@@ -11,7 +11,7 @@ Clase Persona {
     Realizar_Donacion() 
 }
 
-Clase Humana {
+Clase Humana hereda de Persona {
     nombre,
     apellido,
     edad,
@@ -25,7 +25,7 @@ Clase Humana {
 }
 
 
-Clase Juridica {
+Clase Juridica hereda de Persona {
     razon_social,
     tipo,
     rubro,
@@ -55,6 +55,17 @@ clase SistemaDonaciones {
 
     // Metodos
     Segmentacion_de_Bienes()
+    EsRecurrente()
+    EsExtraordinaria()
+    InmigracionMasivaDeDonantes()
+
+    // Estados de la donacion
+    RegistrarDonacion()
+    AsignarDonacion()
+
+    // Notificaciones
+    Aca se pide otro metodo
+
 }
 
 clase formulario {
@@ -65,10 +76,17 @@ clase formulario {
 
 }
 
+Clase Donacion {
+    Bien
+    Estado // puede ser asiganada o en deposito
+    Subcategoria // esto no se si se tiene que volver a poner
+}
+
 Clase Bien {
     descripcion
     foto // opcional
     tipo_de_bien
+
 }
 
 Clase tipo_de_bien {
@@ -95,4 +113,18 @@ Enum Unidades {
 }
 
 ==================
+
+Entidad_Beneficiara hereda de Persona {
+razón social, dirección completa, teléfono y correos de las personas
+tiene en común alguno de esos atributos
+
+Necesidades que tienen
+Subcategoria, y descripcion
+y pueden ser recurrente o extraordinarias
+
+}
+
+=====================================
+
+
 
