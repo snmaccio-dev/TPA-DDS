@@ -1,0 +1,88 @@
+// URL: //www.plantuml.com/plantuml/png/bLJDRXit4BxlKmpKItgmMzLn4FXWH8fMG836AAB-N7mPaIEP3PVSyaUENVHX-W0z-H7qOXsIkrwj2hc8OTZScM_cc_ztFg0BiT6mi0P_TYW-mnai56uTDWYIO46-rOgsaQhAVrQcHTQ0iQpwimAOiyNMsMZaUwkjWs_gDylfSfuqrabodNJwzd8vksJfqffmWmt1p2dKdM2b7Wcc5zLV1mp2DgqrPC89cjdoOb4VqrpCtoocqvTfVXZHI0ouHdyYcUMihXUpOvQtbw-Nty-_XWMTi_UPedFnEltyJw1JTb6X28oVp6IZZFB1eRHk0kW1awHNf-QPGF0TVABMaISJqdS6ogBheRK9IgA4EHdQAA6GUJDkVI2egjHWzgjyQxqAQcT1aePVV6IrpNYX5TEKmWtDcdnWcTlW8-Dx-ArvPPBzHXcc1ZBy6mqpIVjjTXLLIhLGhiZj52UPx6SyUGA5sZ-PadFRUbQJEoRzk7-IKISEw4hXRyr3VWl569_D6oi7oKa7NO6AXniIvDFduABNd_RmWOKkbBXlJODUxH3UhtxjFV3pbEsjkR51SHkEuixIiT5At15RaUFoCiNM54B066op_pkmZr9TtmDJaP_dVJ9FVrF1C5ZEzHFfp8cwJCrwr13MUAY_17B6-lkCeFo5-hWNFpcx8qeTh1jKkc3JQxKJfv2hZwiIQkDVGFrsXy7FsZP3xp4XEQEy271sTWrHmHL4ZrKtycFXuNoFDLLKIJ2C5yjL6cCKfQJNrrKr6fuCbsl6QKfRHruujQO472RaPLWUWm4W725OG14YQlM8_Thw1Eu7O80xskPh06OqBWdytEwC7eTz1LBvT9BWO69kKnFb_Xy4biMorEndpDfta5sGsIMmiCwHXLTUDL6dLJwED7LpPC5TVWb-ZoDqt-qZauep9d1gUnV0RWw66w3Mms41PQGI27z40ZrAbu6UW7ud4GCURakJCvzqnQXWACSa7R--vdd5TMvGSNZEq1yHzFvfcnZpLWNKkhjqWUtGmoQ6wD2VLsGaf1oECXaEmqe1wL9mU43UCsQbgs4qpWl6s5vLXeTjOhcth7zuxf8ZIQaacdmA78KWR_yJnTe6haCEOpWsjO6wX0zJqDONd_pVMmDzKtn9Fo_CrdKto17gL0X7PPWfLRrr-wSlga4FAf0h8pcgnpj-naR_2m00
+
+@startuml DonaTrack - Diagrama de Despliegue
+
+skinparam node {
+  BackgroundColor #E6F1FB
+  BorderColor #185FA5
+  FontName Arial
+  FontSize 13
+}
+skinparam component {
+  BackgroundColor #EAF3DE
+  BorderColor #3B6D11
+  FontName Arial
+  FontSize 12
+}
+skinparam database {
+  BackgroundColor #FAEEDA
+  BorderColor #854F0B
+  FontName Arial
+  FontSize 12
+}
+skinparam arrow {
+  Color #444441
+  FontName Arial
+  FontSize 11
+}
+
+actor "Administrador" as admin
+actor "Donante / Representante" as donante
+actor "Entidad Beneficiaria" as beneficiaria
+
+node "Dispositivo del Usuario" as cliente {
+  component "Interfaz de Usuario\n(no definida en enunciado)" as ui
+}
+
+node "Servidor de Aplicación" as appserver {
+  component "Módulo de Donantes\ny Donaciones" as modDonaciones
+  component "Módulo de Entidades\ny Necesidades" as modEntidades
+  component "Módulo de Importación\nmasiva CSV" as modCSV
+  component "Módulo de\nNotificaciones" as modNotif
+  component "Scheduler\n(asignación automática)" as scheduler
+}
+
+database "Base de Datos\nRelacional" as db
+
+node "Servicios Externosw" as external {
+  component "Proveedor Email" as emailSvc
+  component "Proveedor SMS" as smsSvc
+  component "Proveedor WhatsApp" as waSvc
+}
+
+admin --> ui : usa
+donante --> ui : usa
+beneficiaria --> ui : usa
+
+ui --> appserver : interacción >>
+
+modDonaciones --> db : lee / escribe >>
+modEntidades --> db : lee / escribe >>
+modCSV --> db : crea o actualiza donantes >>
+modNotif --> db : registra notificaciones >>
+scheduler --> modDonaciones : dispara asignación\nal día siguiente >>
+
+modNotif --> emailSvc : envía correo (simulado) >>
+modNotif --> smsSvc : envía SMS (simulado) >>
+modNotif --> waSvc : envía WhatsApp (simulado) >>
+
+note right of scheduler
+  El enunciado indica que la asignación
+  se ejecuta automáticamente "al día
+  siguiente" del registro de la donación.
+  La lógica se detalla en entregas futuras.
+end note
+
+note right of modCSV
+  Si el email ya existe: actualiza.
+  Si no existe: crea el usuario
+  y envía credenciales de acceso.
+end note
+
+note bottom of modNotif
+  En Entrega 1 los envíos son simulados.
+  La integración real se realiza en
+  próximas iteraciones.
+end note
+
+@enduml
