@@ -1,6 +1,124 @@
 @startuml
 title Diagrama de Clases - DonaTrack - Grupo 13
 
+' =========================
+' ENUMS
+' =========================
+
+enum TipoOrganizacion {
+    GUBERNAMENTAL
+    ONG
+    EMPRESA
+    INSTITUCION
+}
+
+enum TipoContacto {
+    EMAIL
+    TELEFONO
+    WHATSAPP
+}
+
+enum Genero {
+    MASCULINO
+    FEMENINO
+    OTRO
+}
+
+enum Unidades {
+    KILOGRAMOS
+    UNIDADES
+    METROS
+}
+
+' =========================
+' CLASES
+' =========================
+
+abstract class Persona {
+    direccion
+    contactos
+    contactoPredeterminado
+    ingresarDonacion()
+}
+
+class PersonaHumana {
+    nombre
+    apellido
+    edad
+    documento
+    genero
+}
+
+class PersonaJuridica {
+    razonSocial
+    tipo
+    rubro
+}
+
+class MedioContacto {
+    tipo
+    valor
+}
+
+class Usuario {
+    nombre
+    contrasena
+}
+
+class Donacion {
+    Bienes
+    Estado
+    Subcategoria
+}
+
+class Bien {
+    descripcion
+    foto
+}
+
+class Categoria {
+    nombre
+}
+
+class Subcategoria {
+    nombre
+}
+
+class EntidadBeneficiaria{
+    Necesidades
+    registrarNecesidades()
+}
+
+class Necesidad {
+    descripcion
+    cantidad
+    subcategoria
+}
+
+' =========================
+' HERENCIA
+' =========================
+
+Persona <|-- PersonaHumana
+Persona <|-- PersonaJuridica
+Persona <|-- EntidadBeneficiaria
+
+' =========================
+' CONOCE
+' =========================
+
+Persona --> "1" MedioContacto
+PersonaHumana --> "1" Genero
+MedioContacto --> "1" TipoContacto
+PersonaJuridica --> "1" TipoOrganizacion
+PersonaJuridica --> "*" PersonaHumana
+Persona --> "1" Usuario
+Donacion --> "*" Bien
+Categoria --> "1" Subcategoria
+Bien --> "1" Subcategoria
+Bien --> "1" Unidades
+EntidadBeneficiaria --> "1 o *" Necesidad
+Necesidad --> "1" Subcategoria
 
 
 @enduml
