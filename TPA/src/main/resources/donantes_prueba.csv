@@ -1,0 +1,6 @@
+TipoPersona,TipoDoc,Documento,NombreRazonSocial,Email,Telefono
+HUMANA,DNI,12345678,Ana Perez,ana@mail.com,+54 11 5555-5555
+HUMANA,DNI,87654321,Carlos Lopez,carlos@mail.com,+54 11 6666-6666
+JURIDICA,CUIT,30-12345678-9,Arcos Plateados S.A.,contacto@arcos.com,+54 11 4444-4444
+HUMANA,DNI,11111111,Maria Torres,maria@mail.com,
+HUMANA,DNI,12345678,Ana Perez Actualizada,ana@mail.com,+54 11 9999-9999
