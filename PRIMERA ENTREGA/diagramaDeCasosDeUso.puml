@@ -1,0 +1,62 @@
+@startuml DonaTrack - Diagrama General de Casos de Uso
+
+left to right direction
+skinparam packageStyle rectangle
+
+
+skinparam defaultFontSize 12
+skinparam nodesep 50
+skinparam ranksep 30
+
+actor "Donante" as donante
+actor "Administrador" as admin
+actor "   Entidad\nBeneficiaria" as entidad
+actor "Servicio Externo\nde Notificaciones" as servicio
+
+
+rectangle "Sistema DonaTrack" {
+    usecase "Iniciar\nSesión"                          as UC0
+    usecase "Registrar\npersona donante"                          as UC4
+    usecase "Configurar medio de\ncontacto predeterminado"        as UC3
+
+    usecase "Registrar\ndonación"                                 as UC5
+    usecase "Importar donantes\npor CSV"                          as UC6
+
+
+    usecase "Cambiar estado de\ndonación a ""Vencida"""           as UC9
+
+  usecase "Registrar Entidad\nBeneficiaria" as UC10
+
+    usecase "Registrar\nnecesidad"                                as UC12
+
+
+    usecase "Enviar\nnotificación"                                as UC14
+
+}
+
+donante -- UC4
+
+admin -- UC4
+admin -- UC5
+admin -- UC6
+
+admin -- UC9
+
+entidad -- UC10
+entidad -- UC12
+
+UC14 -- servicio
+
+UC4 <.. UC3 : <<extend>>
+UC4 ..> UC14 : <<include>>
+
+
+UC5 ..> UC0 : <<include>>
+UC6 ..> UC0 : <<include>>
+UC9 ..> UC0 : <<include>>
+UC12 ..> UC0 : <<include>>
+
+
+
+
+@enduml
