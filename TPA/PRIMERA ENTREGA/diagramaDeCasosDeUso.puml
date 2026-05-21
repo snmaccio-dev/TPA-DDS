@@ -1,0 +1,79 @@
+@startuml
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam usecase {
+    BackgroundColor #EFEFEF
+    BorderColor black
+}
+
+actor Donante
+actor Administrador
+actor "Entidad\nBeneficiaria" as EntidadBeneficiaria
+
+rectangle "Sistema DonaTrack" {
+
+    ' =========================
+    ' Casos superiores
+    ' =========================
+
+    (Registrar\npersona donante) as UC_RegistrarDonante
+    (Enviar\nnotificación) as UC_Notificacion
+    (Configurar medio de\ncontacto predeterminado) as UC_ConfigurarContacto
+
+    UC_RegistrarDonante -[hidden]-> UC_Notificacion
+    UC_Notificacion -[hidden]down-> UC_ConfigurarContacto
+
+    ' =========================
+    ' Casos centrales
+    ' =========================
+
+    (Registrar\ndonación) as UC_RegistrarDonacion
+    (Importar donantes\npor CSV) as UC_ImportarCSV
+    (Iniciar\nSesión) as UC_Login
+    (Cambiar estado de\ndonación a Vencida) as UC_CambiarEstado
+
+    UC_RegistrarDonacion -[hidden]down-> UC_ImportarCSV
+    UC_ImportarCSV -[hidden]down-> UC_CambiarEstado
+
+    UC_RegistrarDonacion -[hidden]-> UC_Login
+
+    ' =========================
+    ' Casos inferiores
+    ' =========================
+
+    (Registrar Entidad\nBeneficiaria) as UC_Entidad
+    (Registrar\nnecesidad) as UC_Necesidad
+
+    UC_Entidad -[hidden]down-> UC_Necesidad
+    UC_Entidad -[hidden]-> UC_Login
+
+    ' =========================
+    ' Relaciones actores
+    ' =========================
+
+    Donante --> UC_RegistrarDonante
+
+    Administrador --> UC_RegistrarDonacion
+    Administrador --> UC_ImportarCSV
+    Administrador --> UC_CambiarEstado
+    Administrador --> UC_RegistrarDonante
+
+    EntidadBeneficiaria --> UC_Entidad
+    EntidadBeneficiaria --> UC_Necesidad
+
+    ' =========================
+    ' Include / Extend
+    ' =========================
+
+    UC_RegistrarDonante ..> UC_Notificacion : <<include>>
+
+    UC_ConfigurarContacto ..> UC_RegistrarDonante : <<extend>>
+
+    UC_RegistrarDonacion ..> UC_Login : <<include>>
+    UC_ImportarCSV ..> UC_Login : <<include>>
+    UC_CambiarEstado ..> UC_Login : <<include>>
+    UC_Necesidad ..> UC_Login : <<include>>
+}
+
+@enduml
