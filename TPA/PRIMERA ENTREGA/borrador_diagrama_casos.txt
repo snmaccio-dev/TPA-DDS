@@ -1,0 +1,18 @@
+Dejo algunas aclaraciones de diseño por si les parece importante agregarlas:
+
+1.	El CU “Registrar persona donante” puede ser llevado a cabo tanto
+por el donante como por el administrador ya que la consigna dice que el donante
+puede autorregistrarse en la plataforma,
+o si llega al depósito sin usuario una persona administradora
+le pedirá los datos de registro, pero en si la acción es la misma.
+
+2.	El CU “Configurar medio de contacto predeterminado” decidimos dejarlo
+como <<extend>> ya que es opcional a la hora de registrarse,
+no es un paso obligatorio del flujo.
+
+3.	El CU “Enviar notificación” solo se ejecuta al registrar un donante y
+no al registrar una entidad porque en la consigna no está especificado que lo haga.
+
+4.	Los CU “Confirmar entregade donación” y “Registrar justificación de entrega
+fallida” consideramos que no están contemplados en el alcance de esta entrega.
+

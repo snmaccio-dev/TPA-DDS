@@ -44,7 +44,7 @@ node "Servidor de Aplicación" as appserver {
 
 database "Base de Datos\nRelacional" as db
 
-node "Servicios Externosw" as external {
+node "Servicios Externos" as external {
   component "Proveedor Email" as emailSvc
   component "Proveedor SMS" as smsSvc
   component "Proveedor WhatsApp" as waSvc
