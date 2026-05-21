@@ -6,17 +6,21 @@ skinparam shadowing false
 
 actor Donante
 actor Administrador
+actor Beneficiario
 
 node "Servidor Web / Aplicación" {
 
   component "Sistema Donatrack" as app
+  component "Notificador" as notifier
 
   database "Base de Datos" as db
 
   app --> db : JDBC / SQL
+  app --> notifier : envío de notificaciones
 }
 
 Donante --> app : HTTPS
 Administrador --> app : HTTPS
+Beneficiario --> app : HTTPS
 
 @enduml
