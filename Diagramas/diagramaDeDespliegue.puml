@@ -28,16 +28,15 @@ actor "Administrador" as admin
 actor "Donante / Representante" as donante
 actor "Entidad Beneficiaria" as beneficiaria
 
-node "Dispositivo del Usuario" as cliente {
-  component "Interfaz de Usuario\n(no definida en enunciado)" as ui
-}
 
 node "Servidor de Aplicación\n(Monolito)" as appserver {
+component "Interfaz de Usuario\n(no definida en enunciado)" as ui
   component "Módulo de Donantes\ny Donaciones" as modDonaciones
   component "Módulo de Entidades\ny Necesidades" as modEntidades
   component "Módulo de Importación\nmasiva CSV" as modCSV
   component "Módulo de\nNotificaciones" as modNotif
   component "Scheduler\n(asignación automática)" as scheduler
+  database "Base de Datos\nRelacional" as db
 }
 
 database "Base de Datos\nRelacional" as db
