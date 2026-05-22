@@ -1,124 +1,242 @@
 @startuml
-title Diagrama de Clases - DonaTrack - Grupo 13
+skinparam classAttributeIconSize 0
+  skinparam packageStyle rectangle
+  hide empty members
 
-' =========================
-' ENUMS
-' =========================
+  enum Genero {
+    MASCULINO
+    FEMENINO
+    OTRO
+  }
 
-enum TipoOrganizacion {
+  enum TipoOrganizacion {
     GUBERNAMENTAL
     ONG
     EMPRESA
     INSTITUCION
-}
+  }
 
-enum TipoContacto {
+  enum TipoContacto {
     EMAIL
     TELEFONO
     WHATSAPP
-}
+  }
 
-enum Genero {
-    MASCULINO
-    FEMENINO
-    OTRO
-}
-
-enum Unidades {
+  enum Unidades {
     KILOGRAMOS
     UNIDADES
     METROS
-}
-
-' =========================
-' CLASES
-' =========================
-
-abstract class Persona {
-    direccion
-    contactos
-    contactoPredeterminado
-    ingresarDonacion()
-}
-
-class PersonaHumana {
-    nombre
-    apellido
-    edad
-    documento
-    genero
-}
-
-class PersonaJuridica {
-    razonSocial
-    tipo
-    rubro
-}
-
-class MedioContacto {
-    tipo
-    valor
-}
-
-class Usuario {
-    nombre
-    contrasena
-}
-
-class Donacion {
-    Bienes
-    Estado
-    Subcategoria
-}
-
-class Bien {
-    descripcion
-    foto
-}
-
-class Categoria {
-    nombre
-}
-
-class Subcategoria {
-    nombre
-}
-
-class EntidadBeneficiaria{
-    Necesidades
-    registrarNecesidades()
-}
-
-class Necesidad {
-    descripcion
-    cantidad
-    subcategoria
-}
-
-' =========================
-' HERENCIA
-' =========================
-
-Persona <|-- PersonaHumana
-Persona <|-- PersonaJuridica
-Persona <|-- EntidadBeneficiaria
-
-' =========================
-' CONOCE
-' =========================
-
-Persona --> "1" MedioContacto
-PersonaHumana --> "1" Genero
-MedioContacto --> "1" TipoContacto
-PersonaJuridica --> "1" TipoOrganizacion
-PersonaJuridica --> "*" PersonaHumana
-Persona --> "1" Usuario
-Donacion --> "*" Bien
-Categoria --> "1" Subcategoria
-Bien --> "1" Subcategoria
-Bien --> "1" Unidades
-EntidadBeneficiaria --> "1 o *" Necesidad
-Necesidad --> "1" Subcategoria
+  }
 
 
+  class MedioContacto {
+    - tipo: TipoContacto
+    - valor: String
+    + getTipo(): TipoContacto
+    + getValor(): String
+    + setValor(String): void
+  }
+
+  class Usuario {
+    - nombre: String
+    - contrasena: String
+    + getNombre(): String
+    + getContrasena(): String
+    + setContrasena(String): void
+  }
+
+
+
+  abstract class Persona {
+    # direccion: String
+    # contactos: List<MedioContacto>
+    # contactoPredeterminado: MedioContacto
+    # usuario: Usuario
+    + ingresarDonacion(List<Bien>): void
+    + {abstract} getNombreDisplay(): String
+    + agregarMedioContacto(MedioContacto): void
+    + getDireccion(): String
+    + setDireccion(String): void
+    + getContactos(): List<MedioContacto>
+    + getContactoPredeterminado(): MedioContacto
+    + setContactoPredeterminado(MedioContacto): void
+    + getUsuario(): Usuario
+    + setUsuario(Usuario): void
+  }
+
+  class PersonaHumana {
+    - nombre: String
+    - apellido: String
+    - edad: int
+    - documento: String
+    - genero: Genero
+    + PersonaHumana(String, String, int, String, Genero)
+    + getNombre(): String
+    + getApellido(): String
+    + getEdad(): int
+    + getDocumento(): String
+    + getGenero(): Genero
+  }
+
+  class PersonaJuridica {
+    - razonSocial: String
+    - tipo: TipoOrganizacion
+    - rubro: String
+    - representantes: List<PersonaHumana>
+    + PersonaJuridica(String, TipoOrganizacion, String)
+    + agregarRepresentante(PersonaHumana): void
+    + getRazonSocial(): String
+    + getTipo(): TipoOrganizacion
+    + getRubro(): String
+    + getRepresentantes(): List<PersonaHumana>
+  }
+
+  class EntidadBeneficiaria {
+    - razonSocial: String
+    - necesidades: List<Necesidad>
+    + EntidadBeneficiaria(String)
+    + registrarNecesidades(Necesidad): void
+    + getNecesidades(): List<Necesidad>
+    + getRazonSocial(): String
+  }
+
+
+  class Categoria {
+    - nombre: String
+    - subcategoria: Subcategoria
+    + Categoria(String, Subcategoria)
+    + getNombre(): String
+    + getSubcategoria(): Subcategoria
+    + setSubcategoria(Subcategoria): void
+  }
+
+  class Subcategoria {
+    - nombre: String
+    + Subcategoria(String)
+    + getNombre(): String
+    + setNombre(String): void
+    + toString(): String
+  }
+
+
+  class Necesidad {
+    - descripcion: String
+    - cantidad: int
+    - subcategoria: Subcategoria
+    + Necesidad(String, int, Subcategoria)
+    + getDescripcion(): String
+    + getCantidad(): int
+    + setCantidad(int): void
+    + getSubcategoria(): Subcategoria
+  }
+
+
+  class Bien {
+    - descripcion: String
+    - foto: String
+    - subcategoria: Subcategoria
+    - unidades: Unidades
+    + Bien(String, Subcategoria, Unidades)
+    + getDescripcion(): String
+    + getFoto(): String
+    + setFoto(String): void
+    + getSubcategoria(): Subcategoria
+    + getUnidades(): Unidades
+  }
+
+  class Donacion {
+    - bienes: List<Bien>
+    - estado: EstadoDonacion
+    - subcategoria: Subcategoria
+    - observers: List<DonacionObserver>
+    + Donacion(List<Bien>, Subcategoria)
+    + asignar(): void
+    + planificarRuta(): void
+    + iniciarTraslado(): void
+    + confirmarEntrega(): void
+    + fallarEntrega(String): void
+    + vencer(): void
+    + cambiarEstado(EstadoDonacion): void
+    + agregarObserver(DonacionObserver): void
+    + removerObserver(DonacionObserver): void
+    - notificarObservers(String, String): void
+    + getBienes(): List<Bien>
+    + getEstado(): EstadoDonacion
+    + getSubcategoria(): Subcategoria
+    + toString(): String
+  }
+
+  class DonacionBuilder {
+    - subcategoria: Subcategoria
+    - bienes: List<Bien>
+    + conSubcategoria(Subcategoria): DonacionBuilder
+    + agregarBien(Bien): DonacionBuilder
+    + agregarBienes(List<Bien>): DonacionBuilder
+    + build(): Donacion
+  }
+
+
+  interface EstadoDonacion {
+    + asignar(Donacion): void
+    + planificarRuta(Donacion): void
+    + iniciarTraslado(Donacion): void
+    + confirmarEntrega(Donacion): void
+    + fallarEntrega(Donacion, String): void
+    + vencer(Donacion): void
+    + getNombre(): String
+  }
+
+  class EnDeposito implements EstadoDonacion
+  class AsignacionRealizada implements EstadoDonacion
+  class ListaParaEntregar implements EstadoDonacion
+  class EnTraslado implements EstadoDonacion
+  class Entregada implements EstadoDonacion
+  class Vencida implements EstadoDonacion
+
+  class EntregaFallida implements EstadoDonacion {
+    + devolverAlDeposito(Donacion): void
+  }
+
+
+  interface DonacionObserver {
+    + onCambioEstado(Donacion, String, String): void
+  }
+
+  class NotificadorDonacionObserver implements DonacionObserver {
+    - donante: Persona
+    - servicioNotificaciones: ServicioNotificaciones
+    + NotificadorDonacionObserver(Persona, ServicioNotificaciones)
+  }
+
+
+  Persona <|-- PersonaHumana
+  Persona <|-- PersonaJuridica
+  Persona <|-- EntidadBeneficiaria
+
+
+  Persona "1" *-- "0..*" MedioContacto
+  Persona "1" o-- "0..1" Usuario
+
+  PersonaJuridica "1" o-- "0..*" PersonaHumana : representantes
+
+  EntidadBeneficiaria "1" *-- "0..*" Necesidad
+  Necesidad --> Subcategoria
+
+  Categoria "1" *-- "1" Subcategoria
+
+  Bien --> Subcategoria
+  Bien --> Unidades
+
+  Donacion "1" *-- "1..*" Bien
+  Donacion --> EstadoDonacion : estado
+  Donacion --> Subcategoria
+  Donacion "1" o-- "0..*" DonacionObserver
+
+  DonacionBuilder ..> Donacion : <<creates>>
+
+  MedioContacto --> TipoContacto
+  PersonaHumana --> Genero
+  PersonaJuridica --> TipoOrganizacion
+
+  NotificadorDonacionObserver --> Persona
 @enduml
