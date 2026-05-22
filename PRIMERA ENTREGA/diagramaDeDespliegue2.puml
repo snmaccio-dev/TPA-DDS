@@ -1,0 +1,26 @@
+@startuml
+title Diagrama de Despliegue - DonaTrack
+
+skinparam shadowing false
+skinparam componentStyle rectangle
+
+actor Donante
+actor Administrador
+actor Beneficiario
+
+node "Servidor Web / Aplicación" {
+
+    component "Sistema Donatrack" as sistema
+    component "Servicio de Notificaciones" as notif
+
+    database "Base de Datos" as db
+}
+
+Donante --> sistema : HTTPS
+Administrador --> sistema : HTTPS
+Beneficiario --> sistema : HTTPS
+
+sistema --> db : JDBC / SQL
+sistema --> notif : API
+
+@enduml
