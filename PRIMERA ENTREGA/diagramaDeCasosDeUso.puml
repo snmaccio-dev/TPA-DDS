@@ -11,7 +11,6 @@ skinparam ranksep 30
 actor "Donante" as donante
 actor "Administrador" as admin
 actor "   Entidad\nBeneficiaria" as entidad
-actor "Servicio Externo\nde Notificaciones" as servicio
 
 
 rectangle "Sistema DonaTrack" {
@@ -45,7 +44,6 @@ admin -- UC9
 entidad -- UC10
 entidad -- UC12
 
-UC14 -- servicio
 
 UC4 <.. UC3 : <<extend>>
 UC4 ..> UC14 : <<include>>
@@ -55,8 +53,5 @@ UC5 ..> UC0 : <<include>>
 UC6 ..> UC0 : <<include>>
 UC9 ..> UC0 : <<include>>
 UC12 ..> UC0 : <<include>>
-
-
-
 
 @enduml
