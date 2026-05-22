@@ -10,8 +10,7 @@ skinparam ranksep 30
 
 actor "Donante" as donante
 actor "Administrador" as admin
-actor "   Entidad\nBeneficiaria" as entidad
-actor "Servicio Externo\nde Notificaciones" as servicio
+actor "Entidad\nBeneficiaria" as entidad
 
 
 rectangle "Sistema DonaTrack" {
