@@ -4,24 +4,16 @@ import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.Bien;
 import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
-class EstadoDonacionTest {
-
-  private Donacion donacion;
-
-  @BeforeEach
-  void setUp() {
-    Subcategoria ropa = new Subcategoria("Camperas de abrigo");
-    Bien campera = new Bien("Campera talle M nueva", ropa, Unidades.UNIDADES);
-    donacion = new Donacion(List.of(campera), ropa);
-  }
+public class EstadoDonacionTest {
 
   @Test
-  void donacionHaceElRecorridoFelizHastaSerEntregada() {
+  public void donacionHaceElRecorridoFelizHastaSerEntregada() {
+    Donacion donacion = donacionDeCampera();
+
     donacion.asignar();
     assertEquals("ASIGNACION_REALIZADA", donacion.getEstado().getNombre());
 
@@ -36,7 +28,8 @@ class EstadoDonacionTest {
   }
 
   @Test
-  void donacionEnTrasladoFallaYRetornaAlDeposito() {
+  public void donacionEnTrasladoFallaYRetornaAlDeposito() {
+    Donacion donacion = donacionDeCampera();
     donacion.asignar();
     donacion.planificarRuta();
     donacion.iniciarTraslado();
@@ -49,9 +42,17 @@ class EstadoDonacionTest {
   }
 
   @Test
-  void transicionInvalidaLanzaIllegalStateException() {
+  public void transicionInvalidaLanzaIllegalStateException() {
+    Donacion donacion = donacionDeCampera();
+
     assertThrows(IllegalStateException.class, () -> {
       donacion.confirmarEntrega();
-    }, "Debería lanzar IllegalStateException al intentar confirmar entrega desde el depósito");
+    });
+  }
+
+  private Donacion donacionDeCampera() {
+    Subcategoria ropa = new Subcategoria("Camperas de abrigo");
+    Bien campera = new Bien("Campera talle M nueva", ropa, Unidades.UNIDADES);
+    return new Donacion(List.of(campera), ropa);
   }
 }

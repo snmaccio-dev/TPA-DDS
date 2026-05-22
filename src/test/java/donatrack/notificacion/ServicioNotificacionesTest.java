@@ -6,27 +6,27 @@ import donatrack.model.persona.PersonaHumana;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
-class ServicioNotificacionesTest {
+public class ServicioNotificacionesTest {
 
   @Test
-  void notificarFallaSilenciosamenteSiLaPersonaNoTieneContacto() {
-    // Arrange: Creamos un donante sin agregarle MedioContacto
-    PersonaHumana donanteSinContacto = new PersonaHumana("Juan", "Perez", 30, "111", Genero.MASCULINO);
+  public void notificarFallaSilenciosamenteSiLaPersonaNoTieneContacto() {
     ServicioNotificaciones servicio = new ServicioNotificaciones();
 
-    // Act & Assert: Verificamos que el sistema no lance NullPointerException al intentar enviar
     assertDoesNotThrow(() -> {
-      servicio.notificar(donanteSinContacto, "Mensaje de prueba");
-    }, "El servicio debería manejar correctamente donantes sin medios de contacto");
+      servicio.notificar(donanteSinContacto(), "Mensaje de prueba");
+    });
   }
 
   @Test
-  void notificarPorMedioEligeLaEstrategiaCorrectaSinExcepciones() {
+  public void notificarPorMedioEligeLaEstrategiaCorrectaSinExcepciones() {
     ServicioNotificaciones servicio = new ServicioNotificaciones();
 
-    // Act & Assert: Verificamos que se resuelva la estrategia de EMAIL correctamente
     assertDoesNotThrow(() -> {
       servicio.notificarPorMedio("test@mail.com", TipoContacto.EMAIL, "Prueba Strategy");
     });
+  }
+
+  private PersonaHumana donanteSinContacto() {
+    return new PersonaHumana("Martin", "Friedrich", 23, "44510667", Genero.MASCULINO);
   }
 }
