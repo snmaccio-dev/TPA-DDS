@@ -1,9 +1,8 @@
-package donatrack.servicio;
+package servicio;
 
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.Bien;
 import donatrack.model.donacion.Donacion;
-import donatrack.model.donacion.DonacionBuilder;
 import donatrack.model.persona.Persona;
 import donatrack.repositorio.RepositorioDonaciones;
 

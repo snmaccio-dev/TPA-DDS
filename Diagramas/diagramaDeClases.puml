@@ -32,17 +32,11 @@ skinparam classAttributeIconSize 0
   class MedioContacto {
     - tipo: TipoContacto
     - valor: String
-    + getTipo(): TipoContacto
-    + getValor(): String
-    + setValor(String): void
   }
 
   class Usuario {
     - nombre: String
     - contrasena: String
-    + getNombre(): String
-    + getContrasena(): String
-    + setContrasena(String): void
   }
 
 
@@ -55,13 +49,6 @@ skinparam classAttributeIconSize 0
     + ingresarDonacion(List<Bien>): void
     + {abstract} getNombreDisplay(): String
     + agregarMedioContacto(MedioContacto): void
-    + getDireccion(): String
-    + setDireccion(String): void
-    + getContactos(): List<MedioContacto>
-    + getContactoPredeterminado(): MedioContacto
-    + setContactoPredeterminado(MedioContacto): void
-    + getUsuario(): Usuario
-    + setUsuario(Usuario): void
   }
 
   class PersonaHumana {
@@ -71,12 +58,13 @@ skinparam classAttributeIconSize 0
     - documento: String
     - genero: Genero
     + PersonaHumana(String, String, int, String, Genero)
-    + getNombre(): String
-    + getApellido(): String
-    + getEdad(): int
-    + getDocumento(): String
-    + getGenero(): Genero
   }
+
+class Representante {
+    nombre
+    apellido
+    cargo
+}
 
   class PersonaJuridica {
     - razonSocial: String
@@ -85,10 +73,6 @@ skinparam classAttributeIconSize 0
     - representantes: List<PersonaHumana>
     + PersonaJuridica(String, TipoOrganizacion, String)
     + agregarRepresentante(PersonaHumana): void
-    + getRazonSocial(): String
-    + getTipo(): TipoOrganizacion
-    + getRubro(): String
-    + getRepresentantes(): List<PersonaHumana>
   }
 
   class EntidadBeneficiaria {
@@ -96,8 +80,6 @@ skinparam classAttributeIconSize 0
     - necesidades: List<Necesidad>
     + EntidadBeneficiaria(String)
     + registrarNecesidades(Necesidad): void
-    + getNecesidades(): List<Necesidad>
-    + getRazonSocial(): String
   }
 
 
@@ -106,8 +88,6 @@ skinparam classAttributeIconSize 0
     - subcategoria: Subcategoria
     + Categoria(String, Subcategoria)
     + getNombre(): String
-    + getSubcategoria(): Subcategoria
-    + setSubcategoria(Subcategoria): void
   }
 
   class Subcategoria {
@@ -137,11 +117,6 @@ skinparam classAttributeIconSize 0
     - subcategoria: Subcategoria
     - unidades: Unidades
     + Bien(String, Subcategoria, Unidades)
-    + getDescripcion(): String
-    + getFoto(): String
-    + setFoto(String): void
-    + getSubcategoria(): Subcategoria
-    + getUnidades(): Unidades
   }
 
   class Donacion {
@@ -160,21 +135,8 @@ skinparam classAttributeIconSize 0
     + agregarObserver(DonacionObserver): void
     + removerObserver(DonacionObserver): void
     - notificarObservers(String, String): void
-    + getBienes(): List<Bien>
-    + getEstado(): EstadoDonacion
-    + getSubcategoria(): Subcategoria
     + toString(): String
   }
-
-  class DonacionBuilder {
-    - subcategoria: Subcategoria
-    - bienes: List<Bien>
-    + conSubcategoria(Subcategoria): DonacionBuilder
-    + agregarBien(Bien): DonacionBuilder
-    + agregarBienes(List<Bien>): DonacionBuilder
-    + build(): Donacion
-  }
-
 
   interface EstadoDonacion {
     + asignar(Donacion): void
@@ -214,25 +176,24 @@ skinparam classAttributeIconSize 0
   Persona <|-- EntidadBeneficiaria
 
 
-  Persona "1" *-- "0..*" MedioContacto
-  Persona "1" o-- "0..1" Usuario
+  Persona "1" <-- "0..*" MedioContacto
+  Persona "1" <-- "0..1" Usuario
 
-  PersonaJuridica "1" o-- "0..*" PersonaHumana : representantes
+  PersonaJuridica "1" <-- "0..*" PersonaHumana
+  PersonaJuridica --> "1..*" Representante
 
-  EntidadBeneficiaria "1" *-- "0..*" Necesidad
+  EntidadBeneficiaria "1" <-- "0..*" Necesidad
   Necesidad --> Subcategoria
 
-  Categoria "1" *-- "1" Subcategoria
+  Categoria "1" <-- "1..*" Subcategoria
 
   Bien --> Subcategoria
   Bien --> Unidades
 
-  Donacion "1" *-- "1..*" Bien
-  Donacion --> EstadoDonacion : estado
+  Donacion "1" <-- "1..*" Bien
+  Donacion --> EstadoDonacion
   Donacion --> Subcategoria
-  Donacion "1" o-- "0..*" DonacionObserver
-
-  DonacionBuilder ..> Donacion : <<creates>>
+  Donacion "1" <-- "0..*" DonacionObserver
 
   MedioContacto --> TipoContacto
   PersonaHumana --> Genero

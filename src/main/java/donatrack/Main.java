@@ -15,7 +15,6 @@ import donatrack.model.persona.PersonaHumana;
 import donatrack.model.persona.PersonaJuridica;
 import donatrack.model.persona.TipoOrganizacion;
 import donatrack.notificacion.NotificadorDonacionObserver;
-import donatrack.notificacion.ServicioNotificaciones;
 import donatrack.servicio.ServicioDonaciones;
 
 import java.util.List;

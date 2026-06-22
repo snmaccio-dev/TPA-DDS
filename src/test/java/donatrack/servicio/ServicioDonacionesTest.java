@@ -7,6 +7,8 @@ import donatrack.model.donacion.Unidades;
 import donatrack.model.persona.PersonaJuridica;
 import donatrack.model.persona.TipoOrganizacion;
 import org.junit.jupiter.api.Test;
+import servicio.ServicioDonaciones;
+
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 

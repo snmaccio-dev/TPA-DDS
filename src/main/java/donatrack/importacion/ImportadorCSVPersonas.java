@@ -2,7 +2,6 @@ package donatrack.importacion;
 
 import donatrack.model.contacto.TipoContacto;
 import donatrack.model.persona.Persona;
-import donatrack.notificacion.ServicioNotificaciones;
 import donatrack.repositorio.RepositorioPersonas;
 
 public class ImportadorCSVPersonas extends ImportadorCSV<Persona> {

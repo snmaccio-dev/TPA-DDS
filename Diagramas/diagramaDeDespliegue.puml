@@ -1,87 +1,21 @@
 @startuml
 
-skinparam node {
-  BackgroundColor #E6F1FB
-  BorderColor #185FA5
-  FontName Arial
-  FontSize 13
-}
-skinparam component {
-  BackgroundColor #EAF3DE
-  BorderColor #3B6D11
-  FontName Arial
-  FontSize 12
-}
-skinparam database {
-  BackgroundColor #FAEEDA
-  BorderColor #854F0B
-  FontName Arial
-  FontSize 12
-}
-skinparam arrow {
-  Color #444441
-  FontName Arial
-  FontSize 11
+actor Administrador
+actor Donante
+actor Beneficiaria
+
+
+node "Servidor" {
+
+    component "DonaTrack\n(Monolito)" as monolito
+
+    database "BD Relacional" as db
+
+    monolito --> db
 }
 
-actor "Administrador" as admin
-actor "Donante / Representante" as donante
-actor "Entidad Beneficiaria" as beneficiaria
-
-node "Dispositivo del Usuario" as cliente {
-  component "Interfaz de Usuario\n(no definida en enunciado)" as ui
-}
-
-node "Servidor de Aplicación\n(Monolito)" as appserver {
-  component "Módulo de Donantes\ny Donaciones" as modDonaciones
-  component "Módulo de Entidades\ny Necesidades" as modEntidades
-  component "Módulo de Importación\nmasiva CSV" as modCSV
-  component "Módulo de\nNotificaciones" as modNotif
-  component "Scheduler\n(asignación automática)" as scheduler
-  database "Base de Datos\nRelacional" as db
-}
-
-database "Base de Datos\nRelacional" as db
-
-node "Servicios Externos\n(simulados en Entrega 1)" as external {
-  component "Proveedor Email" as emailSvc
-  component "Proveedor SMS" as smsSvc
-  component "Proveedor WhatsApp" as waSvc
-}
-
-admin --> ui : usa
-donante --> ui : usa
-beneficiaria --> ui : usa
-
-ui --> appserver : interacción >>
-
-modDonaciones --> db : lee / escribe >>
-modEntidades --> db : lee / escribe >>
-modCSV --> db : crea o actualiza donantes >>
-modNotif --> db : registra notificaciones >>
-scheduler --> modDonaciones : dispara asignación\nal día siguiente >>
-
-modNotif --> emailSvc : envía correo (simulado) >>
-modNotif --> smsSvc : envía SMS (simulado) >>
-modNotif --> waSvc : envía WhatsApp (simulado) >>
-
-note right of scheduler
-  El enunciado indica que la asignación
-  se ejecuta automáticamente "al día
-  siguiente" del registro de la donación.
-  La lógica se detalla en entregas futuras.
-end note
-
-note right of modCSV
-  Si el email ya existe: actualiza.
-  Si no existe: crea el usuario
-  y envía credenciales de acceso.
-end note
-
-note bottom of modNotif
-  En Entrega 1 los envíos son simulados.
-  La integración real se realiza en
-  próximas iteraciones.
-end note
+Administrador --> monolito
+Donante --> monolito
+Beneficiaria --> monolito
 
 @enduml
