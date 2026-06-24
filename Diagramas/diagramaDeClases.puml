@@ -110,6 +110,9 @@ class Representante {
     + getSubcategoria(): Subcategoria
   }
 
+  class SegmentadorDonaciones{
+  segmentar(Donaciones)
+  }
 
   class Bien {
     - descripcion: String
@@ -200,4 +203,7 @@ class Representante {
   PersonaJuridica --> TipoOrganizacion
 
   NotificadorDonacionObserver --> Persona
+
+  SegmentadorDonaciones --> "1..*  " Donacion
+
 @enduml
