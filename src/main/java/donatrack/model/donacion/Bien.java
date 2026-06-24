@@ -1,5 +1,6 @@
 package donatrack.model.donacion;
 
+import donatrack.model.catalogo.Categoria;
 import donatrack.model.catalogo.Subcategoria;
 
 public class Bien {
@@ -29,6 +30,10 @@ public class Bien {
 
     public Subcategoria getSubcategoria() {
         return subcategoria;
+    }
+
+    public Categoria getCategoria(){
+      return subcategoria.getCategoria();
     }
 
     public Unidades getUnidades() {

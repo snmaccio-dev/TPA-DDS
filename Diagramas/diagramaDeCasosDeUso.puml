@@ -10,12 +10,10 @@ skinparam ranksep 30
 
 actor "Donante" as donante
 actor "Administrador" as admin
-<<<<<<< HEAD
-actor "Entidad\nBeneficiaria" as entidad
-=======
-actor "   Entidad\nBeneficiaria" as entidad
->>>>>>> e6c18bc695c22585dd89cc3f847345d382279612
 
+actor "Entidad\nBeneficiaria" as entidad
+
+actor "Entidad\nBeneficiaria" as entidad
 
 rectangle "Sistema DonaTrack" {
     usecase "Iniciar\nSesión"                          as UC0
