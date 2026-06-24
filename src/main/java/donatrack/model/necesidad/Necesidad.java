@@ -2,31 +2,29 @@ package donatrack.model.necesidad;
 
 import donatrack.model.catalogo.Subcategoria;
 
-public class Necesidad {
+public abstract class Necesidad {
 
-    private String descripcion;
-    private int cantidad;
-    private Subcategoria subcategoria;
+  protected String descripcion;
+  protected int cantidad;
+  protected Subcategoria subcategoria;
 
-    public Necesidad(String descripcion, int cantidad, Subcategoria subcategoria) {
-        this.descripcion = descripcion;
-        this.cantidad = cantidad;
-        this.subcategoria = subcategoria;
-    }
+  public Necesidad(String descripcion, int cantidad, Subcategoria subcategoria) {
+    this.descripcion = descripcion;
+    this.cantidad = cantidad;
+    this.subcategoria = subcategoria;
+  }
 
-    public String getDescripcion() {
-        return descripcion;
-    }
+  public int getCantidad() {
+    return cantidad;
+  }
 
-    public int getCantidad() {
-        return cantidad;
-    }
+  public Subcategoria getSubcategoria() {
+    return subcategoria;
+  }
 
-    public void setCantidad(int cantidad) {
-        this.cantidad = cantidad;
-    }
+  public String getDescripcion() {
+    return descripcion;
+  }
 
-    public Subcategoria getSubcategoria() {
-        return subcategoria;
-    }
+  public abstract boolean esExtraordinaria();
 }

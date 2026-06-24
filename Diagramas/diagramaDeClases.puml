@@ -110,6 +110,14 @@ class Representante {
     + getSubcategoria(): Subcategoria
   }
 
+  class NecesidadOrdinaria {
+        + esExtraordinaria() : boolean
+  }
+
+  class NecesidadExtraordinaria {
+        + esExtraordinaria() : boolean
+  }
+
   class SegmentadorDonaciones{
   segmentar(Donaciones)
   }
@@ -205,5 +213,7 @@ class Representante {
   NotificadorDonacionObserver --> Persona
 
   SegmentadorDonaciones --> "1..*  " Donacion
+  Necesidad <|-- NecesidadOrdinaria
+  Necesidad <|-- NecesidadExtraordinaria
 
 @enduml
