@@ -4,6 +4,8 @@ import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.estado.EstadoDonacion;
 import donatrack.model.donacion.estado.EnDeposito;
 import donatrack.notificacion.DonacionObserver;
+import donatrack.model.donacion.CambioEstado;
+import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +15,7 @@ public class Donacion {
     private List<Bien> bienes;
     private EstadoDonacion estado;
     private Subcategoria subcategoria;
+    private List<CambioEstado> historialEstados = new ArrayList<>();
 
     // Observer — lista de observadores del ciclo de vida
     private final List<DonacionObserver> observers = new ArrayList<>();
@@ -90,5 +93,21 @@ public class Donacion {
     public String toString() {
         return "Donacion[subcategoria=" + subcategoria + ", estado=" + estado.getNombre()
                 + ", bienes=" + bienes.size() + "]";
+    }
+
+    public void cambiarEstado(EstadoDonacion nuevoEstado) {
+
+      String anterior = this.estado.getNombre();
+      String nuevo = nuevoEstado.getNombre();
+
+      this.estado = nuevoEstado;
+
+      historialEstados.add(new CambioEstado(anterior, nuevo));
+
+      notificarObservers(anterior, nuevo);
+    }
+
+    public List<CambioEstado> getHistorialEstados() {
+      return historialEstados;
     }
 }
