@@ -13,23 +13,23 @@ import java.util.Map;
 
 public class ServicioSegmentacion {
 
-    public List<Donacion> segmentar(List<Bien> bienes, Persona donante) {
-        Map<String, List<Bien>> grupos = agruparPorSubcategoria(bienes);
-        List<Donacion> resultado = new ArrayList<>();
-        RepositorioDonaciones repo = RepositorioDonaciones.getInstance();
+  public List<Donacion> segmentar(List<Bien> bienes, Persona donante) {
+    Map<String, List<Bien>> grupos = agruparPorSubcategoria(bienes);
+    List<Donacion> resultado = new ArrayList<>();
 
-        for (Map.Entry<String, List<Bien>> entry : grupos.entrySet()) {
-            Subcategoria subcategoria = entry.getValue().get(0).getSubcategoria();
-            Donacion donacion = new DonacionBuilder()
-                    .conSubcategoria(subcategoria)
-                    .agregarBienes(entry.getValue())
-                    .build();
-            repo.guardar(donacion);
-            resultado.add(donacion);
-        }
+    for (Map.Entry<String, List<Bien>> entry : grupos.entrySet()) {
+      Subcategoria subcategoria = entry.getValue().get(0).getSubcategoria();
 
-        return resultado;
+      Donacion donacion = new DonacionBuilder()
+          .conSubcategoria(subcategoria)
+          .agregarBienes(entry.getValue())
+          .build();
+
+      resultado.add(donacion);
     }
+
+    return resultado;
+  }
 
     private Map<String, List<Bien>> agruparPorSubcategoria(List<Bien> bienes) {
         Map<String, List<Bien>> grupos = new LinkedHashMap<>();

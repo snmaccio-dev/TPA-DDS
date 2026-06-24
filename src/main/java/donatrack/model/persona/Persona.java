@@ -4,7 +4,6 @@ import donatrack.model.contacto.MedioContacto;
 import donatrack.model.donacion.Bien;
 import donatrack.model.donacion.Donacion;
 import donatrack.model.usuario.Usuario;
-import donatrack.servicio.ServicioSegmentacion;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,13 +14,6 @@ public abstract class Persona {
     protected List<MedioContacto> contactos = new ArrayList<>();
     protected MedioContacto contactoPredeterminado;
     protected Usuario usuario;
-
-    public void ingresarDonacion(List<Bien> bienes) {
-        ServicioSegmentacion servicio = new ServicioSegmentacion();
-        List<Donacion> donaciones = servicio.segmentar(bienes, this);
-        System.out.println("[DONACION] Se generaron " + donaciones.size()
-                + " donacion(es) para " + getNombreDisplay());
-    }
 
     public abstract String getNombreDisplay();
 
