@@ -7,7 +7,7 @@ import donatrack.model.persona.Persona;
 public class NotificadorDonacionObserver implements DonacionObserver {
 
     private final Persona donante;
-    private final ServicioNotificaciones servicioNotificaciones;
+  private final ServicioNotificaciones servicioNotificaciones;
 
     public NotificadorDonacionObserver(Persona donante, ServicioNotificaciones servicioNotificaciones) {
         this.donante = donante;

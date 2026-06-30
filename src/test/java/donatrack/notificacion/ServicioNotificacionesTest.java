@@ -4,7 +4,7 @@ import donatrack.model.contacto.TipoContacto;
 import donatrack.model.persona.Genero;
 import donatrack.model.persona.PersonaHumana;
 import org.junit.jupiter.api.Test;
-import servicio.ServicioPersonas;
+import gestion.GestorPersonas;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -12,7 +12,7 @@ public class ServicioNotificacionesTest {
 
   @Test
   public void notificarFallaSilenciosamenteSiLaPersonaNoTieneContacto() {
-    ServicioPersonas.ServicioNotificaciones servicio = new ServicioPersonas.ServicioNotificaciones();
+    GestorPersonas.ServicioNotificaciones servicio = new GestorPersonas.ServicioNotificaciones();
 
     assertDoesNotThrow(() -> {
       servicio.notificar(donanteSinContacto(), "Mensaje de prueba");
@@ -21,7 +21,7 @@ public class ServicioNotificacionesTest {
 
   @Test
   public void notificarPorMedioEligeLaEstrategiaCorrectaSinExcepciones() {
-    ServicioPersonas.ServicioNotificaciones servicio = new ServicioPersonas.ServicioNotificaciones();
+    GestorPersonas.ServicioNotificaciones servicio = new GestorPersonas.ServicioNotificaciones();
 
     assertDoesNotThrow(() -> {
       servicio.notificarPorMedio("test@mail.com", TipoContacto.EMAIL, "Prueba Strategy");

@@ -8,7 +8,7 @@ import donatrack.model.persona.Genero;
 import donatrack.model.persona.PersonaHumana;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import servicio.ServicioPersonas;
+import gestion.GestorPersonas;
 
 import static org.mockito.Mockito.*;
 
@@ -17,7 +17,7 @@ public class NotificadorDonacionObserverTest {
   @Test
   public void onCambioEstadoArmaElMensajeYLlamaAlServicio() {
     PersonaHumana donante = donanteAna();
-    ServicioPersonas.ServicioNotificaciones servicioFalso = mock(ServicioPersonas.ServicioNotificaciones.class);
+    GestorPersonas.ServicioNotificaciones servicioFalso = mock(GestorPersonas.ServicioNotificaciones.class);
     NotificadorDonacionObserver observer = new NotificadorDonacionObserver(donante, servicioFalso);
 
     observer.onCambioEstado(donacionDeSillas(), "EN_DEPOSITO", "ASIGNACION_REALIZADA");

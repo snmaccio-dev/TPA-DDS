@@ -1,4 +1,4 @@
-package servicio;
+package gestion;
 
 import donatrack.model.contacto.MedioContacto;
 import donatrack.model.contacto.TipoContacto;
@@ -10,7 +10,7 @@ import donatrack.repositorio.RepositorioPersonas;
 import java.util.Optional;
 import java.util.UUID;
 
-public class ServicioPersonas {
+public class GestorPersonas {
 
     private final RepositorioPersonas repositorio = RepositorioPersonas.getInstance();
     private final ServicioNotificaciones servicioNotificaciones = new ServicioNotificaciones();

@@ -7,16 +7,16 @@ import donatrack.model.donacion.Unidades;
 import donatrack.model.persona.PersonaJuridica;
 import donatrack.model.persona.TipoOrganizacion;
 import org.junit.jupiter.api.Test;
-import servicio.ServicioDonaciones;
+import gestion.GestorDonaciones;
 
 import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ServicioDonacionesTest {
+public class GestorDonacionesTest {
 
   @Test
   public void ingresarDonacionSegmentaCorrectamentePorSubcategoria() {
-    ServicioDonaciones servicio = new ServicioDonaciones();
+    GestorDonaciones servicio = new GestorDonaciones();
     List<Donacion> resultado = servicio.ingresarDonacion(bienesVariados(), donanteArcosPlateados());
 
     assertEquals(2, resultado.size());

@@ -59,6 +59,25 @@ public class Donacion {
         notificarObservers(anterior, nuevoEstado.getNombre());
     }
 
+    public static Donacion crear(Subcategoria subcategoria, List<Bien> bienes) {
+      Donacion donacion = new Donacion();
+      donacion.setSubcategoria(subcategoria);
+      donacion.getBienes().addAll(bienes);
+      return donacion;
+    }
+
+    public Subcategoria getSubcategoria() {
+      return subcategoria;
+    }
+
+    public void setSubcategoria(Subcategoria subcategoria) {
+      this.subcategoria = subcategoria;
+    }
+
+    public List<Bien> getBienes() {
+      return bienes;
+    }
+
     // === Observer ===
 
     public void agregarObserver(DonacionObserver observer) {
