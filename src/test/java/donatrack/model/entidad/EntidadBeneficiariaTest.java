@@ -2,6 +2,7 @@ package donatrack.model.entidad;
 
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.necesidad.Necesidad;
+import donatrack.model.necesidad.NecesidadExtraordinaria;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -28,6 +29,6 @@ public class EntidadBeneficiariaTest {
   }
 
   private Necesidad necesidadBancosYSillas(int cantidad) {
-    return new Necesidad("Reposicion tras inundacion", cantidad, new Subcategoria("Bancos y Sillas escolares"));
+    return new NecesidadExtraordinaria("Reposicion tras inundacion", cantidad, new Subcategoria("Bancos y Sillas escolares"));
   }
 }

@@ -2,6 +2,7 @@ package donatrack.notificacion;
 
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.Bien;
+import donatrack.model.donacion.CondicionBien;
 import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
 import donatrack.model.persona.Genero;
@@ -17,7 +18,7 @@ public class NotificadorDonacionObserverTest {
   @Test
   public void onCambioEstadoArmaElMensajeYLlamaAlServicio() {
     PersonaHumana donante = donanteAna();
-    GestorPersonas.ServicioNotificaciones servicioFalso = mock(GestorPersonas.ServicioNotificaciones.class);
+    GestorPersonas.notificador servicioFalso = mock(GestorPersonas.notificador.class);
     NotificadorDonacionObserver observer = new NotificadorDonacionObserver(donante, servicioFalso);
 
     observer.onCambioEstado(donacionDeSillas(), "EN_DEPOSITO", "ASIGNACION_REALIZADA");
@@ -32,6 +33,6 @@ public class NotificadorDonacionObserverTest {
 
   private Donacion donacionDeSillas() {
     Subcategoria subcategoria = new Subcategoria("Sillas");
-    return new Donacion(List.of(new Bien("Silla", subcategoria, Unidades.UNIDADES)), subcategoria);
+    return new Donacion(List.of(new Bien("Silla", subcategoria, Unidades.UNIDADES, CondicionBien.NUEVO)), subcategoria);
   }
 }

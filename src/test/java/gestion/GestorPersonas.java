@@ -13,7 +13,7 @@ import java.util.UUID;
 public class GestorPersonas {
 
     private final RepositorioPersonas repositorio = RepositorioPersonas.getInstance();
-    private final ServicioNotificaciones servicioNotificaciones = new ServicioNotificaciones();
+    private final Notificador notificador = new Notificador();
 
     public void registrar(String email, Persona persona) {
         Optional<Persona> existente = repositorio.buscarPorEmail(email);
@@ -25,7 +25,7 @@ public class GestorPersonas {
             persona.setUsuario(new Usuario(email, contrasena));
             persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
             repositorio.guardar(email, persona);
-            servicioNotificaciones.notificarPorMedio(email, TipoContacto.EMAIL,
+            notificador.notificarPorMedio(email, TipoContacto.EMAIL,
                     "Bienvenido a DonaTrack. Su usuario: " + email + " | Contrasena: " + contrasena);
             System.out.println("[REGISTRO] Persona creada: " + email);
         }
@@ -41,7 +41,7 @@ public class GestorPersonas {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
-  public static class ServicioNotificaciones {
+  public static class Notificador {
 
       public void notificar(Persona destinatario, String mensaje) {
           MedioContacto medio = destinatario.getContactoPredeterminado();

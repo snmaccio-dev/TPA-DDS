@@ -8,7 +8,7 @@ import gestion.GestorPersonas;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class ServicioNotificacionesTest {
+public class GestorNotificaciones {
 
   @Test
   public void notificarFallaSilenciosamenteSiLaPersonaNoTieneContacto() {

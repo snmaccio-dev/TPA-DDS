@@ -2,6 +2,7 @@ package donatrack.model.donacion.estado;
 
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.Bien;
+import donatrack.model.donacion.CondicionBien;
 import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
 import org.junit.jupiter.api.Test;
@@ -52,7 +53,7 @@ public class EstadoDonacionTest {
 
   private Donacion donacionDeCampera() {
     Subcategoria ropa = new Subcategoria("Camperas de abrigo");
-    Bien campera = new Bien("Campera talle M nueva", ropa, Unidades.UNIDADES);
+    Bien campera = new Bien("Campera talle M nueva", ropa, Unidades.UNIDADES, CondicionBien.NUEVO);
     return new Donacion(List.of(campera), ropa);
   }
 }
