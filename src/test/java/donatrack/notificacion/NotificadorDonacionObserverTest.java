@@ -18,13 +18,13 @@ public class NotificadorDonacionObserverTest {
   @Test
   public void onCambioEstadoArmaElMensajeYLlamaAlServicio() {
     PersonaHumana donante = donanteAna();
-    GestorPersonas.notificador servicioFalso = mock(GestorPersonas.notificador.class);
+    Notificador servicioFalso = mock(Notificador.class);
     NotificadorDonacionObserver observer = new NotificadorDonacionObserver(donante, servicioFalso);
 
     observer.onCambioEstado(donacionDeSillas(), "EN_DEPOSITO", "ASIGNACION_REALIZADA");
 
     String mensajeEsperado = "Su donacion de [Sillas] cambio de estado: EN_DEPOSITO → ASIGNACION_REALIZADA";
-    verify(servicioFalso, times(1)).notificar(donante, mensajeEsperado);
+    verify(servicioFalso, times(1)).notificar(donante.getNombre(), mensajeEsperado);
   }
 
   private PersonaHumana donanteAna() {

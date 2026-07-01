@@ -7,17 +7,17 @@ import donatrack.model.persona.Persona;
 public class NotificadorDonacionObserver implements DonacionObserver {
 
     private final Persona donante;
-  private final ServicioNotificaciones servicioNotificaciones;
+    private final Notificador servicioNotificaciones;
 
-    public NotificadorDonacionObserver(Persona donante, ServicioNotificaciones servicioNotificaciones) {
+    public NotificadorDonacionObserver(Persona donante, Notificador servicioNotificaciones) {
         this.donante = donante;
         this.servicioNotificaciones = servicioNotificaciones;
     }
 
     @Override
     public void onCambioEstado(Donacion donacion, String estadoAnterior, String estadoNuevo) {
-        String mensaje = "Su donacion de [" + donacion.getSubcategoria().getNombre()
+        String mensaje = "Su donacion de [" + donacion.getBienes().stream().map(Bien::getNombre).toList()
                 + "] cambio de estado: " + estadoAnterior + " → " + estadoNuevo;
-        servicioNotificaciones.notificar(donante, mensaje);
+        servicioNotificaciones.notificar(donante.getUsuario().getNombre(), mensaje);
     }
 }

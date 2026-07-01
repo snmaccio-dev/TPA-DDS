@@ -9,6 +9,7 @@ import java.time.LocalDate;
 public class Bien {
 
     private String descripcion;
+    private String nombre;
     private String foto;
     private Subcategoria subcategoria;
     private Unidades unidades;
@@ -47,5 +48,9 @@ public class Bien {
 
     public Unidades getUnidades() {
         return unidades;
+    }
+
+    public String getNombre(){
+      return nombre;
     }
 }
