@@ -4,6 +4,8 @@ import donatrack.model.contacto.MedioContacto;
 import donatrack.model.contacto.TipoContacto;
 import donatrack.model.persona.Persona;
 import donatrack.model.usuario.Usuario;
+import donatrack.notificacion.NotificadorSMS;
+import donatrack.notificacion.NotificadorEmail;
 import donatrack.notificacion.*;
 import donatrack.repositorio.RepositorioPersonas;
 
@@ -13,7 +15,7 @@ import java.util.UUID;
 public class GestorPersonas {
 
     private final RepositorioPersonas repositorio = RepositorioPersonas.getInstance();
-    private final Notificador notificador = new Notificador();
+    private final Notificador notificador = new NotificadorEmail();
 
     public void registrar(String email, Persona persona) {
         Optional<Persona> existente = repositorio.buscarPorEmail(email);
@@ -25,7 +27,7 @@ public class GestorPersonas {
             persona.setUsuario(new Usuario(email, contrasena));
             persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
             repositorio.guardar(email, persona);
-            notificador.notificarPorMedio(email, TipoContacto.EMAIL,
+            notificador.notificar(email,
                     "Bienvenido a DonaTrack. Su usuario: " + email + " | Contrasena: " + contrasena);
             System.out.println("[REGISTRO] Persona creada: " + email);
         }
@@ -41,29 +43,27 @@ public class GestorPersonas {
         return UUID.randomUUID().toString().substring(0, 8);
     }
 
-  public static class Notificador {
+    public class GestorNotificaciones {
 
-      public void notificar(Persona destinatario, String mensaje) {
-          MedioContacto medio = destinatario.getContactoPredeterminado();
-          if (medio == null) {
-              System.out.println("[NOTIFICACION] Sin medio de contacto para " + destinatario.getNombreDisplay());
-              return;
-          }
-          Notificador notificador = resolverNotificador(medio.getTipo());
-          notificador.notificar(medio.getValor(), mensaje);
-      }
+        public void notificar(Persona destinatario, String mensaje) {
+            MedioContacto medio = destinatario.getContactoPredeterminado();
 
-      public void notificarPorMedio(String valor, TipoContacto tipo, String mensaje) {
-          Notificador notificador = resolverNotificador(tipo);
-          notificador.notificar(valor, mensaje);
-      }
+            if (medio == null) {
+                System.out.println("[NOTIFICACION] Sin medio de contacto para "
+                    + destinatario.getNombreDisplay());
+                return;
+            }
 
-      private Notificador resolverNotificador(TipoContacto tipo) {
-          return switch (tipo) {
-              case EMAIL    -> new NotificadorEmail();
-              case TELEFONO -> new NotificadorSMS();
-              case WHATSAPP -> new NotificadorWhatsApp();
-          };
-      }
-  }
+            Notificador notificador = resolverNotificador(medio.getTipo());
+            notificador.notificar(medio.getValor(), mensaje);
+        }
+
+        private Notificador resolverNotificador(TipoContacto tipo) {
+            return switch (tipo) {
+                case EMAIL -> new NotificadorEmail();
+                case TELEFONO -> new NotificadorSMS();
+                case WHATSAPP -> new NotificadorWhatsApp();
+            };
+        }
+    }
 }

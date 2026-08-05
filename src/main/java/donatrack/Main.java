@@ -10,7 +10,11 @@ import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
 import donatrack.model.donacion.estado.EntregaFallida;
 import donatrack.model.entidad.EntidadBeneficiaria;
-import donatrack.model.necesidad.Necesidad;
+import donatrack.notificacion.Notificador;
+import donatrack.notificacion.NotificadorDonacionObserver;
+import donatrack.notificacion.NotificadorWhatsApp;
+import donatrack.notificacion.NotificadorEmail;
+import donatrack.notificacion.NotificadorSMS;
 import donatrack.model.necesidad.NecesidadOrdinaria;
 import donatrack.model.persona.Genero;
 import donatrack.model.persona.PersonaHumana;
@@ -18,7 +22,7 @@ import donatrack.model.persona.PersonaJuridica;
 import donatrack.model.persona.TipoOrganizacion;
 import donatrack.model.donacion.SegmentadorDonaciones;
 import donatrack.notificacion.NotificadorDonacionObserver;
-//import donatrack.servicio.ServicioDonaciones;
+
 
 import java.util.List;
 
@@ -95,8 +99,10 @@ public class Main {
         Bien campera = new Bien("Campera talle M nueva", ropa, Unidades.UNIDADES, CondicionBien.USADO);
         Donacion donacion = new Donacion(List.of(campera), ropa);
 
-        //ServicioNotificaciones svc = new ServicioNotificaciones();
-        //donacion.agregarObserver(new NotificadorDonacionObserver(donante, svc));
+        // Registrar el observer de la donación
+        donacion.agregarObserver(
+            new NotificadorDonacionObserver(donante, new NotificadorWhatsApp())
+        );
 
         System.out.println("Estado inicial: " + donacion.getEstado().getNombre());
         donacion.asignar();
@@ -136,10 +142,12 @@ public class Main {
 
     static void demo5_notificaciones() {
         System.out.println("--- [5] Notificaciones simuladas (Strategy) ---");
-        //ServicioNotificaciones svc = new ServicioNotificaciones();
-        //svc.notificarPorMedio("usuario@mail.com",   TipoContacto.EMAIL,    "Prueba de notificacion por EMAIL");
-        //svc.notificarPorMedio("+54 11 1234-5678",   TipoContacto.TELEFONO, "Prueba de notificacion por SMS");
-        //svc.notificarPorMedio("+54 11 9876-5432",   TipoContacto.WHATSAPP, "Prueba de notificacion por WhatsApp");
+        Notificador email = new NotificadorEmail();
+        Notificador sms = new NotificadorSMS();
+        Notificador whatsapp = new NotificadorWhatsApp();
+        email.notificar("usuario@mail.com", "Prueba de notificacion por EMAIL");
+        sms.notificar("+54 11 1234-5678", "Prueba de notificacion por SMS");
+        whatsapp.notificar("+54 11 9876-5432", "Prueba de notificacion por WhatsApp");
         System.out.println();
     }
 
