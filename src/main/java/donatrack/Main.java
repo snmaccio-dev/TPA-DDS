@@ -5,17 +5,20 @@ import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.contacto.MedioContacto;
 import donatrack.model.contacto.TipoContacto;
 import donatrack.model.donacion.Bien;
+import donatrack.model.donacion.CondicionBien;
 import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
 import donatrack.model.donacion.estado.EntregaFallida;
 import donatrack.model.entidad.EntidadBeneficiaria;
 import donatrack.model.necesidad.Necesidad;
+import donatrack.model.necesidad.NecesidadOrdinaria;
 import donatrack.model.persona.Genero;
 import donatrack.model.persona.PersonaHumana;
 import donatrack.model.persona.PersonaJuridica;
 import donatrack.model.persona.TipoOrganizacion;
+import donatrack.model.donacion.SegmentadorDonaciones;
 import donatrack.notificacion.NotificadorDonacionObserver;
-import donatrack.servicio.ServicioDonaciones;
+//import donatrack.servicio.ServicioDonaciones;
 
 import java.util.List;
 
@@ -62,15 +65,16 @@ public class Main {
         Subcategoria tomates = new Subcategoria("Tomate en tetrapak");
 
         List<Bien> bienes = List.of(
-                new Bien("Silla oficina usada",    sillas,  Unidades.UNIDADES),
-                new Bien("Silla oficina usada",    sillas,  Unidades.UNIDADES),
-                new Bien("Mesa rectangular usada", mesas,   Unidades.UNIDADES),
-                new Bien("Fideos 500g",            fideos,  Unidades.KILOGRAMOS),
-                new Bien("Tetrapak tomate",        tomates, Unidades.UNIDADES)
+                new Bien("Silla oficina usada",    sillas,  Unidades.UNIDADES, CondicionBien.NUEVO),
+                new Bien("Silla oficina usada",    sillas,  Unidades.UNIDADES, CondicionBien.NUEVO),
+                new Bien("Mesa rectangular usada", mesas,   Unidades.UNIDADES, CondicionBien.NUEVO),
+                new Bien("Fideos 500g",            fideos,  Unidades.KILOGRAMOS, CondicionBien.NUEVO),
+                new Bien("Tetrapak tomate",        tomates, Unidades.UNIDADES, CondicionBien.NUEVO)
         );
 
-        ServicioDonaciones servicio = new ServicioDonaciones();
-        List<Donacion> donaciones = servicio.ingresarDonacion(bienes, arcos);
+        // Segmentar donaciones
+        // agregar la lista de bienes arriba a arcos
+        List<Donacion> donaciones = SegmentadorDonaciones.segmentar(bienes);
 
         System.out.println("Bienes ingresados: " + bienes.size());
         System.out.println("Donaciones generadas: " + donaciones.size());
@@ -88,11 +92,11 @@ public class Main {
         donante.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
 
         Subcategoria ropa = new Subcategoria("Camperas de abrigo");
-        Bien campera = new Bien("Campera talle M nueva", ropa, Unidades.UNIDADES);
+        Bien campera = new Bien("Campera talle M nueva", ropa, Unidades.UNIDADES, CondicionBien.USADO);
         Donacion donacion = new Donacion(List.of(campera), ropa);
 
-        ServicioNotificaciones svc = new ServicioNotificaciones();
-        donacion.agregarObserver(new NotificadorDonacionObserver(donante, svc));
+        //ServicioNotificaciones svc = new ServicioNotificaciones();
+        //donacion.agregarObserver(new NotificadorDonacionObserver(donante, svc));
 
         System.out.println("Estado inicial: " + donacion.getEstado().getNombre());
         donacion.asignar();
@@ -132,10 +136,10 @@ public class Main {
 
     static void demo5_notificaciones() {
         System.out.println("--- [5] Notificaciones simuladas (Strategy) ---");
-        ServicioNotificaciones svc = new ServicioNotificaciones();
-        svc.notificarPorMedio("usuario@mail.com",   TipoContacto.EMAIL,    "Prueba de notificacion por EMAIL");
-        svc.notificarPorMedio("+54 11 1234-5678",   TipoContacto.TELEFONO, "Prueba de notificacion por SMS");
-        svc.notificarPorMedio("+54 11 9876-5432",   TipoContacto.WHATSAPP, "Prueba de notificacion por WhatsApp");
+        //ServicioNotificaciones svc = new ServicioNotificaciones();
+        //svc.notificarPorMedio("usuario@mail.com",   TipoContacto.EMAIL,    "Prueba de notificacion por EMAIL");
+        //svc.notificarPorMedio("+54 11 1234-5678",   TipoContacto.TELEFONO, "Prueba de notificacion por SMS");
+        //svc.notificarPorMedio("+54 11 9876-5432",   TipoContacto.WHATSAPP, "Prueba de notificacion por WhatsApp");
         System.out.println();
     }
 
@@ -148,10 +152,10 @@ public class Main {
         escuela.setDireccion("Ruta 3 km 42, Provincia de Buenos Aires");
         escuela.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "escuela10@edu.ar"));
 
-        escuela.registrarNecesidades(new Necesidad("Reposicion tras inundacion", 30, bancos));
+        escuela.registrarNecesidades(new NecesidadOrdinaria("Reposicion tras inundacion", 30, bancos));
 
         EntidadBeneficiaria comedor = new EntidadBeneficiaria("Escobar Sonrisas");
-        comedor.registrarNecesidades(new Necesidad("Consumo semanal habitual", 100, fideos));
+        comedor.registrarNecesidades(new NecesidadOrdinaria("Consumo semanal habitual", 100, fideos));
 
         System.out.println("Necesidades de " + escuela.getNombreDisplay() + ": " + escuela.getNecesidades().size());
         System.out.println("Necesidades de " + comedor.getNombreDisplay() + ": " + comedor.getNecesidades().size());

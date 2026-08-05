@@ -1,4 +1,4 @@
-package donatrack.model.donacion.estado;
+package donatrack.model.donacion;
 
 import java.time.LocalDateTime;
 

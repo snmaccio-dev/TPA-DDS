@@ -5,7 +5,6 @@ import donatrack.model.donacion.estado.EstadoDonacion;
 import donatrack.model.donacion.estado.EnDeposito;
 import donatrack.notificacion.DonacionObserver;
 import donatrack.model.donacion.CambioEstado;
-import java.time.LocalDateTime;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,18 +51,8 @@ public class Donacion {
         estado.vencer(this);
     }
 
-    // Llamado por los estados concretos para cambiar el estado y notificar
-    public void cambiarEstado(EstadoDonacion nuevoEstado) {
-        String anterior = this.estado.getNombre();
-        this.estado = nuevoEstado;
-        notificarObservers(anterior, nuevoEstado.getNombre());
-    }
-
     public static Donacion crear(Subcategoria subcategoria, List<Bien> bienes) {
-      Donacion donacion = new Donacion();
-      donacion.setSubcategoria(subcategoria);
-      donacion.getBienes().addAll(bienes);
-      return donacion;
+        return new Donacion(bienes, subcategoria);
     }
 
     public Subcategoria getSubcategoria() {
@@ -96,16 +85,8 @@ public class Donacion {
 
     // === Getters ===
 
-    public List<Bien> getBienes() {
-        return bienes;
-    }
-
     public EstadoDonacion getEstado() {
         return estado;
-    }
-
-    public Subcategoria getSubcategoria() {
-        return subcategoria;
     }
 
     @Override
