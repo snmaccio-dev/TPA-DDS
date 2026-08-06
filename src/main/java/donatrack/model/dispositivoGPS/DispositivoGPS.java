@@ -7,26 +7,40 @@ public class DispositivoGPS implements ProveedorUbicacion {
   @Override
   public EstadoRecorrido obtenerEstado(Camion camion) {
 
-    // Simulación de datos enviados por el dispositivo GPS externo
+    // Datos enviados por el GPS externo
     Posicion posicion = new Posicion(
-        -34.6037,  // latitud ejemplo CABA
-        -58.3816,  // longitud ejemplo CABA
-        45.0       // velocidad km/h
+        -34.6037,
+        -58.3816
     );
 
-    double avance = 65.0;
+    double velocidad = 45.0; // km/h
+    double avance = 65.0; // porcentaje
 
-    validarDatos(posicion, avance);
+    validarDatos(posicion, velocidad, avance);
 
-    return new EstadoRecorrido(posicion, avance);
+    return new EstadoRecorrido(
+        posicion,
+        velocidad,
+        avance
+    );
   }
 
 
-  private void validarDatos(Posicion posicion, double avance) {
+  private void validarDatos(
+      Posicion posicion,
+      double velocidad,
+      double avance
+  ) {
 
     if (posicion == null) {
       throw new IllegalArgumentException(
           "El GPS no envió una posición válida."
+      );
+    }
+
+    if (velocidad < 0) {
+      throw new IllegalArgumentException(
+          "Velocidad inválida."
       );
     }
 
