@@ -7,8 +7,6 @@ import donatrack.notificacion.Notificador;
 
 import java.util.List;
 
-import java.util.List;
-
 public class GestorNotificaciones {
 
   private final List<Notificador> notificadores;

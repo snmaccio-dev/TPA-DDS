@@ -46,9 +46,11 @@ public class GestorAsignaciones {
 
     List<EntidadBeneficiaria> resultado = new ArrayList<>(ranking1);
 
-    ranking2.stream()
+    List<EntidadBeneficiaria> nuevasEntidades = ranking2.stream()
         .filter(entidad -> !resultado.contains(entidad))
-        .forEach(resultado::add);
+        .collect(Collectors.toList());
+
+    resultado.addAll(nuevasEntidades);
 
     return resultado;
   }

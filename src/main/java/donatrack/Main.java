@@ -1,5 +1,6 @@
 package donatrack;
 
+import donatrack.gestion.SegmentadorDonaciones;
 import donatrack.importacion.ImportadorCSVPersonas;
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.contacto.MedioContacto;
@@ -20,8 +21,6 @@ import donatrack.model.persona.Genero;
 import donatrack.model.persona.PersonaHumana;
 import donatrack.model.persona.PersonaJuridica;
 import donatrack.model.persona.TipoOrganizacion;
-import donatrack.model.donacion.SegmentadorDonaciones;
-import donatrack.notificacion.NotificadorDonacionObserver;
 
 
 import java.util.List;
@@ -77,8 +76,9 @@ public class Main {
         );
 
         // Segmentar donaciones
+        SegmentadorDonaciones segmentador = new SegmentadorDonaciones();
         // agregar la lista de bienes arriba a arcos
-        List<Donacion> donaciones = SegmentadorDonaciones.segmentar(bienes);
+        List<Donacion> donaciones = segmentador.segmentar(bienes, arcos);
 
         System.out.println("Bienes ingresados: " + bienes.size());
         System.out.println("Donaciones generadas: " + donaciones.size());
@@ -160,10 +160,10 @@ public class Main {
         escuela.setDireccion("Ruta 3 km 42, Provincia de Buenos Aires");
         escuela.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "escuela10@edu.ar"));
 
-        escuela.registrarNecesidades(new NecesidadOrdinaria("Reposicion tras inundacion", 30, bancos));
+        escuela.registrarNecesidad(new NecesidadOrdinaria("Reposicion tras inundacion", 30, bancos));
 
         EntidadBeneficiaria comedor = new EntidadBeneficiaria("Escobar Sonrisas");
-        comedor.registrarNecesidades(new NecesidadOrdinaria("Consumo semanal habitual", 100, fideos));
+        comedor.registrarNecesidad(new NecesidadOrdinaria("Consumo semanal habitual", 100, fideos));
 
         System.out.println("Necesidades de " + escuela.getNombreDisplay() + ": " + escuela.getNecesidades().size());
         System.out.println("Necesidades de " + comedor.getNombreDisplay() + ": " + comedor.getNecesidades().size());
