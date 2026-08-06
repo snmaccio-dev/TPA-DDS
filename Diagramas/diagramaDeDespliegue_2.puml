@@ -3,49 +3,77 @@
 actor Administrador
 actor Donante
 actor Beneficiaria
+actor Chofer
 
 
 node "Servidor" {
 
 
-node "Microservicio Donaciones" {
+    node "Microservicio Donaciones" {
 
-component "API Donaciones" as apiDonaciones
+        component "API Donaciones" as apiDonaciones
 
-database "BD Donaciones" as bdDonaciones
+        database "BD Donaciones" as bdDonaciones
 
-component "Motor Asignación\n(Async)" as motor
+        component "Motor Asignación\n(Async)" as motor
+
+        component "Servicio\nNotificaciones" as notificador
 
 
-apiDonaciones --> bdDonaciones
-motor --> bdDonaciones
+        apiDonaciones --> bdDonaciones
+        motor --> bdDonaciones
+        notificador --> bdDonaciones
+    }
+
+
+
+    node "Microservicio Logística" {
+
+        component "API Logística" as apiLogistica
+
+        database "BD Logística" as bdLogistica
+
+        component "Dashboard\nMonitoreo GPS" as dashboard
+
+        component "Adaptador\nProveedor GPS" as gps
+
+        component "Cliente\nPlanificador Rutas" as clientePlanner
+
+
+        apiLogistica --> bdLogistica
+
+        dashboard --> gps
+
+        apiLogistica --> clientePlanner
+    }
 
 }
 
 
-node "Microservicio Logística" {
+node "Servicios Externos" {
 
-component "API Logística" as apiLogistica
+    component "Planificador\nExterno de Rutas" as planificador
 
-database "BD Logística" as bdLogistica
-
-component "Dashboard\nMonitoreo GPS" as dashboard
-
-component "Adaptador\nProveedor GPS" as gps
-
-component "Cliente\nPlanificador Externo" as planner
-
-
-dashboard --> gps
-
-}
-
+    component "Dispositivo GPS /\nAplicación Móvil Chofer" as proveedorGPS
 
 }
 
 
 Administrador --> apiDonaciones
+
 Donante --> apiDonaciones
+
 Beneficiaria --> apiDonaciones
+
+Chofer --> apiLogistica
+
+
+clientePlanner --> planificador : HTTP REST\nSolicitud de rutas
+
+planificador --> clientePlanner : Callback HTTP\nResultado planificación
+
+
+proveedorGPS --> gps : Ubicación,\nvelocidad
+
 
 @enduml
