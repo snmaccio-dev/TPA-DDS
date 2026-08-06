@@ -3,15 +3,12 @@ package donatrack.servicio;
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.Bien;
 import donatrack.model.donacion.CondicionBien;
-import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
 import donatrack.model.persona.PersonaJuridica;
 import donatrack.model.persona.TipoOrganizacion;
 import org.junit.jupiter.api.Test;
-import gestion.GestorDonaciones;
 
 import java.util.List;
-import static org.junit.jupiter.api.Assertions.*;
 
 public class GestorDonacionesTest {
 

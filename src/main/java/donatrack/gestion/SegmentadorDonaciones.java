@@ -1,4 +1,4 @@
-package gestion;
+package donatrack.gestion;
 
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.Bien;

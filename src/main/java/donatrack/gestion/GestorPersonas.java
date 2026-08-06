@@ -1,4 +1,4 @@
-package gestion;
+package donatrack.gestion;
 
 import donatrack.model.contacto.MedioContacto;
 import donatrack.model.contacto.TipoContacto;

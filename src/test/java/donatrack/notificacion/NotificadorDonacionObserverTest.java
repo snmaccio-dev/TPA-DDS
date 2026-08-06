@@ -9,7 +9,6 @@ import donatrack.model.persona.Genero;
 import donatrack.model.persona.PersonaHumana;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import gestion.GestorPersonas;
 
 import static org.mockito.Mockito.*;
 
