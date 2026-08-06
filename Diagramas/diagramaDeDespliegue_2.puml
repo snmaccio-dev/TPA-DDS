@@ -1,0 +1,76 @@
+@startuml
+
+actor Administrador
+actor Donante
+actor Beneficiaria
+
+node "Servidor" {
+
+    node "Microservicio Gestión de Donaciones" {
+
+        component "Servicio Donaciones" as donaciones
+
+        database "BD Donaciones" as dbDonaciones
+
+        donaciones --> dbDonaciones
+    }
+
+
+    node "Microservicio Logística" {
+
+        component "Servicio Logística" as logistica
+
+        component "Dashboard Monitoreo\nCamiones" as dashboard
+
+        database "BD Logística" as dbLogistica
+
+        logistica --> dbLogistica
+        dashboard --> logistica
+    }
+
+
+    component "API Gateway" as gateway
+
+    gateway --> donaciones
+    gateway --> logistica
+}
+
+
+Administrador --> gateway
+Donante --> gateway
+Beneficiaria --> gateway
+
+
+donaciones ..> logistica : Solicitud de entrega\n(API REST / Eventos)
+
+' ==========================================================
+' División del sistema en dos microservicios buscando:
+' - Alta cohesión interna: cada servicio agrupa funcionalidades
+'   relacionadas a un mismo dominio.
+' - Bajo acoplamiento: los servicios no comparten lógica interna
+'   ni base de datos, comunicándose mediante contratos definidos.
+'
+' Microservicio Gestión de Donaciones:
+'   Responsable de personas, donaciones, bienes y notificaciones.
+'
+' Microservicio Logística:
+'   Responsable de camiones, rutas, entregas, GPS y monitoreo.
+'
+' La comunicación entre servicios se realiza mediante API REST
+' o eventos, evitando dependencia directa entre componentes.
+' ==========================================================
+
+' ===========================================================
+' Decisión de diseño:
+' Se divide el sistema en dos microservicios
+' siguiendo el principio de alta cohesión y bajo acoplamiento.
+' El microservicio de Gestión de Donaciones concentra las operaciones
+' relacionadas con donantes, beneficiarias y donaciones,
+' mientras que el microservicio de Logística concentra la gestión de camiones,
+' rutas y monitoreo en tiempo real. Ambos
+' servicios mantienen sus propios modelos y bases de datos,
+' comunicándose mediante contratos de integración definidos.
+
+' ===========================================================
+
+@enduml
