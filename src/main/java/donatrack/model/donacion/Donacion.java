@@ -3,6 +3,7 @@ package donatrack.model.donacion;
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.estado.EstadoDonacion;
 import donatrack.model.donacion.estado.EnDeposito;
+import donatrack.model.logistica.Camion;
 import donatrack.notificacion.DonacionObserver;
 import donatrack.model.donacion.CambioEstado;
 
@@ -17,6 +18,8 @@ public class Donacion {
     private Subcategoria subcategoria;
     private List<CambioEstado> historialEstados = new ArrayList<>();
     private LocalDate fechaEntrega;
+    private Camion camionEntrega;
+    private List<String> fotos = new ArrayList<>();
 
     // Observer — lista de observadores del ciclo de vida
     private final List<DonacionObserver> observers = new ArrayList<>();
@@ -80,9 +83,7 @@ public class Donacion {
     }
 
     private void notificarObservers(String estadoAnterior, String estadoNuevo) {
-        for (DonacionObserver o : observers) {
-            o.onCambioEstado(this, estadoAnterior, estadoNuevo);
-        }
+        observers.forEach(o -> o.onCambioEstado(this, estadoAnterior, estadoNuevo));
     }
 
     // === Getters ===
@@ -121,5 +122,20 @@ public class Donacion {
         return fechaEntrega;
     }
 
+    public void registrarCamion(Camion camion) {
+        this.camionEntrega = camion;
+    }
+
+    public void agregarFoto(String foto) {
+        fotos.add(foto);
+    }
+
+    public Camion getCamionEntrega() {
+        return camionEntrega;
+    }
+
+    public List<String> getFotos() {
+        return fotos;
+    }
 
 }
