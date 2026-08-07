@@ -177,7 +177,7 @@ class Representante {
 
   class NotificadorDonacionObserver implements DonacionObserver {
     - donante: Persona
-    + NotificadorDonacionObserver(Persona, ServicioNotificaciones)
+    + NotificadorDonacionObserver(Persona, (Notificador))
   }
 
 
@@ -214,5 +214,165 @@ class Representante {
   SegmentadorDonaciones --> "1..*  " Donacion
   Necesidad <|-- NecesidadOrdinaria
   Necesidad <|-- NecesidadExtraordinaria
+
+'=======================================================
+' Segunda entrega
+'=======================================================
+'===============================
+' GESTION ASIGNACIONES
+'===============================
+
+interface Algoritmo {
+    + matchmaking(Donacion,List<EntidadBeneficiaria>): List<EntidadBeneficiaria>
+}
+
+class AlgoritmoCompatibilidadSemantica implements Algoritmo
+class AlgoritmoPrioridadSubAtendidos implements Algoritmo
+
+
+class GestorAsignaciones {
+
+    - compatibilidad: Algoritmo
+    - prioridadSubAtendidos: Algoritmo
+
+    + obtenerPropuesta(
+        Donacion,
+        List<EntidadBeneficiaria>
+    ): List<EntidadBeneficiaria>
+}
+
+
+GestorAsignaciones --> Algoritmo
+GestorAsignaciones --> Donacion
+GestorAsignaciones --> EntidadBeneficiaria
+
+
+'===============================
+' NOTIFICACIONES
+'===============================
+
+
+interface Notificador {
+    + notificar(String,String): void
+}
+
+
+class NotificadorEmail
+class NotificadorSMS
+class NotificadorWhatsApp
+
+
+Notificador <|.. NotificadorEmail
+Notificador <|.. NotificadorSMS
+Notificador <|.. NotificadorWhatsApp
+
+
+
+class GestorNotificaciones {
+
+    - notificadores: List<Notificador>
+
+    + notificarAusenciaPlataforma(Persona)
+    + notificarDonacionAsignadaBeneficiario(
+        EntidadBeneficiaria,
+        Donacion
+    )
+}
+
+
+GestorNotificaciones --> Notificador
+GestorNotificaciones --> Persona
+GestorNotificaciones --> Donacion
+GestorNotificaciones --> EntidadBeneficiaria
+
+
+
+'===============================
+' LOGISTICA
+'===============================
+
+
+interface GeneradorRutas {
+
+    + generar(
+        List<Donacion>,
+        List<Camion>
+    ): List<RutaReparto>
+}
+
+
+class GeneradorRutasExterno
+
+GeneradorRutas <|.. GeneradorRutasExterno
+
+
+
+class GestorLogistica {
+
+    - generadorRutas: GeneradorRutas
+
+    + planificarRutas(
+        List<Donacion>,
+        List<Camion>
+    ): List<RutaReparto>
+}
+
+
+GestorLogistica --> GeneradorRutas
+
+
+
+class Camion {
+
+    - patente:String
+    - capacidadVolumen:double
+    - altura:double
+    - capacidadCarga:double
+
+}
+
+
+class RutaReparto {
+
+    - camion:Camion
+    - destinos:List<DestinoEntrega>
+
+    + iniciarRuta():void
+}
+
+
+class DestinoEntrega {
+
+    - direccion:String
+    - donaciones:List<Donacion>
+}
+
+
+
+Camion --> RutaReparto
+
+RutaReparto --> DestinoEntrega
+
+DestinoEntrega --> Donacion
+
+
+
+'===============================
+' SEGMENTACION
+'===============================
+
+
+class SegmentadorDonaciones {
+
+ + segmentar(
+    List<Bien>,
+    Persona
+ ):List<Donacion>
+
+}
+
+
+SegmentadorDonaciones --> Bien
+SegmentadorDonaciones --> Persona
 
 @enduml
