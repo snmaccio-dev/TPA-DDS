@@ -13,6 +13,8 @@ import java.util.List;
 
 public class Donacion {
 
+    private final long id;
+    private static long proximoId = 1;
     private List<Bien> bienes;
     private EstadoDonacion estado;
     private Subcategoria subcategoria;
@@ -25,6 +27,7 @@ public class Donacion {
     private final List<DonacionObserver> observers = new ArrayList<>();
 
     public Donacion(List<Bien> bienes, Subcategoria subcategoria) {
+        this.id = proximoId++;
         this.bienes = new ArrayList<>(bienes);
         this.subcategoria = subcategoria;
         this.estado = new EnDeposito();
@@ -136,6 +139,12 @@ public class Donacion {
 
     public List<String> getFotos() {
         return fotos;
+    }
+
+    // Parte de REST
+
+    public Long getId() {
+        return id;
     }
 
 }
