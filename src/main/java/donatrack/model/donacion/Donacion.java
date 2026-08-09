@@ -1,6 +1,7 @@
 package donatrack.model.donacion;
 
 import donatrack.model.catalogo.Subcategoria;
+import donatrack.model.donacion.estado.EntregaFallida;
 import donatrack.model.donacion.estado.EstadoDonacion;
 import donatrack.model.donacion.estado.EnDeposito;
 import donatrack.model.logistica.Camion;
@@ -53,6 +54,10 @@ public class Donacion {
 
     public void fallarEntrega(String justificacion) {
         estado.fallarEntrega(this, justificacion);
+
+        if (estado instanceof EntregaFallida entregaFallida) {
+            entregaFallida.devolverAlDeposito(this);
+        }
     }
 
     public void vencer() {
