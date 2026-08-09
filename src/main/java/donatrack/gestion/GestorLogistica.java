@@ -10,23 +10,24 @@ import java.util.List;
 
 public class GestorLogistica {
 
-  private GeneradorRutas generadorRutas;
+  private final GeneradorRutas generadorRutas;
 
   public GestorLogistica(GeneradorRutas generadorRutas) {
     this.generadorRutas = generadorRutas;
   }
 
-
   public List<RutaReparto> planificarRutas(
       List<Donacion> donaciones,
       List<Camion> camiones) {
 
-
     List<Donacion> asignadas = donaciones.stream()
-        .filter(d -> d.getEstado() instanceof AsignacionRealizada)
+        .filter(d ->
+            d.getEstado() instanceof AsignacionRealizada)
         .toList();
 
-
-    return generadorRutas.generar(asignadas, camiones);
+    return generadorRutas.generar(
+        asignadas,
+        camiones
+    );
   }
 }
