@@ -16,7 +16,7 @@ import donatrack.notificacion.NotificadorDonacionObserver;
 import donatrack.notificacion.NotificadorWhatsApp;
 import donatrack.notificacion.NotificadorEmail;
 import donatrack.notificacion.NotificadorSMS;
-import donatrack.model.necesidad.NecesidadOrdinaria;
+import donatrack.model.necesidad.NecesidadRecurrente;
 import donatrack.model.persona.Genero;
 import donatrack.model.persona.PersonaHumana;
 import donatrack.model.persona.PersonaJuridica;
@@ -160,10 +160,10 @@ public class Main {
         escuela.setDireccion("Ruta 3 km 42, Provincia de Buenos Aires");
         escuela.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "escuela10@edu.ar"));
 
-        escuela.registrarNecesidad(new NecesidadOrdinaria("Reposicion tras inundacion", 30, bancos));
+        escuela.registrarNecesidad(new NecesidadRecurrente("Reposicion tras inundacion", 30, bancos));
 
         EntidadBeneficiaria comedor = new EntidadBeneficiaria("Escobar Sonrisas");
-        comedor.registrarNecesidad(new NecesidadOrdinaria("Consumo semanal habitual", 100, fideos));
+        comedor.registrarNecesidad(new NecesidadRecurrente("Consumo semanal habitual", 100, fideos));
 
         System.out.println("Necesidades de " + escuela.getNombreDisplay() + ": " + escuela.getNecesidades().size());
         System.out.println("Necesidades de " + comedor.getNombreDisplay() + ": " + comedor.getNecesidades().size());
