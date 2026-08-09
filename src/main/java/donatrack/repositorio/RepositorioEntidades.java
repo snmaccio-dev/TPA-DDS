@@ -12,9 +12,12 @@ import java.util.Optional;
 public class RepositorioEntidades {
 
     private static RepositorioEntidades instancia;
-    private final Map<String, EntidadBeneficiaria> porRazonSocial = new HashMap<>();
 
-    private RepositorioEntidades() {}
+    private final Map<String, EntidadBeneficiaria> entidades =
+        new HashMap<>();
+
+    private RepositorioEntidades() {
+    }
 
     public static RepositorioEntidades getInstance() {
         if (instancia == null) {
@@ -23,15 +26,24 @@ public class RepositorioEntidades {
         return instancia;
     }
 
-    public void guardar(EntidadBeneficiaria entidad) {
-        porRazonSocial.put(entidad.getRazonSocial(), entidad);
+    public void guardar(
+        String razonSocial,
+        EntidadBeneficiaria entidad
+    ) {
+        entidades.put(razonSocial, entidad);
     }
 
-    public Optional<EntidadBeneficiaria> buscarPorRazonSocial(String razonSocial) {
-        return Optional.ofNullable(porRazonSocial.get(razonSocial));
+    public Optional<EntidadBeneficiaria> buscarPorRazonSocial(
+        String razonSocial
+    ) {
+        return Optional.ofNullable(entidades.get(razonSocial));
     }
 
     public List<EntidadBeneficiaria> todas() {
-        return new ArrayList<>(porRazonSocial.values());
+        return new ArrayList<>(entidades.values());
+    }
+
+    public void eliminar(String razonSocial) {
+        entidades.remove(razonSocial);
     }
 }

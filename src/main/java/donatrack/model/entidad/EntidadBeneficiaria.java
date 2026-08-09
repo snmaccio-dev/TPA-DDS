@@ -65,4 +65,8 @@ public class EntidadBeneficiaria extends Persona {
             .filter(d -> !d.getFechaEntrega().isBefore(haceTresMeses))
             .count();
     }
+
+    public void setRazonSocial(String razonSocial) {
+        this.razonSocial = razonSocial;
+    }
 }
