@@ -3,12 +3,16 @@ package donatrack.api;
 import donatrack.gestion.GestorDonaciones;
 import donatrack.model.donacion.CambioEstado;
 import donatrack.model.donacion.Donacion;
+import donatrack.notificacion.Notificador;
+import donatrack.notificacion.NotificadorWhatsApp;
 
 import java.util.List;
 
 public class DonacionesController {
 
-  private final GestorDonaciones gestor = new GestorDonaciones();
+  // Crear gestor de donaciones
+  private final GestorDonaciones gestor =
+      new GestorDonaciones(new NotificadorWhatsApp());
 
   // GET /donaciones
   public List<Donacion> todas() {

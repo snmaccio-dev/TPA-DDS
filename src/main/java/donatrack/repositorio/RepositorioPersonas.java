@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// Singleton — unica instancia de almacen de personas en memoria
 public class RepositorioPersonas {
 
     private static RepositorioPersonas instancia;
@@ -37,6 +36,10 @@ public class RepositorioPersonas {
 
     public List<Persona> todos() {
         return new ArrayList<>(porEmail.values());
+    }
+
+    public void eliminar(String email) {
+        porEmail.remove(email);
     }
 
     public int cantidad() {

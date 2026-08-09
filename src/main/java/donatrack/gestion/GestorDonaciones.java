@@ -11,8 +11,14 @@ import java.util.List;
 public class GestorDonaciones {
 
     private final SegmentadorDonaciones segmentacion = new SegmentadorDonaciones();
-    private final Notificador notificador = new NotificadorWhatsApp();
-    private final RepositorioDonaciones repositorio = RepositorioDonaciones.getInstance();
+    private final RepositorioDonaciones repositorio =
+        RepositorioDonaciones.getInstance();
+    private final Notificador notificador;
+
+    public GestorDonaciones(Notificador notificador) {
+        this.notificador = notificador;
+    }
+
 
     // GET /donaciones
     public List<Donacion> todas() {
