@@ -22,7 +22,7 @@ public class GestorLogistica {
     this.generadorRutas = generadorRutas;
   }
 
-  public List<RutaReparto> planificarRutas(
+  public void planificarRutas(
       List<Donacion> donaciones,
       List<Camion> camiones) {
 
@@ -31,9 +31,11 @@ public class GestorLogistica {
             d.getEstado() instanceof AsignacionRealizada)
         .toList();
 
-    return generadorRutas.generar(
-        asignadas,
-        camiones
+    List<List<Donacion>> lotes =
+        dividirEnLotes(asignadas);
+
+    lotes.forEach(lote ->
+        generadorRutas.generar(lote, camiones)
     );
   }
 

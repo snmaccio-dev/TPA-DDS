@@ -35,8 +35,11 @@ public class RutaReparto {
 
   public void iniciarRuta() {
     destinos.stream()
-        .flatMap(destino ->
-            destino.getDonaciones().stream())
-        .forEach(Donacion::iniciarTraslado);
+        .flatMap(destino -> destino.getDonaciones().stream())
+        .map(donacion -> {
+          donacion.iniciarTraslado();
+          return donacion;
+        })
+        .toList();
   }
 }
