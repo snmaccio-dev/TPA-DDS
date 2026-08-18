@@ -5,6 +5,7 @@ import donatrack.model.donacion.estado.EntregaFallida;
 import donatrack.model.donacion.estado.EstadoDonacion;
 import donatrack.model.donacion.estado.EnDeposito;
 import donatrack.model.logistica.Camion;
+import donatrack.model.persona.Persona;
 import donatrack.notificacion.DonacionObserver;
 import donatrack.model.donacion.CambioEstado;
 
@@ -23,6 +24,7 @@ public class Donacion {
     private LocalDate fechaEntrega;
     private Camion camionEntrega;
     private List<String> fotos = new ArrayList<>();
+    private Persona donante;
 
     // Observer — lista de observadores del ciclo de vida
     private final List<DonacionObserver> observers = new ArrayList<>();
