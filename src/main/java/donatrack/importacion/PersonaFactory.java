@@ -24,6 +24,13 @@ public class PersonaFactory {
         };
     }
 
+    public static String extraerEmail(String[] campos) {
+        if (campos.length < 6) {
+            throw new IllegalArgumentException("Fila CSV con campos insuficientes: " + campos.length);
+        }
+        return campos[4].trim();
+    }
+
     private static PersonaHumana crearPersonaHumana(String[] campos) {
         String documento = campos[2].trim();
         String nombre    = campos[3].trim();
