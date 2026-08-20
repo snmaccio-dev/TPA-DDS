@@ -1,5 +1,6 @@
 package donatrack.model.donacion.estado;
 
+import donatrack.model.catalogo.Categoria;
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.Bien;
 import donatrack.model.donacion.CondicionBien;
@@ -52,7 +53,7 @@ public class EstadoDonacionTest {
   }
 
   private Donacion donacionDeCampera() {
-    Subcategoria ropa = new Subcategoria("Camperas de abrigo");
+    Subcategoria ropa = new Subcategoria("Camperas de abrigo", new Categoria("Vestimenta"));
     Bien campera = new Bien("Campera talle M nueva", ropa, Unidades.UNIDADES, CondicionBien.NUEVO);
     return new Donacion(List.of(campera), ropa);
   }

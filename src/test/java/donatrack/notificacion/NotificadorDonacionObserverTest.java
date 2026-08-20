@@ -1,5 +1,6 @@
 package donatrack.notificacion;
 
+import donatrack.model.catalogo.Categoria;
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.Bien;
 import donatrack.model.donacion.CondicionBien;
@@ -31,7 +32,7 @@ public class NotificadorDonacionObserverTest {
   }
 
   private Donacion donacionDeSillas() {
-    Subcategoria subcategoria = new Subcategoria("Sillas");
+    Subcategoria subcategoria = new Subcategoria("Sillas", new Categoria("Mobiliario"));
     return new Donacion(List.of(new Bien("Silla", subcategoria, Unidades.UNIDADES, CondicionBien.NUEVO)), subcategoria);
   }
 }

@@ -1,5 +1,6 @@
 package donatrack.servicio;
 
+import donatrack.model.catalogo.Categoria;
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.Bien;
 import donatrack.model.donacion.CondicionBien;
@@ -25,8 +26,8 @@ public class GestorDonacionesTest {
   }
 
   private List<Bien> bienesVariados() {
-    Subcategoria sillas = new Subcategoria("Sillas");
-    Subcategoria fideos = new Subcategoria("Fideos");
+    Subcategoria sillas = new Subcategoria("Sillas", new Categoria("Mobiliario"));
+    Subcategoria fideos = new Subcategoria("Fideos", new Categoria("Alimentos"));
 
     return List.of(
         new Bien("Silla usada de oficina 1", sillas, Unidades.UNIDADES, CondicionBien.NUEVO),

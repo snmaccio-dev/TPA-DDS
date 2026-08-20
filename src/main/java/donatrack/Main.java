@@ -2,6 +2,7 @@ package donatrack;
 
 import donatrack.gestion.SegmentadorDonaciones;
 import donatrack.importacion.ImportadorCSVPersonas;
+import donatrack.model.catalogo.Categoria;
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.contacto.MedioContacto;
 import donatrack.model.contacto.TipoContacto;
@@ -62,10 +63,12 @@ public class Main {
         PersonaJuridica arcos = new PersonaJuridica("Arcos Plateados", TipoOrganizacion.EMPRESA, "Mudanza");
         arcos.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "arcos@demo.com"));
 
-        Subcategoria sillas  = new Subcategoria("Sillas");
-        Subcategoria mesas   = new Subcategoria("Mesas");
-        Subcategoria fideos  = new Subcategoria("Fideos secos");
-        Subcategoria tomates = new Subcategoria("Tomate en tetrapak");
+        Categoria mobiliario = new Categoria("Mobiliario");
+        Categoria alimentos  = new Categoria("Alimentos");
+        Subcategoria sillas  = new Subcategoria("Sillas",              mobiliario);
+        Subcategoria mesas   = new Subcategoria("Mesas",               mobiliario);
+        Subcategoria fideos  = new Subcategoria("Fideos secos",        alimentos);
+        Subcategoria tomates = new Subcategoria("Tomate en tetrapak",  alimentos);
 
         List<Bien> bienes = List.of(
                 new Bien("Silla oficina usada",    sillas,  Unidades.UNIDADES, CondicionBien.NUEVO),
@@ -95,7 +98,8 @@ public class Main {
         PersonaHumana donante = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
         donante.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
 
-        Subcategoria ropa = new Subcategoria("Camperas de abrigo");
+        Categoria vestimenta = new Categoria("Vestimenta");
+        Subcategoria ropa = new Subcategoria("Camperas de abrigo", vestimenta);
         Bien campera = new Bien("Campera talle M nueva", ropa, Unidades.UNIDADES, CondicionBien.USADO);
         Donacion donacion = new Donacion(List.of(campera), ropa);
 
@@ -153,8 +157,10 @@ public class Main {
 
     static void demo6_entidadBeneficiaria() {
         System.out.println("--- [6] Entidades beneficiarias y necesidades ---");
-        Subcategoria bancos = new Subcategoria("Bancos escolares");
-        Subcategoria fideos = new Subcategoria("Fideos secos");
+        Categoria mobiliario = new Categoria("Mobiliario");
+        Categoria alimentos  = new Categoria("Alimentos");
+        Subcategoria bancos = new Subcategoria("Bancos escolares", mobiliario);
+        Subcategoria fideos = new Subcategoria("Fideos secos",     alimentos);
 
         EntidadBeneficiaria escuela = new EntidadBeneficiaria("Escuela Rural N10");
         escuela.setDireccion("Ruta 3 km 42, Provincia de Buenos Aires");

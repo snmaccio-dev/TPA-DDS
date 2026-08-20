@@ -1,5 +1,6 @@
 package donatrack.model.entidad;
 
+import donatrack.model.catalogo.Categoria;
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.necesidad.Necesidad;
 import donatrack.model.necesidad.NecesidadExtraordinaria;
@@ -29,6 +30,6 @@ public class EntidadBeneficiariaTest {
   }
 
   private Necesidad necesidadBancosYSillas(int cantidad) {
-    return new NecesidadExtraordinaria("Reposicion tras inundacion", cantidad, new Subcategoria("Bancos y Sillas escolares"));
+    return new NecesidadExtraordinaria("Reposicion tras inundacion", cantidad, new Subcategoria("Bancos y Sillas escolares", new Categoria("Mobiliario")));
   }
 }
