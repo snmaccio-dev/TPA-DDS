@@ -12,7 +12,7 @@ public class EntidadBeneficiariaTest {
   @Test
   public void registrarNecesidadAgregaCorrectamenteALaLista() {
     EntidadBeneficiaria escuela = entidad("Escuela Parroquial San Jose");
-    escuela.registrarNecesidades(necesidadBancosYSillas(30));
+    escuela.registrarNecesidad(necesidadBancosYSillas(30));
 
     assertEquals(1, escuela.getNecesidades().size());
     assertEquals("Reposicion tras inundacion", escuela.getNecesidades().get(0).getDescripcion());

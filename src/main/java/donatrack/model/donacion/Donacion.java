@@ -20,19 +20,25 @@ public class Donacion {
     private List<Bien> bienes;
     private EstadoDonacion estado;
     private Subcategoria subcategoria;
+    private String descripcion;
+    private Persona donante;
     private List<CambioEstado> historialEstados = new ArrayList<>();
     private LocalDate fechaEntrega;
     private Camion camionEntrega;
     private List<String> fotos = new ArrayList<>();
-    private Persona donante;
 
     // Observer — lista de observadores del ciclo de vida
     private final List<DonacionObserver> observers = new ArrayList<>();
 
-    public Donacion(List<Bien> bienes, Subcategoria subcategoria) {
+    public Donacion(List<Bien> bienes,
+                    Subcategoria subcategoria,
+                    Persona donante,
+                    String descripcion) {
         this.id = proximoId++;
         this.bienes = new ArrayList<>(bienes);
         this.subcategoria = subcategoria;
+        this.donante = donante;
+        this.descripcion = descripcion;
         this.estado = new EnDeposito();
     }
 
@@ -66,8 +72,27 @@ public class Donacion {
         estado.vencer(this);
     }
 
-    public static Donacion crear(Subcategoria subcategoria, List<Bien> bienes) {
-        return new Donacion(bienes, subcategoria);
+    public static Donacion crear(Subcategoria subcategoria,
+                                 List<Bien> bienes,
+                                 Persona donante,
+                                 String descripcion) {
+        return new Donacion(bienes, subcategoria, donante, descripcion);
+    }
+
+    public String getDescripcion() {
+        return descripcion;
+    }
+
+    public void setDescripcion(String descripcion) {
+        this.descripcion = descripcion;
+    }
+
+    public Persona getDonante() {
+        return donante;
+    }
+
+    public void setDonante(Persona donante) {
+        this.donante = donante;
     }
 
     public Subcategoria getSubcategoria() {

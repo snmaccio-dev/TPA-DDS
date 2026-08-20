@@ -2,6 +2,7 @@ package donatrack.model.entidad;
 
 import donatrack.model.necesidad.Necesidad;
 import donatrack.model.persona.Persona;
+import donatrack.model.persona.PersonaHumana;
 import donatrack.model.donacion.Donacion;
 
 import java.time.LocalDate;
@@ -12,6 +13,7 @@ public class EntidadBeneficiaria extends Persona {
 
     private String razonSocial;
     private List<Necesidad> necesidades = new ArrayList<>();
+    private List<PersonaHumana> representantes = new ArrayList<>();
     private List<Donacion> donacionesRecibidas = new ArrayList<>();
 
     public EntidadBeneficiaria(String razonSocial) {
@@ -20,6 +22,14 @@ public class EntidadBeneficiaria extends Persona {
 
     public void registrarNecesidad(Necesidad necesidad) {
         necesidades.add(necesidad);
+    }
+
+    public void agregarRepresentante(PersonaHumana representante) {
+        representantes.add(representante);
+    }
+
+    public List<PersonaHumana> getRepresentantes() {
+        return representantes;
     }
 
     public void registrarDonacionRecibida(Donacion donacion) {

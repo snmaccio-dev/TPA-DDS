@@ -81,7 +81,7 @@ public class Main {
         // Segmentar donaciones
         SegmentadorDonaciones segmentador = new SegmentadorDonaciones();
         // agregar la lista de bienes arriba a arcos
-        List<Donacion> donaciones = segmentador.segmentar(bienes, arcos);
+        List<Donacion> donaciones = segmentador.segmentar(bienes, arcos, "Mudanza de oficinas Arcos Plateados");
 
         System.out.println("Bienes ingresados: " + bienes.size());
         System.out.println("Donaciones generadas: " + donaciones.size());
@@ -101,7 +101,7 @@ public class Main {
         Categoria vestimenta = new Categoria("Vestimenta");
         Subcategoria ropa = new Subcategoria("Camperas de abrigo", vestimenta);
         Bien campera = new Bien("Campera talle M nueva", ropa, 1, Unidades.UNIDADES, CondicionBien.USADO);
-        Donacion donacion = new Donacion(List.of(campera), ropa);
+        Donacion donacion = new Donacion(List.of(campera), ropa, donante, "Campera de abrigo en desuso");
 
         // Registrar el observer de la donación
         donacion.agregarObserver(
