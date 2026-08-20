@@ -54,7 +54,7 @@ public class EstadoDonacionTest {
 
   private Donacion donacionDeCampera() {
     Subcategoria ropa = new Subcategoria("Camperas de abrigo", new Categoria("Vestimenta"));
-    Bien campera = new Bien("Campera talle M nueva", ropa, Unidades.UNIDADES, CondicionBien.NUEVO);
+    Bien campera = new Bien("Campera talle M nueva", ropa, 1, Unidades.UNIDADES, CondicionBien.NUEVO);
     return new Donacion(List.of(campera), ropa);
   }
 }

@@ -30,9 +30,9 @@ public class GestorDonacionesTest {
     Subcategoria fideos = new Subcategoria("Fideos", new Categoria("Alimentos"));
 
     return List.of(
-        new Bien("Silla usada de oficina 1", sillas, Unidades.UNIDADES, CondicionBien.NUEVO),
-        new Bien("Silla usada de oficina 2", sillas, Unidades.UNIDADES, CondicionBien.NUEVO),
-        new Bien("Paquete fideos 500g", fideos, Unidades.KILOGRAMOS, CondicionBien.NUEVO)
+        new Bien("Silla usada de oficina 1", sillas, 1,   Unidades.UNIDADES,   CondicionBien.USADO),
+        new Bien("Silla usada de oficina 2", sillas, 1,   Unidades.UNIDADES,   CondicionBien.USADO),
+        new Bien("Paquete fideos 500g",      fideos, 0.5, Unidades.KILOGRAMOS, CondicionBien.NUEVO)
     );
   }
 }

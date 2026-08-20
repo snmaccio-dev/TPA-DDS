@@ -37,3 +37,9 @@ build/
 
 ### Mac OS ###
 .DS_Store
+
+### Claude Code ###
+.claude/
+
+### Enunciados / documentos ###
+*.docx

@@ -71,11 +71,11 @@ public class Main {
         Subcategoria tomates = new Subcategoria("Tomate en tetrapak",  alimentos);
 
         List<Bien> bienes = List.of(
-                new Bien("Silla oficina usada",    sillas,  Unidades.UNIDADES, CondicionBien.NUEVO),
-                new Bien("Silla oficina usada",    sillas,  Unidades.UNIDADES, CondicionBien.NUEVO),
-                new Bien("Mesa rectangular usada", mesas,   Unidades.UNIDADES, CondicionBien.NUEVO),
-                new Bien("Fideos 500g",            fideos,  Unidades.KILOGRAMOS, CondicionBien.NUEVO),
-                new Bien("Tetrapak tomate",        tomates, Unidades.UNIDADES, CondicionBien.NUEVO)
+                new Bien("Silla oficina usada",    sillas,  1,   Unidades.UNIDADES,   CondicionBien.USADO),
+                new Bien("Silla oficina usada",    sillas,  1,   Unidades.UNIDADES,   CondicionBien.USADO),
+                new Bien("Mesa rectangular usada", mesas,   1,   Unidades.UNIDADES,   CondicionBien.USADO),
+                new Bien("Fideos 500g",            fideos,  0.5, Unidades.KILOGRAMOS, CondicionBien.NUEVO),
+                new Bien("Tetrapak tomate",        tomates, 1,   Unidades.UNIDADES,   CondicionBien.NUEVO)
         );
 
         // Segmentar donaciones
@@ -100,7 +100,7 @@ public class Main {
 
         Categoria vestimenta = new Categoria("Vestimenta");
         Subcategoria ropa = new Subcategoria("Camperas de abrigo", vestimenta);
-        Bien campera = new Bien("Campera talle M nueva", ropa, Unidades.UNIDADES, CondicionBien.USADO);
+        Bien campera = new Bien("Campera talle M nueva", ropa, 1, Unidades.UNIDADES, CondicionBien.USADO);
         Donacion donacion = new Donacion(List.of(campera), ropa);
 
         // Registrar el observer de la donación
