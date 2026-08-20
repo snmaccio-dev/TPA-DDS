@@ -18,7 +18,7 @@
    - [4.5 Patrón Template Method — Importación CSV](#45-patrón-template-method--importación-csv)
    - [4.6 Patrón Factory Method — Creación de personas desde CSV](#46-patrón-factory-method--creación-de-personas-desde-csv)
    - [4.7 Patrón Singleton — Repositorios en memoria](#47-patrón-singleton--repositorios-en-memoria)
-   - [4.8 Patrón Builder — Construcción de Donaciones](#48-patrón-builder--construcción-de-donaciones)
+   - [4.8 Validaciones en constructores (fail-fast)](#48-validaciones-en-constructores-fail-fast)
 5. [Lógica de segmentación](#5-lógica-de-segmentación)
 6. [Simulación de notificaciones](#6-simulación-de-notificaciones)
 
@@ -60,10 +60,10 @@ src/main/java/donatrack/
 │   ├── entidad/         → EntidadBeneficiaria
 │   ├── contacto/        → MedioContacto, TipoContacto
 │   ├── usuario/         → Usuario
-│   ├── donacion/        → Donacion, Bien, DonacionBuilder, Unidades
+│   ├── donacion/        → Donacion, Bien, Unidades, CondicionBien, CambioEstado
 │   │   └── estado/      → EstadoDonacion (interfaz) + 7 estados concretos
 │   ├── catalogo/        → Categoria, Subcategoria
-│   └── necesidad/       → Necesidad
+│   └── necesidad/       → Necesidad, NecesidadRecurrente, NecesidadExtraordinaria, Periodo
 ├── notificacion/        → Notificador, 3 implementaciones, Observer, Servicio
 ├── importacion/         → ImportadorCSV (abstract), ImportadorCSVPersonas, PersonaFactory
 ├── repositorio/         → RepositorioPersonas, RepositorioDonaciones, RepositorioEntidades
@@ -83,13 +83,13 @@ El modelo de clases respeta fielmente el diagrama de clases definido para la ent
 |---|---|
 | `Persona` (abstract) | Base común para humanas, jurídicas y entidades beneficiarias |
 | `PersonaHumana` | Donante individual con datos personales y género |
-| `PersonaJuridica` | Organización donante con razón social y representantes habilitados |
-| `EntidadBeneficiaria` | Organización receptora; gestiona sus propias necesidades |
+| `PersonaJuridica` | Organización donante con razón social y personas representantes |
+| `EntidadBeneficiaria` | Organización receptora; gestiona sus necesidades y personas representantes |
 | `MedioContacto` | Canal de comunicación tipado (email, teléfono, WhatsApp) |
-| `Donacion` | Unidad mínima de asignación agrupada por subcategoría |
-| `Bien` | Ítem físico con descripción, subcategoría y unidad de medida |
-| `Categoria` / `Subcategoria` | Jerarquía de clasificación de bienes |
-| `Necesidad` | Requerimiento material de una entidad beneficiaria |
+| `Donacion` | Agrupación de bienes con misma subcategoría, condición y fecha de vencimiento; conoce a su donante y descripción general |
+| `Bien` | Ítem físico con descripción, subcategoría, cantidad, unidad de medida y (opcional) condición y fecha de vencimiento |
+| `Categoria` / `Subcategoria` | Jerarquía de clasificación de bienes (una subcategoría pertenece a una categoría) |
+| `Necesidad` | Requerimiento material de una entidad beneficiaria; subtipos `Recurrente` (con `Periodo`) y `Extraordinaria` |
 
 **Por qué `Persona` es abstracta:** las tres variantes (humana, jurídica, beneficiaria) comparten dirección, contactos y usuario, pero tienen identidad distinta. La abstracción evita duplicación y permite tratar a cualquier persona de forma polimórfica en el servicio de notificaciones.
 
@@ -227,40 +227,39 @@ public static RepositorioPersonas getInstance() {
 
 ---
 
-### 4.8 Patrón Builder — Construcción de Donaciones
+### 4.8 Validaciones en constructores (fail-fast)
 
-**Problema:** `Donacion` requiere al menos una subcategoría y una lista de bienes. El servicio de segmentación construye donaciones en un loop, y el constructor telescópico (`new Donacion(sub, bienes, estado, ...)`) se vuelve confuso cuando los parámetros crecen.
+**Problema:** una `Donacion` o un `Bien` mal formados pueden atravesar buena parte del sistema antes de generar un error, y el error aparece lejos de la causa (por ejemplo, un NPE al notificar). Sin invariantes explícitas es difícil garantizar que el estado del dominio sea siempre consistente.
 
-**Solución:** `DonacionBuilder` expone una API fluida y valida las precondiciones antes de construir.
+**Solución:** cada clase valida sus invariantes en el constructor y lanza `IllegalArgumentException` si algún argumento no cumple. El objeto simplemente no llega a existir en estado inválido.
 
-```java
-Donacion d = new DonacionBuilder()
-    .conSubcategoria(subcategoria)
-    .agregarBienes(listaBienes)
-    .build();
-```
+- `Bien` exige `descripcion` no vacía, `subcategoria` no nula, `cantidad > 0` y `unidades` no nulas. La `condicion` es opcional (aplica sólo a categorías donde el estado nuevo/usado es relevante).
+- `Donacion` exige `bienes` no vacío, `donante` no nulo y `descripcion` no vacía. La subcategoría es derivada de los bienes (todos comparten la misma tras la segmentación), no un parámetro separado.
 
-**Por qué el Builder valida:** `build()` lanza `IllegalStateException` si falta la subcategoría o la lista está vacía. Esto hace que el error sea detectado en el momento de construcción y no en algún método posterior.
-
-**Archivos:** `model/donacion/DonacionBuilder.java`.
+**Por qué no un Builder:** con 3–4 parámetros obligatorios y ninguno opcional, un Builder agrega ceremonia sin aportar claridad. Las validaciones viajan con la propia clase y se ejecutan siempre, sin depender de que el llamador use el camino correcto.
 
 ---
 
 ## 5. Lógica de segmentación
 
-Cuando un donante ingresa bienes, el sistema no crea una única donación con todo. El enunciado establece que la subcategoría es la unidad mínima de asignación. `ServicioSegmentacion` agrupa los bienes por subcategoría y genera una `Donacion` independiente por grupo.
+Cuando un donante ingresa bienes, el sistema no crea una única donación con todo. `SegmentadorDonaciones` los agrupa por la tripla **(subcategoría, condición, fecha de vencimiento)** y genera una `Donacion` independiente por grupo.
+
+- La **subcategoría** es la unidad mínima de asignación del enunciado.
+- La **condición** (nuevo/usado) separa lotes cuya evaluación posterior difiere (mobiliario, vestimenta).
+- La **fecha de vencimiento** separa perecederos que caducan en fechas distintas; los bienes sin vencimiento (no perecederos) forman su propio grupo por ese eje.
 
 **Ejemplo:**
 ```
-Entrada: [silla, silla, mesa, fideos, tomate]
-         ─────   ─────  ────  ──────  ──────
-         sillas sillas mesas fideos  tomate
+Entrada: [silla usada, silla usada, mesa usada, fideos, tomate vence 2027-01-01]
+         ────────────  ────────────  ──────────  ──────  ─────────────────────
 
-Salida: Donacion(sillas, 2 bienes)   → EN_DEPOSITO
-        Donacion(mesas, 1 bien)      → EN_DEPOSITO
-        Donacion(fideos, 1 bien)     → EN_DEPOSITO
-        Donacion(tomate, 1 bien)     → EN_DEPOSITO
+Salida: Donacion(Sillas, USADO, sin venc)             → EN_DEPOSITO, 2 bienes
+        Donacion(Mesas, USADO, sin venc)              → EN_DEPOSITO, 1 bien
+        Donacion(Fideos, NUEVO, sin venc)             → EN_DEPOSITO, 1 bien
+        Donacion(Tomate, NUEVO, venc 2027-01-01)      → EN_DEPOSITO, 1 bien
 ```
+
+Si en la misma carga hubiera además `tomate NUEVO vence 2027-02-01`, se generaría una quinta donación separada de la anterior (distinta fecha de vencimiento).
 
 Cada `Donacion` resultante queda registrada en `RepositorioDonaciones` y lista para el algoritmo de asignación de la Entrega 2.
 
