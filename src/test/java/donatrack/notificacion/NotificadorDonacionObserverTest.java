@@ -35,7 +35,6 @@ public class NotificadorDonacionObserverTest {
     Subcategoria subcategoria = new Subcategoria("Sillas", new Categoria("Mobiliario"));
     return new Donacion(
         List.of(new Bien("Silla", subcategoria, 1, Unidades.UNIDADES, CondicionBien.NUEVO)),
-        subcategoria,
         donanteAna(),
         "Silla suelta"
     );

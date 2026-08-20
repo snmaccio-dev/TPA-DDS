@@ -20,6 +20,18 @@ public class Bien {
                 double cantidad,
                 Unidades unidades,
                 CondicionBien condicion) {
+        if (descripcion == null || descripcion.isBlank()) {
+            throw new IllegalArgumentException("El bien debe tener descripcion.");
+        }
+        if (subcategoria == null) {
+            throw new IllegalArgumentException("El bien debe pertenecer a una subcategoria.");
+        }
+        if (cantidad <= 0) {
+            throw new IllegalArgumentException("La cantidad del bien debe ser mayor a cero.");
+        }
+        if (unidades == null) {
+            throw new IllegalArgumentException("El bien debe tener una unidad de medida.");
+        }
         this.descripcion = descripcion;
         this.subcategoria = subcategoria;
         this.cantidad = cantidad;

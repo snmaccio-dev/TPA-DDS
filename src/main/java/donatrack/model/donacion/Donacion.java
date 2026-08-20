@@ -19,7 +19,6 @@ public class Donacion {
     private static long proximoId = 1;
     private List<Bien> bienes;
     private EstadoDonacion estado;
-    private Subcategoria subcategoria;
     private String descripcion;
     private Persona donante;
     private List<CambioEstado> historialEstados = new ArrayList<>();
@@ -31,12 +30,19 @@ public class Donacion {
     private final List<DonacionObserver> observers = new ArrayList<>();
 
     public Donacion(List<Bien> bienes,
-                    Subcategoria subcategoria,
                     Persona donante,
                     String descripcion) {
+        if (bienes == null || bienes.isEmpty()) {
+            throw new IllegalArgumentException("La donacion debe contener al menos un bien.");
+        }
+        if (donante == null) {
+            throw new IllegalArgumentException("La donacion debe tener un donante.");
+        }
+        if (descripcion == null || descripcion.isBlank()) {
+            throw new IllegalArgumentException("La donacion debe tener una descripcion.");
+        }
         this.id = proximoId++;
         this.bienes = new ArrayList<>(bienes);
-        this.subcategoria = subcategoria;
         this.donante = donante;
         this.descripcion = descripcion;
         this.estado = new EnDeposito();
@@ -72,11 +78,10 @@ public class Donacion {
         estado.vencer(this);
     }
 
-    public static Donacion crear(Subcategoria subcategoria,
-                                 List<Bien> bienes,
+    public static Donacion crear(List<Bien> bienes,
                                  Persona donante,
                                  String descripcion) {
-        return new Donacion(bienes, subcategoria, donante, descripcion);
+        return new Donacion(bienes, donante, descripcion);
     }
 
     public String getDescripcion() {
@@ -96,11 +101,7 @@ public class Donacion {
     }
 
     public Subcategoria getSubcategoria() {
-      return subcategoria;
-    }
-
-    public void setSubcategoria(Subcategoria subcategoria) {
-      this.subcategoria = subcategoria;
+      return bienes.get(0).getSubcategoria();
     }
 
     public List<Bien> getBienes() {
@@ -129,7 +130,7 @@ public class Donacion {
 
     @Override
     public String toString() {
-        return "Donacion[subcategoria=" + subcategoria + ", estado=" + estado.getNombre()
+        return "Donacion[subcategoria=" + getSubcategoria() + ", estado=" + estado.getNombre()
                 + ", bienes=" + bienes.size() + "]";
     }
 

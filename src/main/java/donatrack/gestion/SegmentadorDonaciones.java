@@ -2,14 +2,15 @@ package donatrack.gestion;
 
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.Bien;
+import donatrack.model.donacion.CondicionBien;
 import donatrack.model.donacion.Donacion;
 import donatrack.model.persona.Persona;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class SegmentadorDonaciones {
 
@@ -17,12 +18,22 @@ public class SegmentadorDonaciones {
                                   Persona donante,
                                   String descripcion) {
 
-    Map<Subcategoria, List<Bien>> grupos = bienes.stream()
-        .collect(Collectors.groupingBy(Bien::getSubcategoria));
+    Map<Clave, List<Bien>> grupos = new LinkedHashMap<>();
+    for (Bien bien : bienes) {
+      Clave clave = new Clave(
+          bien.getSubcategoria(),
+          bien.getCondicion(),
+          bien.getFechaVencimiento()
+      );
+      grupos.computeIfAbsent(clave, k -> new ArrayList<>()).add(bien);
+    }
 
-    return grupos.entrySet()
-        .stream()
-        .map(entry -> Donacion.crear(entry.getKey(), entry.getValue(), donante, descripcion))
-        .collect(Collectors.toList());
+    return grupos.values().stream()
+        .map(grupo -> Donacion.crear(grupo, donante, descripcion))
+        .toList();
   }
+
+  private record Clave(Subcategoria subcategoria,
+                       CondicionBien condicion,
+                       LocalDate fechaVencimiento) {}
 }
