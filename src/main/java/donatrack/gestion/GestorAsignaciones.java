@@ -4,8 +4,8 @@ import donatrack.model.donacion.asignacion.Algoritmo;
 import donatrack.model.donacion.asignacion.CompatibilidadSemantica;
 import donatrack.model.donacion.asignacion.PrioridadSubatendidos;
 import donatrack.model.donacion.estado.EnDeposito;
-import donatrack.model.entidad.EntidadBeneficiaria;
 import donatrack.model.donacion.Donacion;
+import donatrack.model.persona.Beneficiaria;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,17 +22,17 @@ public class GestorAsignaciones {
   }
 
   // EJECUCIÓN A DEMANDA
-  public List<EntidadBeneficiaria> ejecutarAsignacion(
+  public List<Beneficiaria> ejecutarAsignacion(
       Donacion donacion,
-      List<EntidadBeneficiaria> entidades) {
+      List<Beneficiaria> beneficiarias) {
 
-    return obtenerPropuesta(donacion, entidades);
+    return obtenerPropuesta(donacion, beneficiarias);
   }
 
   // Obtiene la propuesta/ranking
-  public List<EntidadBeneficiaria> obtenerPropuesta(
+  public List<Beneficiaria> obtenerPropuesta(
       Donacion donacion,
-      List<EntidadBeneficiaria> entidades) {
+      List<Beneficiaria> beneficiarias) {
 
     if (!(donacion.getEstado() instanceof EnDeposito)) {
       throw new IllegalStateException(
@@ -40,11 +40,11 @@ public class GestorAsignaciones {
       );
     }
 
-    List<EntidadBeneficiaria> rankingCompatibilidad =
-        compatibilidad.matchmaking(donacion, entidades);
+    List<Beneficiaria> rankingCompatibilidad =
+        compatibilidad.matchmaking(donacion, beneficiarias);
 
-    List<EntidadBeneficiaria> rankingPrioridad =
-        prioridadSubAtendidos.matchmaking(donacion, entidades);
+    List<Beneficiaria> rankingPrioridad =
+        prioridadSubAtendidos.matchmaking(donacion, beneficiarias);
 
     return filtrarCoincidencias(
         rankingCompatibilidad,
@@ -52,11 +52,11 @@ public class GestorAsignaciones {
     );
   }
 
-  private List<EntidadBeneficiaria> filtrarCoincidencias(
-      List<EntidadBeneficiaria> ranking1,
-      List<EntidadBeneficiaria> ranking2) {
+  private List<Beneficiaria> filtrarCoincidencias(
+      List<Beneficiaria> ranking1,
+      List<Beneficiaria> ranking2) {
 
-    List<EntidadBeneficiaria> coincidencias =
+    List<Beneficiaria> coincidencias =
         ranking1.stream()
             .filter(ranking2::contains)
             .collect(Collectors.toList());
@@ -65,11 +65,11 @@ public class GestorAsignaciones {
       return coincidencias;
     }
 
-    List<EntidadBeneficiaria> resultado =
+    List<Beneficiaria> resultado =
         new ArrayList<>(ranking1);
 
     ranking2.stream()
-        .filter(entidad -> !resultado.contains(entidad))
+        .filter(beneficiaria -> !resultado.contains(beneficiaria))
         .forEach(resultado::add);
 
     return resultado;

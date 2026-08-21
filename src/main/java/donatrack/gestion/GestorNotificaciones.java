@@ -1,7 +1,7 @@
 package donatrack.gestion;
 
 import donatrack.model.donacion.Donacion;
-import donatrack.model.entidad.EntidadBeneficiaria;
+import donatrack.model.persona.Beneficiaria;
 import donatrack.model.persona.Persona;
 import donatrack.notificacion.Notificador;
 
@@ -24,11 +24,11 @@ public class GestorNotificaciones {
   }
 
   public void notificarDonacionAsignadaBeneficiario(
-      EntidadBeneficiaria entidad,
+      Beneficiaria beneficiaria,
       Donacion donacion) {
 
     enviar(
-        entidad,
+        beneficiaria.getPersona(),
         "Se te asignó una nueva donación según tus necesidades."
     );
   }
@@ -47,21 +47,18 @@ public class GestorNotificaciones {
       List<Persona> involucrados,
       String linkMapa) {
 
-    involucrados.stream()
-        .map(persona -> {
-          enviar(
-              persona,
-              "La ruta de entrega comenzó. "
-                  + "Podés seguirla aquí: " + linkMapa
-          );
-          return persona;
-        })
-        .toList();
+    involucrados.forEach(persona ->
+        enviar(
+            persona,
+            "La ruta de entrega comenzó. "
+                + "Podés seguirla aquí: " + linkMapa
+        )
+    );
   }
 
   public void notificarEntregaExitosa(
       Persona donante,
-      EntidadBeneficiaria entidad,
+      Beneficiaria beneficiaria,
       String comprobante) {
 
     enviar(
@@ -71,7 +68,7 @@ public class GestorNotificaciones {
     );
 
     enviar(
-        entidad,
+        beneficiaria.getPersona(),
         "Confirmaste la recepción de la donación. "
             + comprobante
     );
@@ -79,7 +76,7 @@ public class GestorNotificaciones {
 
   public void notificarEntregaFallida(
       Persona donante,
-      EntidadBeneficiaria entidad,
+      Beneficiaria beneficiaria,
       List<Persona> administradores,
       String motivo) {
 
@@ -89,31 +86,22 @@ public class GestorNotificaciones {
     );
 
     enviar(
-        entidad,
+        beneficiaria.getPersona(),
         "La entrega no pudo completarse: " + motivo
     );
 
-    administradores.stream()
-        .map(admin -> {
-          enviar(
-              admin,
-              "Entrega fallida: " + motivo
-          );
-          return admin;
-        })
-        .toList();
+    administradores.forEach(admin ->
+        enviar(admin, "Entrega fallida: " + motivo)
+    );
   }
 
 
   private void enviar(Persona destinatario, String mensaje) {
-    notificadores.stream()
-        .map(notificador -> {
-          notificador.notificar(
-              destinatario.getUsuario().getNombre(),
-              mensaje
-          );
-          return notificador;
-        })
-        .toList();
+    notificadores.forEach(notificador ->
+        notificador.notificar(
+            destinatario.getUsuario().getNombre(),
+            mensaje
+        )
+    );
   }
 }

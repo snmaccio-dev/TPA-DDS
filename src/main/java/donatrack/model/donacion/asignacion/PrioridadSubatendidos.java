@@ -4,18 +4,18 @@ import java.util.Comparator;
 import java.util.List;
 
 import donatrack.model.donacion.Donacion;
-import donatrack.model.entidad.EntidadBeneficiaria;
+import donatrack.model.persona.Beneficiaria;
 
 public class PrioridadSubatendidos implements Algoritmo {
 
   @Override
-  public List<EntidadBeneficiaria> matchmaking(
+  public List<Beneficiaria> matchmaking(
       Donacion donacion,
-      List<EntidadBeneficiaria> entidades) {
+      List<Beneficiaria> beneficiarias) {
 
-    return entidades.stream()
+    return beneficiarias.stream()
         .sorted(Comparator.comparingLong(
-            EntidadBeneficiaria::getCantidadDonacionesUltimoTrimestre))
+            Beneficiaria::getCantidadDonacionesUltimoTrimestre))
         .limit(10)
         .toList();
   }

@@ -11,7 +11,7 @@ import donatrack.model.donacion.CondicionBien;
 import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
 import donatrack.model.usuario.Usuario;
-import donatrack.model.entidad.EntidadBeneficiaria;
+import donatrack.model.persona.Beneficiaria;
 import donatrack.notificacion.Notificador;
 import donatrack.notificacion.NotificadorDonacionObserver;
 import donatrack.notificacion.NotificadorWhatsApp;
@@ -156,16 +156,17 @@ public class Main {
         Subcategoria bancos = new Subcategoria("Bancos escolares", mobiliario);
         Subcategoria fideos = new Subcategoria("Fideos secos",     alimentos);
 
-        EntidadBeneficiaria escuela = new EntidadBeneficiaria("Escuela Rural N10");
-        escuela.setDireccion("Ruta 3 km 42, Provincia de Buenos Aires");
-        escuela.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "escuela10@edu.ar"));
-
+        PersonaJuridica escuelaOrg = new PersonaJuridica("Escuela Rural N10", TipoOrganizacion.INSTITUCION, "Educacion");
+        escuelaOrg.setDireccion("Ruta 3 km 42, Provincia de Buenos Aires");
+        escuelaOrg.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "escuela10@edu.ar"));
+        Beneficiaria escuela = new Beneficiaria(escuelaOrg);
         escuela.registrarNecesidad(new NecesidadRecurrente("Reposicion tras inundacion", 30, bancos, Periodo.MENSUAL));
 
-        EntidadBeneficiaria comedor = new EntidadBeneficiaria("Escobar Sonrisas");
+        PersonaJuridica comedorOrg = new PersonaJuridica("Escobar Sonrisas", TipoOrganizacion.ONG, "Comedor");
+        Beneficiaria comedor = new Beneficiaria(comedorOrg);
         comedor.registrarNecesidad(new NecesidadRecurrente("Consumo semanal habitual", 100, fideos, Periodo.SEMANAL));
 
-        System.out.println("Necesidades de " + escuela.getNombreDisplay() + ": " + escuela.getNecesidades().size());
-        System.out.println("Necesidades de " + comedor.getNombreDisplay() + ": " + comedor.getNecesidades().size());
+        System.out.println("Necesidades de " + escuela.getPersona().getNombreDisplay() + ": " + escuela.getNecesidades().size());
+        System.out.println("Necesidades de " + comedor.getPersona().getNombreDisplay() + ": " + comedor.getNecesidades().size());
     }
 }

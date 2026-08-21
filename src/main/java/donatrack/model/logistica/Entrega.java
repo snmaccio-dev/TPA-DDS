@@ -1,9 +1,9 @@
 package donatrack.model.logistica;
 
 import donatrack.model.donacion.Donacion;
-import donatrack.model.entidad.EntidadBeneficiaria;
 import donatrack.model.logistica.estado.EstadoEntrega;
 import donatrack.model.logistica.estado.Pendiente;
+import donatrack.model.persona.Beneficiaria;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ public class Entrega {
 
   private final long id;
   private final Donacion donacion;
-  private final EntidadBeneficiaria destinatario;
+  private final Beneficiaria destinatario;
   private Camion camion;
   private EstadoEntrega estado;
   private LocalDate fechaEntrega;
@@ -23,13 +23,13 @@ public class Entrega {
   private String motivoNoRecibida;
 
   public Entrega(Donacion donacion,
-                 EntidadBeneficiaria destinatario,
+                 Beneficiaria destinatario,
                  Camion camion) {
     if (donacion == null) {
       throw new IllegalArgumentException("La entrega debe referenciar a una donacion.");
     }
     if (destinatario == null) {
-      throw new IllegalArgumentException("La entrega debe tener una entidad beneficiaria destinataria.");
+      throw new IllegalArgumentException("La entrega debe tener una beneficiaria destinataria.");
     }
     if (camion == null) {
       throw new IllegalArgumentException("La entrega debe tener un camion asignado.");
@@ -90,7 +90,7 @@ public class Entrega {
     return donacion;
   }
 
-  public EntidadBeneficiaria getDestinatario() {
+  public Beneficiaria getDestinatario() {
     return destinatario;
   }
 

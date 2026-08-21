@@ -2,6 +2,7 @@ package donatrack.gestion;
 
 import donatrack.model.contacto.MedioContacto;
 import donatrack.model.contacto.TipoContacto;
+import donatrack.model.persona.Donante;
 import donatrack.model.persona.Persona;
 import donatrack.model.usuario.Usuario;
 import donatrack.notificacion.NotificadorSMS;
@@ -43,6 +44,8 @@ public class GestorPersonas {
                     email
                 )
             );
+
+            new Donante(persona);
 
             repositorio.guardar(email, persona);
 

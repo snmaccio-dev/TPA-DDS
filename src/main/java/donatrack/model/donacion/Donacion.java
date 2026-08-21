@@ -3,8 +3,8 @@ package donatrack.model.donacion;
 import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.estado.EstadoDonacion;
 import donatrack.model.donacion.estado.EnDeposito;
-import donatrack.model.entidad.EntidadBeneficiaria;
 import donatrack.model.logistica.Entrega;
+import donatrack.model.persona.Beneficiaria;
 import donatrack.model.persona.Persona;
 import donatrack.notificacion.DonacionObserver;
 
@@ -19,7 +19,7 @@ public class Donacion {
     private EstadoDonacion estado;
     private String descripcion;
     private Persona donante;
-    private EntidadBeneficiaria destinatarioAsignado;
+    private Beneficiaria destinatarioAsignado;
     private Entrega entrega;
     private List<CambioEstado> historialEstados = new ArrayList<>();
 
@@ -93,11 +93,11 @@ public class Donacion {
         this.donante = donante;
     }
 
-    public EntidadBeneficiaria getDestinatarioAsignado() {
+    public Beneficiaria getDestinatarioAsignado() {
         return destinatarioAsignado;
     }
 
-    public void asignarDestinatario(EntidadBeneficiaria destinatario) {
+    public void asignarDestinatario(Beneficiaria destinatario) {
         this.destinatarioAsignado = destinatario;
     }
 

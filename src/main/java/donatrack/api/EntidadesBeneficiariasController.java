@@ -1,7 +1,7 @@
 package donatrack.api;
 
 import donatrack.gestion.GestorEntidadesBeneficiarias;
-import donatrack.model.entidad.EntidadBeneficiaria;
+import donatrack.model.persona.Beneficiaria;
 
 import java.util.List;
 
@@ -11,24 +11,22 @@ public class EntidadesBeneficiariasController {
       new GestorEntidadesBeneficiarias();
 
   // GET /entidades
-  public List<EntidadBeneficiaria> todas() {
+  public List<Beneficiaria> todas() {
     return gestor.todas();
   }
 
-  // GET /entidades/{razonSocial}
-  public EntidadBeneficiaria buscar(String razonSocial) {
-    return gestor.buscar(razonSocial);
+  // GET /entidades/{id}
+  public Beneficiaria buscar(long id) {
+    return gestor.buscar(id);
   }
 
   // POST /entidades
-  public EntidadBeneficiaria crear(
-      EntidadBeneficiaria entidad
-  ) {
-    return gestor.crear(entidad);
+  public Beneficiaria crear(Beneficiaria beneficiaria) {
+    return gestor.crear(beneficiaria);
   }
 
-  // DELETE /entidades/{razonSocial}
-  public void eliminar(String razonSocial) {
-    gestor.eliminar(razonSocial);
+  // DELETE /entidades/{id}
+  public void eliminar(long id) {
+    gestor.eliminar(id);
   }
 }

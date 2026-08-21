@@ -2,7 +2,7 @@ package donatrack.gestion;
 
 import donatrack.model.donacion.CambioEstado;
 import donatrack.model.donacion.Donacion;
-import donatrack.model.entidad.EntidadBeneficiaria;
+import donatrack.model.persona.Beneficiaria;
 import donatrack.notificacion.Notificador;
 import donatrack.repositorio.RepositorioDonaciones;
 
@@ -46,7 +46,7 @@ public class GestorDonaciones {
         buscar(id).asignar();
     }
 
-    public void asignarDestinatario(long id, EntidadBeneficiaria destinatario) {
+    public void asignarDestinatario(long id, Beneficiaria destinatario) {
         buscar(id).asignarDestinatario(destinatario);
     }
 

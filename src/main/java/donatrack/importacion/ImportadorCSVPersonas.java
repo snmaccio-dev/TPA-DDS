@@ -1,5 +1,6 @@
 package donatrack.importacion;
 
+import donatrack.model.persona.Donante;
 import donatrack.model.persona.Persona;
 import donatrack.repositorio.RepositorioPersonas;
 
@@ -27,6 +28,9 @@ public class ImportadorCSVPersonas extends ImportadorCSV<Persona> {
     } else {
       creados++;
     }
+
+    new Donante(persona);
+
     repositorio.guardar(email, persona);
 
     return persona;
