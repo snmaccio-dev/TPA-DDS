@@ -5,27 +5,23 @@ import donatrack.model.donacion.Donacion;
 public class Entregada implements EstadoDonacion {
 
     @Override
+
     public void asignar(Donacion donacion) {
         throw new IllegalStateException("La donacion ya fue entregada.");
     }
 
     @Override
-    public void planificarRuta(Donacion donacion) {
+    public void marcarEnReparto(Donacion donacion) {
         throw new IllegalStateException("La donacion ya fue entregada.");
     }
 
     @Override
-    public void iniciarTraslado(Donacion donacion) {
+    public void marcarEntregada(Donacion donacion) {
         throw new IllegalStateException("La donacion ya fue entregada.");
     }
 
     @Override
-    public void confirmarEntrega(Donacion donacion) {
-        throw new IllegalStateException("La donacion ya fue entregada.");
-    }
-
-    @Override
-    public void fallarEntrega(Donacion donacion, String justificacion) {
+    public void devolverAlDeposito(Donacion donacion) {
         throw new IllegalStateException("La donacion ya fue entregada.");
     }
 

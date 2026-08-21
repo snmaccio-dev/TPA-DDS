@@ -49,7 +49,7 @@ public class GestorLogistica {
         .flatMap(ruta -> ruta.getDestinos().stream())
         .flatMap(destino -> destino.getDonaciones().stream())
         .map(donacion -> {
-          donacion.planificarRuta();
+          donacion.marcarEnReparto();
           return donacion;
         })
         .toList();
@@ -87,7 +87,7 @@ public class GestorLogistica {
         .flatMap(ruta -> ruta.getDestinos().stream())
         .flatMap(destino -> destino.getDonaciones().stream())
         .map(donacion -> {
-          donacion.planificarRuta();
+          donacion.marcarEnReparto();
           return donacion;
         })
         .toList();

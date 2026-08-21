@@ -36,10 +36,13 @@ public class RutaReparto {
   public void iniciarRuta() {
     destinos.stream()
         .flatMap(destino -> destino.getDonaciones().stream())
-        .map(donacion -> {
-          donacion.iniciarTraslado();
-          return donacion;
-        })
-        .toList();
+        .forEach(donacion -> {
+          if (donacion.getEntrega() == null) {
+            throw new IllegalStateException(
+                "La donacion " + donacion.getId() + " no tiene una entrega asociada."
+            );
+          }
+          donacion.getEntrega().iniciarTraslado();
+        });
   }
 }

@@ -1,15 +1,13 @@
 package donatrack.model.donacion;
 
 import donatrack.model.catalogo.Subcategoria;
-import donatrack.model.donacion.estado.EntregaFallida;
 import donatrack.model.donacion.estado.EstadoDonacion;
 import donatrack.model.donacion.estado.EnDeposito;
-import donatrack.model.logistica.Camion;
+import donatrack.model.entidad.EntidadBeneficiaria;
+import donatrack.model.logistica.Entrega;
 import donatrack.model.persona.Persona;
 import donatrack.notificacion.DonacionObserver;
-import donatrack.model.donacion.CambioEstado;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,10 +19,9 @@ public class Donacion {
     private EstadoDonacion estado;
     private String descripcion;
     private Persona donante;
+    private EntidadBeneficiaria destinatarioAsignado;
+    private Entrega entrega;
     private List<CambioEstado> historialEstados = new ArrayList<>();
-    private LocalDate fechaEntrega;
-    private Camion camionEntrega;
-    private List<String> fotos = new ArrayList<>();
 
     // Observer — lista de observadores del ciclo de vida
     private final List<DonacionObserver> observers = new ArrayList<>();
@@ -54,35 +51,31 @@ public class Donacion {
         estado.asignar(this);
     }
 
-    public void planificarRuta() {
-        estado.planificarRuta(this);
+    public void marcarEnReparto() {
+        estado.marcarEnReparto(this);
     }
 
-    public void iniciarTraslado() {
-        estado.iniciarTraslado(this);
+    public void marcarEntregada() {
+        estado.marcarEntregada(this);
     }
 
-    public void confirmarEntrega() {
-        estado.confirmarEntrega(this);
-    }
-
-    public void fallarEntrega(String justificacion) {
-        estado.fallarEntrega(this, justificacion);
-
-        if (estado instanceof EntregaFallida entregaFallida) {
-            entregaFallida.devolverAlDeposito(this);
-        }
+    public void devolverAlDeposito() {
+        estado.devolverAlDeposito(this);
     }
 
     public void vencer() {
         estado.vencer(this);
     }
 
+    // === Factory ===
+
     public static Donacion crear(List<Bien> bienes,
                                  Persona donante,
                                  String descripcion) {
         return new Donacion(bienes, donante, descripcion);
     }
+
+    // === Getters / Setters de dominio ===
 
     public String getDescripcion() {
         return descripcion;
@@ -100,12 +93,28 @@ public class Donacion {
         this.donante = donante;
     }
 
+    public EntidadBeneficiaria getDestinatarioAsignado() {
+        return destinatarioAsignado;
+    }
+
+    public void asignarDestinatario(EntidadBeneficiaria destinatario) {
+        this.destinatarioAsignado = destinatario;
+    }
+
+    public Entrega getEntrega() {
+        return entrega;
+    }
+
+    public void setEntrega(Entrega entrega) {
+        this.entrega = entrega;
+    }
+
     public Subcategoria getSubcategoria() {
-      return bienes.get(0).getSubcategoria();
+        return bienes.get(0).getSubcategoria();
     }
 
     public List<Bien> getBienes() {
-      return bienes;
+        return bienes;
     }
 
     // === Observer ===
@@ -122,62 +131,33 @@ public class Donacion {
         observers.forEach(o -> o.onCambioEstado(this, estadoAnterior, estadoNuevo));
     }
 
-    // === Getters ===
+    // === Estado ===
 
     public EstadoDonacion getEstado() {
         return estado;
     }
 
-    @Override
-    public String toString() {
-        return "Donacion[subcategoria=" + getSubcategoria() + ", estado=" + estado.getNombre()
-                + ", bienes=" + bienes.size() + "]";
-    }
-
     public void cambiarEstado(EstadoDonacion nuevoEstado) {
+        String anterior = this.estado.getNombre();
+        String nuevo = nuevoEstado.getNombre();
 
-      String anterior = this.estado.getNombre();
-      String nuevo = nuevoEstado.getNombre();
-
-      this.estado = nuevoEstado;
-
-      historialEstados.add(new CambioEstado(anterior, nuevo));
-
-      notificarObservers(anterior, nuevo);
+        this.estado = nuevoEstado;
+        historialEstados.add(new CambioEstado(anterior, nuevo));
+        notificarObservers(anterior, nuevo);
     }
 
     public List<CambioEstado> getHistorialEstados() {
-      return historialEstados;
+        return historialEstados;
     }
 
-    public void registrarEntrega() {
-        this.fechaEntrega = LocalDate.now();
+    @Override
+    public String toString() {
+        return "Donacion[subcategoria=" + getSubcategoria()
+            + ", estado=" + estado.getNombre()
+            + ", bienes=" + bienes.size() + "]";
     }
-
-    public LocalDate getFechaEntrega() {
-        return fechaEntrega;
-    }
-
-    public void registrarCamion(Camion camion) {
-        this.camionEntrega = camion;
-    }
-
-    public void agregarFoto(String foto) {
-        fotos.add(foto);
-    }
-
-    public Camion getCamionEntrega() {
-        return camionEntrega;
-    }
-
-    public List<String> getFotos() {
-        return fotos;
-    }
-
-    // Parte de REST
 
     public Long getId() {
         return id;
     }
-
 }

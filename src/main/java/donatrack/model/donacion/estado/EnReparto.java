@@ -2,26 +2,26 @@ package donatrack.model.donacion.estado;
 
 import donatrack.model.donacion.Donacion;
 
-public class AsignacionRealizada implements EstadoDonacion {
+public class EnReparto implements EstadoDonacion {
 
     @Override
     public void asignar(Donacion donacion) {
-        throw new IllegalStateException("La donacion ya fue asignada.");
+        throw new IllegalStateException("La donacion ya esta comprometida en reparto.");
     }
 
     @Override
     public void marcarEnReparto(Donacion donacion) {
-        donacion.cambiarEstado(new EnReparto());
+        throw new IllegalStateException("La donacion ya esta en reparto.");
     }
 
     @Override
     public void marcarEntregada(Donacion donacion) {
-        throw new IllegalStateException("No se puede marcar como entregada desde ASIGNACION_REALIZADA.");
+        donacion.cambiarEstado(new Entregada());
     }
 
     @Override
     public void devolverAlDeposito(Donacion donacion) {
-        throw new IllegalStateException("No se puede devolver al deposito desde ASIGNACION_REALIZADA.");
+        donacion.cambiarEstado(new EnDeposito());
     }
 
     @Override
@@ -31,6 +31,6 @@ public class AsignacionRealizada implements EstadoDonacion {
 
     @Override
     public String getNombre() {
-        return "ASIGNACION_REALIZADA";
+        return "EN_REPARTO";
     }
 }

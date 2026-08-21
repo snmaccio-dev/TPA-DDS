@@ -10,23 +10,18 @@ public class EnDeposito implements EstadoDonacion {
     }
 
     @Override
-    public void planificarRuta(Donacion donacion) {
-        throw new IllegalStateException("No se puede planificar ruta: la donacion no fue asignada aun.");
+    public void marcarEnReparto(Donacion donacion) {
+        throw new IllegalStateException("No se puede marcar en reparto: la donacion no fue asignada aun.");
     }
 
     @Override
-    public void iniciarTraslado(Donacion donacion) {
-        throw new IllegalStateException("No se puede iniciar traslado desde EN_DEPOSITO.");
+    public void marcarEntregada(Donacion donacion) {
+        throw new IllegalStateException("No se puede marcar como entregada desde EN_DEPOSITO.");
     }
 
     @Override
-    public void confirmarEntrega(Donacion donacion) {
-        throw new IllegalStateException("No se puede confirmar entrega desde EN_DEPOSITO.");
-    }
-
-    @Override
-    public void fallarEntrega(Donacion donacion, String justificacion) {
-        throw new IllegalStateException("No se puede registrar entrega fallida desde EN_DEPOSITO.");
+    public void devolverAlDeposito(Donacion donacion) {
+        throw new IllegalStateException("La donacion ya se encuentra en el deposito.");
     }
 
     @Override

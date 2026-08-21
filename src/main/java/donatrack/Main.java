@@ -10,7 +10,7 @@ import donatrack.model.donacion.Bien;
 import donatrack.model.donacion.CondicionBien;
 import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
-import donatrack.model.donacion.estado.EntregaFallida;
+import donatrack.model.usuario.Usuario;
 import donatrack.model.entidad.EntidadBeneficiaria;
 import donatrack.notificacion.Notificador;
 import donatrack.notificacion.NotificadorDonacionObserver;
@@ -98,35 +98,28 @@ public class Main {
 
         PersonaHumana donante = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
         donante.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
+        donante.setUsuario(new Usuario("luis.garcia", "***"));
 
         Categoria vestimenta = new Categoria("Vestimenta");
         Subcategoria ropa = new Subcategoria("Camperas de abrigo", vestimenta);
         Bien campera = new Bien("Campera talle M nueva", ropa, 1, Unidades.UNIDADES, CondicionBien.USADO);
         Donacion donacion = new Donacion(List.of(campera), donante, "Campera de abrigo en desuso");
 
-        // Registrar el observer de la donación
         donacion.agregarObserver(
             new NotificadorDonacionObserver(donante, new NotificadorWhatsApp())
         );
 
-        System.out.println("Estado inicial: " + donacion.getEstado().getNombre());
+        System.out.println("Estado inicial:       " + donacion.getEstado().getNombre());
         donacion.asignar();
-        System.out.println("Tras asignar:   " + donacion.getEstado().getNombre());
-        donacion.planificarRuta();
-        System.out.println("Tras planificar ruta: " + donacion.getEstado().getNombre());
-        donacion.iniciarTraslado();
-        System.out.println("Tras iniciar traslado: " + donacion.getEstado().getNombre());
-        donacion.fallarEntrega("Tocamos timbre pero nadie respondio");
-        System.out.println("Tras entrega fallida: " + donacion.getEstado().getNombre());
+        System.out.println("Tras asignar:         " + donacion.getEstado().getNombre());
+        donacion.marcarEnReparto();
+        System.out.println("Tras marcar reparto:  " + donacion.getEstado().getNombre());
+        donacion.devolverAlDeposito();
+        System.out.println("Devuelta al deposito: " + donacion.getEstado().getNombre());
 
-        // Volver al deposito desde entrega fallida
-        ((EntregaFallida) donacion.getEstado()).devolverAlDeposito(donacion);
-        System.out.println("Vuelve al deposito: " + donacion.getEstado().getNombre());
-
-        // Transicion invalida — debe lanzar excepcion
-        System.out.print("Transicion invalida (confirmarEntrega desde EN_DEPOSITO): ");
+        System.out.print("Transicion invalida (marcarEntregada desde EN_DEPOSITO): ");
         try {
-            donacion.confirmarEntrega();
+            donacion.marcarEntregada();
         } catch (IllegalStateException e) {
             System.out.println("excepcion capturada correctamente → " + e.getMessage());
         }

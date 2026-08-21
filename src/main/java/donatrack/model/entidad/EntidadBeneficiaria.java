@@ -4,6 +4,7 @@ import donatrack.model.necesidad.Necesidad;
 import donatrack.model.persona.Persona;
 import donatrack.model.persona.PersonaHumana;
 import donatrack.model.donacion.Donacion;
+import donatrack.model.logistica.Entrega;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -36,12 +37,13 @@ public class EntidadBeneficiaria extends Persona {
         donacionesRecibidas.add(donacion);
     }
 
-    public long cantidadDonacionesUltimoTrimestre() {
+    public long getCantidadDonacionesUltimoTrimestre() {
         LocalDate limite = LocalDate.now().minusMonths(3);
 
         return donacionesRecibidas.stream()
-            .filter(d -> d.getFechaEntrega() != null)
-            .filter(d -> !d.getFechaEntrega().isBefore(limite))
+            .map(Donacion::getEntrega)
+            .filter(entrega -> entrega != null && entrega.getFechaEntrega() != null)
+            .filter(entrega -> !entrega.getFechaEntrega().isBefore(limite))
             .count();
     }
 
@@ -53,6 +55,10 @@ public class EntidadBeneficiaria extends Persona {
         return razonSocial;
     }
 
+    public void setRazonSocial(String razonSocial) {
+        this.razonSocial = razonSocial;
+    }
+
     public List<Donacion> getDonacionesRecibidas() {
         return donacionesRecibidas;
     }
@@ -60,23 +66,5 @@ public class EntidadBeneficiaria extends Persona {
     @Override
     public String getNombreDisplay() {
         return razonSocial;
-    }
-
-    public void recibirDonacion(Donacion donacion) {
-        donacionesRecibidas.add(donacion);
-        donacion.registrarEntrega();
-    }
-
-    public long getCantidadDonacionesUltimoTrimestre() {
-        LocalDate haceTresMeses = LocalDate.now().minusMonths(3);
-
-        return donacionesRecibidas.stream()
-            .filter(d -> d.getFechaEntrega() != null)
-            .filter(d -> !d.getFechaEntrega().isBefore(haceTresMeses))
-            .count();
-    }
-
-    public void setRazonSocial(String razonSocial) {
-        this.razonSocial = razonSocial;
     }
 }

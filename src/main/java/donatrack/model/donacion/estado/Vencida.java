@@ -10,22 +10,17 @@ public class Vencida implements EstadoDonacion {
     }
 
     @Override
-    public void planificarRuta(Donacion donacion) {
+    public void marcarEnReparto(Donacion donacion) {
         throw new IllegalStateException("La donacion esta vencida y no puede ser procesada.");
     }
 
     @Override
-    public void iniciarTraslado(Donacion donacion) {
+    public void marcarEntregada(Donacion donacion) {
         throw new IllegalStateException("La donacion esta vencida y no puede ser procesada.");
     }
 
     @Override
-    public void confirmarEntrega(Donacion donacion) {
-        throw new IllegalStateException("La donacion esta vencida y no puede ser procesada.");
-    }
-
-    @Override
-    public void fallarEntrega(Donacion donacion, String justificacion) {
+    public void devolverAlDeposito(Donacion donacion) {
         throw new IllegalStateException("La donacion esta vencida y no puede ser procesada.");
     }
 

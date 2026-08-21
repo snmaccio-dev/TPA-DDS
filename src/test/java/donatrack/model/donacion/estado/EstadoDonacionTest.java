@@ -21,27 +21,20 @@ public class EstadoDonacionTest {
     donacion.asignar();
     assertEquals("ASIGNACION_REALIZADA", donacion.getEstado().getNombre());
 
-    donacion.planificarRuta();
-    assertEquals("LISTA_PARA_ENTREGAR", donacion.getEstado().getNombre());
+    donacion.marcarEnReparto();
+    assertEquals("EN_REPARTO", donacion.getEstado().getNombre());
 
-    donacion.iniciarTraslado();
-    assertEquals("EN_TRASLADO", donacion.getEstado().getNombre());
-
-    donacion.confirmarEntrega();
+    donacion.marcarEntregada();
     assertEquals("ENTREGADA", donacion.getEstado().getNombre());
   }
 
   @Test
-  public void donacionEnTrasladoFallaYRetornaAlDeposito() {
+  public void donacionEnRepartoPuedeVolverAlDeposito() {
     Donacion donacion = donacionDeCampera();
     donacion.asignar();
-    donacion.planificarRuta();
-    donacion.iniciarTraslado();
+    donacion.marcarEnReparto();
 
-    donacion.fallarEntrega("No había nadie en la escuela");
-    assertTrue(donacion.getEstado() instanceof EntregaFallida);
-
-    ((EntregaFallida) donacion.getEstado()).devolverAlDeposito(donacion);
+    donacion.devolverAlDeposito();
     assertEquals("EN_DEPOSITO", donacion.getEstado().getNombre());
   }
 
@@ -50,7 +43,7 @@ public class EstadoDonacionTest {
     Donacion donacion = donacionDeCampera();
 
     assertThrows(IllegalStateException.class, () -> {
-      donacion.confirmarEntrega();
+      donacion.marcarEntregada();
     });
   }
 
