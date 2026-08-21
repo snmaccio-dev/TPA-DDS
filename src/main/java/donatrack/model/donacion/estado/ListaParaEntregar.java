@@ -4,21 +4,21 @@ import donatrack.model.donacion.Donacion;
 
 import java.util.List;
 
-public class AsignacionRealizada implements EstadoDonacion {
+public class ListaParaEntregar implements EstadoDonacion {
 
     @Override
     public void asignar(Donacion donacion) {
-        throw new IllegalStateException("La donacion ya fue asignada.");
+        throw new IllegalStateException("La donacion ya esta lista para entregar.");
     }
 
     @Override
     public void marcarListaParaEntregar(Donacion donacion) {
-        donacion.cambiarEstado(new ListaParaEntregar());
+        throw new IllegalStateException("La donacion ya esta lista para entregar.");
     }
 
     @Override
     public void marcarEnTraslado(Donacion donacion) {
-        throw new IllegalStateException("La donacion aun no fue incluida en una ruta planificada.");
+        donacion.cambiarEstado(new EnTraslado());
     }
 
     @Override
@@ -28,7 +28,7 @@ public class AsignacionRealizada implements EstadoDonacion {
 
     @Override
     public void marcarEntregaFallida(Donacion donacion, String motivo) {
-        throw new IllegalStateException("La donacion no esta en traslado.");
+        throw new IllegalStateException("La donacion aun no fue trasladada.");
     }
 
     @Override
@@ -43,6 +43,6 @@ public class AsignacionRealizada implements EstadoDonacion {
 
     @Override
     public String getNombre() {
-        return "ASIGNACION_REALIZADA";
+        return "LISTA_PARA_ENTREGAR";
     }
 }

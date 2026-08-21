@@ -1,13 +1,16 @@
 package donatrack.model.donacion;
 
 import donatrack.model.catalogo.Subcategoria;
-import donatrack.model.donacion.estado.EstadoDonacion;
 import donatrack.model.donacion.estado.EnDeposito;
-import donatrack.model.logistica.Entrega;
+import donatrack.model.donacion.estado.Entregada;
+import donatrack.model.donacion.estado.EstadoDonacion;
+import donatrack.model.logistica.Camion;
+import donatrack.model.logistica.Comprobante;
 import donatrack.model.persona.Beneficiaria;
 import donatrack.model.persona.Persona;
 import donatrack.notificacion.DonacionObserver;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,7 +23,9 @@ public class Donacion {
     private String descripcion;
     private Persona donante;
     private Beneficiaria destinatarioAsignado;
-    private Entrega entrega;
+    private Camion camion;
+    private LocalDateTime fechaHoraEntrega;
+    private List<String> fotos = new ArrayList<>();
     private List<CambioEstado> historialEstados = new ArrayList<>();
 
     // Observer — lista de observadores del ciclo de vida
@@ -45,26 +50,54 @@ public class Donacion {
         this.estado = new EnDeposito();
     }
 
-    // === Delegación al State ===
+    // === Transiciones ===
 
     public void asignar() {
         estado.asignar(this);
     }
 
-    public void marcarEnReparto() {
-        estado.marcarEnReparto(this);
+    public void marcarListaParaEntregar() {
+        estado.marcarListaParaEntregar(this);
     }
 
-    public void marcarEntregada() {
-        estado.marcarEntregada(this);
+    public void marcarEnTraslado() {
+        estado.marcarEnTraslado(this);
     }
 
-    public void devolverAlDeposito() {
-        estado.devolverAlDeposito(this);
+    public void confirmarRecepcion(List<String> fotos) {
+        estado.confirmarRecepcion(this, fotos);
+    }
+
+    public void marcarEntregaFallida(String motivo) {
+        estado.marcarEntregaFallida(this, motivo);
+    }
+
+    public void marcarEnDeposito() {
+        estado.marcarEnDeposito(this);
     }
 
     public void vencer() {
         estado.vencer(this);
+    }
+
+    // Uso interno del State al confirmar recepción — no invocar directamente.
+    public void registrarRecepcion(List<String> fotos) {
+        this.fechaHoraEntrega = LocalDateTime.now();
+        this.fotos = new ArrayList<>(fotos);
+    }
+
+    public Comprobante generarComprobante() {
+        if (!(estado instanceof Entregada)) {
+            throw new IllegalStateException("Solo se genera comprobante de una donacion entregada.");
+        }
+        return new Comprobante(
+            id,
+            fechaHoraEntrega,
+            camion.getPatente(),
+            destinatarioAsignado.getPersona().getRazonSocial(),
+            donante.getNombreDisplay(),
+            descripcion
+        );
     }
 
     // === Factory ===
@@ -101,12 +134,28 @@ public class Donacion {
         this.destinatarioAsignado = destinatario;
     }
 
-    public Entrega getEntrega() {
-        return entrega;
+    public void limpiarDestinatario() {
+        this.destinatarioAsignado = null;
     }
 
-    public void setEntrega(Entrega entrega) {
-        this.entrega = entrega;
+    public Camion getCamion() {
+        return camion;
+    }
+
+    public void asignarCamion(Camion camion) {
+        this.camion = camion;
+    }
+
+    public void limpiarCamion() {
+        this.camion = null;
+    }
+
+    public LocalDateTime getFechaHoraEntrega() {
+        return fechaHoraEntrega;
+    }
+
+    public List<String> getFotos() {
+        return fotos;
     }
 
     public Subcategoria getSubcategoria() {
@@ -138,11 +187,15 @@ public class Donacion {
     }
 
     public void cambiarEstado(EstadoDonacion nuevoEstado) {
+        cambiarEstado(nuevoEstado, null);
+    }
+
+    public void cambiarEstado(EstadoDonacion nuevoEstado, String motivo) {
         String anterior = this.estado.getNombre();
         String nuevo = nuevoEstado.getNombre();
 
         this.estado = nuevoEstado;
-        historialEstados.add(new CambioEstado(anterior, nuevo));
+        historialEstados.add(new CambioEstado(anterior, nuevo, motivo));
         notificarObservers(anterior, nuevo);
     }
 

@@ -50,12 +50,16 @@ public class GestorDonaciones {
         buscar(id).asignarDestinatario(destinatario);
     }
 
-    public void marcarEnReparto(long id) {
-        buscar(id).marcarEnReparto();
+    public void confirmarRecepcion(long id, java.util.List<String> fotos) {
+        buscar(id).confirmarRecepcion(fotos);
     }
 
-    public void devolverAlDeposito(long id) {
-        buscar(id).devolverAlDeposito();
+    public void marcarEntregaFallida(long id, String motivo) {
+        buscar(id).marcarEntregaFallida(motivo);
+    }
+
+    public void marcarEnDeposito(long id) {
+        buscar(id).marcarEnDeposito();
     }
 
     public void vencer(long id) {

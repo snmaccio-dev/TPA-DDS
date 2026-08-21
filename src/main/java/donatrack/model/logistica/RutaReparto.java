@@ -1,6 +1,7 @@
 package donatrack.model.logistica;
 
 import donatrack.model.donacion.Donacion;
+import donatrack.model.persona.Chofer;
 
 import java.util.List;
 
@@ -33,16 +34,9 @@ public class RutaReparto {
     return destinos;
   }
 
-  public void iniciarRuta() {
+  public void iniciarRuta(Chofer chofer) {
     destinos.stream()
         .flatMap(destino -> destino.getDonaciones().stream())
-        .forEach(donacion -> {
-          if (donacion.getEntrega() == null) {
-            throw new IllegalStateException(
-                "La donacion " + donacion.getId() + " no tiene una entrega asociada."
-            );
-          }
-          donacion.getEntrega().iniciarTraslado();
-        });
+        .forEach(Donacion::marcarEnTraslado);
   }
 }

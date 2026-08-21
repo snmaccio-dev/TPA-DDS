@@ -4,14 +4,20 @@ import java.time.LocalDateTime;
 
 public class CambioEstado {
 
-  private String estadoAnterior;
-  private String estadoNuevo;
-  private LocalDateTime fecha;
+  private final String estadoAnterior;
+  private final String estadoNuevo;
+  private final LocalDateTime fecha;
+  private final String motivo;
 
   public CambioEstado(String estadoAnterior, String estadoNuevo) {
+    this(estadoAnterior, estadoNuevo, null);
+  }
+
+  public CambioEstado(String estadoAnterior, String estadoNuevo, String motivo) {
     this.estadoAnterior = estadoAnterior;
     this.estadoNuevo = estadoNuevo;
     this.fecha = LocalDateTime.now();
+    this.motivo = motivo;
   }
 
   public String getEstadoAnterior() {
@@ -24,5 +30,9 @@ public class CambioEstado {
 
   public LocalDateTime getFecha() {
     return fecha;
+  }
+
+  public String getMotivo() {
+    return motivo;
   }
 }

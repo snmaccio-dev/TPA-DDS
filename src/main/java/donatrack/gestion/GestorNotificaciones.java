@@ -1,6 +1,7 @@
 package donatrack.gestion;
 
 import donatrack.model.donacion.Donacion;
+import donatrack.model.logistica.Comprobante;
 import donatrack.model.persona.Beneficiaria;
 import donatrack.model.persona.Persona;
 import donatrack.notificacion.Notificador;
@@ -59,18 +60,20 @@ public class GestorNotificaciones {
   public void notificarEntregaExitosa(
       Persona donante,
       Beneficiaria beneficiaria,
-      String comprobante) {
+      Comprobante comprobante) {
+
+    String detalle = "Comprobante #" + comprobante.donacionId()
+        + " | Fecha: " + comprobante.fecha()
+        + " | Camión: " + comprobante.patenteCamion();
 
     enviar(
         donante,
-        "La entrega fue realizada correctamente. "
-            + comprobante
+        "La entrega fue realizada correctamente. " + detalle
     );
 
     enviar(
         beneficiaria.getPersona(),
-        "Confirmaste la recepción de la donación. "
-            + comprobante
+        "Confirmaste la recepción de la donación. " + detalle
     );
   }
 

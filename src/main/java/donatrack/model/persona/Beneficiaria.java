@@ -40,9 +40,8 @@ public class Beneficiaria extends Rol {
     public long getCantidadDonacionesUltimoTrimestre() {
         LocalDate limite = LocalDate.now().minusMonths(3);
         return donacionesRecibidas.stream()
-            .map(Donacion::getEntrega)
-            .filter(entrega -> entrega != null && entrega.getFechaEntrega() != null)
-            .filter(entrega -> !entrega.getFechaEntrega().isBefore(limite))
+            .filter(donacion -> donacion.getFechaHoraEntrega() != null)
+            .filter(donacion -> !donacion.getFechaHoraEntrega().toLocalDate().isBefore(limite))
             .count();
     }
 
