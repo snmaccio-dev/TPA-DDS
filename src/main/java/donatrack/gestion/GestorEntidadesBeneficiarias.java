@@ -1,6 +1,6 @@
 package donatrack.gestion;
 
-import donatrack.model.entidad.EntidadBeneficiaria;
+import donatrack.model.persona.Beneficiaria;
 import donatrack.repositorio.RepositorioEntidades;
 
 import java.util.List;
@@ -11,46 +11,33 @@ public class GestorEntidadesBeneficiarias {
       RepositorioEntidades.getInstance();
 
   // POST /entidades
-  public EntidadBeneficiaria crear(
-      EntidadBeneficiaria entidad
-  ) {
-    repositorio.guardar(
-        entidad.getRazonSocial(),
-        entidad
-    );
-
-    return entidad;
+  public Beneficiaria crear(Beneficiaria beneficiaria) {
+    repositorio.guardar(beneficiaria);
+    return beneficiaria;
   }
 
   // GET /entidades
-  public List<EntidadBeneficiaria> todas() {
+  public List<Beneficiaria> todas() {
     return repositorio.todas();
   }
 
-  // GET /entidades/{razonSocial}
-  public EntidadBeneficiaria buscar(String razonSocial) {
-    return repositorio.buscarPorRazonSocial(razonSocial)
+  // GET /entidades/{id}
+  public Beneficiaria buscar(long id) {
+    return repositorio.buscarPorId(id)
         .orElseThrow(() ->
             new IllegalArgumentException(
-                "No existe la entidad beneficiaria: "
-                    + razonSocial
+                "No existe la beneficiaria con id: " + id
             ));
   }
 
-  // DELETE /entidades/{razonSocial}
-  public void eliminar(String razonSocial) {
-    buscar(razonSocial);
-    repositorio.eliminar(razonSocial);
+  // DELETE /entidades/{id}
+  public void eliminar(long id) {
+    buscar(id);
+    repositorio.eliminar(id);
   }
 
-  public void actualizar(
-      String razonSocial,
-      EntidadBeneficiaria nuevosDatos
-  ) {
-    EntidadBeneficiaria existente = buscar(razonSocial);
-
-    existente.setDireccion(nuevosDatos.getDireccion());
-
-    // Actualizar demas datos recordatorio
+  public void actualizarDireccion(long id, String nuevaDireccion) {
+    Beneficiaria beneficiaria = buscar(id);
+    beneficiaria.getPersona().setDireccion(nuevaDireccion);
   }
 }

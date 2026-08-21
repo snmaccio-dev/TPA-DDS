@@ -8,7 +8,6 @@ import donatrack.model.logistica.RutaReparto;
 import donatrack.model.planificacion.ResultadoPlanificacion;
 import donatrack.repositorio.RepositorioRutas;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -45,14 +44,7 @@ public class GestorLogistica {
 
     repositorioRutas.guardar(rutas);
 
-    rutas.stream()
-        .flatMap(ruta -> ruta.getDestinos().stream())
-        .flatMap(destino -> destino.getDonaciones().stream())
-        .map(donacion -> {
-          donacion.planificarRuta();
-          return donacion;
-        })
-        .toList();
+    rutas.forEach(this::asignarCamionYPlanificar);
 
     // Las no asignadas deberán volver a ser planificadas.
     if (!noAsignadas.isEmpty()) {
@@ -79,18 +71,9 @@ public class GestorLogistica {
       ResultadoPlanificacion resultado,
       List<Camion> camiones) {
 
-    repositorioRutas.guardar(
-        resultado.getRutas()
-    );
+    repositorioRutas.guardar(resultado.getRutas());
 
-    resultado.getRutas().stream()
-        .flatMap(ruta -> ruta.getDestinos().stream())
-        .flatMap(destino -> destino.getDonaciones().stream())
-        .map(donacion -> {
-          donacion.planificarRuta();
-          return donacion;
-        })
-        .toList();
+    resultado.getRutas().forEach(this::asignarCamionYPlanificar);
 
     List<Donacion> noAsignadas =
         resultado.getDonacionesNoAsignadas();
@@ -98,5 +81,14 @@ public class GestorLogistica {
     if (!noAsignadas.isEmpty()) {
       planificarRutas(noAsignadas, camiones);
     }
+  }
+
+  private void asignarCamionYPlanificar(RutaReparto ruta) {
+    ruta.getDestinos().forEach(destino ->
+        destino.getDonaciones().forEach(donacion -> {
+          donacion.asignarCamion(ruta.getCamion());
+          donacion.marcarListaParaEntregar();
+        })
+    );
   }
 }

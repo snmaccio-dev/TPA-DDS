@@ -10,8 +10,9 @@ import donatrack.model.donacion.Bien;
 import donatrack.model.donacion.CondicionBien;
 import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
-import donatrack.model.donacion.estado.EntregaFallida;
-import donatrack.model.entidad.EntidadBeneficiaria;
+import donatrack.model.logistica.Camion;
+import donatrack.model.usuario.Usuario;
+import donatrack.model.persona.Beneficiaria;
 import donatrack.notificacion.Notificador;
 import donatrack.notificacion.NotificadorDonacionObserver;
 import donatrack.notificacion.NotificadorWhatsApp;
@@ -98,35 +99,46 @@ public class Main {
 
         PersonaHumana donante = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
         donante.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
+        donante.setUsuario(new Usuario("luis.garcia", "***"));
 
         Categoria vestimenta = new Categoria("Vestimenta");
         Subcategoria ropa = new Subcategoria("Camperas de abrigo", vestimenta);
         Bien campera = new Bien("Campera talle M nueva", ropa, 1, Unidades.UNIDADES, CondicionBien.USADO);
         Donacion donacion = new Donacion(List.of(campera), donante, "Campera de abrigo en desuso");
 
-        // Registrar el observer de la donación
         donacion.agregarObserver(
             new NotificadorDonacionObserver(donante, new NotificadorWhatsApp())
         );
 
-        System.out.println("Estado inicial: " + donacion.getEstado().getNombre());
+        PersonaJuridica escuelaOrg = new PersonaJuridica("Escuela Demo", TipoOrganizacion.INSTITUCION, "Educacion");
+        Beneficiaria escuela = new Beneficiaria(escuelaOrg);
+        Camion camion = new Camion("AAA111", 10, 3, 1000);
+
+        System.out.println("Estado inicial:         " + donacion.getEstado().getNombre());
+        donacion.asignarDestinatario(escuela);
         donacion.asignar();
-        System.out.println("Tras asignar:   " + donacion.getEstado().getNombre());
-        donacion.planificarRuta();
-        System.out.println("Tras planificar ruta: " + donacion.getEstado().getNombre());
-        donacion.iniciarTraslado();
-        System.out.println("Tras iniciar traslado: " + donacion.getEstado().getNombre());
-        donacion.fallarEntrega("Tocamos timbre pero nadie respondio");
-        System.out.println("Tras entrega fallida: " + donacion.getEstado().getNombre());
+        System.out.println("Tras asignar:           " + donacion.getEstado().getNombre());
 
-        // Volver al deposito desde entrega fallida
-        ((EntregaFallida) donacion.getEstado()).devolverAlDeposito(donacion);
-        System.out.println("Vuelve al deposito: " + donacion.getEstado().getNombre());
+        donacion.asignarCamion(camion);
+        donacion.marcarListaParaEntregar();
+        System.out.println("Tras planificar ruta:   " + donacion.getEstado().getNombre());
 
-        // Transicion invalida — debe lanzar excepcion
-        System.out.print("Transicion invalida (confirmarEntrega desde EN_DEPOSITO): ");
+        donacion.marcarEnTraslado();
+        System.out.println("Tras iniciar traslado:  " + donacion.getEstado().getNombre());
+
+        donacion.marcarEntregaFallida("Nadie recibio la donacion");
+        System.out.println("Tras entrega fallida:   " + donacion.getEstado().getNombre());
+        var ultimoCambio = donacion.getHistorialEstados().get(donacion.getHistorialEstados().size() - 1);
+        System.out.println("Motivo en el historial: " + ultimoCambio.getMotivo());
+
+        donacion.marcarEnDeposito();
+        System.out.println("Tras marcarEnDeposito:  " + donacion.getEstado().getNombre()
+            + " | destinatario: " + donacion.getDestinatarioAsignado()
+            + " | camion: " + donacion.getCamion());
+
+        System.out.print("Transicion invalida (confirmarRecepcion desde EN_DEPOSITO): ");
         try {
-            donacion.confirmarEntrega();
+            donacion.confirmarRecepcion(List.of());
         } catch (IllegalStateException e) {
             System.out.println("excepcion capturada correctamente → " + e.getMessage());
         }
@@ -163,16 +175,17 @@ public class Main {
         Subcategoria bancos = new Subcategoria("Bancos escolares", mobiliario);
         Subcategoria fideos = new Subcategoria("Fideos secos",     alimentos);
 
-        EntidadBeneficiaria escuela = new EntidadBeneficiaria("Escuela Rural N10");
-        escuela.setDireccion("Ruta 3 km 42, Provincia de Buenos Aires");
-        escuela.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "escuela10@edu.ar"));
-
+        PersonaJuridica escuelaOrg = new PersonaJuridica("Escuela Rural N10", TipoOrganizacion.INSTITUCION, "Educacion");
+        escuelaOrg.setDireccion("Ruta 3 km 42, Provincia de Buenos Aires");
+        escuelaOrg.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "escuela10@edu.ar"));
+        Beneficiaria escuela = new Beneficiaria(escuelaOrg);
         escuela.registrarNecesidad(new NecesidadRecurrente("Reposicion tras inundacion", 30, bancos, Periodo.MENSUAL));
 
-        EntidadBeneficiaria comedor = new EntidadBeneficiaria("Escobar Sonrisas");
+        PersonaJuridica comedorOrg = new PersonaJuridica("Escobar Sonrisas", TipoOrganizacion.ONG, "Comedor");
+        Beneficiaria comedor = new Beneficiaria(comedorOrg);
         comedor.registrarNecesidad(new NecesidadRecurrente("Consumo semanal habitual", 100, fideos, Periodo.SEMANAL));
 
-        System.out.println("Necesidades de " + escuela.getNombreDisplay() + ": " + escuela.getNecesidades().size());
-        System.out.println("Necesidades de " + comedor.getNombreDisplay() + ": " + comedor.getNecesidades().size());
+        System.out.println("Necesidades de " + escuela.getPersona().getNombreDisplay() + ": " + escuela.getNecesidades().size());
+        System.out.println("Necesidades de " + comedor.getPersona().getNombreDisplay() + ": " + comedor.getNecesidades().size());
     }
 }

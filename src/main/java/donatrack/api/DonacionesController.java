@@ -3,14 +3,13 @@ package donatrack.api;
 import donatrack.gestion.GestorDonaciones;
 import donatrack.model.donacion.CambioEstado;
 import donatrack.model.donacion.Donacion;
-import donatrack.notificacion.Notificador;
+import donatrack.model.logistica.Comprobante;
 import donatrack.notificacion.NotificadorWhatsApp;
 
 import java.util.List;
 
 public class DonacionesController {
 
-  // Crear gestor de donaciones
   private final GestorDonaciones gestor =
       new GestorDonaciones(new NotificadorWhatsApp());
 
@@ -39,24 +38,25 @@ public class DonacionesController {
     gestor.asignar(id);
   }
 
-  public void planificarRuta(long id) {
-    gestor.planificarRuta(id);
+  public void confirmarRecepcion(long id, List<String> fotos) {
+    gestor.confirmarRecepcion(id, fotos);
   }
 
-  public void iniciarTraslado(long id) {
-    gestor.iniciarTraslado(id);
+  public void marcarEntregaFallida(long id, String motivo) {
+    gestor.marcarEntregaFallida(id, motivo);
   }
 
-  public void confirmarEntrega(long id) {
-    gestor.confirmarEntrega(id);
-  }
-
-  public void fallarEntrega(long id, String justificacion) {
-    gestor.fallarEntrega(id, justificacion);
+  public void marcarEnDeposito(long id) {
+    gestor.marcarEnDeposito(id);
   }
 
   public void vencer(long id) {
     gestor.vencer(id);
+  }
+
+  // GET /donaciones/{id}/comprobante
+  public Comprobante comprobante(long id) {
+    return gestor.buscar(id).generarComprobante();
   }
 
   // GET /donaciones/{id}/historial

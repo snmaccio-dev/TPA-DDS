@@ -1,6 +1,7 @@
 package donatrack.model.logistica;
 
 import donatrack.model.donacion.Donacion;
+import donatrack.model.persona.Chofer;
 
 import java.util.List;
 
@@ -33,13 +34,9 @@ public class RutaReparto {
     return destinos;
   }
 
-  public void iniciarRuta() {
+  public void iniciarRuta(Chofer chofer) {
     destinos.stream()
         .flatMap(destino -> destino.getDonaciones().stream())
-        .map(donacion -> {
-          donacion.iniciarTraslado();
-          return donacion;
-        })
-        .toList();
+        .forEach(Donacion::marcarEnTraslado);
   }
 }

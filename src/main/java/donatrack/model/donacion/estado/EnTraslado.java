@@ -2,32 +2,40 @@ package donatrack.model.donacion.estado;
 
 import donatrack.model.donacion.Donacion;
 
+import java.util.List;
+
 public class EnTraslado implements EstadoDonacion {
 
     @Override
     public void asignar(Donacion donacion) {
-        throw new IllegalStateException("No se puede asignar: la donacion ya esta en traslado.");
+        throw new IllegalStateException("La donacion esta en traslado.");
     }
 
     @Override
-    public void planificarRuta(Donacion donacion) {
-        throw new IllegalStateException("No se puede planificar ruta: la donacion ya esta en traslado.");
+    public void marcarListaParaEntregar(Donacion donacion) {
+        throw new IllegalStateException("La donacion ya fue despachada.");
     }
 
     @Override
-    public void iniciarTraslado(Donacion donacion) {
-        throw new IllegalStateException("El traslado ya fue iniciado.");
+    public void marcarEnTraslado(Donacion donacion) {
+        throw new IllegalStateException("La donacion ya esta en traslado.");
     }
 
     @Override
-    public void confirmarEntrega(Donacion donacion) {
+    public void confirmarRecepcion(Donacion donacion, List<String> fotos) {
+        donacion.registrarRecepcion(fotos);
         donacion.cambiarEstado(new Entregada());
+        donacion.getDestinatarioAsignado().registrarDonacionRecibida(donacion);
     }
 
     @Override
-    public void fallarEntrega(Donacion donacion, String justificacion) {
-        System.out.println("[TRAZABILIDAD] Entrega fallida. Justificacion: " + justificacion);
-        donacion.cambiarEstado(new EntregaFallida());
+    public void marcarEntregaFallida(Donacion donacion, String motivo) {
+        donacion.cambiarEstado(new EntregaFallida(), motivo);
+    }
+
+    @Override
+    public void marcarEnDeposito(Donacion donacion) {
+        throw new IllegalStateException("Solo se marca en deposito desde ENTREGA_FALLIDA.");
     }
 
     @Override

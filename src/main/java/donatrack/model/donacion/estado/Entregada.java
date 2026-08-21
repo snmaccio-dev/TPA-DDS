@@ -2,6 +2,8 @@ package donatrack.model.donacion.estado;
 
 import donatrack.model.donacion.Donacion;
 
+import java.util.List;
+
 public class Entregada implements EstadoDonacion {
 
     @Override
@@ -10,28 +12,33 @@ public class Entregada implements EstadoDonacion {
     }
 
     @Override
-    public void planificarRuta(Donacion donacion) {
+    public void marcarListaParaEntregar(Donacion donacion) {
         throw new IllegalStateException("La donacion ya fue entregada.");
     }
 
     @Override
-    public void iniciarTraslado(Donacion donacion) {
+    public void marcarEnTraslado(Donacion donacion) {
         throw new IllegalStateException("La donacion ya fue entregada.");
     }
 
     @Override
-    public void confirmarEntrega(Donacion donacion) {
+    public void confirmarRecepcion(Donacion donacion, List<String> fotos) {
         throw new IllegalStateException("La donacion ya fue entregada.");
     }
 
     @Override
-    public void fallarEntrega(Donacion donacion, String justificacion) {
+    public void marcarEntregaFallida(Donacion donacion, String motivo) {
+        throw new IllegalStateException("La donacion ya fue entregada.");
+    }
+
+    @Override
+    public void marcarEnDeposito(Donacion donacion) {
         throw new IllegalStateException("La donacion ya fue entregada.");
     }
 
     @Override
     public void vencer(Donacion donacion) {
-        throw new IllegalStateException("No se puede vencer una donacion ya entregada.");
+        throw new IllegalStateException("La donacion ya fue entregada.");
     }
 
     @Override

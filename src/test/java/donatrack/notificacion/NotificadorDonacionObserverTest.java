@@ -8,6 +8,7 @@ import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
 import donatrack.model.persona.Genero;
 import donatrack.model.persona.PersonaHumana;
+import donatrack.model.usuario.Usuario;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -21,21 +22,23 @@ public class NotificadorDonacionObserverTest {
     Notificador servicioFalso = mock(Notificador.class);
     NotificadorDonacionObserver observer = new NotificadorDonacionObserver(donante, servicioFalso);
 
-    observer.onCambioEstado(donacionDeSillas(), "EN_DEPOSITO", "ASIGNACION_REALIZADA");
+    observer.onCambioEstado(donacionDeSillas(donante), "EN_DEPOSITO", "ASIGNACION_REALIZADA");
 
     String mensajeEsperado = "Su donacion de [Sillas] cambio de estado: EN_DEPOSITO → ASIGNACION_REALIZADA";
-    verify(servicioFalso, times(1)).notificar(donante.getNombre(), mensajeEsperado);
+    verify(servicioFalso, times(1)).notificar(donante.getUsuario().getNombre(), mensajeEsperado);
   }
 
   private PersonaHumana donanteAna() {
-    return new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO);
+    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO);
+    ana.setUsuario(new Usuario("ana.perez", "***"));
+    return ana;
   }
 
-  private Donacion donacionDeSillas() {
+  private Donacion donacionDeSillas(PersonaHumana donante) {
     Subcategoria subcategoria = new Subcategoria("Sillas", new Categoria("Mobiliario"));
     return new Donacion(
         List.of(new Bien("Silla", subcategoria, 1, Unidades.UNIDADES, CondicionBien.NUEVO)),
-        donanteAna(),
+        donante,
         "Silla suelta"
     );
   }

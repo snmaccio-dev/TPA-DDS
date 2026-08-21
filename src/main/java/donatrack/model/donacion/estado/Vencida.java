@@ -2,6 +2,8 @@ package donatrack.model.donacion.estado;
 
 import donatrack.model.donacion.Donacion;
 
+import java.util.List;
+
 public class Vencida implements EstadoDonacion {
 
     @Override
@@ -10,28 +12,33 @@ public class Vencida implements EstadoDonacion {
     }
 
     @Override
-    public void planificarRuta(Donacion donacion) {
+    public void marcarListaParaEntregar(Donacion donacion) {
         throw new IllegalStateException("La donacion esta vencida y no puede ser procesada.");
     }
 
     @Override
-    public void iniciarTraslado(Donacion donacion) {
+    public void marcarEnTraslado(Donacion donacion) {
         throw new IllegalStateException("La donacion esta vencida y no puede ser procesada.");
     }
 
     @Override
-    public void confirmarEntrega(Donacion donacion) {
+    public void confirmarRecepcion(Donacion donacion, List<String> fotos) {
         throw new IllegalStateException("La donacion esta vencida y no puede ser procesada.");
     }
 
     @Override
-    public void fallarEntrega(Donacion donacion, String justificacion) {
+    public void marcarEntregaFallida(Donacion donacion, String motivo) {
         throw new IllegalStateException("La donacion esta vencida y no puede ser procesada.");
+    }
+
+    @Override
+    public void marcarEnDeposito(Donacion donacion) {
+        throw new IllegalStateException("La donacion esta vencida.");
     }
 
     @Override
     public void vencer(Donacion donacion) {
-        throw new IllegalStateException("La donacion ya esta marcada como vencida.");
+        throw new IllegalStateException("La donacion ya esta vencida.");
     }
 
     @Override

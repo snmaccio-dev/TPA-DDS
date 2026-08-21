@@ -2,6 +2,8 @@ package donatrack.model.donacion.estado;
 
 import donatrack.model.donacion.Donacion;
 
+import java.util.List;
+
 public class AsignacionRealizada implements EstadoDonacion {
 
     @Override
@@ -10,23 +12,28 @@ public class AsignacionRealizada implements EstadoDonacion {
     }
 
     @Override
-    public void planificarRuta(Donacion donacion) {
+    public void marcarListaParaEntregar(Donacion donacion) {
         donacion.cambiarEstado(new ListaParaEntregar());
     }
 
     @Override
-    public void iniciarTraslado(Donacion donacion) {
-        throw new IllegalStateException("Debe planificar ruta antes de iniciar traslado.");
+    public void marcarEnTraslado(Donacion donacion) {
+        throw new IllegalStateException("La donacion aun no fue incluida en una ruta planificada.");
     }
 
     @Override
-    public void confirmarEntrega(Donacion donacion) {
-        throw new IllegalStateException("No se puede confirmar entrega desde ASIGNACION_REALIZADA.");
+    public void confirmarRecepcion(Donacion donacion, List<String> fotos) {
+        throw new IllegalStateException("La donacion aun no fue trasladada.");
     }
 
     @Override
-    public void fallarEntrega(Donacion donacion, String justificacion) {
-        throw new IllegalStateException("No se puede registrar entrega fallida desde ASIGNACION_REALIZADA.");
+    public void marcarEntregaFallida(Donacion donacion, String motivo) {
+        throw new IllegalStateException("La donacion no esta en traslado.");
+    }
+
+    @Override
+    public void marcarEnDeposito(Donacion donacion) {
+        throw new IllegalStateException("Solo se marca en deposito desde ENTREGA_FALLIDA.");
     }
 
     @Override

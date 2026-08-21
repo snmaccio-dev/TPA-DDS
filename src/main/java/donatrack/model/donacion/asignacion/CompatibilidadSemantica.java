@@ -4,29 +4,29 @@ import java.util.Comparator;
 import java.util.List;
 
 import donatrack.model.donacion.Donacion;
-import donatrack.model.entidad.EntidadBeneficiaria;
 import donatrack.model.necesidad.Necesidad;
+import donatrack.model.persona.Beneficiaria;
 
 public class CompatibilidadSemantica implements Algoritmo {
 
   @Override
-  public List<EntidadBeneficiaria> matchmaking(
+  public List<Beneficiaria> matchmaking(
       Donacion donacion,
-      List<EntidadBeneficiaria> entidades) {
+      List<Beneficiaria> beneficiarias) {
 
-    return entidades.stream()
+    return beneficiarias.stream()
         .sorted(Comparator.comparingInt(
-            entidad -> -puntajeCompatibilidad(entidad, donacion)))
+            beneficiaria -> -puntajeCompatibilidad(beneficiaria, donacion)))
         .limit(10)
         .toList();
   }
 
-  private int puntajeCompatibilidad(EntidadBeneficiaria entidad,
+  private int puntajeCompatibilidad(Beneficiaria beneficiaria,
                                     Donacion donacion) {
 
     int puntaje = 0;
 
-    for (Necesidad necesidad : entidad.getNecesidades()) {
+    for (Necesidad necesidad : beneficiaria.getNecesidades()) {
 
       if (necesidad.getSubcategoria().equals(donacion.getSubcategoria())) {
         puntaje += necesidad.getCantidad();

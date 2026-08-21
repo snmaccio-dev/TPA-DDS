@@ -2,7 +2,7 @@ package donatrack.api;
 
 import donatrack.gestion.GestorAsignaciones;
 import donatrack.model.donacion.Donacion;
-import donatrack.model.entidad.EntidadBeneficiaria;
+import donatrack.model.persona.Beneficiaria;
 
 import java.util.List;
 
@@ -11,13 +11,13 @@ public class AsignacionesController {
   private final GestorAsignaciones gestor =
       new GestorAsignaciones();
 
-  public List<EntidadBeneficiaria> ejecutarAsignacion(
+  public List<Beneficiaria> ejecutarAsignacion(
       Donacion donacion,
-      List<EntidadBeneficiaria> entidades) {
+      List<Beneficiaria> beneficiarias) {
 
     return gestor.ejecutarAsignacion(
         donacion,
-        entidades
+        beneficiarias
     );
   }
 }

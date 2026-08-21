@@ -1,6 +1,6 @@
 package donatrack.repositorio;
 
-import donatrack.model.entidad.EntidadBeneficiaria;
+import donatrack.model.persona.Beneficiaria;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,13 +8,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-// Singleton — unica instancia de almacen de entidades beneficiarias en memoria
+// Singleton — unica instancia de almacen de beneficiarias en memoria
 public class RepositorioEntidades {
 
     private static RepositorioEntidades instancia;
 
-    private final Map<String, EntidadBeneficiaria> entidades =
-        new HashMap<>();
+    private final Map<Long, Beneficiaria> beneficiarias = new HashMap<>();
 
     private RepositorioEntidades() {
     }
@@ -26,24 +25,19 @@ public class RepositorioEntidades {
         return instancia;
     }
 
-    public void guardar(
-        String razonSocial,
-        EntidadBeneficiaria entidad
-    ) {
-        entidades.put(razonSocial, entidad);
+    public void guardar(Beneficiaria beneficiaria) {
+        beneficiarias.put(beneficiaria.getId(), beneficiaria);
     }
 
-    public Optional<EntidadBeneficiaria> buscarPorRazonSocial(
-        String razonSocial
-    ) {
-        return Optional.ofNullable(entidades.get(razonSocial));
+    public Optional<Beneficiaria> buscarPorId(long id) {
+        return Optional.ofNullable(beneficiarias.get(id));
     }
 
-    public List<EntidadBeneficiaria> todas() {
-        return new ArrayList<>(entidades.values());
+    public List<Beneficiaria> todas() {
+        return new ArrayList<>(beneficiarias.values());
     }
 
-    public void eliminar(String razonSocial) {
-        entidades.remove(razonSocial);
+    public void eliminar(long id) {
+        beneficiarias.remove(id);
     }
 }
