@@ -2,7 +2,8 @@ package donatrack.gestion;
 
 import donatrack.model.donacion.CambioEstado;
 import donatrack.model.donacion.Donacion;
-import donatrack.model.persona.Beneficiaria;
+import donatrack.notificacion.NotificadorDonacionObserver;
+import donatrack.notificacion.NotificarBeneficiariaAsignacionObserver;
 import donatrack.notificacion.Notificador;
 import donatrack.repositorio.RepositorioDonaciones;
 
@@ -32,6 +33,12 @@ public class GestorDonaciones {
     }
 
     public Donacion crear(Donacion donacion) {
+        donacion.agregarObserver(
+            new NotificadorDonacionObserver(donacion.getDonante(), notificador)
+        );
+        donacion.agregarObserver(
+            new NotificarBeneficiariaAsignacionObserver(notificador)
+        );
         repositorio.guardar(donacion);
         return donacion;
     }
@@ -41,14 +48,6 @@ public class GestorDonaciones {
     }
 
     // === Transiciones del ciclo de la Donacion ===
-
-    public void asignar(long id) {
-        buscar(id).asignar();
-    }
-
-    public void asignarDestinatario(long id, Beneficiaria destinatario) {
-        buscar(id).asignarDestinatario(destinatario);
-    }
 
     public void confirmarRecepcion(long id, java.util.List<String> fotos) {
         buscar(id).confirmarRecepcion(fotos);

@@ -1,18 +1,20 @@
 package donatrack.model.donacion.estado;
 
 import donatrack.model.donacion.Donacion;
+import donatrack.model.persona.Beneficiaria;
 
 import java.util.List;
 
 public class EnDeposito implements EstadoDonacion {
 
     @Override
-    public void asignar(Donacion donacion) {
-        if (donacion.getDestinatarioAsignado() == null) {
-            throw new IllegalStateException(
-                "Se debe asignar un destinatario antes de asignar la donacion."
+    public void confirmarDestino(Donacion donacion, Beneficiaria destinatario) {
+        if (destinatario == null) {
+            throw new IllegalArgumentException(
+                "Debe especificarse un destinatario para confirmar el destino."
             );
         }
+        donacion.registrarDestinatarioConfirmado(destinatario);
         donacion.cambiarEstado(new AsignacionRealizada());
     }
 

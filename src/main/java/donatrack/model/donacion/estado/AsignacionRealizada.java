@@ -1,14 +1,15 @@
 package donatrack.model.donacion.estado;
 
 import donatrack.model.donacion.Donacion;
+import donatrack.model.persona.Beneficiaria;
 
 import java.util.List;
 
 public class AsignacionRealizada implements EstadoDonacion {
 
     @Override
-    public void asignar(Donacion donacion) {
-        throw new IllegalStateException("La donacion ya fue asignada.");
+    public void confirmarDestino(Donacion donacion, Beneficiaria destinatario) {
+        throw new IllegalStateException("La donacion ya tiene un destinatario confirmado.");
     }
 
     @Override

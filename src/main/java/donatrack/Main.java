@@ -115,9 +115,8 @@ public class Main {
         Camion camion = new Camion("AAA111", 10, 3, 1000);
 
         System.out.println("Estado inicial:         " + donacion.getEstado().getNombre());
-        donacion.asignarDestinatario(escuela);
-        donacion.asignar();
-        System.out.println("Tras asignar:           " + donacion.getEstado().getNombre());
+        donacion.confirmarDestino(escuela);
+        System.out.println("Tras confirmar destino: " + donacion.getEstado().getNombre());
 
         donacion.asignarCamion(camion);
         donacion.marcarListaParaEntregar();

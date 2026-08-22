@@ -27,8 +27,7 @@ public class EstadoDonacionTest {
     Donacion donacion = donacionDeCampera();
     assertEquals("EN_DEPOSITO", donacion.getEstado().getNombre());
 
-    donacion.asignarDestinatario(escuela);
-    donacion.asignar();
+    donacion.confirmarDestino(escuela);
     assertEquals("ASIGNACION_REALIZADA", donacion.getEstado().getNombre());
 
     donacion.asignarCamion(unCamion());
@@ -85,7 +84,7 @@ public class EstadoDonacionTest {
   @Test
   public void transicionInvalidaLanzaIllegalStateException() {
     Donacion donacion = donacionDeCampera();
-    assertThrows(IllegalStateException.class, donacion::asignar);
+    assertThrows(IllegalStateException.class, donacion::marcarEnTraslado);
   }
 
   @Test
@@ -105,8 +104,7 @@ public class EstadoDonacionTest {
 
   private Donacion donacionEnTraslado(Beneficiaria escuela) {
     Donacion donacion = donacionDeCampera();
-    donacion.asignarDestinatario(escuela);
-    donacion.asignar();
+    donacion.confirmarDestino(escuela);
     donacion.asignarCamion(unCamion());
     donacion.marcarListaParaEntregar();
     donacion.marcarEnTraslado();

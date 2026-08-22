@@ -1,13 +1,14 @@
 package donatrack.model.donacion.estado;
 
 import donatrack.model.donacion.Donacion;
+import donatrack.model.persona.Beneficiaria;
 
 import java.util.List;
 
 public class EnTraslado implements EstadoDonacion {
 
     @Override
-    public void asignar(Donacion donacion) {
+    public void confirmarDestino(Donacion donacion, Beneficiaria destinatario) {
         throw new IllegalStateException("La donacion esta en traslado.");
     }
 

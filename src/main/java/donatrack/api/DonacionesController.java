@@ -33,11 +33,6 @@ public class DonacionesController {
     gestor.eliminar(id);
   }
 
-  // PATCH /donaciones/{id}/estado
-  public void asignar(long id) {
-    gestor.asignar(id);
-  }
-
   public void confirmarRecepcion(long id, List<String> fotos) {
     gestor.confirmarRecepcion(id, fotos);
   }

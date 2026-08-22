@@ -52,8 +52,8 @@ public class Donacion {
 
     // === Transiciones ===
 
-    public void asignar() {
-        estado.asignar(this);
+    public void confirmarDestino(Beneficiaria destinatario) {
+        estado.confirmarDestino(this, destinatario);
     }
 
     public void marcarListaParaEntregar() {
@@ -130,7 +130,8 @@ public class Donacion {
         return destinatarioAsignado;
     }
 
-    public void asignarDestinatario(Beneficiaria destinatario) {
+    // Uso interno del State al confirmar el destino — no invocar directamente.
+    public void registrarDestinatarioConfirmado(Beneficiaria destinatario) {
         this.destinatarioAsignado = destinatario;
     }
 

@@ -5,7 +5,10 @@ import donatrack.model.donacion.asignacion.CompatibilidadSemantica;
 import donatrack.model.donacion.asignacion.PrioridadSubatendidos;
 import donatrack.model.donacion.estado.EnDeposito;
 import donatrack.model.donacion.Donacion;
+import donatrack.model.persona.Administrador;
 import donatrack.model.persona.Beneficiaria;
+import donatrack.repositorio.RepositorioDonaciones;
+import donatrack.repositorio.RepositorioPersonas;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,30 +18,30 @@ public class GestorAsignaciones {
 
   private final Algoritmo compatibilidad;
   private final Algoritmo prioridadSubAtendidos;
+  private final RepositorioDonaciones repositorioDonaciones;
+  private final RepositorioPersonas repositorioPersonas;
 
   public GestorAsignaciones() {
     this.compatibilidad = new CompatibilidadSemantica();
     this.prioridadSubAtendidos = new PrioridadSubatendidos();
+    this.repositorioDonaciones = RepositorioDonaciones.getInstance();
+    this.repositorioPersonas = RepositorioPersonas.getInstance();
   }
 
   // EJECUCIÓN A DEMANDA
-  public List<Beneficiaria> ejecutarAsignacion(
-      Donacion donacion,
-      List<Beneficiaria> beneficiarias) {
-
-    return obtenerPropuesta(donacion, beneficiarias);
+  public List<Beneficiaria> ejecutarAsignacion(Donacion donacion) {
+    return obtenerPropuesta(donacion);
   }
 
-  // Obtiene la propuesta/ranking
-  public List<Beneficiaria> obtenerPropuesta(
-      Donacion donacion,
-      List<Beneficiaria> beneficiarias) {
-
+  // Obtiene la propuesta/ranking a partir de todas las beneficiarias registradas
+  public List<Beneficiaria> obtenerPropuesta(Donacion donacion) {
     if (!(donacion.getEstado() instanceof EnDeposito)) {
       throw new IllegalStateException(
           "Solo pueden asignarse donaciones en estado En Depósito."
       );
     }
+
+    List<Beneficiaria> beneficiarias = obtenerBeneficiariasRegistradas();
 
     List<Beneficiaria> rankingCompatibilidad =
         compatibilidad.matchmaking(donacion, beneficiarias);
@@ -50,6 +53,33 @@ public class GestorAsignaciones {
         rankingCompatibilidad,
         rankingPrioridad
     );
+  }
+
+  // Confirma el destino final de la donación validando administrador y donación
+  public void confirmarDestino(long donacionId,
+                               Beneficiaria destinatario,
+                               Administrador administrador) {
+    if (administrador == null) {
+      throw new IllegalArgumentException(
+          "Debe indicarse el administrador que confirma el destino."
+      );
+    }
+    if (destinatario == null) {
+      throw new IllegalArgumentException(
+          "Debe indicarse la beneficiaria a confirmar como destinataria."
+      );
+    }
+    Donacion donacion = repositorioDonaciones.buscarPorId(donacionId)
+        .orElseThrow(() -> new IllegalArgumentException(
+            "No existe la donación con ID " + donacionId
+        ));
+    donacion.confirmarDestino(destinatario);
+  }
+
+  private List<Beneficiaria> obtenerBeneficiariasRegistradas() {
+    return repositorioPersonas.todos().stream()
+        .flatMap(persona -> persona.comoRol(Beneficiaria.class).stream())
+        .toList();
   }
 
   private List<Beneficiaria> filtrarCoincidencias(
