@@ -4,7 +4,7 @@ import donatrack.model.catalogo.Subcategoria;
 import donatrack.model.donacion.Bien;
 import donatrack.model.donacion.CondicionBien;
 import donatrack.model.donacion.Donacion;
-import donatrack.model.persona.Persona;
+import donatrack.model.persona.Donante;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -15,7 +15,7 @@ import java.util.Map;
 public class SegmentadorDonaciones {
 
   public List<Donacion> segmentar(List<Bien> bienes,
-                                  Persona donante,
+                                  Donante donante,
                                   String descripcion) {
 
     Map<Clave, List<Bien>> grupos = new LinkedHashMap<>();

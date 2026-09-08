@@ -9,6 +9,7 @@ import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
 import donatrack.model.logistica.Camion;
 import donatrack.model.persona.Beneficiaria;
+import donatrack.model.persona.Donante;
 import donatrack.model.persona.Genero;
 import donatrack.model.persona.PersonaHumana;
 import donatrack.model.persona.PersonaJuridica;
@@ -98,7 +99,8 @@ public class EstadoDonacionTest {
   private Donacion donacionDeCampera() {
     Subcategoria ropa = new Subcategoria("Camperas de abrigo", new Categoria("Vestimenta"));
     Bien campera = new Bien("Campera talle M nueva", ropa, 1, Unidades.UNIDADES, CondicionBien.NUEVO);
-    PersonaHumana donante = new PersonaHumana("Test", "Donante", 30, "0", Genero.MASCULINO);
+    PersonaHumana persona = new PersonaHumana("Test", "Donante", 30, "0", Genero.MASCULINO);
+    Donante donante = new Donante(persona);
     return new Donacion(List.of(campera), donante, "Campera nueva");
   }
 

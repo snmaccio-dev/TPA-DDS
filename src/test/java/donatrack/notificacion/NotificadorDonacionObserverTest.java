@@ -6,6 +6,7 @@ import donatrack.model.donacion.Bien;
 import donatrack.model.donacion.CondicionBien;
 import donatrack.model.donacion.Donacion;
 import donatrack.model.donacion.Unidades;
+import donatrack.model.persona.Donante;
 import donatrack.model.persona.Genero;
 import donatrack.model.persona.PersonaHumana;
 import donatrack.model.usuario.Usuario;
@@ -18,23 +19,23 @@ public class NotificadorDonacionObserverTest {
 
   @Test
   public void onCambioEstadoArmaElMensajeYLlamaAlServicio() {
-    PersonaHumana donante = donanteAna();
+    Donante donante = donanteAna();
     Notificador servicioFalso = mock(Notificador.class);
     NotificadorDonacionObserver observer = new NotificadorDonacionObserver(donante, servicioFalso);
 
     observer.onCambioEstado(donacionDeSillas(donante), "EN_DEPOSITO", "ASIGNACION_REALIZADA");
 
     String mensajeEsperado = "Su donacion de [Sillas] cambio de estado: EN_DEPOSITO → ASIGNACION_REALIZADA";
-    verify(servicioFalso, times(1)).notificar(donante.getUsuario().getNombre(), mensajeEsperado);
+    verify(servicioFalso, times(1)).notificar(donante.getPersona().getUsuario().getNombre(), mensajeEsperado);
   }
 
-  private PersonaHumana donanteAna() {
+  private Donante donanteAna() {
     PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO);
     ana.setUsuario(new Usuario("ana.perez", "***"));
-    return ana;
+    return new Donante(ana);
   }
 
-  private Donacion donacionDeSillas(PersonaHumana donante) {
+  private Donacion donacionDeSillas(Donante donante) {
     Subcategoria subcategoria = new Subcategoria("Sillas", new Categoria("Mobiliario"));
     return new Donacion(
         List.of(new Bien("Silla", subcategoria, 1, Unidades.UNIDADES, CondicionBien.NUEVO)),

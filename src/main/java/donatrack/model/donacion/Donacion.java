@@ -6,8 +6,8 @@ import donatrack.model.donacion.estado.Entregada;
 import donatrack.model.donacion.estado.EstadoDonacion;
 import donatrack.model.logistica.Camion;
 import donatrack.model.logistica.Comprobante;
+import donatrack.model.persona.Donante;
 import donatrack.model.persona.Beneficiaria;
-import donatrack.model.persona.Persona;
 import donatrack.notificacion.DonacionObserver;
 
 import java.time.LocalDateTime;
@@ -21,7 +21,7 @@ public class Donacion {
     private List<Bien> bienes;
     private EstadoDonacion estado;
     private String descripcion;
-    private Persona donante;
+    private Donante donante;
     private Beneficiaria destinatarioAsignado;
     private Camion camion;
     private LocalDateTime fechaHoraEntrega;
@@ -32,7 +32,7 @@ public class Donacion {
     private final List<DonacionObserver> observers = new ArrayList<>();
 
     public Donacion(List<Bien> bienes,
-                    Persona donante,
+                    Donante donante,
                     String descripcion) {
         if (bienes == null || bienes.isEmpty()) {
             throw new IllegalArgumentException("La donacion debe contener al menos un bien.");
@@ -95,7 +95,7 @@ public class Donacion {
             fechaHoraEntrega,
             camion.getPatente(),
             destinatarioAsignado.getPersona().getRazonSocial(),
-            donante.getNombreDisplay(),
+            donante.getPersona().getNombreDisplay(),
             descripcion
         );
     }
@@ -103,7 +103,7 @@ public class Donacion {
     // === Factory ===
 
     public static Donacion crear(List<Bien> bienes,
-                                 Persona donante,
+                                 Donante donante,
                                  String descripcion) {
         return new Donacion(bienes, donante, descripcion);
     }
@@ -118,11 +118,11 @@ public class Donacion {
         this.descripcion = descripcion;
     }
 
-    public Persona getDonante() {
+    public Donante getDonante() {
         return donante;
     }
 
-    public void setDonante(Persona donante) {
+    public void setDonante(Donante donante) {
         this.donante = donante;
     }
 

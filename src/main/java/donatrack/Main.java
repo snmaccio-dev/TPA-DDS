@@ -13,6 +13,7 @@ import donatrack.model.donacion.Unidades;
 import donatrack.model.logistica.Camion;
 import donatrack.model.usuario.Usuario;
 import donatrack.model.persona.Beneficiaria;
+import donatrack.model.persona.Donante;
 import donatrack.notificacion.Notificador;
 import donatrack.notificacion.NotificadorDonacionObserver;
 import donatrack.notificacion.NotificadorWhatsApp;
@@ -82,8 +83,9 @@ public class Main {
 
         // Segmentar donaciones
         SegmentadorDonaciones segmentador = new SegmentadorDonaciones();
+        Donante arcosDonante = new Donante(arcos);
         // agregar la lista de bienes arriba a arcos
-        List<Donacion> donaciones = segmentador.segmentar(bienes, arcos, "Mudanza de oficinas Arcos Plateados");
+        List<Donacion> donaciones = segmentador.segmentar(bienes, arcosDonante, "Mudanza de oficinas Arcos Plateados");
 
         System.out.println("Bienes ingresados: " + bienes.size());
         System.out.println("Donaciones generadas: " + donaciones.size());
@@ -97,9 +99,10 @@ public class Main {
     static void demo3_estadosDonacion() {
         System.out.println("--- [3] Ciclo de estados de una donacion ---");
 
-        PersonaHumana donante = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
-        donante.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
-        donante.setUsuario(new Usuario("luis.garcia", "***"));
+        PersonaHumana luis = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
+        luis.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
+        luis.setUsuario(new Usuario("luis.garcia", "***"));
+        Donante donante = new Donante(luis);
 
         Categoria vestimenta = new Categoria("Vestimenta");
         Subcategoria ropa = new Subcategoria("Camperas de abrigo", vestimenta);
