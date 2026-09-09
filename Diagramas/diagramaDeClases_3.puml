@@ -1,0 +1,378 @@
+@startuml
+skinparam classAttributeIconSize 0
+  skinparam packageStyle rectangle
+  hide empty members
+
+  enum Genero {
+    MASCULINO
+    FEMENINO
+    OTRO
+  }
+
+  enum TipoOrganizacion {
+    GUBERNAMENTAL
+    ONG
+    EMPRESA
+    INSTITUCION
+  }
+
+  enum TipoContacto {
+    EMAIL
+    TELEFONO
+    WHATSAPP
+  }
+
+  enum Unidades {
+    KILOGRAMOS
+    UNIDADES
+    METROS
+  }
+
+
+  class MedioContacto {
+    - tipo: TipoContacto
+    - valor: String
+  }
+
+  class Usuario {
+    - nombre: String
+    - contrasena: String
+  }
+
+
+
+  abstract class Persona {
+    # direccion: String
+    # contactos: List<MedioContacto>
+    # contactoPredeterminado: MedioContacto
+    # usuario: Usuario
+    + ingresarDonacion(List<Bien>): void
+    + {abstract} getNombreDisplay(): String
+    + agregarMedioContacto(MedioContacto): void
+  }
+
+  class PersonaHumana {
+    - nombre: String
+    - apellido: String
+    - edad: int
+    - documento: String
+    - genero: Genero
+    + PersonaHumana(String, String, int, String, Genero)
+  }
+
+class Representante {
+    nombre
+    apellido
+    cargo
+}
+
+  class PersonaJuridica {
+    - razonSocial: String
+    - tipo: TipoOrganizacion
+    - rubro: String
+    - representantes: List<PersonaHumana>
+    + PersonaJuridica(String, TipoOrganizacion, String)
+    + agregarRepresentante(PersonaHumana): void
+  }
+
+  class EntidadBeneficiaria {
+    - razonSocial: String
+    - necesidades: List<Necesidad>
+    + EntidadBeneficiaria(String)
+    + registrarNecesidades(Necesidad): void
+  }
+
+
+  class Categoria {
+    - nombre: String
+    - subcategoria: Subcategoria
+    + Categoria(String, Subcategoria)
+    + getNombre(): String
+  }
+
+  class Subcategoria {
+    - nombre: String
+    + Subcategoria(String)
+    + getNombre(): String
+    + setNombre(String): void
+    + toString(): String
+  }
+
+
+  class Necesidad {
+    - descripcion: String
+    - cantidad: int
+    - subcategoria: Subcategoria
+    + Necesidad(String, int, Subcategoria)
+    + getDescripcion(): String
+    + getCantidad(): int
+    + setCantidad(int): void
+    + getSubcategoria(): Subcategoria
+  }
+
+  class NecesidadOrdinaria {
+        + esExtraordinaria() : boolean
+  }
+
+  class NecesidadExtraordinaria {
+        + esExtraordinaria() : boolean
+  }
+
+  class SegmentadorDonaciones{
+  segmentar(Donaciones)
+  }
+
+  class Bien {
+    - descripcion: String
+    - foto: String
+    - subcategoria: Subcategoria
+    - unidades: Unidades
+    + Bien(String, Subcategoria, Unidades)
+  }
+
+  class Donacion {
+    - bienes: List<Bien>
+    - estado: EstadoDonacion
+    - subcategoria: Subcategoria
+    - observers: List<DonacionObserver>
+    + Donacion(List<Bien>, Subcategoria)
+    + asignar(): void
+    + planificarRuta(): void
+    + iniciarTraslado(): void
+    + confirmarEntrega(): void
+    + fallarEntrega(String): void
+    + vencer(): void
+    + cambiarEstado(EstadoDonacion): void
+    + agregarObserver(DonacionObserver): void
+    + removerObserver(DonacionObserver): void
+    - notificarObservers(String, String): void
+    + toString(): String
+  }
+
+  interface EstadoDonacion {
+    + asignar(Donacion): void
+    + planificarRuta(Donacion): void
+    + iniciarTraslado(Donacion): void
+    + confirmarEntrega(Donacion): void
+    + fallarEntrega(Donacion, String): void
+    + vencer(Donacion): void
+    + getNombre(): String
+  }
+
+  class EnDeposito implements EstadoDonacion
+  class AsignacionRealizada implements EstadoDonacion
+  class ListaParaEntregar implements EstadoDonacion
+  class EnTraslado implements EstadoDonacion
+  class Entregada implements EstadoDonacion
+  class Vencida implements EstadoDonacion
+
+  class EntregaFallida implements EstadoDonacion {
+    + devolverAlDeposito(Donacion): void
+  }
+
+
+  interface DonacionObserver {
+    + onCambioEstado(Donacion, String, String): void
+  }
+
+  class NotificadorDonacionObserver implements DonacionObserver {
+    - donante: Persona
+    + NotificadorDonacionObserver(Persona, (Notificador))
+  }
+
+
+  Persona <|-- PersonaHumana
+  Persona <|-- PersonaJuridica
+  Persona <|-- EntidadBeneficiaria
+
+
+  Persona "1" <-- "0..*" MedioContacto
+  Persona "1" <-- "0..1" Usuario
+
+  PersonaJuridica "1" <-- "0..*" PersonaHumana
+  PersonaJuridica --> "1..*" Representante
+
+  EntidadBeneficiaria "1" <-- "0..*" Necesidad
+  Necesidad --> Subcategoria
+
+  Categoria "1" <-- "1..*" Subcategoria
+
+  Bien --> Subcategoria
+  Bien --> Unidades
+
+  Donacion "1" <-- "1..*" Bien
+  Donacion --> EstadoDonacion
+  Donacion --> Subcategoria
+  Donacion "1" <-- "0..*" DonacionObserver
+
+  MedioContacto --> TipoContacto
+  PersonaHumana --> Genero
+  PersonaJuridica --> TipoOrganizacion
+
+  NotificadorDonacionObserver --> Persona
+
+  SegmentadorDonaciones --> "1..*  " Donacion
+  Necesidad <|-- NecesidadOrdinaria
+  Necesidad <|-- NecesidadExtraordinaria
+
+'=======================================================
+' Segunda entrega
+'=======================================================
+'===============================
+' GESTION ASIGNACIONES
+'===============================
+
+interface Algoritmo {
+    + matchmaking(Donacion,List<EntidadBeneficiaria>): List<EntidadBeneficiaria>
+}
+
+class AlgoritmoCompatibilidadSemantica implements Algoritmo
+class AlgoritmoPrioridadSubAtendidos implements Algoritmo
+
+
+class GestorAsignaciones {
+
+    - compatibilidad: Algoritmo
+    - prioridadSubAtendidos: Algoritmo
+
+    + obtenerPropuesta(
+        Donacion,
+        List<EntidadBeneficiaria>
+    ): List<EntidadBeneficiaria>
+}
+
+
+GestorAsignaciones --> Algoritmo
+GestorAsignaciones --> Donacion
+GestorAsignaciones --> EntidadBeneficiaria
+
+
+'===============================
+' NOTIFICACIONES
+'===============================
+
+
+interface Notificador {
+    + notificar(String,String): void
+}
+
+
+class NotificadorEmail
+class NotificadorSMS
+class NotificadorWhatsApp
+
+
+Notificador <|.. NotificadorEmail
+Notificador <|.. NotificadorSMS
+Notificador <|.. NotificadorWhatsApp
+
+
+
+class GestorNotificaciones {
+
+    - notificadores: List<Notificador>
+
+    + notificarAusenciaPlataforma(Persona)
+    + notificarDonacionAsignadaBeneficiario(
+        EntidadBeneficiaria,
+        Donacion
+    )
+}
+
+
+GestorNotificaciones --> Notificador
+GestorNotificaciones --> Persona
+GestorNotificaciones --> Donacion
+GestorNotificaciones --> EntidadBeneficiaria
+
+
+
+'===============================
+' LOGISTICA
+'===============================
+
+
+interface GeneradorRutas {
+
+    + generar(
+        List<Donacion>,
+        List<Camion>
+    ): List<RutaReparto>
+}
+
+
+class GeneradorRutasExterno
+
+GeneradorRutas <|.. GeneradorRutasExterno
+
+
+
+class GestorLogistica {
+
+    - generadorRutas: GeneradorRutas
+
+    + planificarRutas(
+        List<Donacion>,
+        List<Camion>
+    ): List<RutaReparto>
+}
+
+
+GestorLogistica --> GeneradorRutas
+
+
+
+class Camion {
+
+    - patente:String
+    - capacidadVolumen:double
+    - altura:double
+    - capacidadCarga:double
+
+}
+
+
+class RutaReparto {
+
+    - camion:Camion
+    - destinos:List<DestinoEntrega>
+
+    + iniciarRuta():void
+}
+
+
+class DestinoEntrega {
+
+    - direccion:String
+    - donaciones:List<Donacion>
+}
+
+
+
+Camion --> RutaReparto
+
+RutaReparto --> DestinoEntrega
+
+DestinoEntrega --> Donacion
+
+
+
+'===============================
+' SEGMENTACION
+'===============================
+
+
+class SegmentadorDonaciones {
+
+ + segmentar(
+    List<Bien>,
+    Persona
+ ):List<Donacion>
+
+}
+
+
+SegmentadorDonaciones --> Bien
+SegmentadorDonaciones --> Persona
+
+@enduml

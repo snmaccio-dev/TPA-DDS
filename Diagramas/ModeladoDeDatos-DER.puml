@@ -1,0 +1,107 @@
+@startuml
+
+'Entidades Persona
+
+entity Persona {
+
+}
+
+entity MedioContacto {
+
+}
+
+entity Usuario {
+
+}
+
+entity PersonaJuridica {
+
+}
+
+entity PersonaHumana {
+
+}
+
+entity EntidadBeneficiaria {
+
+}
+
+entity Necesidad {
+
+}
+
+entity Representante {
+
+}
+
+entity Categoria {
+
+}
+
+entity Subcategoria {
+
+}
+
+entity Bien {
+
+}
+
+entity Donacion {
+
+}
+
+entity Camion {
+
+}
+
+entity RutaReparto {
+
+}
+
+entity DestinoEntrega {
+
+}
+
+' Relaciones - Persona
+
+Persona ||--{ MedioContacto
+Persona ||--|| Usuario
+PersonaJuridica ||--|{ Representante
+
+' Herencia de persona
+
+PersonaHumana --|| Persona
+PersonaJuridica --|| Persona
+EntidadBeneficiaria --|| Persona
+
+' Entidad Beneficiaria
+
+EntidadBeneficiaria ||--o{ Necesidad
+
+' Necesidad
+
+Subcategoria ||--o{ Necesidad
+Categoria ||--o{ Subcategoria
+
+' Bien
+
+Subcategoria ||--|{ Bien
+
+' Donacion
+
+Donacion |o--|{ Bien
+Subcategoria ||--|{ Donacion
+
+' Logistica
+
+Camion ||--|{ RutaReparto
+RutaReparto ||--|{ DestinoEntrega
+
+' Relacion Muchos a Muchos
+
+DestinoEntrega ||--|{ DonacionXDestinoEntrega
+Donacion ||--|{ DonacionXDestinoEntrega
+
+
+@enduml
+
