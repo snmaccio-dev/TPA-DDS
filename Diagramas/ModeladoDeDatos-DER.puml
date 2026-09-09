@@ -26,7 +26,7 @@ entity Usuario {
 }
 
 entity PersonaJuridica {
-    persona_id : numeric(10) (PK)(FK)
+    persona_id : numeric(10) (PK)
     --
     razon_social : varchar(100)
     tipo : varchar(30)
@@ -34,7 +34,7 @@ entity PersonaJuridica {
 }
 
 entity PersonaHumana {
-    persona_id : numeric(10) (PK)(FK)
+    persona_id : numeric(10) (PK)
     --
     nombre : varchar(50)
     apellido : varchar(50)
