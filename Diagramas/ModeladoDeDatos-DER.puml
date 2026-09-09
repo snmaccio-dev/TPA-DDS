@@ -3,63 +3,139 @@
 'Entidades Persona
 
 entity Persona {
-
+    persona_id : numeric(10) (PK)
+    --
+    direccion : varchar(100)
+    usuario_id : numeric(10) (FK)
+    contacto_predeterminado_id : numeric(10) (FK)
 }
 
 entity MedioContacto {
-
+    medio_contacto_id : numeric(10) (PK)
+    --
+    tipo : varchar(20)
+    valor : varchar(100)
+    persona_id : numeric(10) (FK)
 }
-
 entity Usuario {
-
+    usuario_id : numeric(10) (PK)
+    --
+    nombre : varchar(50)
+    contrasena : varchar(100)
 }
 
 entity PersonaJuridica {
-
+    persona_id : numeric(10) (PK)(FK)
+    --
+    razon_social : varchar(100)
+    tipo : varchar(30)
+    rubro : varchar(50)
 }
 
 entity PersonaHumana {
-
+    persona_id : numeric(10) (PK)(FK)
+    --
+    nombre : varchar(50)
+    apellido : varchar(50)
+    edad : integer
+    documento : varchar(20)
+    genero : varchar(20)
 }
 
 entity EntidadBeneficiaria {
-
+    persona_id : numeric(10) (PK)(FK)
+    --
+    razon_social : varchar(100)
 }
 
 entity Necesidad {
+    necesidad_id : numeric(10) (PK)
+    --
+    descripcion : varchar(200)
+    cantidad : integer
 
+    entidad_beneficiaria_id : numeric(10) (FK)
+    subcategoria_id : numeric(10) (FK)
 }
 
 entity Representante {
+    representante_id : numeric(10) (PK)
+    --
+    nombre : varchar(50)
+    apellido : varchar(50)
+    cargo : varchar(50)
 
+    persona_juridica_id : numeric(10) (FK)
 }
 
 entity Categoria {
-
+    categoria_id : numeric(10) (PK)
+    --
+    nombre : varchar(50)
 }
 
 entity Subcategoria {
-
+    subcategoria_id : numeric(10) (PK)
+    --
+    nombre : varchar(50)
+    categoria_id : numeric(10) (FK)
 }
 
 entity Bien {
+    bien_id : numeric(10) (PK)
+    --
+    descripcion : varchar(200)
+    foto : varchar(255)
+    cantidad : decimal(10,2)
+    unidades : varchar(20)
+    condicion : varchar(20)
+    fecha_vencimiento : date
 
+    subcategoria_id : numeric(10) (FK)
+    donacion_id : numeric(10) (FK)
 }
 
 entity Donacion {
+    donacion_id : numeric(10) (PK)
+    --
+    descripcion : varchar(200)
+    estado : varchar(30)
+    fecha_hora_entrega : datetime
 
+    donante_id : numeric(10) (FK)
+    destinatario_id : numeric(10) (FK)
+    camion_id : numeric(10) (FK)
+}
+
+entity DonacionXDestinoEntrega {
+    donacion_x_destino_id : numeric(10) (PK)
+    --
+    descripcion : varchar(200)
+    estado : varchar(30)
+    fecha_hora_entrega : datetime
+    donante_id : numeric(10) (FK)
 }
 
 entity Camion {
-
+    camion_id : numeric(10) (PK)
+    --
+    patente : varchar(10)
+    capacidad_volumen : decimal(10,2)
+    altura : decimal(10,2)
+    capacidad_carga : decimal(10,2)
 }
 
 entity RutaReparto {
-
+    ruta_id : numeric(10) (PK)
+    --
+    camion_id : numeric(10) (FK)
 }
 
 entity DestinoEntrega {
-
+    destino_id : numeric(10) (PK)
+    --
+    direccion : varchar(100)
+    ruta_id : numeric(10) (FK)
 }
 
 ' Relaciones - Persona
@@ -101,7 +177,6 @@ RutaReparto ||--|{ DestinoEntrega
 
 DestinoEntrega ||--|{ DonacionXDestinoEntrega
 Donacion ||--|{ DonacionXDestinoEntrega
-
 
 @enduml
 
