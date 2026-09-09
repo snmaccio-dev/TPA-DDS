@@ -17,6 +17,7 @@ entity MedioContacto {
     valor : varchar(100)
     persona_id : numeric(10) (FK)
 }
+
 entity Usuario {
     usuario_id : numeric(10) (PK)
     --
@@ -43,7 +44,7 @@ entity PersonaHumana {
 }
 
 entity EntidadBeneficiaria {
-    persona_id : numeric(10) (PK)(FK)
+    persona_id : numeric(10) (PK)
     --
     razon_social : varchar(100)
 }
