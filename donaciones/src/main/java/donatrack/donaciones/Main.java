@@ -1,0 +1,193 @@
+package donatrack.donaciones;
+
+import donatrack.donaciones.service.SegmentadorDonaciones;
+import donatrack.donaciones.service.importacion.ImportadorCSVPersonas;
+import donatrack.donaciones.domain.catalogo.Categoria;
+import donatrack.donaciones.domain.catalogo.Subcategoria;
+import donatrack.donaciones.domain.contacto.MedioContacto;
+import donatrack.donaciones.domain.contacto.TipoContacto;
+import donatrack.donaciones.domain.donacion.Bien;
+import donatrack.donaciones.domain.donacion.CondicionBien;
+import donatrack.donaciones.domain.donacion.Donacion;
+import donatrack.donaciones.domain.donacion.Unidades;
+import donatrack.logistica.domain.flota.Camion;
+import donatrack.donaciones.domain.usuario.Usuario;
+import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.Donante;
+import donatrack.donaciones.domain.notificacion.Notificador;
+import donatrack.donaciones.domain.notificacion.NotificadorDonacionObserver;
+import donatrack.donaciones.infrastructure.notificacion.NotificadorWhatsApp;
+import donatrack.donaciones.infrastructure.notificacion.NotificadorEmail;
+import donatrack.donaciones.infrastructure.notificacion.NotificadorSMS;
+import donatrack.donaciones.domain.necesidad.NecesidadRecurrente;
+import donatrack.donaciones.domain.necesidad.Periodo;
+import donatrack.donaciones.domain.persona.Genero;
+import donatrack.donaciones.domain.persona.PersonaHumana;
+import donatrack.donaciones.domain.persona.PersonaJuridica;
+import donatrack.donaciones.domain.persona.TipoOrganizacion;
+
+
+import java.util.List;
+
+public class Main {
+
+    public static void main(String[] args) {
+        System.out.println("=== DonaTrack — Entrega 1 ===\n");
+
+        demo1_crearPersonas();
+        demo2_segmentacionDonaciones();
+        demo3_estadosDonacion();
+        demo4_importacionCSV();
+        demo5_notificaciones();
+        demo6_entidadBeneficiaria();
+    }
+
+    static void demo1_crearPersonas() {
+        System.out.println("--- [1] Registro de personas donantes ---");
+
+        PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "12345678", Genero.FEMENINO);
+        ana.setDireccion("Av. Corrientes 1234, CABA");
+        ana.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "ana@mail.com"));
+        ana.agregarMedioContacto(new MedioContacto(TipoContacto.WHATSAPP, "+54 11 5555-5555"));
+        System.out.println("Persona humana creada: " + ana.getNombreDisplay()
+                + " | Contacto predeterminado: " + ana.getContactoPredeterminado().getValor());
+
+        PersonaJuridica arcos = new PersonaJuridica("Arcos Plateados S.A.", TipoOrganizacion.EMPRESA, "Construccion");
+        arcos.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "contacto@arcos.com"));
+        arcos.agregarRepresentante(ana);
+        System.out.println("Persona juridica creada: " + arcos.getNombreDisplay()
+                + " | Representantes: " + arcos.getRepresentantes().size());
+        System.out.println();
+    }
+
+    static void demo2_segmentacionDonaciones() {
+        System.out.println("--- [2] Segmentacion automatica de donaciones por subcategoria ---");
+
+        PersonaJuridica arcos = new PersonaJuridica("Arcos Plateados", TipoOrganizacion.EMPRESA, "Mudanza");
+        arcos.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "arcos@demo.com"));
+
+        Categoria mobiliario = new Categoria("Mobiliario");
+        Categoria alimentos  = new Categoria("Alimentos");
+        Subcategoria sillas  = new Subcategoria("Sillas",              mobiliario);
+        Subcategoria mesas   = new Subcategoria("Mesas",               mobiliario);
+        Subcategoria fideos  = new Subcategoria("Fideos secos",        alimentos);
+        Subcategoria tomates = new Subcategoria("Tomate en tetrapak",  alimentos);
+
+        List<Bien> bienes = List.of(
+                new Bien("Silla oficina usada",    sillas,  1,   Unidades.UNIDADES,   CondicionBien.USADO),
+                new Bien("Silla oficina usada",    sillas,  1,   Unidades.UNIDADES,   CondicionBien.USADO),
+                new Bien("Mesa rectangular usada", mesas,   1,   Unidades.UNIDADES,   CondicionBien.USADO),
+                new Bien("Fideos 500g",            fideos,  0.5, Unidades.KILOGRAMOS, CondicionBien.NUEVO),
+                new Bien("Tetrapak tomate",        tomates, 1,   Unidades.UNIDADES,   CondicionBien.NUEVO)
+        );
+
+        // Segmentar donaciones
+        SegmentadorDonaciones segmentador = new SegmentadorDonaciones();
+        Donante arcosDonante = new Donante(arcos);
+        // agregar la lista de bienes arriba a arcos
+        List<Donacion> donaciones = segmentador.segmentar(bienes, arcosDonante, "Mudanza de oficinas Arcos Plateados");
+
+        System.out.println("Bienes ingresados: " + bienes.size());
+        System.out.println("Donaciones generadas: " + donaciones.size());
+        donaciones.forEach(d ->
+                System.out.println("  → " + d.getSubcategoria().getNombre()
+                        + " [" + d.getBienes().size() + " bien(es)] estado: " + d.getEstado().getNombre())
+        );
+        System.out.println();
+    }
+
+    static void demo3_estadosDonacion() {
+        System.out.println("--- [3] Ciclo de estados de una donacion ---");
+
+        PersonaHumana luis = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
+        luis.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
+        luis.setUsuario(new Usuario("luis.garcia", "***"));
+        Donante donante = new Donante(luis);
+
+        Categoria vestimenta = new Categoria("Vestimenta");
+        Subcategoria ropa = new Subcategoria("Camperas de abrigo", vestimenta);
+        Bien campera = new Bien("Campera talle M nueva", ropa, 1, Unidades.UNIDADES, CondicionBien.USADO);
+        Donacion donacion = new Donacion(List.of(campera), donante, "Campera de abrigo en desuso");
+
+        donacion.agregarObserver(
+            new NotificadorDonacionObserver(donante, new NotificadorWhatsApp())
+        );
+
+        PersonaJuridica escuelaOrg = new PersonaJuridica("Escuela Demo", TipoOrganizacion.INSTITUCION, "Educacion");
+        Beneficiaria escuela = new Beneficiaria(escuelaOrg);
+        Camion camion = new Camion("AAA111", 10, 3, 1000);
+
+        System.out.println("Estado inicial:         " + donacion.getEstado().getNombre());
+        donacion.confirmarDestino(escuela);
+        System.out.println("Tras confirmar destino: " + donacion.getEstado().getNombre());
+
+        donacion.asignarCamion(camion);
+        donacion.marcarListaParaEntregar();
+        System.out.println("Tras planificar ruta:   " + donacion.getEstado().getNombre());
+
+        donacion.marcarEnTraslado();
+        System.out.println("Tras iniciar traslado:  " + donacion.getEstado().getNombre());
+
+        donacion.marcarEntregaFallida("Nadie recibio la donacion");
+        System.out.println("Tras entrega fallida:   " + donacion.getEstado().getNombre());
+        var ultimoCambio = donacion.getHistorialEstados().get(donacion.getHistorialEstados().size() - 1);
+        System.out.println("Motivo en el historial: " + ultimoCambio.getMotivo());
+
+        donacion.marcarEnDeposito();
+        System.out.println("Tras marcarEnDeposito:  " + donacion.getEstado().getNombre()
+            + " | destinatario: " + donacion.getDestinatarioAsignado()
+            + " | camion: " + donacion.getCamion());
+
+        System.out.print("Transicion invalida (confirmarRecepcion desde EN_DEPOSITO): ");
+        try {
+            donacion.confirmarRecepcion(List.of());
+        } catch (IllegalStateException e) {
+            System.out.println("excepcion capturada correctamente → " + e.getMessage());
+        }
+        System.out.println();
+    }
+
+    static void demo4_importacionCSV() {
+        System.out.println("--- [4] Importacion masiva CSV ---");
+        String ruta = "src/main/resources/donantes_prueba.csv"; //Se puede cambiar por "donantes_prueba_2.csv" para validar el funcionamiento a mayor escala.
+        ImportadorCSVPersonas importador = new ImportadorCSVPersonas();
+        try {
+            importador.importarConResumen(ruta);
+        } catch (RuntimeException e) {
+            System.out.println("[CSV] Archivo no encontrado en: " + ruta + " — " + e.getMessage());
+        }
+        System.out.println();
+    }
+
+    static void demo5_notificaciones() {
+        System.out.println("--- [5] Notificaciones simuladas (Strategy) ---");
+        Notificador email = new NotificadorEmail();
+        Notificador sms = new NotificadorSMS();
+        Notificador whatsapp = new NotificadorWhatsApp();
+        email.notificar("usuario@mail.com", "Prueba de notificacion por EMAIL");
+        sms.notificar("+54 11 1234-5678", "Prueba de notificacion por SMS");
+        whatsapp.notificar("+54 11 9876-5432", "Prueba de notificacion por WhatsApp");
+        System.out.println();
+    }
+
+    static void demo6_entidadBeneficiaria() {
+        System.out.println("--- [6] Entidades beneficiarias y necesidades ---");
+        Categoria mobiliario = new Categoria("Mobiliario");
+        Categoria alimentos  = new Categoria("Alimentos");
+        Subcategoria bancos = new Subcategoria("Bancos escolares", mobiliario);
+        Subcategoria fideos = new Subcategoria("Fideos secos",     alimentos);
+
+        PersonaJuridica escuelaOrg = new PersonaJuridica("Escuela Rural N10", TipoOrganizacion.INSTITUCION, "Educacion");
+        escuelaOrg.setDireccion("Ruta 3 km 42, Provincia de Buenos Aires");
+        escuelaOrg.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "escuela10@edu.ar"));
+        Beneficiaria escuela = new Beneficiaria(escuelaOrg);
+        escuela.registrarNecesidad(new NecesidadRecurrente("Reposicion tras inundacion", 30, bancos, Periodo.MENSUAL));
+
+        PersonaJuridica comedorOrg = new PersonaJuridica("Escobar Sonrisas", TipoOrganizacion.ONG, "Comedor");
+        Beneficiaria comedor = new Beneficiaria(comedorOrg);
+        comedor.registrarNecesidad(new NecesidadRecurrente("Consumo semanal habitual", 100, fideos, Periodo.SEMANAL));
+
+        System.out.println("Necesidades de " + escuela.getPersona().getNombreDisplay() + ": " + escuela.getNecesidades().size());
+        System.out.println("Necesidades de " + comedor.getPersona().getNombreDisplay() + ": " + comedor.getNecesidades().size());
+    }
+}
