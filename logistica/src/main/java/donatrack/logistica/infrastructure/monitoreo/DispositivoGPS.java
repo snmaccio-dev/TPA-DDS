@@ -1,6 +1,9 @@
 package donatrack.logistica.infrastructure.monitoreo;
 
 import donatrack.logistica.domain.flota.Camion;
+import donatrack.logistica.domain.monitoreo.EstadoRecorrido;
+import donatrack.logistica.domain.monitoreo.Posicion;
+import donatrack.logistica.domain.monitoreo.ProveedorUbicacion;
 
 public class DispositivoGPS implements ProveedorUbicacion {
 

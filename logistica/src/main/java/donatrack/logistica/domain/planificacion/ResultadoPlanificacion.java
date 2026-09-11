@@ -1,29 +1,35 @@
 package donatrack.logistica.domain.planificacion;
 
-import donatrack.donaciones.domain.donacion.Donacion;
+import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.ruta.RutaReparto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ResultadoPlanificacion {
 
+  private final String solicitudId;
   private final List<RutaReparto> rutas;
-  private final List<Donacion> donacionesNoAsignadas;
+  private final List<Entrega> entregasNoAsignadas;
 
-  public ResultadoPlanificacion(
-      List<RutaReparto> rutas,
-      List<Donacion> donacionesNoAsignadas) {
+  public ResultadoPlanificacion(String solicitudId,
+                                List<RutaReparto> rutas,
+                                List<Entrega> entregasNoAsignadas) {
+    this.solicitudId = solicitudId;
+    this.rutas = rutas == null ? new ArrayList<>() : new ArrayList<>(rutas);
+    this.entregasNoAsignadas =
+        entregasNoAsignadas == null ? new ArrayList<>() : new ArrayList<>(entregasNoAsignadas);
+  }
 
-    this.rutas = rutas;
-    this.donacionesNoAsignadas =
-        donacionesNoAsignadas;
+  public String getSolicitudId() {
+    return solicitudId;
   }
 
   public List<RutaReparto> getRutas() {
-    return rutas;
+    return new ArrayList<>(rutas);
   }
 
-  public List<Donacion> getDonacionesNoAsignadas() {
-    return donacionesNoAsignadas;
+  public List<Entrega> getEntregasNoAsignadas() {
+    return new ArrayList<>(entregasNoAsignadas);
   }
 }

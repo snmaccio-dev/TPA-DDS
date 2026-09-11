@@ -20,7 +20,7 @@ public class GestorRutas {
   public RutaReparto buscar(long id) {
     return repositorio.buscarPorId(id)
         .orElseThrow(() ->
-            new IllegalArgumentException(
+            new RecursoInexistenteException(
                 "No existe una ruta con ID " + id
             ));
   }

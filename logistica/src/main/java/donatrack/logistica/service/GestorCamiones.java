@@ -17,7 +17,7 @@ public class GestorCamiones {
   public Camion buscar(String patente) {
     return repositorio.buscar(patente)
         .orElseThrow(() ->
-            new IllegalArgumentException(
+            new RecursoInexistenteException(
                 "No existe el camión con patente " + patente
             ));
   }

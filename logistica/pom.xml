@@ -12,4 +12,49 @@
 
     <artifactId>logistica</artifactId>
 
+    <properties>
+        <javalin.version>6.4.0</javalin.version>
+        <jackson.version>2.17.2</jackson.version>
+        <slf4j.version>2.0.13</slf4j.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin</artifactId>
+            <version>${javalin.version}</version>
+        </dependency>
+
+        <!--
+          Javalin resuelve el JSON del lado servidor, pero no expone un serializador para las
+          llamadas salientes hacia Donaciones y hacia el planificador externo. Se declara el
+          mismo Jackson que Javalin ya trae, en vez de sumar una segunda libreria de JSON.
+          Su uso esta confinado a SerializadorJackson, detras del puerto SerializadorJson.
+        -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <mainClass>donatrack.logistica.LogisticaApp</mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

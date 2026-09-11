@@ -1,13 +1,15 @@
 package donatrack.logistica.domain.planificacion;
 
-import donatrack.donaciones.domain.donacion.Donacion;
+import donatrack.logistica.domain.entrega.Entrega;
+import donatrack.logistica.domain.flota.Camion;
 
 import java.util.List;
 
 public interface GeneradorRutas {
 
-  List<RutaReparto> generar(
-      List<Donacion> donaciones,
-      List<Camion> camiones
+  String solicitarPlanificacion(
+      List<Entrega> entregas,
+      List<Camion> camiones,
+      String urlCallback
   );
 }

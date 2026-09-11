@@ -14,6 +14,8 @@ public class Bien {
     private Unidades unidades;
     private CondicionBien condicion;
     private LocalDate fechaVencimiento;
+    private double pesoKg;
+    private double volumenM3;
 
     public Bien(String descripcion,
                 Subcategoria subcategoria,
@@ -81,5 +83,27 @@ public class Bien {
 
     public void setFechaVencimiento(LocalDate fechaVencimiento) {
         this.fechaVencimiento = fechaVencimiento;
+    }
+
+    public double getPesoKg() {
+        return pesoKg;
+    }
+
+    public void setPesoKg(double pesoKg) {
+        if (pesoKg < 0) {
+            throw new IllegalArgumentException("El peso del bien no puede ser negativo.");
+        }
+        this.pesoKg = pesoKg;
+    }
+
+    public double getVolumenM3() {
+        return volumenM3;
+    }
+
+    public void setVolumenM3(double volumenM3) {
+        if (volumenM3 < 0) {
+            throw new IllegalArgumentException("El volumen del bien no puede ser negativo.");
+        }
+        this.volumenM3 = volumenM3;
     }
 }

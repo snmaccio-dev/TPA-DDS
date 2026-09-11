@@ -10,7 +10,7 @@ import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.CondicionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.Unidades;
-import donatrack.logistica.domain.flota.Camion;
+import donatrack.donaciones.domain.donacion.DatosEntrega;
 import donatrack.donaciones.domain.usuario.Usuario;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
@@ -115,13 +115,12 @@ public class Main {
 
         PersonaJuridica escuelaOrg = new PersonaJuridica("Escuela Demo", TipoOrganizacion.INSTITUCION, "Educacion");
         Beneficiaria escuela = new Beneficiaria(escuelaOrg);
-        Camion camion = new Camion("AAA111", 10, 3, 1000);
 
         System.out.println("Estado inicial:         " + donacion.getEstado().getNombre());
         donacion.confirmarDestino(escuela);
         System.out.println("Tras confirmar destino: " + donacion.getEstado().getNombre());
 
-        donacion.asignarCamion(camion);
+        donacion.asignarDatosEntrega(new DatosEntrega(null, "AAA111"));
         donacion.marcarListaParaEntregar();
         System.out.println("Tras planificar ruta:   " + donacion.getEstado().getNombre());
 
@@ -136,7 +135,7 @@ public class Main {
         donacion.marcarEnDeposito();
         System.out.println("Tras marcarEnDeposito:  " + donacion.getEstado().getNombre()
             + " | destinatario: " + donacion.getDestinatarioAsignado()
-            + " | camion: " + donacion.getCamion());
+            + " | datos de entrega: " + donacion.getDatosEntrega());
 
         System.out.print("Transicion invalida (confirmarRecepcion desde EN_DEPOSITO): ");
         try {
