@@ -1,8 +1,8 @@
-package donatrack.donaciones.domain.donacion;
+package donatrack.donaciones.domain.catalogo;
 
 public enum Unidades {
     KILOGRAMOS,
     UNIDADES,
     METROS,
-    VOLUMEN,
+    LITROS,
 }

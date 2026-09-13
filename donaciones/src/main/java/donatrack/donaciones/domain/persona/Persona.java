@@ -24,6 +24,11 @@ public abstract class Persona {
         return contactos.stream().anyMatch(c -> c.getTipo() == tipo);
     }
 
+    public boolean tieneContacto(TipoContacto tipo, String valor) {
+        return contactos.stream()
+            .anyMatch(c -> c.getTipo() == tipo && c.getValor().equals(valor));
+    }
+
     public void agregarMedioContacto(MedioContacto medio) {
         contactos.add(medio);
         if (contactos.size() == 1) {

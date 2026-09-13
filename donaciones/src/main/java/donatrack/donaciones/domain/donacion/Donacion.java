@@ -1,6 +1,7 @@
 package donatrack.donaciones.domain.donacion;
 
 import donatrack.donaciones.domain.catalogo.Subcategoria;
+import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.donacion.estado.EstadoDonacion;
 import donatrack.donaciones.domain.donacion.estado.EstadoEntregaFallida;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
@@ -170,6 +171,14 @@ public class Donacion {
 
     public List<Bien> getBienes() {
         return bienes;
+    }
+
+    public double getCantidadTotal() {
+        return bienes.stream().mapToDouble(Bien::getCantidad).sum();
+    }
+
+    public Unidades getUnidades() {
+        return getSubcategoria().getUnidades();
     }
 
     // === Observer ===

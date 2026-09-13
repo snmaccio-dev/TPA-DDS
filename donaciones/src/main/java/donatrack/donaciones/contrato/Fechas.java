@@ -1,4 +1,4 @@
-package donatrack.logistica.controller.dto;
+package donatrack.donaciones.contrato;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

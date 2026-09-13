@@ -1,6 +1,7 @@
 package donatrack.logistica.repository;
 
 import donatrack.logistica.domain.entrega.Entrega;
+import donatrack.logistica.domain.entrega.EstadoEntrega;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,15 @@ public class RepositorioEntregas {
   public List<Entrega> queEsperanPlanificacion() {
     return entregas.stream()
         .filter(Entrega::esperaPlanificacion)
+        .toList();
+  }
+
+  public List<Entrega> pendientesDeMedicion() {
+    return entregas.stream()
+        .filter(entrega ->
+            entrega.getEstado() == EstadoEntrega.PENDIENTE
+                && entrega.getRuta() == null
+                && !entrega.estaMedida())
         .toList();
   }
 

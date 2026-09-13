@@ -5,7 +5,7 @@ import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.CondicionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
-import donatrack.donaciones.domain.donacion.Unidades;
+import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
@@ -37,9 +37,9 @@ public class NotificadorDonacionObserverTest {
   }
 
   private Donacion donacionDeSillas(Donante donante) {
-    Subcategoria subcategoria = new Subcategoria("Sillas", new Categoria("Mobiliario"));
+    Subcategoria subcategoria = new Subcategoria("Sillas", new Categoria("Mobiliario"), Unidades.UNIDADES);
     return new Donacion(
-        List.of(new Bien("Silla", subcategoria, 1, Unidades.UNIDADES, CondicionBien.NUEVO)),
+        List.of(new Bien("Silla", subcategoria, 1, CondicionBien.NUEVO)),
         donante,
         "Silla suelta"
     );

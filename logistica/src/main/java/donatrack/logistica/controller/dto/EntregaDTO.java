@@ -1,5 +1,6 @@
 package donatrack.logistica.controller.dto;
 
+import donatrack.logistica.contrato.Fechas;
 import donatrack.logistica.domain.entrega.Entrega;
 
 import java.util.List;
@@ -10,8 +11,10 @@ public record EntregaDTO(
     long beneficiariaId,
     String direccionDestino,
     String descripcionDonacion,
-    double pesoKg,
-    double volumenM3,
+    double cantidad,
+    String unidad,
+    Double pesoKg,
+    Double volumenM3,
     String estado,
     Long rutaId,
     String patenteCamion,
@@ -27,6 +30,8 @@ public record EntregaDTO(
         entrega.getBeneficiariaId(),
         entrega.getDireccionDestino(),
         entrega.getDescripcionDonacion(),
+        entrega.getCantidad(),
+        entrega.getUnidad(),
         entrega.getPesoKg(),
         entrega.getVolumenM3(),
         entrega.getEstado().getNombre(),

@@ -23,4 +23,8 @@ public class RepositorioPropuestas {
     public List<PropuestaAsignacion> todas() {
         return new ArrayList<>(propuestas.values());
     }
+
+    public void eliminar(long donacionId) {
+        propuestas.remove(donacionId);
+    }
 }

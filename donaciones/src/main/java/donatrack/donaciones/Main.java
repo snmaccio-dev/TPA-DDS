@@ -1,5 +1,7 @@
 package donatrack.donaciones;
 
+import donatrack.donaciones.repository.RepositorioDonantes;
+import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioPropuestas;
 import donatrack.donaciones.service.GestorAsignaciones;
 import donatrack.donaciones.service.GestorNotificaciones;
@@ -13,7 +15,7 @@ import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.CondicionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
-import donatrack.donaciones.domain.donacion.Unidades;
+import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.donacion.DatosEntrega;
 import donatrack.donaciones.domain.usuario.Usuario;
 import donatrack.donaciones.domain.persona.Beneficiaria;
@@ -81,17 +83,17 @@ public class Main {
 
         Categoria mobiliario = new Categoria("Mobiliario");
         Categoria alimentos  = new Categoria("Alimentos");
-        Subcategoria sillas  = new Subcategoria("Sillas",              mobiliario);
-        Subcategoria mesas   = new Subcategoria("Mesas",               mobiliario);
-        Subcategoria fideos  = new Subcategoria("Fideos secos",        alimentos);
-        Subcategoria tomates = new Subcategoria("Tomate en tetrapak",  alimentos);
+        Subcategoria sillas  = new Subcategoria("Sillas",              mobiliario, Unidades.UNIDADES);
+        Subcategoria mesas   = new Subcategoria("Mesas",               mobiliario, Unidades.UNIDADES);
+        Subcategoria fideos  = new Subcategoria("Fideos secos",        alimentos,  Unidades.KILOGRAMOS);
+        Subcategoria tomates = new Subcategoria("Tomate en tetrapak",  alimentos,  Unidades.UNIDADES);
 
         List<Bien> bienes = List.of(
-                new Bien("Silla oficina usada",    sillas,  1,   Unidades.UNIDADES,   CondicionBien.USADO),
-                new Bien("Silla oficina usada",    sillas,  1,   Unidades.UNIDADES,   CondicionBien.USADO),
-                new Bien("Mesa rectangular usada", mesas,   1,   Unidades.UNIDADES,   CondicionBien.USADO),
-                new Bien("Fideos 500g",            fideos,  0.5, Unidades.KILOGRAMOS, CondicionBien.NUEVO),
-                new Bien("Tetrapak tomate",        tomates, 1,   Unidades.UNIDADES,   CondicionBien.NUEVO)
+                new Bien("Silla oficina usada",    sillas,  1,   CondicionBien.USADO),
+                new Bien("Silla oficina usada",    sillas,  1,   CondicionBien.USADO),
+                new Bien("Mesa rectangular usada", mesas,   1,   CondicionBien.USADO),
+                new Bien("Fideos 500g",            fideos,  0.5, CondicionBien.NUEVO),
+                new Bien("Tetrapak tomate",        tomates, 1,   CondicionBien.NUEVO)
         );
 
         // Segmentar donaciones
@@ -118,8 +120,8 @@ public class Main {
         Donante donante = new Donante(luis);
 
         Categoria vestimenta = new Categoria("Vestimenta");
-        Subcategoria ropa = new Subcategoria("Camperas de abrigo", vestimenta);
-        Bien campera = new Bien("Campera talle M nueva", ropa, 1, Unidades.UNIDADES, CondicionBien.USADO);
+        Subcategoria ropa = new Subcategoria("Camperas de abrigo", vestimenta, Unidades.UNIDADES);
+        Bien campera = new Bien("Campera talle M nueva", ropa, 1, CondicionBien.USADO);
         Donacion donacion = new Donacion(List.of(campera), donante, "Campera de abrigo en desuso");
 
         GestorNotificaciones gestorNotificaciones = new GestorNotificaciones(List.of(
@@ -132,6 +134,8 @@ public class Main {
         );
 
         PersonaJuridica escuelaOrg = new PersonaJuridica("30-99999999-1", "Escuela Demo", TipoOrganizacion.INSTITUCION, "Educacion");
+        escuelaOrg.setDireccion("Av. Siempreviva 742, CABA");
+        escuelaOrg.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, "+54 11 4000-0000"));
         Beneficiaria escuela = new Beneficiaria(escuelaOrg);
 
         System.out.println("Estado inicial:         " + donacion.getEstado().getNombre());
@@ -167,7 +171,10 @@ public class Main {
     static void demo4_importacionCSV() {
         System.out.println("--- [4] Importacion masiva CSV ---");
         String ruta = "src/main/resources/donantes_prueba.csv"; //Se puede cambiar por "donantes_prueba_2.csv" para validar el funcionamiento a mayor escala.
-        ImportadorCSVPersonas importador = new ImportadorCSVPersonas();
+        ImportadorCSVPersonas importador = new ImportadorCSVPersonas(
+            RepositorioPersonas.getInstance(),
+            new RepositorioDonantes()
+        );
         try {
             importador.importarConResumen(ruta);
         } catch (RuntimeException e) {
@@ -191,16 +198,19 @@ public class Main {
         System.out.println("--- [6] Entidades beneficiarias y necesidades ---");
         Categoria mobiliario = new Categoria("Mobiliario");
         Categoria alimentos  = new Categoria("Alimentos");
-        Subcategoria bancos = new Subcategoria("Bancos escolares", mobiliario);
-        Subcategoria fideos = new Subcategoria("Fideos secos",     alimentos);
+        Subcategoria bancos = new Subcategoria("Bancos escolares", mobiliario, Unidades.UNIDADES);
+        Subcategoria fideos = new Subcategoria("Fideos secos",     alimentos,  Unidades.KILOGRAMOS);
 
         PersonaJuridica escuelaOrg = new PersonaJuridica("30-77777777-1", "Escuela Rural N10", TipoOrganizacion.INSTITUCION, "Educacion");
         escuelaOrg.setDireccion("Ruta 3 km 42, Provincia de Buenos Aires");
         escuelaOrg.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "escuela10@edu.ar"));
+        escuelaOrg.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, "+54 2320 000000"));
         Beneficiaria escuela = new Beneficiaria(escuelaOrg);
         escuela.registrarNecesidad(new NecesidadRecurrente("Reposicion tras inundacion", 30, bancos, Periodo.MENSUAL));
 
         PersonaJuridica comedorOrg = new PersonaJuridica("30-66666666-1", "Escobar Sonrisas", TipoOrganizacion.ONG, "Comedor");
+        comedorOrg.setDireccion("Calle Falsa 123, Escobar");
+        comedorOrg.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, "+54 3488 000000"));
         Beneficiaria comedor = new Beneficiaria(comedorOrg);
         comedor.registrarNecesidad(new NecesidadRecurrente("Consumo semanal habitual", 100, fideos, Periodo.SEMANAL));
 

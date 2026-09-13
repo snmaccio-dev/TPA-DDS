@@ -26,7 +26,7 @@ public class GestorNecesidades {
   public Necesidad buscar(long id) {
     return repositorio.buscarPorId(id)
         .orElseThrow(() ->
-            new IllegalArgumentException(
+            new RecursoInexistenteException(
                 "No existe la necesidad con ID "
                     + id
             ));

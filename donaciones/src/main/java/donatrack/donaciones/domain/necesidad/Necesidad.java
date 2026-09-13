@@ -1,6 +1,7 @@
 package donatrack.donaciones.domain.necesidad;
 
 import donatrack.donaciones.domain.catalogo.Subcategoria;
+import donatrack.donaciones.domain.catalogo.Unidades;
 
 public abstract class Necesidad {
 
@@ -33,6 +34,10 @@ public abstract class Necesidad {
 
   public Subcategoria getSubcategoria() {
     return subcategoria;
+  }
+
+  public Unidades getUnidades() {
+    return subcategoria.getUnidades();
   }
 
   public String getDescripcion() {

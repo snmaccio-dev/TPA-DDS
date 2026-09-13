@@ -2,6 +2,7 @@ package donatrack.donaciones.domain.persona;
 
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
+import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.necesidad.Necesidad;
 import donatrack.donaciones.domain.necesidad.NecesidadExtraordinaria;
 import org.junit.jupiter.api.Test;
@@ -49,6 +50,6 @@ public class BeneficiariaTest {
   }
 
   private Necesidad necesidadBancosYSillas(int cantidad) {
-    return new NecesidadExtraordinaria("Reposicion tras inundacion", cantidad, new Subcategoria("Bancos y Sillas escolares", new Categoria("Mobiliario")));
+    return new NecesidadExtraordinaria("Reposicion tras inundacion", cantidad, new Subcategoria("Bancos y Sillas escolares", new Categoria("Mobiliario"), Unidades.UNIDADES));
   }
 }

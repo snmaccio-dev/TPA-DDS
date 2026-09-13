@@ -2,11 +2,11 @@ package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
+import donatrack.donaciones.domain.notificacion.Notificador;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.domain.usuario.Usuario;
-import donatrack.donaciones.infrastructure.notificacion.NotificadorEmail;
-import donatrack.donaciones.domain.notificacion.Notificador;
+import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioPersonas;
 
 import java.util.List;
@@ -18,81 +18,66 @@ public class GestorPersonas {
     private final RepositorioPersonas repositorio =
         RepositorioPersonas.getInstance();
 
-    private final Notificador notificador =
-        new NotificadorEmail();
+    private final RepositorioDonantes repositorioDonantes;
+    private final Notificador notificador;
 
-    public void registrar(String email, Persona persona) {
-        Optional<Persona> existente =
-            repositorio.buscarPorEmail(email);
-
-        if (existente.isPresent()) {
-            actualizarDatos(existente.get(), persona);
-            System.out.println(
-                "[REGISTRO] Persona actualizada: " + email
-            );
-        } else {
-            String contrasena = generarContrasena();
-
-            persona.setUsuario(
-                new Usuario(email, contrasena)
-            );
-
-            persona.agregarMedioContacto(
-                new MedioContacto(
-                    TipoContacto.EMAIL,
-                    email
-                )
-            );
-
-            new Donante(persona);
-
-            repositorio.guardar(persona);
-
-            notificador.notificar(
-                email,
-                "Bienvenido a DonaTrack. Su usuario: "
-                    + email
-                    + " | Contrasena: "
-                    + contrasena
-            );
-
-            System.out.println(
-                "[REGISTRO] Persona creada: " + email
-            );
-        }
+    public GestorPersonas(Notificador notificador, RepositorioDonantes repositorioDonantes) {
+        this.notificador = notificador;
+        this.repositorioDonantes = repositorioDonantes;
     }
 
-    public Persona buscar(String email) {
-        return repositorio.buscarPorEmail(email)
+    public void registrar(Persona persona, String email) {
+        Optional<Persona> existente = repositorio.buscarPorDocumento(persona.getDocumento());
+
+        if (existente.isPresent()) {
+            Persona actual = existente.get();
+            if (!actual.tieneContacto(TipoContacto.EMAIL, email)) {
+                actual.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
+            }
+            if (!actual.tieneRol(Donante.class)) {
+                Donante donante = new Donante(actual);
+                repositorioDonantes.guardar(donante);
+            }
+            System.out.println("[REGISTRO] Persona ya existente: " + persona.getDocumento());
+            return;
+        }
+
+        String contrasena = generarContrasena();
+        persona.setUsuario(new Usuario(email, contrasena));
+        persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
+        Donante donante = new Donante(persona);
+        repositorio.guardar(persona);
+        repositorioDonantes.guardar(donante);
+
+        notificador.notificar(
+            email,
+            "Bienvenido a DonaTrack. Su usuario: " + email + " | Contrasena: " + contrasena
+        );
+
+        System.out.println("[REGISTRO] Persona creada: " + persona.getDocumento());
+    }
+
+    public Persona buscarPorDocumento(String documento) {
+        return repositorio.buscarPorDocumento(documento)
             .orElseThrow(() ->
-                new IllegalArgumentException(
-                    "No existe una persona con email "
-                        + email
+                new RecursoInexistenteException(
+                    "No existe una persona con documento " + documento
                 ));
+    }
+
+    public Optional<Persona> buscarPorEmail(String email) {
+        return repositorio.buscarPorEmail(email);
     }
 
     public List<Persona> todos() {
         return repositorio.todos();
     }
 
-    public void eliminar(String email) {
-        repositorio.buscarPorEmail(email).ifPresent(repositorio::eliminar);
-    }
-
-    private void actualizarDatos(
-        Persona existente,
-        Persona nueva
-    ) {
-        if (nueva.getDireccion() != null) {
-            existente.setDireccion(
-                nueva.getDireccion()
-            );
-        }
+    public void eliminar(String documento) {
+        repositorio.buscarPorDocumento(documento).ifPresent(repositorio::eliminar);
     }
 
     private String generarContrasena() {
-        return UUID.randomUUID()
-            .toString()
-            .substring(0, 8);
+        return UUID.randomUUID().toString().substring(0, 8);
     }
 }

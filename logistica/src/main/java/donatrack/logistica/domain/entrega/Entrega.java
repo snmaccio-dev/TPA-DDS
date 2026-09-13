@@ -16,8 +16,11 @@ public class Entrega {
   private final long beneficiariaId;
   private final String direccionDestino;
   private final String descripcionDonacion;
-  private final double pesoKg;
-  private final double volumenM3;
+  private final double cantidad;
+  private final String unidad;
+
+  private Double pesoKg;
+  private Double volumenM3;
 
   private EstadoEntrega estado;
   private RutaReparto ruta;
@@ -31,24 +34,21 @@ public class Entrega {
                  long beneficiariaId,
                  String direccionDestino,
                  String descripcionDonacion,
-                 double pesoKg,
-                 double volumenM3) {
+                 double cantidad,
+                 String unidad) {
     if (direccionDestino == null || direccionDestino.isBlank()) {
       throw new IllegalArgumentException("La entrega debe tener una direccion de destino.");
     }
     if (descripcionDonacion == null || descripcionDonacion.isBlank()) {
       throw new IllegalArgumentException("La entrega debe tener una descripcion de la donacion.");
     }
-    if (pesoKg < 0 || volumenM3 < 0) {
-      throw new IllegalArgumentException("El peso y el volumen de la entrega no pueden ser negativos.");
-    }
     this.id = proximoId++;
     this.donacionId = donacionId;
     this.beneficiariaId = beneficiariaId;
     this.direccionDestino = direccionDestino;
     this.descripcionDonacion = descripcionDonacion;
-    this.pesoKg = pesoKg;
-    this.volumenM3 = volumenM3;
+    this.cantidad = cantidad;
+    this.unidad = unidad;
     this.estado = EstadoEntrega.PENDIENTE;
   }
 
@@ -58,9 +58,27 @@ public class Entrega {
         donacion.beneficiariaId(),
         donacion.direccionDestino(),
         donacion.descripcion(),
-        donacion.pesoKg(),
-        donacion.volumenM3()
+        donacion.cantidad(),
+        donacion.unidad()
     );
+  }
+
+  // === Medicion ===
+
+  public boolean estaMedida() {
+    return pesoKg != null && volumenM3 != null;
+  }
+
+  public void registrarMedicion(double pesoKg, double volumenM3) {
+    exigirEstado("registrar la medicion", EstadoEntrega.PENDIENTE);
+    if (pesoKg <= 0) {
+      throw new IllegalArgumentException("El peso de la entrega debe ser mayor a cero.");
+    }
+    if (volumenM3 <= 0) {
+      throw new IllegalArgumentException("El volumen de la entrega debe ser mayor a cero.");
+    }
+    this.pesoKg = pesoKg;
+    this.volumenM3 = volumenM3;
   }
 
   // === Transiciones ===
@@ -70,17 +88,18 @@ public class Entrega {
     if (ruta == null) {
       throw new IllegalArgumentException("Debe indicarse la ruta a la que se asigna la entrega.");
     }
+    if (!estaMedida()) {
+      throw new IllegalStateException(
+          "La entrega " + id + " todavia no tiene medicion registrada."
+      );
+    }
     this.ruta = ruta;
     this.patenteCamion = ruta.getCamion().getPatente();
+    this.estado = EstadoEntrega.PLANIFICADA;
   }
 
   public void marcarEnTraslado() {
-    exigirEstado("marcar en traslado", EstadoEntrega.PENDIENTE);
-    if (ruta == null) {
-      throw new IllegalStateException(
-          "La entrega " + id + " todavia no fue incluida en una ruta planificada."
-      );
-    }
+    exigirEstado("marcar en traslado", EstadoEntrega.PLANIFICADA);
     this.estado = EstadoEntrega.EN_TRASLADO;
   }
 
@@ -127,7 +146,7 @@ public class Entrega {
   // === Planificacion ===
 
   public boolean esperaPlanificacion() {
-    return estado == EstadoEntrega.PENDIENTE && ruta == null;
+    return estado == EstadoEntrega.PENDIENTE && estaMedida();
   }
 
   public void registrarIntentoDePlanificacion() {
@@ -160,11 +179,19 @@ public class Entrega {
     return descripcionDonacion;
   }
 
-  public double getPesoKg() {
+  public double getCantidad() {
+    return cantidad;
+  }
+
+  public String getUnidad() {
+    return unidad;
+  }
+
+  public Double getPesoKg() {
     return pesoKg;
   }
 
-  public double getVolumenM3() {
+  public Double getVolumenM3() {
     return volumenM3;
   }
 

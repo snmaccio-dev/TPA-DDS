@@ -1,48 +1,83 @@
 package donatrack.donaciones.controller;
 
-import donatrack.donaciones.service.GestorNecesidades;
+import donatrack.donaciones.controller.dto.ActualizarNecesidadRequest;
+import donatrack.donaciones.controller.dto.NecesidadDTO;
+import donatrack.donaciones.controller.dto.NuevaNecesidadRequest;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.necesidad.Necesidad;
-
-import java.util.List;
+import donatrack.donaciones.domain.necesidad.NecesidadExtraordinaria;
+import donatrack.donaciones.domain.necesidad.NecesidadRecurrente;
+import donatrack.donaciones.domain.necesidad.Periodo;
+import donatrack.donaciones.repository.RepositorioSubcategorias;
+import donatrack.donaciones.service.GestorNecesidades;
+import donatrack.donaciones.service.RecursoInexistenteException;
+import io.javalin.Javalin;
+import io.javalin.http.Context;
 
 public class NecesidadesController {
 
-  private final GestorNecesidades gestor =
-      new GestorNecesidades();
+  private final GestorNecesidades gestor;
+  private final RepositorioSubcategorias repositorioSubcategorias;
 
-  // GET /necesidades
-  public List<Necesidad> todas() {
-    return gestor.todas();
+  public NecesidadesController(GestorNecesidades gestor,
+                               RepositorioSubcategorias repositorioSubcategorias) {
+    this.gestor = gestor;
+    this.repositorioSubcategorias = repositorioSubcategorias;
   }
 
-  // GET /necesidades/{id}
-  public Necesidad buscar(long id) {
-    return gestor.buscar(id);
+  public void registrarRutas(Javalin app) {
+    app.get("/necesidades", this::todas);
+    app.post("/necesidades", this::crear);
+    app.get("/necesidades/{id}", this::buscar);
+    app.put("/necesidades/{id}", this::actualizar);
+    app.delete("/necesidades/{id}", this::eliminar);
   }
 
-  // POST /necesidades
-  public Necesidad crear(Necesidad necesidad) {
-    return gestor.crear(necesidad);
+  private void todas(Context ctx) {
+    ctx.json(NecesidadDTO.desde(gestor.todas()));
   }
 
-  // PUT /necesidades/{id}
-  public void actualizar(
-      long id,
-      String descripcion,
-      int cantidad,
-      Subcategoria subcategoria
-  ) {
+  private void buscar(Context ctx) {
+    ctx.json(NecesidadDTO.desde(gestor.buscar(idDe(ctx))));
+  }
+
+  private void crear(Context ctx) {
+    NuevaNecesidadRequest request = ctx.bodyAsClass(NuevaNecesidadRequest.class);
+    Subcategoria subcategoria = subcategoriaDe(request.subcategoria());
+    Necesidad necesidad = "RECURRENTE".equalsIgnoreCase(request.tipo())
+        ? new NecesidadRecurrente(
+            request.descripcion(),
+            request.cantidad(),
+            subcategoria,
+            request.periodo() == null ? null : Periodo.valueOf(request.periodo()))
+        : new NecesidadExtraordinaria(request.descripcion(), request.cantidad(), subcategoria);
+    ctx.status(201).json(NecesidadDTO.desde(gestor.crear(necesidad)));
+  }
+
+  private void actualizar(Context ctx) {
+    ActualizarNecesidadRequest request = ctx.bodyAsClass(ActualizarNecesidadRequest.class);
     gestor.actualizar(
-        id,
-        descripcion,
-        cantidad,
-        subcategoria
+        idDe(ctx),
+        request.descripcion(),
+        request.cantidad(),
+        subcategoriaDe(request.subcategoria())
     );
+    ctx.status(204);
   }
 
-  // DELETE /necesidades/{id}
-  public void eliminar(long id) {
-    gestor.eliminar(id);
+  private void eliminar(Context ctx) {
+    gestor.eliminar(idDe(ctx));
+    ctx.status(204);
+  }
+
+  private Subcategoria subcategoriaDe(String nombre) {
+    return repositorioSubcategorias.buscarPorNombre(nombre)
+        .orElseThrow(() -> new RecursoInexistenteException(
+            "No existe la subcategoría '" + nombre + "'."
+        ));
+  }
+
+  private long idDe(Context ctx) {
+    return ctx.pathParamAsClass("id", Long.class).get();
   }
 }

@@ -4,10 +4,15 @@ public class Subcategoria {
 
     private String nombre;
     private Categoria categoria;
+    private Unidades unidades;
 
-    public Subcategoria(String nombre, Categoria categoria) {
+    public Subcategoria(String nombre, Categoria categoria, Unidades unidades) {
+        if (unidades == null) {
+            throw new IllegalArgumentException("La subcategoria debe tener una unidad de medida.");
+        }
         this.nombre = nombre;
         this.categoria = categoria;
+        this.unidades = unidades;
     }
 
     public String getNombre() {
@@ -24,6 +29,10 @@ public class Subcategoria {
 
     public void setCategoria(Categoria categoria) {
         this.categoria = categoria;
+    }
+
+    public Unidades getUnidades() {
+        return unidades;
     }
 
     @Override

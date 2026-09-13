@@ -94,10 +94,11 @@ public class GestorAsignaciones {
       );
     }
     Donacion donacion = repositorioDonaciones.buscarPorId(donacionId)
-        .orElseThrow(() -> new IllegalArgumentException(
+        .orElseThrow(() -> new RecursoInexistenteException(
             "No existe la donación con ID " + donacionId
         ));
     donacion.confirmarDestino(destinatario);
+    repositorioPropuestas.eliminar(donacionId);
   }
 
   private ResultadoMatchmaking calcularPropuesta(Donacion donacion) {

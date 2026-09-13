@@ -76,6 +76,16 @@ public class GestorEntregas {
     return entrega;
   }
 
+  public Entrega registrarMedicion(long entregaId, double pesoKg, double volumenM3) {
+    Entrega entrega = buscar(entregaId);
+    entrega.registrarMedicion(pesoKg, volumenM3);
+    return entrega;
+  }
+
+  public List<Entrega> pendientesDeMedicion() {
+    return repositorioEntregas.pendientesDeMedicion();
+  }
+
   public Entrega buscar(long entregaId) {
     return repositorioEntregas.buscarPorId(entregaId)
         .orElseThrow(() ->
@@ -93,13 +103,19 @@ public class GestorEntregas {
   }
 
   private void publicarResultado(Entrega entrega, ResultadoEntrega resultado) {
+    // La patente solo se manda si la entrega efectivamente se concretó. En NO_RECIBIDA la
+    // entrega todavia tiene patente cargada (se limpia recien en retornarADeposito), asi
+    // que hay que omitirla explicitamente.
+    String patente = resultado == ResultadoEntrega.ENTREGADA
+        ? entrega.getPatenteCamion()
+        : null;
+
     clienteDonaciones.publicarEntrega(
         EventoEntrega.de(
             entrega.getDonacionId(),
             resultado,
             entrega.getFechaHoraEntrega(),
-            entrega.getPatenteCamion(),
-            entrega.getFotos(),
+            patente,
             entrega.getMotivoNoRecepcion()
         )
     );

@@ -15,8 +15,11 @@ public class PersonaJuridica extends Persona {
         if (cuit == null) {
             throw new IllegalArgumentException("El CUIT es obligatorio.");
         }
+        if (razonSocial == null || razonSocial.isBlank()) {
+            throw new IllegalArgumentException("La razon social es obligatoria.");
+        }
         this.cuit = cuit.replaceAll("[^0-9]", "");
-        this.razonSocial = razonSocial;
+        this.razonSocial = razonSocial.trim();
         this.tipo = tipo;
         this.rubro = rubro;
     }

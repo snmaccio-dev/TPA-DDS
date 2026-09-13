@@ -1,5 +1,6 @@
 package donatrack.logistica.controller.dto;
 
+import donatrack.logistica.contrato.Fechas;
 import donatrack.logistica.domain.flota.Chofer;
 import donatrack.logistica.domain.ruta.RutaReparto;
 

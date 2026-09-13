@@ -60,9 +60,9 @@ src/main/java/donatrack/
 │   ├── entidad/         → EntidadBeneficiaria
 │   ├── contacto/        → MedioContacto, TipoContacto
 │   ├── usuario/         → Usuario
-│   ├── donacion/        → Donacion, Bien, Unidades, CondicionBien, CambioEstado
+│   ├── donacion/        → Donacion, Bien, CondicionBien, CambioEstado
 │   │   └── estado/      → EstadoDonacion (interfaz) + 7 estados concretos
-│   ├── catalogo/        → Categoria, Subcategoria
+│   ├── catalogo/        → Categoria, Subcategoria, Unidades
 │   └── necesidad/       → Necesidad, NecesidadRecurrente, NecesidadExtraordinaria, Periodo
 ├── notificacion/        → Notificador, 3 implementaciones, Observer, Servicio
 ├── importacion/         → ImportadorCSV (abstract), ImportadorCSVPersonas, PersonaFactory

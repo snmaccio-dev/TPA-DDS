@@ -28,7 +28,7 @@ public class GestorEntidadesBeneficiarias {
   public Beneficiaria buscar(long id) {
     return repositorioEntidades.buscarPorId(id)
         .orElseThrow(() ->
-            new IllegalArgumentException(
+            new RecursoInexistenteException(
                 "No existe la beneficiaria con id: " + id
             ));
   }
@@ -40,14 +40,18 @@ public class GestorEntidadesBeneficiarias {
   }
 
   public void actualizarDireccion(long id, String nuevaDireccion) {
+    if (nuevaDireccion == null || nuevaDireccion.isBlank()) {
+      throw new IllegalArgumentException("La direccion de la beneficiaria no puede quedar vacia.");
+    }
     Beneficiaria beneficiaria = buscar(id);
-    beneficiaria.getPersona().setDireccion(nuevaDireccion);
+    beneficiaria.getPersona().setDireccion(nuevaDireccion.trim());
   }
 
   public Optional<PersonaJuridica> buscarPorCuit(String cuit) {
     return repositorioPersonas.buscarJuridicaPorCuit(cuit);
   }
 
+  // Ya no decide si se escriben datos: sirve al front para saber qué campos precargar.
   public List<String> datosFaltantesParaBeneficiaria(PersonaJuridica juridica) {
     List<String> faltantes = new ArrayList<>();
     if (juridica.getDireccion() == null || juridica.getDireccion().isBlank()) {
@@ -61,29 +65,27 @@ public class GestorEntidadesBeneficiarias {
 
   public Beneficiaria registrarDePersonaExistente(String cuit, DatosEntidad datos) {
     PersonaJuridica juridica = repositorioPersonas.buscarJuridicaPorCuit(cuit)
-        .orElseThrow(() -> new IllegalArgumentException(
+        .orElseThrow(() -> new RecursoInexistenteException(
             "No existe una persona juridica con CUIT " + cuit
         ));
-    completarDatosFaltantes(juridica, datos);
+    aplicarDatosDeBeneficiaria(juridica, datos);
     return crearRol(juridica);
   }
 
   public Beneficiaria registrarConPersonaNueva(PersonaJuridica juridica, DatosEntidad datos) {
     repositorioPersonas.guardar(juridica);
-    completarDatosFaltantes(juridica, datos);
+    aplicarDatosDeBeneficiaria(juridica, datos);
     return crearRol(juridica);
   }
 
-  private void completarDatosFaltantes(PersonaJuridica juridica, DatosEntidad datos) {
+  private void aplicarDatosDeBeneficiaria(PersonaJuridica juridica, DatosEntidad datos) {
     if (datos == null) {
-      return;
+      throw new IllegalArgumentException(
+          "Los datos de la beneficiaria (direccion y telefono) son obligatorios."
+      );
     }
-    if ((juridica.getDireccion() == null || juridica.getDireccion().isBlank())
-        && datos.direccion() != null && !datos.direccion().isBlank()) {
-      juridica.setDireccion(datos.direccion());
-    }
-    if (!juridica.tieneContactoDeTipo(TipoContacto.TELEFONO)
-        && datos.telefono() != null && !datos.telefono().isBlank()) {
+    juridica.setDireccion(datos.direccion());
+    if (!juridica.tieneContacto(TipoContacto.TELEFONO, datos.telefono())) {
       juridica.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, datos.telefono()));
     }
   }

@@ -5,7 +5,7 @@ import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.CondicionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
-import donatrack.donaciones.domain.donacion.Unidades;
+import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.logistica.domain.flota.Camion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
@@ -97,8 +97,8 @@ public class EstadoDonacionTest {
   // === helpers ===
 
   private Donacion donacionDeCampera() {
-    Subcategoria ropa = new Subcategoria("Camperas de abrigo", new Categoria("Vestimenta"));
-    Bien campera = new Bien("Campera talle M nueva", ropa, 1, Unidades.UNIDADES, CondicionBien.NUEVO);
+    Subcategoria ropa = new Subcategoria("Camperas de abrigo", new Categoria("Vestimenta"), Unidades.UNIDADES);
+    Bien campera = new Bien("Campera talle M nueva", ropa, 1, CondicionBien.NUEVO);
     PersonaHumana persona = new PersonaHumana("Test", "Donante", 30, "0", Genero.MASCULINO);
     Donante donante = new Donante(persona);
     return new Donacion(List.of(campera), donante, "Campera nueva");
