@@ -1,32 +1,41 @@
 package donatrack.logistica.controller;
 
+import donatrack.logistica.controller.dto.CrearCamionRequest;
 import donatrack.logistica.service.GestorCamiones;
-import donatrack.logistica.domain.flota.Camion;
-
-import java.util.List;
+import io.javalin.Javalin;
+import io.javalin.http.Context;
 
 public class CamionesController {
 
-  private final GestorCamiones gestor =
-      new GestorCamiones();
+  private final GestorCamiones gestor;
 
-  // GET /camiones
-  public List<Camion> todas() {
-    return gestor.todas();
+  public CamionesController(GestorCamiones gestor) {
+    this.gestor = gestor;
   }
 
-  // GET /camiones/{patente}
-  public Camion buscar(String patente) {
-    return gestor.buscar(patente);
+  public void registrarRutas(Javalin app) {
+    app.get("/camiones", this::todos);
+    app.get("/camiones/{patente}", this::buscar);
+    app.post("/camiones", this::crear);
+    app.delete("/camiones/{patente}", this::eliminar);
   }
 
-  // POST /camiones
-  public Camion crear(Camion camion) {
-    return gestor.crear(camion);
+  private void todos(Context ctx) {
+    ctx.json(gestor.todas());
   }
 
-  // DELETE /camiones/{patente}
-  public void eliminar(String patente) {
-    gestor.eliminar(patente);
+  private void buscar(Context ctx) {
+    ctx.json(gestor.buscar(ctx.pathParam("patente")));
+  }
+
+  private void crear(Context ctx) {
+    CrearCamionRequest request = ctx.bodyAsClass(CrearCamionRequest.class);
+    ctx.status(201).json(gestor.crear(request.aCamion()));
+  }
+
+  private void eliminar(Context ctx) {
+    gestor.buscar(ctx.pathParam("patente"));
+    gestor.eliminar(ctx.pathParam("patente"));
+    ctx.status(204);
   }
 }

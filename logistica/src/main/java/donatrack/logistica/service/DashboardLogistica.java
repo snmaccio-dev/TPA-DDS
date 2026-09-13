@@ -1,6 +1,8 @@
 package donatrack.logistica.service;
 
 import donatrack.logistica.domain.flota.Camion;
+import donatrack.logistica.domain.monitoreo.EstadoRecorrido;
+import donatrack.logistica.domain.monitoreo.ProveedorUbicacion;
 
 public class DashboardLogistica {
 

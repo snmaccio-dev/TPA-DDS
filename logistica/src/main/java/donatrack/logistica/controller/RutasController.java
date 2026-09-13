@@ -1,32 +1,55 @@
 package donatrack.logistica.controller;
 
+import donatrack.logistica.controller.dto.EntregaDTO;
+import donatrack.logistica.controller.dto.IniciarRutaRequest;
+import donatrack.logistica.controller.dto.RutaDTO;
+import donatrack.logistica.service.GestorEntregas;
 import donatrack.logistica.service.GestorRutas;
-import donatrack.logistica.domain.ruta.RutaReparto;
-
-import java.util.List;
+import io.javalin.Javalin;
+import io.javalin.http.Context;
 
 public class RutasController {
 
-  private final GestorRutas gestor =
-      new GestorRutas();
+  private final GestorRutas gestorRutas;
+  private final GestorEntregas gestorEntregas;
 
-  // GET /rutas
-  public List<RutaReparto> todas() {
-    return gestor.todas();
+  public RutasController(GestorRutas gestorRutas, GestorEntregas gestorEntregas) {
+    this.gestorRutas = gestorRutas;
+    this.gestorEntregas = gestorEntregas;
   }
 
-  // GET /rutas/{id}
-  public RutaReparto buscar(long id) {
-    return gestor.buscar(id);
+  public void registrarRutas(Javalin app) {
+    app.get("/rutas", this::todas);
+    app.get("/rutas/{id}", this::buscar);
+    app.get("/rutas/{id}/entregas", this::entregas);
+    app.post("/rutas/{id}/inicio", this::iniciar);
+    app.delete("/rutas/{id}", this::eliminar);
   }
 
-  // POST /rutas
-  public RutaReparto crear(RutaReparto ruta) {
-    return gestor.crear(ruta);
+  private void todas(Context ctx) {
+    ctx.json(RutaDTO.desde(gestorRutas.todas()));
   }
 
-  // DELETE /rutas/{id}
-  public void eliminar(long id) {
-    gestor.eliminar(id);
+  private void buscar(Context ctx) {
+    ctx.json(RutaDTO.desde(gestorRutas.buscar(idDe(ctx))));
+  }
+
+  private void entregas(Context ctx) {
+    ctx.json(EntregaDTO.desde(gestorEntregas.deRuta(idDe(ctx))));
+  }
+
+  private void iniciar(Context ctx) {
+    IniciarRutaRequest request = ctx.bodyAsClass(IniciarRutaRequest.class);
+    ctx.json(RutaDTO.desde(gestorEntregas.iniciarRuta(idDe(ctx), request.aChofer())));
+  }
+
+  private void eliminar(Context ctx) {
+    gestorRutas.buscar(idDe(ctx));
+    gestorRutas.eliminar(idDe(ctx));
+    ctx.status(204);
+  }
+
+  private long idDe(Context ctx) {
+    return ctx.pathParamAsClass("id", Long.class).get();
   }
 }

@@ -1,24 +1,31 @@
 package donatrack.logistica.domain.ruta;
 
-import donatrack.donaciones.domain.donacion.Donacion;
+import donatrack.logistica.domain.entrega.Entrega;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DestinoEntrega {
 
-  private String direccion;
-  private List<Donacion> donaciones;
+  private final String direccion;
+  private final List<Entrega> entregas;
 
-  public DestinoEntrega(String direccion, List<Donacion> donaciones) {
+  public DestinoEntrega(String direccion, List<Entrega> entregas) {
+    if (direccion == null || direccion.isBlank()) {
+      throw new IllegalArgumentException("El destino debe tener una direccion.");
+    }
+    if (entregas == null || entregas.isEmpty()) {
+      throw new IllegalArgumentException("El destino debe tener al menos una entrega.");
+    }
     this.direccion = direccion;
-    this.donaciones = donaciones;
+    this.entregas = new ArrayList<>(entregas);
   }
 
   public String getDireccion() {
     return direccion;
   }
 
-  public List<Donacion> getDonaciones() {
-    return donaciones;
+  public List<Entrega> getEntregas() {
+    return new ArrayList<>(entregas);
   }
 }
