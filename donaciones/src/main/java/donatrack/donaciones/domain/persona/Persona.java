@@ -1,6 +1,7 @@
 package donatrack.donaciones.domain.persona;
 
 import donatrack.donaciones.domain.contacto.MedioContacto;
+import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.usuario.Usuario;
 
 import java.util.ArrayList;
@@ -16,6 +17,12 @@ public abstract class Persona {
     protected final List<Rol> roles = new ArrayList<>();
 
     public abstract String getNombreDisplay();
+
+    public abstract String getDocumento();
+
+    public boolean tieneContactoDeTipo(TipoContacto tipo) {
+        return contactos.stream().anyMatch(c -> c.getTipo() == tipo);
+    }
 
     public void agregarMedioContacto(MedioContacto medio) {
         contactos.add(medio);
@@ -47,7 +54,7 @@ public abstract class Persona {
     }
 
     public List<Rol> getRoles() {
-        return roles;
+        return List.copyOf(roles);
     }
 
     public String getDireccion() {
@@ -59,11 +66,18 @@ public abstract class Persona {
     }
 
     public List<MedioContacto> getContactos() {
-        return contactos;
+        return List.copyOf(contactos);
     }
 
     public MedioContacto getContactoPredeterminado() {
         return contactoPredeterminado;
+    }
+
+    public Optional<MedioContacto> getContactoParaNotificar() {
+        if (contactoPredeterminado != null) {
+            return Optional.of(contactoPredeterminado);
+        }
+        return contactos.stream().findFirst();
     }
 
     public void setContactoPredeterminado(MedioContacto contactoPredeterminado) {

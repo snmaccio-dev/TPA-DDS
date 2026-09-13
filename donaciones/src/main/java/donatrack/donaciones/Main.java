@@ -1,5 +1,9 @@
 package donatrack.donaciones;
 
+import donatrack.donaciones.repository.RepositorioPropuestas;
+import donatrack.donaciones.service.GestorAsignaciones;
+import donatrack.donaciones.service.GestorNotificaciones;
+import donatrack.donaciones.service.PlanificadorAsignaciones;
 import donatrack.donaciones.service.SegmentadorDonaciones;
 import donatrack.donaciones.service.importacion.ImportadorCSVPersonas;
 import donatrack.donaciones.domain.catalogo.Categoria;
@@ -34,12 +38,21 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("=== DonaTrack — Entrega 1 ===\n");
 
-        demo1_crearPersonas();
-        demo2_segmentacionDonaciones();
-        demo3_estadosDonacion();
-        demo4_importacionCSV();
-        demo5_notificaciones();
-        demo6_entidadBeneficiaria();
+        RepositorioPropuestas repositorioPropuestas = new RepositorioPropuestas();
+        GestorAsignaciones gestorAsignaciones = new GestorAsignaciones(repositorioPropuestas);
+        PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(gestorAsignaciones);
+        planificador.iniciar();
+
+        try {
+            demo1_crearPersonas();
+            demo2_segmentacionDonaciones();
+            demo3_estadosDonacion();
+            demo4_importacionCSV();
+            demo5_notificaciones();
+            demo6_entidadBeneficiaria();
+        } finally {
+            planificador.detener();
+        }
     }
 
     static void demo1_crearPersonas() {
@@ -52,7 +65,7 @@ public class Main {
         System.out.println("Persona humana creada: " + ana.getNombreDisplay()
                 + " | Contacto predeterminado: " + ana.getContactoPredeterminado().getValor());
 
-        PersonaJuridica arcos = new PersonaJuridica("Arcos Plateados S.A.", TipoOrganizacion.EMPRESA, "Construccion");
+        PersonaJuridica arcos = new PersonaJuridica("30-12345678-1", "Arcos Plateados S.A.", TipoOrganizacion.EMPRESA, "Construccion");
         arcos.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "contacto@arcos.com"));
         arcos.agregarRepresentante(ana);
         System.out.println("Persona juridica creada: " + arcos.getNombreDisplay()
@@ -63,7 +76,7 @@ public class Main {
     static void demo2_segmentacionDonaciones() {
         System.out.println("--- [2] Segmentacion automatica de donaciones por subcategoria ---");
 
-        PersonaJuridica arcos = new PersonaJuridica("Arcos Plateados", TipoOrganizacion.EMPRESA, "Mudanza");
+        PersonaJuridica arcos = new PersonaJuridica("30-12345678-2", "Arcos Plateados", TipoOrganizacion.EMPRESA, "Mudanza");
         arcos.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "arcos@demo.com"));
 
         Categoria mobiliario = new Categoria("Mobiliario");
@@ -109,11 +122,16 @@ public class Main {
         Bien campera = new Bien("Campera talle M nueva", ropa, 1, Unidades.UNIDADES, CondicionBien.USADO);
         Donacion donacion = new Donacion(List.of(campera), donante, "Campera de abrigo en desuso");
 
+        GestorNotificaciones gestorNotificaciones = new GestorNotificaciones(List.of(
+            new NotificadorEmail(),
+            new NotificadorSMS(),
+            new NotificadorWhatsApp()
+        ));
         donacion.agregarObserver(
-            new NotificadorDonacionObserver(donante, new NotificadorWhatsApp())
+            new NotificadorDonacionObserver(donante, gestorNotificaciones)
         );
 
-        PersonaJuridica escuelaOrg = new PersonaJuridica("Escuela Demo", TipoOrganizacion.INSTITUCION, "Educacion");
+        PersonaJuridica escuelaOrg = new PersonaJuridica("30-99999999-1", "Escuela Demo", TipoOrganizacion.INSTITUCION, "Educacion");
         Beneficiaria escuela = new Beneficiaria(escuelaOrg);
         Camion camion = new Camion("AAA111", 10, 3, 1000);
 
@@ -138,9 +156,9 @@ public class Main {
             + " | destinatario: " + donacion.getDestinatarioAsignado()
             + " | camion: " + donacion.getCamion());
 
-        System.out.print("Transicion invalida (confirmarRecepcion desde EN_DEPOSITO): ");
+        System.out.print("Transicion invalida (marcarEntregada desde EN_DEPOSITO): ");
         try {
-            donacion.confirmarRecepcion(List.of());
+            donacion.marcarEntregada(java.time.LocalDateTime.now(), "AAA111");
         } catch (IllegalStateException e) {
             System.out.println("excepcion capturada correctamente → " + e.getMessage());
         }
@@ -177,13 +195,13 @@ public class Main {
         Subcategoria bancos = new Subcategoria("Bancos escolares", mobiliario);
         Subcategoria fideos = new Subcategoria("Fideos secos",     alimentos);
 
-        PersonaJuridica escuelaOrg = new PersonaJuridica("Escuela Rural N10", TipoOrganizacion.INSTITUCION, "Educacion");
+        PersonaJuridica escuelaOrg = new PersonaJuridica("30-77777777-1", "Escuela Rural N10", TipoOrganizacion.INSTITUCION, "Educacion");
         escuelaOrg.setDireccion("Ruta 3 km 42, Provincia de Buenos Aires");
         escuelaOrg.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "escuela10@edu.ar"));
         Beneficiaria escuela = new Beneficiaria(escuelaOrg);
         escuela.registrarNecesidad(new NecesidadRecurrente("Reposicion tras inundacion", 30, bancos, Periodo.MENSUAL));
 
-        PersonaJuridica comedorOrg = new PersonaJuridica("Escobar Sonrisas", TipoOrganizacion.ONG, "Comedor");
+        PersonaJuridica comedorOrg = new PersonaJuridica("30-66666666-1", "Escobar Sonrisas", TipoOrganizacion.ONG, "Comedor");
         Beneficiaria comedor = new Beneficiaria(comedorOrg);
         comedor.registrarNecesidad(new NecesidadRecurrente("Consumo semanal habitual", 100, fideos, Periodo.SEMANAL));
 

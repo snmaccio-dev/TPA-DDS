@@ -1,9 +1,15 @@
 package donatrack.donaciones.controller;
 
 import donatrack.donaciones.service.GestorDonaciones;
-import donatrack.donaciones.domain.donacion.CambioEstado;
+import donatrack.donaciones.service.GestorNotificaciones;
+import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.Comprobante;
+import donatrack.donaciones.domain.donacion.estado.EstadoDonacion;
+import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.Donante;
+import donatrack.donaciones.infrastructure.notificacion.NotificadorEmail;
+import donatrack.donaciones.infrastructure.notificacion.NotificadorSMS;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorWhatsApp;
 
 import java.util.List;
@@ -11,7 +17,11 @@ import java.util.List;
 public class DonacionesController {
 
   private final GestorDonaciones gestor =
-      new GestorDonaciones(new NotificadorWhatsApp());
+      new GestorDonaciones(new GestorNotificaciones(List.of(
+          new NotificadorEmail(),
+          new NotificadorSMS(),
+          new NotificadorWhatsApp()
+      )));
 
   // GET /donaciones
   public List<Donacion> todas() {
@@ -24,8 +34,8 @@ public class DonacionesController {
   }
 
   // POST /donaciones
-  public Donacion crear(Donacion donacion) {
-    return gestor.crear(donacion);
+  public List<Donacion> crear(List<Bien> bienes, Donante donante, String descripcion) {
+    return gestor.crear(bienes, donante, descripcion);
   }
 
   // DELETE /donaciones/{id}
@@ -33,8 +43,20 @@ public class DonacionesController {
     gestor.eliminar(id);
   }
 
-  public void confirmarRecepcion(long id, List<String> fotos) {
-    gestor.confirmarRecepcion(id, fotos);
+  public void confirmarDestino(long id, Beneficiaria destinatario) {
+    gestor.confirmarDestino(id, destinatario);
+  }
+
+  public void marcarListaParaEntregar(long id) {
+    gestor.marcarListaParaEntregar(id);
+  }
+
+  public void marcarEnTraslado(long id) {
+    gestor.marcarEnTraslado(id);
+  }
+
+  public void marcarEntregada(long id, java.time.LocalDateTime fechaHora, String patenteCamion) {
+    gestor.marcarEntregada(id, fechaHora, patenteCamion);
   }
 
   public void marcarEntregaFallida(long id, String motivo) {
@@ -45,8 +67,8 @@ public class DonacionesController {
     gestor.marcarEnDeposito(id);
   }
 
-  public void vencer(long id) {
-    gestor.vencer(id);
+  public void marcarVencida(long id) {
+    gestor.marcarVencida(id);
   }
 
   // GET /donaciones/{id}/comprobante
@@ -55,7 +77,7 @@ public class DonacionesController {
   }
 
   // GET /donaciones/{id}/historial
-  public List<CambioEstado> historial(long id) {
+  public List<EstadoDonacion> historial(long id) {
     return gestor.historial(id);
   }
 }

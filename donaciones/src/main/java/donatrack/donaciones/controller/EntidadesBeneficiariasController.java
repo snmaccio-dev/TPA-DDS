@@ -1,14 +1,19 @@
 package donatrack.donaciones.controller;
 
+import donatrack.donaciones.service.DatosEntidad;
 import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
 import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.PersonaJuridica;
 
 import java.util.List;
+import java.util.Optional;
 
 public class EntidadesBeneficiariasController {
 
   private final GestorEntidadesBeneficiarias gestor =
       new GestorEntidadesBeneficiarias();
+
+  public record ConsultaCuit(boolean existePersona, List<String> datosFaltantes) {}
 
   // GET /entidades
   public List<Beneficiaria> todas() {
@@ -20,9 +25,23 @@ public class EntidadesBeneficiariasController {
     return gestor.buscar(id);
   }
 
-  // POST /entidades
-  public Beneficiaria crear(Beneficiaria beneficiaria) {
-    return gestor.crear(beneficiaria);
+  // GET /entidades/consulta?cuit=...
+  public ConsultaCuit consultarPorCuit(String cuit) {
+    Optional<PersonaJuridica> encontrada = gestor.buscarPorCuit(cuit);
+    if (encontrada.isPresent()) {
+      return new ConsultaCuit(true, gestor.datosFaltantesParaBeneficiaria(encontrada.get()));
+    }
+    return new ConsultaCuit(false, List.of("direccion", "telefono"));
+  }
+
+  // POST /entidades/existente  { cuit, direccion?, telefono? }
+  public Beneficiaria altaDePersonaExistente(String cuit, DatosEntidad datos) {
+    return gestor.registrarDePersonaExistente(cuit, datos);
+  }
+
+  // POST /entidades/nueva  { juridica, direccion?, telefono? }
+  public Beneficiaria altaConPersonaNueva(PersonaJuridica juridica, DatosEntidad datos) {
+    return gestor.registrarConPersonaNueva(juridica, datos);
   }
 
   // DELETE /entidades/{id}

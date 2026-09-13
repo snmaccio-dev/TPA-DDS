@@ -14,6 +14,7 @@ public class RepositorioEntidades {
     private static RepositorioEntidades instancia;
 
     private final Map<Long, Beneficiaria> beneficiarias = new HashMap<>();
+    private final Map<String, Beneficiaria> porCuit = new HashMap<>();
 
     private RepositorioEntidades() {
     }
@@ -27,10 +28,15 @@ public class RepositorioEntidades {
 
     public void guardar(Beneficiaria beneficiaria) {
         beneficiarias.put(beneficiaria.getId(), beneficiaria);
+        porCuit.put(beneficiaria.getPersona().getCuit(), beneficiaria);
     }
 
     public Optional<Beneficiaria> buscarPorId(long id) {
         return Optional.ofNullable(beneficiarias.get(id));
+    }
+
+    public Optional<Beneficiaria> buscarPorCuit(String cuit) {
+        return Optional.ofNullable(porCuit.get(cuit));
     }
 
     public List<Beneficiaria> todas() {
@@ -38,6 +44,9 @@ public class RepositorioEntidades {
     }
 
     public void eliminar(long id) {
-        beneficiarias.remove(id);
+        Beneficiaria beneficiaria = beneficiarias.remove(id);
+        if (beneficiaria != null) {
+            porCuit.remove(beneficiaria.getPersona().getCuit());
+        }
     }
 }

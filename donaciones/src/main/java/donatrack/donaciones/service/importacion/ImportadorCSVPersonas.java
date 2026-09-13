@@ -20,18 +20,16 @@ public class ImportadorCSVPersonas extends ImportadorCSV<Persona> {
 
   @Override
   protected Persona procesarFila(String[] campos) {
-    String email = PersonaFactory.extraerEmail(campos);
     Persona persona = PersonaFactory.crear(campos);
 
-    if (repositorio.existe(email)) {
+    if (repositorio.buscarPorDocumento(persona.getDocumento()).isPresent()) {
       actualizados++;
-    } else {
-      creados++;
+      return persona;
     }
+    creados++;
 
     new Donante(persona);
-
-    repositorio.guardar(email, persona);
+    repositorio.guardar(persona);
 
     return persona;
   }

@@ -1,4 +1,4 @@
-package donatrack.donaciones.domain.persona;
+package donatrack.donaciones.service.importacion;
 
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
@@ -50,12 +50,12 @@ public class PersonaFactory {
     }
 
     private static PersonaJuridica crearPersonaJuridica(String[] campos) {
-        String documento   = campos[2].trim();
+        String cuit        = campos[2].trim();
         String razonSocial = campos[3].trim();
         String email       = campos[4].trim();
         String telefono    = campos[5].trim();
 
-        PersonaJuridica persona = new PersonaJuridica(razonSocial, TipoOrganizacion.EMPRESA, "");
+        PersonaJuridica persona = new PersonaJuridica(cuit, razonSocial, TipoOrganizacion.EMPRESA, "");
         persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
         if (!telefono.isBlank()) {
             persona.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, telefono));

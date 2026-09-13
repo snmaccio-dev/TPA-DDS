@@ -10,6 +10,7 @@ import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.usuario.Usuario;
+import donatrack.donaciones.service.GestorNotificaciones;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -20,13 +21,13 @@ public class NotificadorDonacionObserverTest {
   @Test
   public void onCambioEstadoArmaElMensajeYLlamaAlServicio() {
     Donante donante = donanteAna();
-    Notificador servicioFalso = mock(Notificador.class);
-    NotificadorDonacionObserver observer = new NotificadorDonacionObserver(donante, servicioFalso);
+    GestorNotificaciones gestorFalso = mock(GestorNotificaciones.class);
+    NotificadorDonacionObserver observer = new NotificadorDonacionObserver(donante, gestorFalso);
 
     observer.onCambioEstado(donacionDeSillas(donante), "EN_DEPOSITO", "ASIGNACION_REALIZADA");
 
     String mensajeEsperado = "Su donacion de [Sillas] cambio de estado: EN_DEPOSITO → ASIGNACION_REALIZADA";
-    verify(servicioFalso, times(1)).notificar(donante.getPersona().getUsuario().getNombre(), mensajeEsperado);
+    verify(gestorFalso, times(1)).notificar(donante.getPersona(), mensajeEsperado);
   }
 
   private Donante donanteAna() {

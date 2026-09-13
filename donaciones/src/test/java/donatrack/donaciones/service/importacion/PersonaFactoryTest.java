@@ -1,4 +1,4 @@
-package donatrack.donaciones.domain.persona;
+package donatrack.donaciones.service.importacion;
 
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.domain.persona.PersonaHumana;

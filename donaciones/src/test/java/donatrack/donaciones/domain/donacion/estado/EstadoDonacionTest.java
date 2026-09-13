@@ -3,7 +3,6 @@ package donatrack.donaciones.domain.donacion.estado;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.donacion.Bien;
-import donatrack.donaciones.domain.donacion.CambioEstado;
 import donatrack.donaciones.domain.donacion.CondicionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.Unidades;
@@ -38,10 +37,10 @@ public class EstadoDonacionTest {
     donacion.marcarEnTraslado();
     assertEquals("EN_TRASLADO", donacion.getEstado().getNombre());
 
-    donacion.confirmarRecepcion(List.of("foto1.jpg"));
+    donacion.marcarEntregada(java.time.LocalDateTime.now(), "AAA111");
     assertEquals("ENTREGADA", donacion.getEstado().getNombre());
     assertNotNull(donacion.getFechaHoraEntrega());
-    assertEquals(List.of("foto1.jpg"), donacion.getFotos());
+    assertEquals("AAA111", donacion.getDatosEntrega().getPatenteCamion());
     assertTrue(escuela.getDonacionesRecibidas().contains(donacion));
   }
 
@@ -53,8 +52,9 @@ public class EstadoDonacionTest {
     donacion.marcarEntregaFallida("Nadie recibio");
     assertEquals("ENTREGA_FALLIDA", donacion.getEstado().getNombre());
 
-    CambioEstado ultimo = donacion.getHistorialEstados().get(donacion.getHistorialEstados().size() - 1);
-    assertEquals("Nadie recibio", ultimo.getMotivo());
+    EstadoDonacion ultimo = donacion.getHistorialEstados().get(donacion.getHistorialEstados().size() - 1);
+    assertTrue(ultimo instanceof EstadoEntregaFallida);
+    assertEquals("Nadie recibio", ((EstadoEntregaFallida) ultimo).getJustificacion());
   }
 
   @Test
@@ -76,9 +76,9 @@ public class EstadoDonacionTest {
   }
 
   @Test
-  public void vencerEsValidoDesdeEnDeposito() {
+  public void marcarVencidaEsValidoDesdeEnDeposito() {
     Donacion donacion = donacionDeCampera();
-    donacion.vencer();
+    donacion.marcarVencida();
     assertEquals("VENCIDA", donacion.getEstado().getNombre());
   }
 
@@ -114,7 +114,7 @@ public class EstadoDonacionTest {
   }
 
   private Beneficiaria beneficiaria() {
-    PersonaJuridica org = new PersonaJuridica("Escuela Test", TipoOrganizacion.INSTITUCION, "Educacion");
+    PersonaJuridica org = new PersonaJuridica("30-11111111-1", "Escuela Test", TipoOrganizacion.INSTITUCION, "Educacion");
     return new Beneficiaria(org);
   }
 

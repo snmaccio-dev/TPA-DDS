@@ -22,7 +22,7 @@ public class GestorDonacionesTest {
   }
 
   private PersonaJuridica donanteArcosPlateados() {
-    return new PersonaJuridica("Arcos Plateados S.A.", TipoOrganizacion.EMPRESA, "Mudanza");
+    return new PersonaJuridica("30-55555555-1", "Arcos Plateados S.A.", TipoOrganizacion.EMPRESA, "Mudanza");
   }
 
   private List<Bien> bienesVariados() {

@@ -33,6 +33,7 @@ public class PersonaHumana extends Persona {
         return edad;
     }
 
+    @Override
     public String getDocumento() {
         return documento;
     }

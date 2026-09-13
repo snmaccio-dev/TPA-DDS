@@ -1,10 +1,12 @@
 package donatrack.donaciones.service;
 
-import donatrack.donaciones.domain.donacion.CambioEstado;
+import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.Donacion;
+import donatrack.donaciones.domain.donacion.estado.EstadoDonacion;
 import donatrack.donaciones.domain.notificacion.NotificadorDonacionObserver;
 import donatrack.donaciones.domain.notificacion.NotificarBeneficiariaAsignacionObserver;
-import donatrack.donaciones.domain.notificacion.Notificador;
+import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 
 import java.util.List;
@@ -14,10 +16,10 @@ public class GestorDonaciones {
     private final SegmentadorDonaciones segmentacion = new SegmentadorDonaciones();
     private final RepositorioDonaciones repositorio =
         RepositorioDonaciones.getInstance();
-    private final Notificador notificador;
+    private final GestorNotificaciones gestorNotificaciones;
 
-    public GestorDonaciones(Notificador notificador) {
-        this.notificador = notificador;
+    public GestorDonaciones(GestorNotificaciones gestorNotificaciones) {
+        this.gestorNotificaciones = gestorNotificaciones;
     }
 
     public List<Donacion> todas() {
@@ -32,15 +34,21 @@ public class GestorDonaciones {
                 ));
     }
 
-    public Donacion crear(Donacion donacion) {
+    public List<Donacion> crear(List<Bien> bienes, Donante donante, String descripcion) {
+        List<Donacion> segmentadas = segmentacion.segmentar(bienes, donante, descripcion);
+        segmentadas.forEach(this::registrarDonacion);
+        return segmentadas;
+    }
+
+    private void registrarDonacion(Donacion donacion) {
         donacion.agregarObserver(
-            new NotificadorDonacionObserver(donacion.getDonante(), notificador)
+            new NotificadorDonacionObserver(donacion.getDonante(), gestorNotificaciones)
         );
         donacion.agregarObserver(
-            new NotificarBeneficiariaAsignacionObserver(notificador)
+            new NotificarBeneficiariaAsignacionObserver(gestorNotificaciones)
         );
+        donacion.getDonante().registrarDonacion(donacion);
         repositorio.guardar(donacion);
-        return donacion;
     }
 
     public void eliminar(long id) {
@@ -49,8 +57,20 @@ public class GestorDonaciones {
 
     // === Transiciones del ciclo de la Donacion ===
 
-    public void confirmarRecepcion(long id, java.util.List<String> fotos) {
-        buscar(id).confirmarRecepcion(fotos);
+    public void confirmarDestino(long id, Beneficiaria destinatario) {
+        buscar(id).confirmarDestino(destinatario);
+    }
+
+    public void marcarListaParaEntregar(long id) {
+        buscar(id).marcarListaParaEntregar();
+    }
+
+    public void marcarEnTraslado(long id) {
+        buscar(id).marcarEnTraslado();
+    }
+
+    public void marcarEntregada(long id, java.time.LocalDateTime fechaHora, String patenteCamion) {
+        buscar(id).marcarEntregada(fechaHora, patenteCamion);
     }
 
     public void marcarEntregaFallida(long id, String motivo) {
@@ -61,11 +81,11 @@ public class GestorDonaciones {
         buscar(id).marcarEnDeposito();
     }
 
-    public void vencer(long id) {
-        buscar(id).vencer();
+    public void marcarVencida(long id) {
+        buscar(id).marcarVencida();
     }
 
-    public List<CambioEstado> historial(long id) {
+    public List<EstadoDonacion> historial(long id) {
         return buscar(id).getHistorialEstados();
     }
 }

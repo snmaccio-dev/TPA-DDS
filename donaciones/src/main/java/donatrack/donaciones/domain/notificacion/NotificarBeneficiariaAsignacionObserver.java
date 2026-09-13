@@ -2,16 +2,17 @@ package donatrack.donaciones.domain.notificacion;
 
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.service.GestorNotificaciones;
 
 // Observer concreto — notifica a la beneficiaria cuando queda confirmada como destinataria
 public class NotificarBeneficiariaAsignacionObserver implements DonacionObserver {
 
     private static final String ESTADO_ASIGNACION = "ASIGNACION_REALIZADA";
 
-    private final Notificador notificador;
+    private final GestorNotificaciones gestor;
 
-    public NotificarBeneficiariaAsignacionObserver(Notificador notificador) {
-        this.notificador = notificador;
+    public NotificarBeneficiariaAsignacionObserver(GestorNotificaciones gestor) {
+        this.gestor = gestor;
     }
 
     @Override
@@ -25,6 +26,6 @@ public class NotificarBeneficiariaAsignacionObserver implements DonacionObserver
         }
         String mensaje = "Se le asigno una donacion de ["
             + donacion.getSubcategoria().getNombre() + "].";
-        notificador.notificar(destinatario.getPersona().getRazonSocial(), mensaje);
+        gestor.notificar(destinatario.getPersona(), mensaje);
     }
 }

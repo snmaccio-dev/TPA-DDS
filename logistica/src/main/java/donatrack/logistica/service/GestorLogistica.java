@@ -1,7 +1,7 @@
 package donatrack.logistica.service;
 
 import donatrack.donaciones.domain.donacion.Donacion;
-import donatrack.donaciones.domain.donacion.estado.EstadoDonacion;
+import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.logistica.domain.flota.Camion;
 import donatrack.logistica.domain.planificacion.GeneradorRutas;
 import donatrack.logistica.domain.ruta.RutaReparto;
@@ -27,7 +27,7 @@ public class GestorLogistica {
 
     List<Donacion> asignadas = donaciones.stream()
         .filter(d ->
-            d.getEstado() == EstadoDonacion.ASIGNACION_REALIZADA)
+            d.getEstado().getEstado() == EstadosPosiblesDonacion.ASIGNACION_REALIZADA)
         .toList();
 
     List<List<Donacion>> lotes =

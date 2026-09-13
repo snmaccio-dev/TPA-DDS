@@ -2,6 +2,8 @@ package donatrack.donaciones.domain.donacion;
 
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.donacion.estado.EstadoDonacion;
+import donatrack.donaciones.domain.donacion.estado.EstadoEntregaFallida;
+import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.notificacion.DonacionObserver;
@@ -20,8 +22,7 @@ public class Donacion {
     private Donante donante;
     private Beneficiaria destinatarioAsignado;
     private DatosEntrega datosEntrega;
-    private List<String> fotos = new ArrayList<>();
-    private List<CambioEstado> historialEstados = new ArrayList<>();
+    private List<EstadoDonacion> historialEstados = new ArrayList<>();
 
     // Observer — lista de observadores del ciclo de vida
     private final List<DonacionObserver> observers = new ArrayList<>();
@@ -42,68 +43,65 @@ public class Donacion {
         this.bienes = new ArrayList<>(bienes);
         this.donante = donante;
         this.descripcion = descripcion;
-        this.estado = EstadoDonacion.EN_DEPOSITO;
+        this.estado = new EstadoDonacion(EstadosPosiblesDonacion.EN_DEPOSITO);
+        this.historialEstados.add(this.estado);
     }
 
     // === Transiciones ===
 
     public void confirmarDestino(Beneficiaria destinatario) {
-        exigirEstado("confirmar el destino", EstadoDonacion.EN_DEPOSITO);
+        exigirEstado("confirmar el destino", EstadosPosiblesDonacion.EN_DEPOSITO);
         if (destinatario == null) {
             throw new IllegalArgumentException(
                 "Debe especificarse un destinatario para confirmar el destino."
             );
         }
         this.destinatarioAsignado = destinatario;
-        cambiarEstado(EstadoDonacion.ASIGNACION_REALIZADA);
+        cambiarEstado(new EstadoDonacion(EstadosPosiblesDonacion.ASIGNACION_REALIZADA));
     }
 
     public void marcarListaParaEntregar() {
-        exigirEstado("marcar lista para entregar", EstadoDonacion.ASIGNACION_REALIZADA);
-        cambiarEstado(EstadoDonacion.LISTA_PARA_ENTREGAR);
+        exigirEstado("marcar lista para entregar", EstadosPosiblesDonacion.ASIGNACION_REALIZADA);
+        cambiarEstado(new EstadoDonacion(EstadosPosiblesDonacion.LISTA_PARA_ENTREGAR));
     }
 
     public void marcarEnTraslado() {
-        exigirEstado("marcar en traslado", EstadoDonacion.LISTA_PARA_ENTREGAR);
-        cambiarEstado(EstadoDonacion.EN_TRASLADO);
+        exigirEstado("marcar en traslado", EstadosPosiblesDonacion.LISTA_PARA_ENTREGAR);
+        cambiarEstado(new EstadoDonacion(EstadosPosiblesDonacion.EN_TRASLADO));
     }
 
-    public void confirmarRecepcion(List<String> fotos) {
-        exigirEstado("confirmar la recepcion", EstadoDonacion.EN_TRASLADO);
-        if (datosEntrega == null) {
-            datosEntrega = new DatosEntrega(LocalDateTime.now(), null);
-        } else {
-            datosEntrega.setFechaHora(LocalDateTime.now());
-        }
-        this.fotos = new ArrayList<>(fotos);
-        cambiarEstado(EstadoDonacion.ENTREGADA);
+    public void marcarEntregada(LocalDateTime fechaHora, String patenteCamion) {
+        exigirEstado("marcar entregada", EstadosPosiblesDonacion.EN_TRASLADO);
+        this.datosEntrega = new DatosEntrega(fechaHora, patenteCamion);
+        cambiarEstado(new EstadoDonacion(EstadosPosiblesDonacion.ENTREGADA));
         destinatarioAsignado.registrarDonacionRecibida(this);
     }
 
     public void marcarEntregaFallida(String motivo) {
-        exigirEstado("marcar entrega fallida", EstadoDonacion.EN_TRASLADO);
-        cambiarEstado(EstadoDonacion.ENTREGA_FALLIDA, motivo);
+        exigirEstado("marcar entrega fallida", EstadosPosiblesDonacion.EN_TRASLADO);
+        cambiarEstado(new EstadoEntregaFallida(motivo));
     }
 
     public void marcarEnDeposito() {
-        exigirEstado("marcar en deposito", EstadoDonacion.ENTREGA_FALLIDA);
+        exigirEstado("marcar en deposito", EstadosPosiblesDonacion.ENTREGA_FALLIDA);
         this.destinatarioAsignado = null;
         this.datosEntrega = null;
-        cambiarEstado(EstadoDonacion.EN_DEPOSITO);
+        cambiarEstado(new EstadoDonacion(EstadosPosiblesDonacion.EN_DEPOSITO));
     }
 
-    public void vencer() {
-        if (estado == EstadoDonacion.ENTREGADA || estado == EstadoDonacion.VENCIDA) {
+    public void marcarVencida() {
+        EstadosPosiblesDonacion actual = estado.getEstado();
+        if (actual == EstadosPosiblesDonacion.ENTREGADA || actual == EstadosPosiblesDonacion.VENCIDA) {
             throw new IllegalStateException(
                 "No se puede vencer desde el estado " + estado.getNombre() + "."
             );
         }
-        cambiarEstado(EstadoDonacion.VENCIDA);
+        cambiarEstado(new EstadoDonacion(EstadosPosiblesDonacion.VENCIDA));
     }
 
-    private void exigirEstado(String accion, EstadoDonacion... permitidos) {
-        for (EstadoDonacion permitido : permitidos) {
-            if (estado == permitido) return;
+    private void exigirEstado(String accion, EstadosPosiblesDonacion... permitidos) {
+        for (EstadosPosiblesDonacion permitido : permitidos) {
+            if (estado.getEstado() == permitido) return;
         }
         throw new IllegalStateException(
             "No se puede " + accion + " desde el estado " + estado.getNombre() + "."
@@ -111,7 +109,7 @@ public class Donacion {
     }
 
     public Comprobante generarComprobante() {
-        if (estado != EstadoDonacion.ENTREGADA) {
+        if (estado.getEstado() != EstadosPosiblesDonacion.ENTREGADA) {
             throw new IllegalStateException("Solo se genera comprobante de una donacion entregada.");
         }
         return new Comprobante(
@@ -158,12 +156,12 @@ public class Donacion {
         return datosEntrega;
     }
 
-    public void asignarDatosEntrega(DatosEntrega datosEntrega) {
-        this.datosEntrega = datosEntrega;
+    public LocalDateTime getFechaHoraEntrega() {
+        return datosEntrega == null ? null : datosEntrega.getFechaHora();
     }
 
-    public List<String> getFotos() {
-        return fotos;
+    public void asignarDatosEntrega(DatosEntrega datosEntrega) {
+        this.datosEntrega = datosEntrega;
     }
 
     public Subcategoria getSubcategoria() {
@@ -195,19 +193,15 @@ public class Donacion {
     }
 
     private void cambiarEstado(EstadoDonacion nuevoEstado) {
-        cambiarEstado(nuevoEstado, null);
-    }
-
-    private void cambiarEstado(EstadoDonacion nuevoEstado, String motivo) {
         String anterior = this.estado.getNombre();
         String nuevo = nuevoEstado.getNombre();
 
         this.estado = nuevoEstado;
-        historialEstados.add(new CambioEstado(anterior, nuevo, motivo));
+        historialEstados.add(nuevoEstado);
         notificarObservers(anterior, nuevo);
     }
 
-    public List<CambioEstado> getHistorialEstados() {
+    public List<EstadoDonacion> getHistorialEstados() {
         return historialEstados;
     }
 

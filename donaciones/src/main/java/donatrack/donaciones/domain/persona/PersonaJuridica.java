@@ -5,12 +5,17 @@ import java.util.List;
 
 public class PersonaJuridica extends Persona {
 
+    private final String cuit;
     private String razonSocial;
     private TipoOrganizacion tipo;
     private String rubro;
     private List<PersonaHumana> representantes = new ArrayList<>();
 
-    public PersonaJuridica(String razonSocial, TipoOrganizacion tipo, String rubro) {
+    public PersonaJuridica(String cuit, String razonSocial, TipoOrganizacion tipo, String rubro) {
+        if (cuit == null) {
+            throw new IllegalArgumentException("El CUIT es obligatorio.");
+        }
+        this.cuit = cuit.replaceAll("[^0-9]", "");
         this.razonSocial = razonSocial;
         this.tipo = tipo;
         this.rubro = rubro;
@@ -23,6 +28,15 @@ public class PersonaJuridica extends Persona {
     @Override
     public String getNombreDisplay() {
         return razonSocial;
+    }
+
+    @Override
+    public String getDocumento() {
+        return cuit;
+    }
+
+    public String getCuit() {
+        return cuit;
     }
 
     public String getRazonSocial() {

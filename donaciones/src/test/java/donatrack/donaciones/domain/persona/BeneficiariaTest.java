@@ -27,7 +27,7 @@ public class BeneficiariaTest {
 
   @Test
   public void beneficiariaQuedaRegistradaComoRolEnLaPersonaJuridica() {
-    PersonaJuridica organizacion = new PersonaJuridica("Fundacion X", TipoOrganizacion.ONG, "Asistencia");
+    PersonaJuridica organizacion = new PersonaJuridica("30-22222222-1", "Fundacion X", TipoOrganizacion.ONG, "Asistencia");
     Beneficiaria rol = new Beneficiaria(organizacion);
 
     assertTrue(organizacion.tieneRol(Beneficiaria.class));
@@ -37,14 +37,14 @@ public class BeneficiariaTest {
 
   @Test
   public void noPuedeAsignarseElMismoRolDosVeces() {
-    PersonaJuridica organizacion = new PersonaJuridica("Fundacion X", TipoOrganizacion.ONG, "Asistencia");
+    PersonaJuridica organizacion = new PersonaJuridica("30-22222222-2", "Fundacion X", TipoOrganizacion.ONG, "Asistencia");
     new Beneficiaria(organizacion);
 
     assertThrows(IllegalStateException.class, () -> new Beneficiaria(organizacion));
   }
 
   private Beneficiaria beneficiaria(String razonSocial) {
-    PersonaJuridica organizacion = new PersonaJuridica(razonSocial, TipoOrganizacion.INSTITUCION, "Educacion");
+    PersonaJuridica organizacion = new PersonaJuridica("30-33333333-" + Math.abs(razonSocial.hashCode() % 10), razonSocial, TipoOrganizacion.INSTITUCION, "Educacion");
     return new Beneficiaria(organizacion);
   }
 
