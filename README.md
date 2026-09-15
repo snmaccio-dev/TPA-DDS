@@ -60,9 +60,9 @@ src/main/java/donatrack/
 │   ├── entidad/         → EntidadBeneficiaria
 │   ├── contacto/        → MedioContacto, TipoContacto
 │   ├── usuario/         → Usuario
-│   ├── donacion/        → Donacion, Bien, Unidades, CondicionBien, CambioEstado
+│   ├── donacion/        → Donacion, Bien, CondicionBien, CambioEstado
 │   │   └── estado/      → EstadoDonacion (interfaz) + 7 estados concretos
-│   ├── catalogo/        → Categoria, Subcategoria
+│   ├── catalogo/        → Categoria, Subcategoria, Unidades
 │   └── necesidad/       → Necesidad, NecesidadRecurrente, NecesidadExtraordinaria, Periodo
 ├── notificacion/        → Notificador, 3 implementaciones, Observer, Servicio
 ├── importacion/         → ImportadorCSV (abstract), ImportadorCSVPersonas, PersonaFactory
@@ -118,7 +118,7 @@ EN_DEPOSITO ──asignar()──► ASIGNACION_REALIZADA ──planificarRuta()
                                                                                         │
                                                                                    EN_DEPOSITO
 
-Cualquier estado ──vencer()──► VENCIDA  (acción del administrador)
+Cualquier estado ──marcarVencida()──► VENCIDA  (acción del administrador)
 ```
 
 **Por qué no un enum con switch:** agregar un nuevo estado requeriría modificar el switch en `Donacion`. Con el patrón State, se agrega una clase nueva sin tocar las existentes.
