@@ -1,0 +1,38 @@
+package donatrack.donaciones.service;
+
+import donatrack.donaciones.domain.catalogo.Categoria;
+import donatrack.donaciones.domain.catalogo.Subcategoria;
+import donatrack.donaciones.domain.donacion.Bien;
+import donatrack.donaciones.domain.donacion.CondicionBien;
+import donatrack.donaciones.domain.catalogo.Unidades;
+import donatrack.donaciones.domain.persona.PersonaJuridica;
+import donatrack.donaciones.domain.persona.TipoOrganizacion;
+import org.junit.jupiter.api.Test;
+
+import java.util.List;
+
+public class GestorDonacionesTest {
+
+  @Test
+  public void ingresarDonacionSegmentaCorrectamentePorSubcategoria() {
+    //GestorDonaciones gestor = new GestorDonaciones();
+    //List<Donacion> resultado = gestor.ingresarDonacion(bienesVariados(), donanteArcosPlateados());
+
+    //assertEquals(2, resultado.size());
+  }
+
+  private PersonaJuridica donanteArcosPlateados() {
+    return new PersonaJuridica("30-55555555-1", "Arcos Plateados S.A.", TipoOrganizacion.EMPRESA, "Mudanza");
+  }
+
+  private List<Bien> bienesVariados() {
+    Subcategoria sillas = new Subcategoria("Sillas", new Categoria("Mobiliario"), Unidades.UNIDADES);
+    Subcategoria fideos = new Subcategoria("Fideos", new Categoria("Alimentos"),  Unidades.KILOGRAMOS);
+
+    return List.of(
+        new Bien("Silla usada de oficina 1", sillas, 1,   CondicionBien.USADO),
+        new Bien("Silla usada de oficina 2", sillas, 1,   CondicionBien.USADO),
+        new Bien("Paquete fideos 500g",      fideos, 0.5, CondicionBien.NUEVO)
+    );
+  }
+}
