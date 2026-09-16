@@ -10,6 +10,21 @@ entity Persona {
     contacto_predeterminado_id : numeric(10) (FK)
 }
 
+entity Rol {
+    rol_id : numeric(10) (PK)
+    --
+}
+
+entity Donante {
+    donante_id : numeric(10) (PK)
+    --
+}
+
+entity Administrador {
+    admin_id : numeric(10) (PK)
+    --
+}
+
 entity MedioContacto {
     medio_contacto_id : numeric(10) (PK)
     --
@@ -108,15 +123,6 @@ entity Donacion {
     camion_id : numeric(10) (FK)
 }
 
-entity DonacionXDestinoEntrega {
-    donacion_x_destino_id : numeric(10) (PK)
-    --
-    descripcion : varchar(200)
-    estado : varchar(30)
-    fecha_hora_entrega : datetime
-    donante_id : numeric(10) (FK)
-}
-
 entity Camion {
     camion_id : numeric(10) (PK)
     --
@@ -129,7 +135,7 @@ entity Camion {
 entity RutaReparto {
     ruta_id : numeric(10) (PK)
     --
-    camion_id : numeric(10) (FK)
+    cho_id : (10) (FK)
 }
 
 entity DestinoEntrega {
@@ -137,6 +143,18 @@ entity DestinoEntrega {
     --
     direccion : varchar(100)
     ruta_id : numeric(10) (FK)
+}
+
+entity Chofer {
+    cho_id : numeric(10) (PK)
+    --
+    camion_id : numeric(10) (FK)
+}
+
+entity Entrega {
+    entrega_id : numeric(10) (PK)
+    --
+    camion_id : numeric(10) (FK)
 }
 
 ' Relaciones - Persona
@@ -174,10 +192,24 @@ Subcategoria ||--|{ Donacion
 Camion ||--|{ RutaReparto
 RutaReparto ||--|{ DestinoEntrega
 
-' Relacion Muchos a Muchos
+' DestinoEntega y Donacion
 
-DestinoEntrega ||--|{ DonacionXDestinoEntrega
-Donacion ||--|{ DonacionXDestinoEntrega
+DestinoEntrega ||--|{ Donacion
+
+
+' Roles y personas
+
+Persona ||--|{ Rol
+
+' Roles
+
+Rol --|| Administrador
+Rol --|| Donante
+
+' Parte logistica
+
+Camion ||--|| Chofer
+Camion ||--|{ Entrega
 
 @enduml
 
