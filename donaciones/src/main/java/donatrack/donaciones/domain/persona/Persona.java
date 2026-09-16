@@ -10,11 +10,11 @@ import java.util.List;
 import java.util.Optional;
 
 @Entity
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS) //PARA Q COINCIDA CON EL DIAGRAMA REVISAR @Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Persona {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     @Column(name="Direccion")

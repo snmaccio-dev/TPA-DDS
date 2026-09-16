@@ -10,11 +10,30 @@ import java.util.List;
 @Table(name = "Persona_Juridica")
 public class PersonaJuridica extends Persona {
 
-    private final String cuit;
+    @Column(name="CUIT")
+    private String cuit;
+
+    @Column(name="Razon_Social")
     private String razonSocial;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name="Tipo_Organizacion")
     private TipoOrganizacion tipo;
+    
+    @Column(name="Rubro")
     private String rubro;
+
+    @ManyToMany
+    @JoinTable(
+        name = "representantes_juridica",
+        joinColumns = @JoinColumn(name = "persona_juridica_id"),
+        inverseJoinColumns = @JoinColumn(name = "persona_humana_id")
+    )
     private List<PersonaHumana> representantes = new ArrayList<>();
+
+    //Constructor vacío para Hibernate
+    protected PersonaJuridica() {
+    }
 
     public PersonaJuridica(String cuit, String razonSocial, TipoOrganizacion tipo, String rubro) {
         if (cuit == null) {

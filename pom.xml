@@ -46,6 +46,28 @@
             <artifactId>hibernate-core</artifactId>
             <version>6.4.4.Final</version>
         </dependency>
+
+        <!-- PostgreSQL para el despliegue local -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>42.7.2</version> <!-- Versión estable del driver -->
+        </dependency>
+
+        <!-- HSQLDB para testing -->
+        <dependency>
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <version>2.7.2</version>
+            <scope>test</scope> <!-- El scope test restringe su uso solo a las pruebas -->
+        </dependency>
+
+        <!-- JPA Extras (Requerido por el TP) -->
+        <dependency>
+            <groupId>io.github.flbulgarelli</groupId>
+            <artifactId>jpa-extras</artifactId>
+            <version>1.0.0-rc1</version> <!-- Chequeá si en clase les pasaron otra versión -->
+        </dependency>
     </dependencies>
 
 </project>

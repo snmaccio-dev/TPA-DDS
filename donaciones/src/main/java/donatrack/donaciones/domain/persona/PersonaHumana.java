@@ -24,6 +24,10 @@ public class PersonaHumana extends Persona {
     @Column(name="Genero")
     private Genero genero;
 
+    //Constructor vacío para Hibernate
+    protected PersonaHumana() {
+    }
+
     public PersonaHumana(String nombre, String apellido, int edad, String documento, Genero genero) {
         this.nombre = nombre;
         this.apellido = apellido;
