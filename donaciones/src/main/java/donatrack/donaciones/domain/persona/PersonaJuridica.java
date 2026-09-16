@@ -1,8 +1,13 @@
 package donatrack.donaciones.domain.persona;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "Persona_Juridica")
 public class PersonaJuridica extends Persona {
 
     private final String cuit;

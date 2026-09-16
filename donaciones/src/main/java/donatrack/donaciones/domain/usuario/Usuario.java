@@ -1,8 +1,15 @@
 package donatrack.donaciones.domain.usuario;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+
+@Entity
 public class Usuario {
 
+    @Column(name="nombre")
     private String nombre;
+
+    @Column(name="contrasena")
     private String contrasena;
 
     public Usuario(String nombre, String contrasena) {

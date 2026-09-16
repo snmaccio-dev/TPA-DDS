@@ -1,7 +1,14 @@
 package donatrack.donaciones.domain.persona;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+
+@Entity
 public abstract class Rol {
 
+    @ManyToOne
+    @JoinColumn(name = "persona_id")
     private final Persona persona;
 
     protected Rol(Persona persona) {

@@ -2,31 +2,29 @@ package donatrack.donaciones.domain.persona;
 
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.necesidad.Necesidad;
+import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@Table(name = "Entidad_Beneficiaria")
 public class Beneficiaria extends Rol {
 
-    private static long proximoId = 1;
-
-    private final long id;
+    @OneToMany(mappedBy = "entidad")
     private final List<Necesidad> necesidades = new ArrayList<>();
+
+    // me olvide esta parte perdon
     private final List<Donacion> donacionesRecibidas = new ArrayList<>();
 
     public Beneficiaria(PersonaJuridica persona) {
         super(persona);
-        this.id = proximoId++;
     }
 
     @Override
     public PersonaJuridica getPersona() {
         return (PersonaJuridica) super.getPersona();
-    }
-
-    public long getId() {
-        return id;
     }
 
     public void registrarNecesidad(Necesidad necesidad) {

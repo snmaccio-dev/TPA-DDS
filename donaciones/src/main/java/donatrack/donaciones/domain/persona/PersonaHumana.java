@@ -1,11 +1,27 @@
 package donatrack.donaciones.domain.persona;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "Persona_Humana")
 public class PersonaHumana extends Persona {
 
+    @Column(name="Nombre")
     private String nombre;
+
+    @Column(name="Apellido")
     private String apellido;
+
+    // No se persiste la edad, tenemos que persistir una fecha de nacimiento
+    // private LocalDate fecha
+    @Column(name="Edad")
     private int edad;
+
+    @Column(name="Documento")
     private String documento;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name="Genero")
     private Genero genero;
 
     public PersonaHumana(String nombre, String apellido, int edad, String documento, Genero genero) {

@@ -3,17 +3,35 @@ package donatrack.donaciones.domain.persona;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.usuario.Usuario;
+import jakarta.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+@Entity
+@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
 public abstract class Persona {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name="Direccion")
     protected String direccion;
+
+    @OneToMany(mappedBy = "persona")
     protected List<MedioContacto> contactos = new ArrayList<>();
+
+    @OneToOne
+    @JoinColumn(name = "contacto_predeterminado_id")
     protected MedioContacto contactoPredeterminado;
+
+    @OneToOne
+    @JoinColumn(name="usuario_id")
     protected Usuario usuario;
+
+    @OneToMany(mappedBy = "persona")
     protected final List<Rol> roles = new ArrayList<>();
 
     public abstract String getNombreDisplay();

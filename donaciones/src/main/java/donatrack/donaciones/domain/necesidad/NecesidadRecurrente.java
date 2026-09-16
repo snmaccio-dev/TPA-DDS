@@ -1,9 +1,14 @@
 package donatrack.donaciones.domain.necesidad;
 
 import donatrack.donaciones.domain.catalogo.Subcategoria;
+import jakarta.persistence.*;
 
+@Entity
+@DiscriminatorValue("RECURRENTE")
 public class NecesidadRecurrente extends Necesidad {
 
+  @Enumerated(EnumType.STRING)
+  @Column(name = "periodo")
   private Periodo periodo;
 
   public NecesidadRecurrente(String descripcion,

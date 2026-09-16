@@ -2,16 +2,33 @@ package donatrack.donaciones.domain.necesidad;
 
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
+import donatrack.donaciones.domain.persona.Beneficiaria;
+import jakarta.persistence.*;
 
+@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)
+@DiscriminatorColumn(name = "tipo_de_necesidad")
 public abstract class Necesidad {
 
   private static long proximoId = 1;
 
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private final long id;
 
+  @Column(name="Descripcion")
   protected String descripcion;
+
+  @Column(name="cantidad")
   protected int cantidad;
+
+  @ManyToOne
+  @JoinColumn(name = "subcategoria_id")
   protected Subcategoria subcategoria;
+
+  @ManyToOne
+  @JoinColumn(name = "entidad_id")
+  private Beneficiaria entidad;
 
   public Necesidad(
       String descripcion,

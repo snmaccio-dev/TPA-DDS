@@ -1,10 +1,30 @@
 package donatrack.donaciones.domain.catalogo;
 
+import donatrack.donaciones.domain.necesidad.Necesidad;
+import jakarta.persistence.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
 public class Subcategoria {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name="nombre")
     private String nombre;
+
+    @ManyToOne
+    @JoinColumn(name = "categoria_id")
     private Categoria categoria;
+
+    @Column(name="unidades")
     private Unidades unidades;
+
+    @OneToMany(mappedBy = "subcategoria")
+    private List<Necesidad> necesidades = new ArrayList<>();
 
     public Subcategoria(String nombre, Categoria categoria, Unidades unidades) {
         if (unidades == null) {
