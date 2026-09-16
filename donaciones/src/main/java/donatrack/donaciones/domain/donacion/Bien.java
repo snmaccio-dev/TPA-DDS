@@ -3,14 +3,27 @@ package donatrack.donaciones.domain.donacion;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
+import jakarta.persistence.*;
 
 import java.time.LocalDate;
 
+@Entity
 public class Bien {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name= "descripcion")
     private String descripcion;
+
+    @Column(name = "foto")
     private String foto;
+
+    @ManyToOne
+    @JoinColumn(name = "subcategoria_id")
     private Subcategoria subcategoria;
+
     private double cantidad;
     private CondicionBien condicion;
     private LocalDate fechaVencimiento;

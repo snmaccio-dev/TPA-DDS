@@ -1,5 +1,7 @@
 package donatrack.donaciones.domain.catalogo;
 
+import donatrack.donaciones.domain.donacion.Bien;
+import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.necesidad.Necesidad;
 import jakarta.persistence.*;
 
@@ -16,15 +18,23 @@ public class Subcategoria {
     @Column(name="nombre")
     private String nombre;
 
+    @Column(name="unidades")
+    private Unidades unidades;
+
+    // Relaciones muchos a muchos
+
     @ManyToOne
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
 
-    @Column(name="unidades")
-    private Unidades unidades;
-
     @OneToMany(mappedBy = "subcategoria")
     private List<Necesidad> necesidades = new ArrayList<>();
+
+    @OneToMany(mappedBy = "subcategoria")
+    private List<Donacion> donaciones = new ArrayList<>();
+
+    @OneToMany(mappedBy = "subcategoria")
+    private List<Bien> bienes = new ArrayList<>();
 
     public Subcategoria(String nombre, Categoria categoria, Unidades unidades) {
         if (unidades == null) {

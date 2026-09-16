@@ -8,14 +8,23 @@ import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.notificacion.DonacionObserver;
+import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
 public class Donacion {
 
-    private final long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "subcategoria_id")
+    private Subcategoria subcategoria;
+
     private static long proximoId = 1;
     private List<Bien> bienes;
     private EstadoDonacion estado;
@@ -24,6 +33,10 @@ public class Donacion {
     private Beneficiaria destinatarioAsignado;
     private DatosEntrega datosEntrega;
     private List<EstadoDonacion> historialEstados = new ArrayList<>();
+
+    // Relacion muhcos a uno
+    @OneToMany(mappedBy = "subcategoria")
+    private List<Donacion> donaciones = new ArrayList<>();
 
     // Observer — lista de observadores del ciclo de vida
     private final List<DonacionObserver> observers = new ArrayList<>();
