@@ -15,10 +15,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "Donacion")
 public class Donacion {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "donacion_id")
     private Long id;
 
     @ManyToOne
@@ -26,12 +28,35 @@ public class Donacion {
     private Subcategoria subcategoria;
 
     private static long proximoId = 1;
-    private List<Bien> bienes;
+
+    // Una donación tiene muchos bienes
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "donacion_id") 
+    private List<Bien> bienes = new ArrayList<>();
+    
+    // Relación con el estado actual
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "estado_actual_id")
     private EstadoDonacion estado;
+
+    @Column(name = "descripcion")
     private String descripcion;
+
+    @ManyToOne
+    @JoinColumn(name = "donante_id")
     private Donante donante;
+
+    @ManyToOne
+    @JoinColumn(name = "destinatario_id")
     private Beneficiaria destinatarioAsignado;
+
+    // Asumiendo que DatosEntrega es un @Embeddable (atributos que se suman a esta misma tabla)
+    @Embedded 
     private DatosEntrega datosEntrega;
+
+    // Historial de estados que tuvo la donación
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "donacion_id")
     private List<EstadoDonacion> historialEstados = new ArrayList<>();
 
     // Relacion muhcos a uno
@@ -39,8 +64,13 @@ public class Donacion {
     private List<Donacion> donaciones = new ArrayList<>();
 
     // Observer — lista de observadores del ciclo de vida
+    // @Transient le dice a JPA que ignore esto, que no intente guardarlo en PostgreSQL
+    @Transient
     private final List<DonacionObserver> observers = new ArrayList<>();
 
+    protected Donacion() {
+    }
+    
     public Donacion(List<Bien> bienes,
                     Donante donante,
                     String descripcion) {

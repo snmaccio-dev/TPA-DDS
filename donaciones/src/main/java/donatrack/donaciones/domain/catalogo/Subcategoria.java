@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@Table(name = "Subcategoria") // Agrego para coincidir con el DER
 public class Subcategoria {
 
     @Id
@@ -18,11 +19,12 @@ public class Subcategoria {
     @Column(name="nombre")
     private String nombre;
 
+    // Agrego @Enumerated asumiendo que Unidades es un Enum (ej: KILOS, LITROS)
+    @Enumerated(EnumType.STRING)
     @Column(name="unidades")
     private Unidades unidades;
 
     // Relaciones muchos a muchos
-
     @ManyToOne
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
@@ -36,6 +38,9 @@ public class Subcategoria {
     @OneToMany(mappedBy = "subcategoria")
     private List<Bien> bienes = new ArrayList<>();
 
+    protected Subcategoria() {
+    }
+
     public Subcategoria(String nombre, Categoria categoria, Unidades unidades) {
         if (unidades == null) {
             throw new IllegalArgumentException("La subcategoria debe tener una unidad de medida.");
@@ -43,6 +48,10 @@ public class Subcategoria {
         this.nombre = nombre;
         this.categoria = categoria;
         this.unidades = unidades;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getNombre() {
