@@ -8,10 +8,12 @@ import jakarta.persistence.*;
 import java.time.LocalDate;
 
 @Entity
+@Table(name = "Bien")
 public class Bien {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "bien_id")
     private Long id;
 
     @Column(name= "descripcion")
@@ -24,9 +26,18 @@ public class Bien {
     @JoinColumn(name = "subcategoria_id")
     private Subcategoria subcategoria;
 
+    @Column(name = "cantidad")
     private double cantidad;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "condicion")
     private CondicionBien condicion;
+
+    @Column(name = "fecha_vencimiento")
     private LocalDate fechaVencimiento;
+
+    protected Bien() {
+    }
 
     public Bien(String descripcion,
                 Subcategoria subcategoria,

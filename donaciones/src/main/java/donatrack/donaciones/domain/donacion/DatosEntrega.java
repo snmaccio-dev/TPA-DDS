@@ -2,10 +2,17 @@ package donatrack.donaciones.domain.donacion;
 
 import java.time.LocalDateTime;
 
+@Embeddable
 public class DatosEntrega {
 
+    @Column(name = "fecha_hora_entrega")
     private LocalDateTime fechaHora;
+
+    @Column(name = "patente_camion")
     private String patenteCamion;
+
+    protected DatosEntrega() {
+    }
 
     public DatosEntrega(LocalDateTime fechaHora, String patenteCamion) {
         this.fechaHora = fechaHora;

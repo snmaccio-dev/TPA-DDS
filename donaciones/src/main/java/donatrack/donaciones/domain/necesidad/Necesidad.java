@@ -6,15 +6,15 @@ import donatrack.donaciones.domain.persona.Beneficiaria;
 import jakarta.persistence.*;
 
 @Entity
+@Table(name = "Necesidad")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "tipo_de_necesidad")
 public abstract class Necesidad {
 
-  private static long proximoId = 1;
-
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private final long id;
+  @Column(name = "necesidad_id")
+  private Long id;
 
   @Column(name="Descripcion")
   protected String descripcion;
@@ -29,6 +29,9 @@ public abstract class Necesidad {
   @ManyToOne
   @JoinColumn(name = "entidad_id")
   private Beneficiaria entidad;
+
+  protected Necesidad() {
+  }
 
   public Necesidad(
       String descripcion,
