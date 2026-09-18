@@ -2,17 +2,14 @@ package donatrack.logistica.repository;
 
 import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.entrega.EstadoEntrega;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// Singleton — unica instancia de almacen de entregas en memoria
-public class RepositorioEntregas {
+public class RepositorioEntregas implements WithSimplePersistenceUnit {
 
   private static RepositorioEntregas instancia;
-
-  private final List<Entrega> entregas = new ArrayList<>();
 
   private RepositorioEntregas() {
   }
@@ -26,49 +23,60 @@ public class RepositorioEntregas {
   }
 
   public void guardar(Entrega entrega) {
-    entregas.add(entrega);
+    persist(entrega);
   }
 
   public void guardar(List<Entrega> nuevasEntregas) {
-    entregas.addAll(nuevasEntregas);
+    nuevasEntregas.forEach(this::persist);
   }
 
   public List<Entrega> todas() {
-    return new ArrayList<>(entregas);
+    return createQuery("select e from Entrega e", Entrega.class).getResultList();
   }
 
   public Optional<Entrega> buscarPorId(long id) {
-    return entregas.stream()
-        .filter(entrega -> entrega.getId() == id)
-        .findFirst();
+    return Optional.ofNullable(find(Entrega.class, id));
   }
 
   public Optional<Entrega> buscarPorDonacion(long donacionId) {
-    return entregas.stream()
-        .filter(entrega -> entrega.getDonacionId() == donacionId)
+    return createQuery(
+        "select e from Entrega e where e.donacionId = :donacionId",
+        Entrega.class)
+        .setParameter("donacionId", donacionId)
+        .getResultList()
+        .stream()
         .findFirst();
   }
 
   public List<Entrega> queEsperanPlanificacion() {
-    return entregas.stream()
-        .filter(Entrega::esperaPlanificacion)
-        .toList();
+    return createQuery(
+        "select e from Entrega e "
+            + "where e.estado = :estado "
+            + "and e.pesoKg is not null "
+            + "and e.volumenM3 is not null",
+        Entrega.class)
+        .setParameter("estado", EstadoEntrega.PENDIENTE)
+        .getResultList();
   }
 
   public List<Entrega> pendientesDeMedicion() {
-    return entregas.stream()
-        .filter(entrega ->
-            entrega.getEstado() == EstadoEntrega.PENDIENTE
-                && entrega.getRuta() == null
-                && !entrega.estaMedida())
-        .toList();
+    return createQuery(
+        "select e from Entrega e "
+            + "where e.estado = :estado "
+            + "and e.ruta is null "
+            + "and (e.pesoKg is null or e.volumenM3 is null)",
+        Entrega.class)
+        .setParameter("estado", EstadoEntrega.PENDIENTE)
+        .getResultList();
   }
 
   public void eliminar(long id) {
-    entregas.removeIf(entrega -> entrega.getId() == id);
+    buscarPorId(id).ifPresent(this::remove);
   }
 
   public int cantidad() {
-    return entregas.size();
+    return createQuery("select count(e) from Entrega e", Long.class)
+        .getSingleResult()
+        .intValue();
   }
 }

@@ -1,23 +1,22 @@
-package donatrack.logistica.infrastructure.monitoreo;
+package donatrack.logistica.obsoleto;
 
 import donatrack.logistica.domain.flota.Camion;
 import donatrack.logistica.domain.monitoreo.EstadoRecorrido;
 import donatrack.logistica.domain.monitoreo.Posicion;
-import donatrack.logistica.domain.monitoreo.ProveedorUbicacion;
 
-public class AplicacionMovil implements ProveedorUbicacion {
+public class DispositivoGPS implements ProveedorUbicacion {
 
   @Override
   public EstadoRecorrido obtenerEstado(Camion camion) {
 
-    // Datos enviados por la app del conductor
+    // Datos enviados por el GPS externo
     Posicion posicion = new Posicion(
-        -34.6100,
-        -58.3900
+        -34.6037,
+        -58.3816
     );
 
-    double velocidad = 30.0;
-    double avance = 40.0;
+    double velocidad = 45.0; // km/h
+    double avance = 65.0; // porcentaje
 
     validarDatos(posicion, velocidad, avance);
 
@@ -37,7 +36,7 @@ public class AplicacionMovil implements ProveedorUbicacion {
 
     if (posicion == null) {
       throw new IllegalArgumentException(
-          "La aplicación no envió una posición válida."
+          "El GPS no envió una posición válida."
       );
     }
 

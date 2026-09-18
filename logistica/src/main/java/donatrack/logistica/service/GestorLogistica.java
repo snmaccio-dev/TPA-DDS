@@ -15,11 +15,13 @@ import donatrack.logistica.domain.ruta.RutaReparto;
 import donatrack.logistica.repository.RepositorioCamiones;
 import donatrack.logistica.repository.RepositorioEntregas;
 import donatrack.logistica.repository.RepositorioRutas;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
-public class GestorLogistica {
+public class GestorLogistica implements WithSimplePersistenceUnit {
 
   private static final int TAMANIO_MAXIMO_DE_LOTE = 100;
   private static final int INTENTOS_ANTES_DE_ESCALAR = 3;
@@ -54,6 +56,12 @@ public class GestorLogistica {
 
   // Toma las donaciones ya asignadas en Donaciones y las incorpora como entregas pendientes
   public List<Entrega> incorporarDonacionesAsignadas() {
+    return withTransaction(() -> {
+      return incorporarDonacionesAsignadasInterno();
+    });
+  }
+
+  private List<Entrega> incorporarDonacionesAsignadasInterno() {
     List<Entrega> nuevas = clienteDonaciones.donacionesConAsignacionRealizada().stream()
         .filter(this::todaviaNoTieneEntrega)
         .map(Entrega::desde)
@@ -65,6 +73,12 @@ public class GestorLogistica {
 
   // Envia al proveedor externo las entregas pendientes, en lotes del tamanio maximo admitido
   public List<String> planificarRutas(List<Camion> camiones) {
+    return withTransaction(() -> {
+      return planificarRutasInterno(camiones);
+    });
+  }
+
+  private List<String> planificarRutasInterno(List<Camion> camiones) {
     if (camiones == null || camiones.isEmpty()) {
       throw new IllegalArgumentException("No hay camiones disponibles para planificar rutas.");
     }
@@ -82,6 +96,10 @@ public class GestorLogistica {
   }
 
   public void procesarResultadoPlanificacion(ResultadoPlanificacion resultado) {
+    withTransaction(() -> procesarResultadoPlanificacionInterno(resultado));
+  }
+
+  private void procesarResultadoPlanificacionInterno(ResultadoPlanificacion resultado) {
     if (resultado == null) {
       throw new IllegalArgumentException("El planificador no devolvio un resultado.");
     }
@@ -98,8 +116,10 @@ public class GestorLogistica {
 
   // Una corrida completa: trae lo asignado en Donaciones y lo manda a planificar
   public List<String> ejecutarCorrida() {
-    incorporarDonacionesAsignadas();
-    return planificarRutas(repositorioCamiones.todas());
+    return withTransaction(() -> {
+      incorporarDonacionesAsignadasInterno();
+      return planificarRutasInterno(repositorioCamiones.todas());
+    });
   }
 
   public List<Entrega> entregasPendientes() {
@@ -108,24 +128,26 @@ public class GestorLogistica {
 
   // Traduce lo que devuelve el proveedor externo a objetos de dominio antes de procesarlo
   public ResultadoPlanificacion procesarCallbackDelProveedor(PlanificacionRecibida recibida) {
-    if (recibida == null) {
-      throw new IllegalArgumentException("El planificador no devolvio un resultado.");
-    }
+    return withTransaction(() -> {
+      if (recibida == null) {
+        throw new IllegalArgumentException("El planificador no devolvio un resultado.");
+      }
 
-    List<RutaReparto> rutas = recibida.rutas().stream()
-        .map(this::armarRuta)
-        .toList();
+      List<RutaReparto> rutas = recibida.rutas().stream()
+          .map(this::armarRuta)
+          .toList();
 
-    List<Entrega> noAsignadas = recibida.entregaIdsNoAsignadas().stream()
-        .map(this::buscarEntrega)
-        .toList();
+      List<Entrega> noAsignadas = recibida.entregaIdsNoAsignadas().stream()
+          .map(this::buscarEntrega)
+          .toList();
 
-    ResultadoPlanificacion resultado =
-        new ResultadoPlanificacion(recibida.solicitudId(), rutas, noAsignadas);
+      ResultadoPlanificacion resultado =
+          new ResultadoPlanificacion(recibida.solicitudId(), rutas, noAsignadas);
 
-    procesarResultadoPlanificacion(resultado);
+      procesarResultadoPlanificacionInterno(resultado);
 
-    return resultado;
+      return resultado;
+    });
   }
 
   public List<Entrega> entregasQueSuperaronLosIntentos() {
@@ -141,19 +163,20 @@ public class GestorLogistica {
                 "El planificador asigno un camion inexistente: " + planificada.patenteCamion()
             ));
 
-    List<DestinoEntrega> destinos = planificada.destinos().stream()
-        .map(this::armarDestino)
+    List<DestinoPlanificado> planificados = planificada.destinos();
+    List<DestinoEntrega> destinos = IntStream.range(0, planificados.size())
+        .mapToObj(orden -> armarDestino(orden, planificados.get(orden)))
         .toList();
 
     return new RutaReparto(camion, destinos);
   }
 
-  private DestinoEntrega armarDestino(DestinoPlanificado planificado) {
+  private DestinoEntrega armarDestino(int orden, DestinoPlanificado planificado) {
     List<Entrega> entregas = planificado.entregaIds().stream()
         .map(this::buscarEntrega)
         .toList();
 
-    return new DestinoEntrega(planificado.direccion(), entregas);
+    return new DestinoEntrega(orden, planificado.direccion(), entregas);
   }
 
   private Entrega buscarEntrega(long entregaId) {

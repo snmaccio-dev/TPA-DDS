@@ -16,6 +16,9 @@
         <javalin.version>6.4.0</javalin.version>
         <jackson.version>2.17.2</jackson.version>
         <slf4j.version>2.0.13</slf4j.version>
+        <db.url>jdbc:postgresql://localhost:5432/donatrack_logistica</db.url>
+        <db.user>postgres</db.user>
+        <db.password>${env.DONATRACK_DB_PASSWORD}</db.password>
     </properties>
 
     <dependencies>
@@ -45,6 +48,13 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>true</filtering>
+            </resource>
+        </resources>
+
         <plugins>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>

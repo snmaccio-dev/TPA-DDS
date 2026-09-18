@@ -4,22 +4,60 @@ import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.entrega.EstadoEntrega;
 import donatrack.logistica.domain.flota.Camion;
 import donatrack.logistica.domain.flota.Chofer;
+import donatrack.logistica.domain.monitoreo.ReporteUbicacion;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.OrderBy;
+import javax.persistence.Table;
 
+@Entity
+@Table(name = "ruta_reparto")
 public class RutaReparto {
 
-  private static long proximoId = 1;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-  private final long id;
-  private final Camion camion;
-  private final List<DestinoEntrega> destinos;
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "camion_id", nullable = false)
+  private Camion camion;
 
+  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+  @JoinColumn(name = "ruta_id", nullable = false)
+  @OrderBy("orden")
+  private List<DestinoEntrega> destinos;
+
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false)
   private EstadoRuta estado;
+
+  @ManyToOne
+  @JoinColumn(name = "chofer_id")
   private Chofer chofer;
+
+  @Column(name = "fecha_hora_inicio")
   private LocalDateTime fechaHoraInicio;
+
+  @OneToOne
+  @JoinColumn(name = "ultimo_reporte_id")
+  private ReporteUbicacion ultimoReporte;
+
+  protected RutaReparto() {
+  }
 
   public RutaReparto(Camion camion, List<DestinoEntrega> destinos) {
     if (camion == null) {
@@ -28,7 +66,6 @@ public class RutaReparto {
     if (destinos == null || destinos.isEmpty()) {
       throw new IllegalArgumentException("La ruta debe tener al menos un destino.");
     }
-    this.id = proximoId++;
     this.camion = camion;
     this.destinos = new ArrayList<>(destinos);
     this.estado = EstadoRuta.PLANIFICADA;
@@ -67,6 +104,19 @@ public class RutaReparto {
     }
   }
 
+  public void liberarEntregas() {
+    getEntregas().forEach(Entrega::desasignarDeRuta);
+  }
+
+  public void registrarUbicacion(ReporteUbicacion reporte) {
+    if (reporte == null) {
+      throw new IllegalArgumentException("Debe indicarse el reporte de ubicacion.");
+    }
+    if (ultimoReporte == null || !reporte.getMomento().isBefore(ultimoReporte.getMomento())) {
+      this.ultimoReporte = reporte;
+    }
+  }
+
   public double getPorcentajeAvance() {
     List<Entrega> entregas = getEntregas();
     if (entregas.isEmpty()) {
@@ -82,7 +132,7 @@ public class RutaReparto {
 
   // === Getters ===
 
-  public long getId() {
+  public Long getId() {
     return id;
   }
 
@@ -100,6 +150,10 @@ public class RutaReparto {
 
   public LocalDateTime getFechaHoraInicio() {
     return fechaHoraInicio;
+  }
+
+  public ReporteUbicacion getUltimoReporte() {
+    return ultimoReporte;
   }
 
   public List<DestinoEntrega> getDestinos() {

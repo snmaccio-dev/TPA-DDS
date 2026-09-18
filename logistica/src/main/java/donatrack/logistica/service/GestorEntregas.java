@@ -8,12 +8,14 @@ import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.flota.Chofer;
 import donatrack.logistica.domain.integracion.ClienteDonaciones;
 import donatrack.logistica.domain.ruta.RutaReparto;
+import donatrack.logistica.repository.RepositorioChoferes;
 import donatrack.logistica.repository.RepositorioEntregas;
 import donatrack.logistica.repository.RepositorioRutas;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.List;
 
-public class GestorEntregas {
+public class GestorEntregas implements WithSimplePersistenceUnit {
 
   private final ClienteDonaciones clienteDonaciones;
   private final String urlBaseMonitoreo;
@@ -22,6 +24,8 @@ public class GestorEntregas {
       RepositorioEntregas.getInstance();
   private final RepositorioRutas repositorioRutas =
       RepositorioRutas.getInstance();
+  private final RepositorioChoferes repositorioChoferes =
+      RepositorioChoferes.getInstance();
 
   public GestorEntregas(ClienteDonaciones clienteDonaciones, String urlBaseMonitoreo) {
     if (clienteDonaciones == null) {
@@ -34,52 +38,62 @@ public class GestorEntregas {
     this.urlBaseMonitoreo = urlBaseMonitoreo;
   }
 
-  public RutaReparto iniciarRuta(long rutaId, Chofer chofer) {
-    RutaReparto ruta = buscarRuta(rutaId);
-    List<Long> donacionIds = ruta.iniciarRuta(chofer);
+  public RutaReparto iniciarRuta(long rutaId, long choferId) {
+    return withTransaction(() -> {
+      RutaReparto ruta = buscarRuta(rutaId);
+      List<Long> donacionIds = ruta.iniciarRuta(buscarChofer(choferId));
 
-    clienteDonaciones.publicarInicioRuta(
-        new EventoInicioRuta(ruta.getId(), donacionIds, linkMapaDe(ruta))
-    );
+      clienteDonaciones.publicarInicioRuta(
+          new EventoInicioRuta(ruta.getId(), donacionIds, linkMapaDe(ruta))
+      );
 
-    return ruta;
+      return ruta;
+    });
   }
 
   public Entrega confirmarRecepcion(long entregaId, List<String> fotos) {
-    Entrega entrega = buscar(entregaId);
-    entrega.confirmarRecepcion(fotos);
+    return withTransaction(() -> {
+      Entrega entrega = buscar(entregaId);
+      entrega.confirmarRecepcion(fotos);
 
-    publicarResultado(entrega, ResultadoEntrega.ENTREGADA);
-    cerrarRutaSiTermino(entrega);
+      publicarResultado(entrega, ResultadoEntrega.ENTREGADA);
+      cerrarRutaSiTermino(entrega);
 
-    return entrega;
+      return entrega;
+    });
   }
 
   public Entrega marcarNoRecibida(long entregaId, String motivo) {
-    Entrega entrega = buscar(entregaId);
-    entrega.marcarNoRecibida(motivo);
+    return withTransaction(() -> {
+      Entrega entrega = buscar(entregaId);
+      entrega.marcarNoRecibida(motivo);
 
-    publicarResultado(entrega, ResultadoEntrega.NO_RECIBIDA);
-    cerrarRutaSiTermino(entrega);
+      publicarResultado(entrega, ResultadoEntrega.NO_RECIBIDA);
+      cerrarRutaSiTermino(entrega);
 
-    return entrega;
+      return entrega;
+    });
   }
 
   public Entrega retornarADeposito(long entregaId) {
-    Entrega entrega = buscar(entregaId);
-    entrega.retornarADeposito();
+    return withTransaction(() -> {
+      Entrega entrega = buscar(entregaId);
+      entrega.retornarADeposito();
 
-    clienteDonaciones.publicarRetornoADeposito(
-        new EventoRetornoDeposito(entrega.getDonacionId())
-    );
+      clienteDonaciones.publicarRetornoADeposito(
+          new EventoRetornoDeposito(entrega.getDonacionId())
+      );
 
-    return entrega;
+      return entrega;
+    });
   }
 
   public Entrega registrarMedicion(long entregaId, double pesoKg, double volumenM3) {
-    Entrega entrega = buscar(entregaId);
-    entrega.registrarMedicion(pesoKg, volumenM3);
-    return entrega;
+    return withTransaction(() -> {
+      Entrega entrega = buscar(entregaId);
+      entrega.registrarMedicion(pesoKg, volumenM3);
+      return entrega;
+    });
   }
 
   public List<Entrega> pendientesDeMedicion() {
@@ -110,6 +124,9 @@ public class GestorEntregas {
         ? entrega.getPatenteCamion()
         : null;
 
+    // Esta llamada ocurre dentro de la transaccion del caso de uso: si Donaciones no
+    // responde, se hace rollback y el cambio local no se confirma. La contrapartida es
+    // que la transaccion queda abierta durante una llamada de red.
     clienteDonaciones.publicarEntrega(
         EventoEntrega.de(
             entrega.getDonacionId(),
@@ -126,6 +143,14 @@ public class GestorEntregas {
     if (ruta != null) {
       ruta.finalizarSiNoQuedanEntregasEnTraslado();
     }
+  }
+
+  private Chofer buscarChofer(long choferId) {
+    return repositorioChoferes.buscarPorId(choferId)
+        .orElseThrow(() ->
+            new RecursoInexistenteException(
+                "No existe el chofer con ID " + choferId
+            ));
   }
 
   private RutaReparto buscarRuta(long rutaId) {

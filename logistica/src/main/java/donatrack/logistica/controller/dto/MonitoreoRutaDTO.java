@@ -20,11 +20,11 @@ public record MonitoreoRutaDTO(
         ruta.getId(),
         ruta.getCamion().getPatente(),
         ruta.getEstado().getNombre(),
-        reporte.latitud(),
-        reporte.longitud(),
-        reporte.velocidadKmh(),
+        reporte.getLatitud(),
+        reporte.getLongitud(),
+        reporte.getVelocidadKmh(),
         ruta.getPorcentajeAvance(),
-        Fechas.aTexto(reporte.momento())
+        Fechas.aTexto(reporte.getMomento())
     );
   }
 

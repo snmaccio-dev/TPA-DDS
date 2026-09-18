@@ -1,16 +1,14 @@
 package donatrack.logistica.repository;
 
 import donatrack.logistica.domain.ruta.RutaReparto;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class RepositorioRutas {
+public class RepositorioRutas implements WithSimplePersistenceUnit {
 
   private static RepositorioRutas instancia;
-
-  private final List<RutaReparto> rutas = new ArrayList<>();
 
   private RepositorioRutas() {
   }
@@ -24,24 +22,22 @@ public class RepositorioRutas {
   }
 
   public void guardar(RutaReparto ruta) {
-    rutas.add(ruta);
+    persist(ruta);
   }
 
   public void guardar(List<RutaReparto> nuevasRutas) {
-    rutas.addAll(nuevasRutas);
+    nuevasRutas.forEach(this::persist);
   }
 
   public List<RutaReparto> todas() {
-    return new ArrayList<>(rutas);
+    return createQuery("select r from RutaReparto r", RutaReparto.class).getResultList();
   }
 
   public Optional<RutaReparto> buscarPorId(long id) {
-    return rutas.stream()
-        .filter(ruta -> ruta.getId() == id)
-        .findFirst();
+    return Optional.ofNullable(find(RutaReparto.class, id));
   }
 
   public void eliminar(long id) {
-    rutas.removeIf(ruta -> ruta.getId() == id);
+    buscarPorId(id).ifPresent(this::remove);
   }
 }

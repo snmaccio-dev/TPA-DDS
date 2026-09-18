@@ -6,11 +6,12 @@ import donatrack.logistica.domain.ruta.EstadoRuta;
 import donatrack.logistica.domain.ruta.RutaReparto;
 import donatrack.logistica.repository.RepositorioPosiciones;
 import donatrack.logistica.repository.RepositorioRutas;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.List;
 import java.util.Optional;
 
-public class GestorMonitoreo {
+public class GestorMonitoreo implements WithSimplePersistenceUnit {
 
   private final RepositorioPosiciones repositorioPosiciones =
       RepositorioPosiciones.getInstance();
@@ -18,40 +19,43 @@ public class GestorMonitoreo {
       RepositorioRutas.getInstance();
 
   public void registrarPosicion(ReporteUbicacion reporte) {
-    RutaReparto ruta = buscarRuta(reporte.rutaId());
+    RutaReparto ruta = reporte.getRuta();
 
     if (ruta.getEstado() != EstadoRuta.EN_CURSO) {
       throw new IllegalStateException(
           "La ruta " + ruta.getId() + " no esta en curso: no admite reportes de ubicacion."
       );
     }
-    if (!ruta.getCamion().getPatente().equals(reporte.patenteCamion())) {
+    if (!ruta.getCamion().getPatente().equals(reporte.getPatenteCamion())) {
       throw new IllegalArgumentException(
           "La patente reportada no coincide con el camion asignado a la ruta " + ruta.getId() + "."
       );
     }
 
-    repositorioPosiciones.registrar(reporte);
+    withTransaction(() -> {
+      repositorioPosiciones.registrar(reporte);
+      ruta.registrarUbicacion(reporte);
+    });
   }
 
   public EstadoRecorrido estadoDe(long rutaId) {
     RutaReparto ruta = buscarRuta(rutaId);
 
-    ReporteUbicacion ultimo = repositorioPosiciones.ultimaDe(rutaId)
+    ReporteUbicacion ultimo = Optional.ofNullable(ruta.getUltimoReporte())
         .orElseThrow(() ->
             new IllegalStateException(
                 "Todavia no se recibieron posiciones para la ruta " + rutaId + "."
             ));
 
     return new EstadoRecorrido(
-        ultimo.posicion(),
-        ultimo.velocidadKmh(),
+        ultimo.getPosicion(),
+        ultimo.getVelocidadKmh(),
         ruta.getPorcentajeAvance()
     );
   }
 
   public Optional<ReporteUbicacion> ultimaPosicionDe(long rutaId) {
-    return repositorioPosiciones.ultimaDe(rutaId);
+    return Optional.ofNullable(buscarRuta(rutaId).getUltimoReporte());
   }
 
   public List<RutaReparto> rutasEnCurso() {

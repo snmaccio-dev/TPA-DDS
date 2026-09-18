@@ -1,15 +1,11 @@
 package donatrack.logistica.controller.dto;
 
-import donatrack.logistica.domain.flota.Chofer;
+public record IniciarRutaRequest(Long choferId) {
 
-public record IniciarRutaRequest(
-    String nombre,
-    String apellido,
-    String documento,
-    String licencia
-) {
-
-  public Chofer aChofer() {
-    return new Chofer(nombre, apellido, documento, licencia);
+  public long choferIdObligatorio() {
+    if (choferId == null) {
+      throw new IllegalArgumentException("Debe indicarse el chofer que inicia la ruta.");
+    }
+    return choferId;
   }
 }

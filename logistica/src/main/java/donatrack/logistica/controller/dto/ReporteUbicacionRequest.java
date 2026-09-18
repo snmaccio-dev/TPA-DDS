@@ -2,6 +2,7 @@ package donatrack.logistica.controller.dto;
 
 import donatrack.logistica.contrato.Fechas;
 import donatrack.logistica.domain.monitoreo.ReporteUbicacion;
+import donatrack.logistica.domain.ruta.RutaReparto;
 
 import java.time.LocalDateTime;
 
@@ -14,11 +15,11 @@ public record ReporteUbicacionRequest(
     String momento
 ) {
 
-  public ReporteUbicacion aReporte() {
+  public ReporteUbicacion aReporte(RutaReparto ruta) {
     LocalDateTime medido = Fechas.aFechaHora(momento);
 
     return new ReporteUbicacion(
-        rutaId,
+        ruta,
         patenteCamion,
         latitud,
         longitud,

@@ -1,11 +1,34 @@
 package donatrack.logistica.domain.flota;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name = "chofer")
 public class Chofer {
 
-    private final String nombre;
-    private final String apellido;
-    private final String documento;
-    private final String licencia;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false)
+    private String nombre;
+
+    @Column(nullable = false)
+    private String apellido;
+
+    @Column(unique = true, nullable = false)
+    private String documento;
+
+    @Column(nullable = false)
+    private String licencia;
+
+    protected Chofer() {
+    }
 
     public Chofer(String nombre, String apellido, String documento, String licencia) {
         if (nombre == null || nombre.isBlank()) {
@@ -24,6 +47,10 @@ public class Chofer {
         this.apellido = apellido;
         this.documento = documento;
         this.licencia = licencia;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getNombre() {

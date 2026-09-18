@@ -40,7 +40,9 @@ public class RutasController {
 
   private void iniciar(Context ctx) {
     IniciarRutaRequest request = ctx.bodyAsClass(IniciarRutaRequest.class);
-    ctx.json(RutaDTO.desde(gestorEntregas.iniciarRuta(idDe(ctx), request.aChofer())));
+    ctx.json(RutaDTO.desde(
+        gestorEntregas.iniciarRuta(idDe(ctx), request.choferIdObligatorio())
+    ));
   }
 
   private void eliminar(Context ctx) {

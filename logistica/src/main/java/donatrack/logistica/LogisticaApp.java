@@ -1,6 +1,7 @@
 package donatrack.logistica;
 
 import donatrack.logistica.controller.CamionesController;
+import donatrack.logistica.controller.ChoferesController;
 import donatrack.logistica.controller.EntregasController;
 import donatrack.logistica.controller.MonitoreoController;
 import donatrack.logistica.controller.PlanificacionController;
@@ -18,11 +19,13 @@ import donatrack.logistica.infrastructure.planificacion.GeneradorRutasExterno;
 import donatrack.logistica.infrastructure.planificacion.GeneradorRutasSimulado;
 import donatrack.logistica.jobs.JobPlanificacionRutas;
 import donatrack.logistica.service.GestorCamiones;
+import donatrack.logistica.service.GestorChoferes;
 import donatrack.logistica.service.GestorEntregas;
 import donatrack.logistica.service.GestorLogistica;
 import donatrack.logistica.service.GestorMonitoreo;
 import donatrack.logistica.service.GestorRutas;
 import donatrack.logistica.service.RecursoInexistenteException;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import io.javalin.Javalin;
 
 import java.time.LocalTime;
@@ -50,6 +53,7 @@ public class LogisticaApp {
         : new GeneradorRutasExterno(urlPlanificador, json);
 
     GestorCamiones gestorCamiones = new GestorCamiones();
+    GestorChoferes gestorChoferes = new GestorChoferes();
     GestorRutas gestorRutas = new GestorRutas();
     GestorEntregas gestorEntregas = new GestorEntregas(clienteDonaciones, urlBase);
     GestorMonitoreo gestorMonitoreo = new GestorMonitoreo();
@@ -61,7 +65,10 @@ public class LogisticaApp {
 
     Javalin app = Javalin.create().start(PUERTO);
 
+    app.after(ctx -> WithSimplePersistenceUnit.dispose());
+
     new CamionesController(gestorCamiones).registrarRutas(app);
+    new ChoferesController(gestorChoferes).registrarRutas(app);
     new RutasController(gestorRutas, gestorEntregas).registrarRutas(app);
     new EntregasController(gestorEntregas).registrarRutas(app);
     new MonitoreoController(gestorMonitoreo, gestorRutas).registrarRutas(app);

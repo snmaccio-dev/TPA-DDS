@@ -1,6 +1,7 @@
 package donatrack.logistica.jobs;
 
 import donatrack.logistica.service.GestorLogistica;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -74,6 +75,8 @@ public class JobPlanificacionRutas {
     } catch (RuntimeException e) {
       System.out.println("[JOB] La corrida fallo: " + e.getMessage()
           + ". Se reintenta en la proxima ejecucion programada.");
+    } finally {
+      WithSimplePersistenceUnit.dispose();
     }
   }
 

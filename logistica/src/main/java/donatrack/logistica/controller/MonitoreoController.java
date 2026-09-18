@@ -26,7 +26,8 @@ public class MonitoreoController {
 
   private void registrarPosicion(Context ctx) {
     ReporteUbicacionRequest request = ctx.bodyAsClass(ReporteUbicacionRequest.class);
-    gestorMonitoreo.registrarPosicion(request.aReporte());
+    RutaReparto ruta = gestorRutas.buscar(request.rutaId());
+    gestorMonitoreo.registrarPosicion(request.aReporte(ruta));
     ctx.status(202);
   }
 
