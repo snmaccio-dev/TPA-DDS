@@ -2,21 +2,24 @@ package donatrack.donaciones.domain.persona;
 
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.necesidad.Necesidad;
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Entidad_Beneficiaria")
+@DiscriminatorValue("BENEFICIARIA")
 public class Beneficiaria extends Rol {
 
     @OneToMany(mappedBy = "entidad")
-    private final List<Necesidad> necesidades = new ArrayList<>();
+    private List<Necesidad> necesidades = new ArrayList<>();
 
-    // me olvide esta parte perdon
-    private final List<Donacion> donacionesRecibidas = new ArrayList<>();
+    @OneToMany(mappedBy = "destinatarioAsignado")
+    private List<Donacion> donacionesRecibidas = new ArrayList<>();
+
+    protected Beneficiaria() {
+    }
 
     public Beneficiaria(PersonaJuridica persona) {
         super(persona);
@@ -44,10 +47,10 @@ public class Beneficiaria extends Rol {
     }
 
     public List<Necesidad> getNecesidades() {
-        return necesidades;
+        return List.copyOf(necesidades);
     }
 
     public List<Donacion> getDonacionesRecibidas() {
-        return donacionesRecibidas;
+        return List.copyOf(donacionesRecibidas);
     }
 }

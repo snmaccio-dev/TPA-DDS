@@ -1,30 +1,33 @@
 package donatrack.donaciones.repository;
 
 import donatrack.donaciones.domain.donacion.asignacion.PropuestaAsignacion;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-public class RepositorioPropuestas {
-
-    private final Map<Long, PropuestaAsignacion> propuestas = new HashMap<>();
+public class RepositorioPropuestas implements WithSimplePersistenceUnit {
 
     public void guardar(PropuestaAsignacion propuesta) {
-        propuestas.put(propuesta.getDonacionId(), propuesta);
+        persist(propuesta);
     }
 
     public Optional<PropuestaAsignacion> buscarPorDonacion(long donacionId) {
-        return Optional.ofNullable(propuestas.get(donacionId));
+        return createQuery(
+            "select p from PropuestaAsignacion p where p.donacionId = :donacionId",
+            PropuestaAsignacion.class)
+            .setParameter("donacionId", donacionId)
+            .getResultList()
+            .stream()
+            .findFirst();
     }
 
     public List<PropuestaAsignacion> todas() {
-        return new ArrayList<>(propuestas.values());
+        return createQuery("select p from PropuestaAsignacion p", PropuestaAsignacion.class)
+            .getResultList();
     }
 
     public void eliminar(long donacionId) {
-        propuestas.remove(donacionId);
+        buscarPorDonacion(donacionId).ifPresent(this::remove);
     }
 }

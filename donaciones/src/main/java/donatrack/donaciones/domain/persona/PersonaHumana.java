@@ -1,6 +1,6 @@
 package donatrack.donaciones.domain.persona;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "Persona_Humana")

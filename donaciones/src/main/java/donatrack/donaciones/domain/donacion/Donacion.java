@@ -8,7 +8,7 @@ import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.notificacion.DonacionObserver;
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -26,8 +26,6 @@ public class Donacion {
     @ManyToOne
     @JoinColumn(name = "subcategoria_id")
     private Subcategoria subcategoria;
-
-    private static long proximoId = 1;
 
     // Una donación tiene muchos bienes
     @OneToMany(cascade = CascadeType.ALL)
@@ -59,10 +57,6 @@ public class Donacion {
     @JoinColumn(name = "donacion_id")
     private List<EstadoDonacion> historialEstados = new ArrayList<>();
 
-    // Relacion muhcos a uno
-    @OneToMany(mappedBy = "subcategoria")
-    private List<Donacion> donaciones = new ArrayList<>();
-
     // Observer — lista de observadores del ciclo de vida
     // @Transient le dice a JPA que ignore esto, que no intente guardarlo en PostgreSQL
     @Transient
@@ -83,8 +77,8 @@ public class Donacion {
         if (descripcion == null || descripcion.isBlank()) {
             throw new IllegalArgumentException("La donacion debe tener una descripcion.");
         }
-        this.id = proximoId++;
         this.bienes = new ArrayList<>(bienes);
+        this.subcategoria = this.bienes.get(0).getSubcategoria();
         this.donante = donante;
         this.descripcion = descripcion;
         this.estado = new EstadoDonacion(EstadosPosiblesDonacion.EN_DEPOSITO);
@@ -209,11 +203,11 @@ public class Donacion {
     }
 
     public Subcategoria getSubcategoria() {
-        return bienes.get(0).getSubcategoria();
+        return subcategoria;
     }
 
     public List<Bien> getBienes() {
-        return bienes;
+        return List.copyOf(bienes);
     }
 
     public double getCantidadTotal() {
@@ -254,7 +248,7 @@ public class Donacion {
     }
 
     public List<EstadoDonacion> getHistorialEstados() {
-        return historialEstados;
+        return List.copyOf(historialEstados);
     }
 
     @Override

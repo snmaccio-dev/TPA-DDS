@@ -1,7 +1,15 @@
 package donatrack.donaciones.domain.persona;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import donatrack.donaciones.domain.contacto.MedioContacto;
+import donatrack.donaciones.domain.contacto.TipoContacto;
+import javax.persistence.CollectionTable;
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.Table;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,13 +31,12 @@ public class PersonaJuridica extends Persona {
     @Column(name="Rubro")
     private String rubro;
 
-    @ManyToMany
-    @JoinTable(
-        name = "representantes_juridica",
-        joinColumns = @JoinColumn(name = "persona_juridica_id"),
-        inverseJoinColumns = @JoinColumn(name = "persona_humana_id")
+    @ElementCollection
+    @CollectionTable(
+        name = "representante",
+        joinColumns = @JoinColumn(name = "persona_juridica_id")
     )
-    private List<PersonaHumana> representantes = new ArrayList<>();
+    private List<Representante> representantes = new ArrayList<>();
 
     //Constructor vacío para Hibernate
     protected PersonaJuridica() {
@@ -48,8 +55,17 @@ public class PersonaJuridica extends Persona {
         this.rubro = rubro;
     }
 
-    public void agregarRepresentante(PersonaHumana representante) {
+    public void agregarRepresentante(Representante representante) {
+        if (representante == null) {
+            throw new IllegalArgumentException("El representante es obligatorio.");
+        }
+        if (representantes.contains(representante)) {
+            return;
+        }
         representantes.add(representante);
+        if (!tieneContacto(TipoContacto.EMAIL, representante.getEmail())) {
+            agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, representante.getEmail()));
+        }
     }
 
     @Override
@@ -78,7 +94,7 @@ public class PersonaJuridica extends Persona {
         return rubro;
     }
 
-    public List<PersonaHumana> getRepresentantes() {
-        return representantes;
+    public List<Representante> getRepresentantes() {
+        return List.copyOf(representantes);
     }
 }

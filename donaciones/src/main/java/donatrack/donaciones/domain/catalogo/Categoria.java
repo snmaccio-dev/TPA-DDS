@@ -1,12 +1,13 @@
 package donatrack.donaciones.domain.catalogo;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.OneToMany;
+import javax.persistence.Column;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 
 import java.util.ArrayList;

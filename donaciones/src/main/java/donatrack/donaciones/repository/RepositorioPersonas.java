@@ -1,21 +1,16 @@
 package donatrack.donaciones.repository;
 
-import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-public class RepositorioPersonas {
+public class RepositorioPersonas implements WithSimplePersistenceUnit {
 
     private static RepositorioPersonas instancia;
-    private final Map<String, Persona> porDocumento = new HashMap<>();
-    private final Map<String, Persona> porEmail = new HashMap<>();
 
     private RepositorioPersonas() {}
 
@@ -31,46 +26,62 @@ public class RepositorioPersonas {
         if (documento == null || documento.isBlank()) {
             throw new IllegalArgumentException("La persona no tiene documento.");
         }
-        if (porDocumento.containsKey(documento)) {
-            throw new IllegalArgumentException(
-                "Ya existe una persona registrada con documento " + documento
-            );
-        }
-        porDocumento.put(documento, persona);
-        emailDe(persona).ifPresent(email -> porEmail.put(email, persona));
+        persist(persona);
     }
 
     public Optional<Persona> buscarPorDocumento(String documento) {
-        return Optional.ofNullable(porDocumento.get(documento));
+        Optional<Persona> humana = createQuery(
+            "select p from PersonaHumana p where p.documento = :documento",
+            Persona.class)
+            .setParameter("documento", documento)
+            .getResultList()
+            .stream()
+            .findFirst();
+        if (humana.isPresent()) {
+            return humana;
+        }
+        return createQuery(
+            "select p from PersonaJuridica p where p.cuit = :documento",
+            Persona.class)
+            .setParameter("documento", documento)
+            .getResultList()
+            .stream()
+            .findFirst();
     }
 
     public Optional<PersonaJuridica> buscarJuridicaPorCuit(String cuit) {
-        return buscarPorDocumento(cuit)
-            .filter(PersonaJuridica.class::isInstance)
-            .map(PersonaJuridica.class::cast);
+        return createQuery(
+            "select p from PersonaJuridica p where p.cuit = :cuit",
+            PersonaJuridica.class)
+            .setParameter("cuit", cuit)
+            .getResultList()
+            .stream()
+            .findFirst();
     }
 
     public Optional<Persona> buscarPorEmail(String email) {
-        return Optional.ofNullable(porEmail.get(email));
+        return createQuery(
+            "select p from Persona p join p.contactos c "
+                + "where c.tipo = :tipo and c.valor = :email",
+            Persona.class)
+            .setParameter("tipo", TipoContacto.EMAIL)
+            .setParameter("email", email)
+            .getResultList()
+            .stream()
+            .findFirst();
     }
 
     public List<Persona> todos() {
-        return new ArrayList<>(porDocumento.values());
+        return createQuery("select p from Persona p", Persona.class).getResultList();
     }
 
     public void eliminar(Persona persona) {
-        porDocumento.remove(persona.getDocumento());
-        emailDe(persona).ifPresent(porEmail::remove);
+        remove(persona);
     }
 
     public int cantidad() {
-        return porDocumento.size();
-    }
-
-    private Optional<String> emailDe(Persona persona) {
-        return persona.getContactos().stream()
-            .filter(c -> c.getTipo() == TipoContacto.EMAIL)
-            .map(MedioContacto::getValor)
-            .findFirst();
+        return createQuery("select count(p) from Persona p", Long.class)
+            .getSingleResult()
+            .intValue();
     }
 }

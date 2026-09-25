@@ -2,15 +2,30 @@ package donatrack.donaciones.domain.persona;
 
 import donatrack.donaciones.domain.donacion.Donacion;
 
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.OneToMany;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+@Entity
+@DiscriminatorValue("DONANTE")
 public class Donante extends Rol {
 
+    @Column(name = "ultima_interaccion")
     private LocalDate ultimaInteraccion;
+
+    @Column(name = "fecha_ultimo_aviso_inactividad")
     private LocalDate fechaUltimoAvisoInactividad;
-    private final List<Donacion> donacionesRealizadas = new ArrayList<>();
+
+    @OneToMany(mappedBy = "donante")
+    private List<Donacion> donacionesRealizadas = new ArrayList<>();
+
+    protected Donante() {
+    }
 
     public Donante(Persona persona) {
         super(persona);
@@ -46,6 +61,6 @@ public class Donante extends Rol {
     }
 
     public List<Donacion> getDonacionesRealizadas() {
-        return donacionesRealizadas;
+        return List.copyOf(donacionesRealizadas);
     }
 }

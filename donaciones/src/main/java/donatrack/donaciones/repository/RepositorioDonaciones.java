@@ -1,16 +1,15 @@
 package donatrack.donaciones.repository;
 
 import donatrack.donaciones.domain.donacion.Donacion;
+import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-// Singleton — unica instancia de almacen de donaciones en memoria
-public class RepositorioDonaciones {
+public class RepositorioDonaciones implements WithSimplePersistenceUnit {
 
     private static RepositorioDonaciones instancia;
-    private final List<Donacion> donaciones = new ArrayList<>();
 
     private RepositorioDonaciones() {}
 
@@ -22,24 +21,32 @@ public class RepositorioDonaciones {
     }
 
     public void guardar(Donacion donacion) {
-        donaciones.add(donacion);
+        persist(donacion);
     }
 
     public List<Donacion> todas() {
-        return new ArrayList<>(donaciones);
+        return createQuery("select d from Donacion d", Donacion.class).getResultList();
     }
 
     public Optional<Donacion> buscarPorId(Long id) {
-        return donaciones.stream()
-            .filter(d -> d.getId().equals(id))
-            .findFirst();
+        return Optional.ofNullable(find(Donacion.class, id));
     }
 
     public void eliminar(Long id) {
-        donaciones.removeIf(d -> d.getId().equals(id));
+        buscarPorId(id).ifPresent(this::remove);
     }
 
     public int cantidad() {
-        return donaciones.size();
+        return createQuery("select count(d) from Donacion d", Long.class)
+            .getSingleResult()
+            .intValue();
+    }
+
+    public List<Donacion> enEstado(EstadosPosiblesDonacion estado) {
+        return createQuery(
+            "select d from Donacion d where d.estado.estado = :estado",
+            Donacion.class)
+            .setParameter("estado", estado)
+            .getResultList();
     }
 }

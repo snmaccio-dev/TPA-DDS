@@ -3,7 +3,7 @@ package donatrack.donaciones.domain.necesidad;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.persona.Beneficiaria;
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "Necesidad")
@@ -38,13 +38,12 @@ public abstract class Necesidad {
       int cantidad,
       Subcategoria subcategoria
   ) {
-    this.id = proximoId++;
     this.descripcion = descripcion;
     this.cantidad = cantidad;
     this.subcategoria = subcategoria;
   }
 
-  public long getId() {
+  public Long getId() {
     return id;
   }
 

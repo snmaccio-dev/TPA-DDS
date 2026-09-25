@@ -11,6 +11,7 @@ import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.repository.RepositorioPropuestas;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class GestorAsignaciones {
+public class GestorAsignaciones implements WithSimplePersistenceUnit {
 
   private final Algoritmo compatibilidad;
   private final Algoritmo prioridadSubAtendidos;
@@ -46,21 +47,21 @@ public class GestorAsignaciones {
 
   // EJECUCIÓN PROGRAMADA
   public int ejecutarMatchmakingProgramado() {
-    List<Donacion> pendientes = repositorioDonaciones.todas().stream()
-        .filter(d -> d.getEstado().getEstado() == EstadosPosiblesDonacion.EN_DEPOSITO)
-        .toList();
+    List<Donacion> pendientes = repositorioDonaciones.enEstado(EstadosPosiblesDonacion.EN_DEPOSITO);
 
     int procesadas = 0;
     for (Donacion donacion : pendientes) {
       try {
         ResultadoMatchmaking resultado = calcularPropuesta(donacion);
-        PropuestaAsignacion propuesta = new PropuestaAsignacion(
-            donacion.getId(),
-            resultado.candidatas(),
-            LocalDateTime.now(),
-            resultado.huboCoincidencias()
-        );
-        repositorioPropuestas.guardar(propuesta);
+        withTransaction(() -> {
+          PropuestaAsignacion propuesta = new PropuestaAsignacion(
+              donacion.getId(),
+              resultado.candidatas(),
+              LocalDateTime.now(),
+              resultado.huboCoincidencias()
+          );
+          repositorioPropuestas.guardar(propuesta);
+        });
         procesadas++;
       } catch (RuntimeException e) {
         System.err.println(
@@ -97,8 +98,10 @@ public class GestorAsignaciones {
         .orElseThrow(() -> new RecursoInexistenteException(
             "No existe la donación con ID " + donacionId
         ));
-    donacion.confirmarDestino(destinatario);
-    repositorioPropuestas.eliminar(donacionId);
+    withTransaction(() -> {
+      donacion.confirmarDestino(destinatario);
+      repositorioPropuestas.eliminar(donacionId);
+    });
   }
 
   private ResultadoMatchmaking calcularPropuesta(Donacion donacion) {

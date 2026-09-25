@@ -3,17 +3,18 @@ package donatrack.donaciones.service;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.necesidad.Necesidad;
 import donatrack.donaciones.repository.RepositorioNecesidades;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.List;
 
-public class GestorNecesidades {
+public class GestorNecesidades implements WithSimplePersistenceUnit {
 
   private final RepositorioNecesidades repositorio =
       RepositorioNecesidades.getInstance();
 
   // POST /necesidades
   public Necesidad crear(Necesidad necesidad) {
-    repositorio.guardar(necesidad);
+    withTransaction(() -> repositorio.guardar(necesidad));
     return necesidad;
   }
 
@@ -35,7 +36,7 @@ public class GestorNecesidades {
   // DELETE /necesidades/{id}
   public void eliminar(long id) {
     buscar(id);
-    repositorio.eliminar(id);
+    withTransaction(() -> repositorio.eliminar(id));
   }
 
   public void actualizar(
@@ -44,10 +45,12 @@ public class GestorNecesidades {
       int cantidad,
       Subcategoria subcategoria
   ) {
-    Necesidad necesidad = buscar(id);
+    withTransaction(() -> {
+      Necesidad necesidad = buscar(id);
 
-    necesidad.setDescripcion(descripcion);
-    necesidad.setCantidad(cantidad);
-    necesidad.setSubcategoria(subcategoria);
+      necesidad.setDescripcion(descripcion);
+      necesidad.setCantidad(cantidad);
+      necesidad.setSubcategoria(subcategoria);
+    });
   }
 }

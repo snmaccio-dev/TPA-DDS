@@ -1,8 +1,16 @@
 package donatrack.donaciones.domain.persona;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "Rol")
@@ -17,7 +25,7 @@ public abstract class Rol {
 
     @ManyToOne
     @JoinColumn(name = "persona_id")
-    private Persona persona; //le saque FINAL
+    private Persona persona;
 
     // Constructor vacío obligatorio para JPA
     protected Rol() {
@@ -33,5 +41,9 @@ public abstract class Rol {
 
     public Persona getPersona() {
         return persona;
+    }
+
+    public Long getId() {
+        return id;
     }
 }

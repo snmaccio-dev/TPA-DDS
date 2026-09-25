@@ -3,7 +3,7 @@ package donatrack.donaciones.domain.donacion;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.time.LocalDate;
 

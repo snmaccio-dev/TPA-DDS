@@ -9,12 +9,13 @@ import donatrack.donaciones.domain.notificacion.NotificarBeneficiariaAsignacionO
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioPropuestas;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class GestorDonaciones {
+public class GestorDonaciones implements WithSimplePersistenceUnit {
 
     private final SegmentadorDonaciones segmentacion = new SegmentadorDonaciones();
     private final RepositorioDonaciones repositorio =
@@ -33,9 +34,7 @@ public class GestorDonaciones {
     }
 
     public List<Donacion> porEstado(EstadosPosiblesDonacion estado) {
-        return repositorio.todas().stream()
-            .filter(d -> d.getEstado().getEstado() == estado)
-            .toList();
+        return repositorio.enEstado(estado);
     }
 
     public Donacion buscar(long id) {
@@ -48,7 +47,7 @@ public class GestorDonaciones {
 
     public List<Donacion> crear(List<Bien> bienes, Donante donante, String descripcion) {
         List<Donacion> segmentadas = segmentacion.segmentar(bienes, donante, descripcion);
-        segmentadas.forEach(this::registrarDonacion);
+        withTransaction(() -> segmentadas.forEach(this::registrarDonacion));
         return segmentadas;
     }
 
@@ -64,34 +63,36 @@ public class GestorDonaciones {
     }
 
     public void eliminar(long id) {
-        repositorio.eliminar(id);
+        withTransaction(() -> repositorio.eliminar(id));
     }
 
     // === Transiciones del ciclo de la Donacion ===
 
     public void marcarListaParaEntregar(long id) {
-        buscar(id).marcarListaParaEntregar();
+        withTransaction(() -> buscar(id).marcarListaParaEntregar());
     }
 
     public void marcarEnTraslado(long id) {
-        buscar(id).marcarEnTraslado();
+        withTransaction(() -> buscar(id).marcarEnTraslado());
     }
 
     public void marcarEntregada(long id, java.time.LocalDateTime fechaHora, String patenteCamion) {
-        buscar(id).marcarEntregada(fechaHora, patenteCamion);
+        withTransaction(() -> buscar(id).marcarEntregada(fechaHora, patenteCamion));
     }
 
     public void marcarEntregaFallida(long id, String motivo) {
-        buscar(id).marcarEntregaFallida(motivo);
+        withTransaction(() -> buscar(id).marcarEntregaFallida(motivo));
     }
 
     public void marcarEnDeposito(long id) {
-        buscar(id).marcarEnDeposito();
+        withTransaction(() -> buscar(id).marcarEnDeposito());
     }
 
     public void marcarVencida(long id) {
-        buscar(id).marcarVencida();
-        repositorioPropuestas.eliminar(id);
+        withTransaction(() -> {
+            buscar(id).marcarVencida();
+            repositorioPropuestas.eliminar(id);
+        });
     }
 
     public List<EstadoDonacion> historial(long id) {
@@ -140,6 +141,6 @@ public class GestorDonaciones {
             );
         }
 
-        aAplicar.forEach(transicion);
+        withTransaction(() -> aAplicar.forEach(transicion));
     }
 }

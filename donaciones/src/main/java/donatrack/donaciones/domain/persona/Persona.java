@@ -3,18 +3,19 @@ package donatrack.donaciones.domain.persona;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.usuario.Usuario;
-import jakarta.persistence.*;
+import javax.persistence.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 @Entity
-@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS) //PARA Q COINCIDA CON EL DIAGRAMA REVISAR @Inheritance(strategy = InheritanceType.JOINED)
+@Table(name = "Persona")
+@Inheritance(strategy = InheritanceType.JOINED)
 public abstract class Persona {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(name="Direccion")
@@ -27,12 +28,12 @@ public abstract class Persona {
     @JoinColumn(name = "contacto_predeterminado_id")
     protected MedioContacto contactoPredeterminado;
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name="usuario_id")
     protected Usuario usuario;
 
     @OneToMany(mappedBy = "persona")
-    protected final List<Rol> roles = new ArrayList<>();
+    protected List<Rol> roles = new ArrayList<>();
 
     public abstract String getNombreDisplay();
 
@@ -48,6 +49,7 @@ public abstract class Persona {
     }
 
     public void agregarMedioContacto(MedioContacto medio) {
+        medio.setPersona(this);
         contactos.add(medio);
         if (contactos.size() == 1) {
             contactoPredeterminado = medio;

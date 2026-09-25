@@ -1,12 +1,6 @@
 package donatrack.donaciones.domain.catalogo;
 
-import donatrack.donaciones.domain.donacion.Bien;
-import donatrack.donaciones.domain.donacion.Donacion;
-import donatrack.donaciones.domain.necesidad.Necesidad;
-import jakarta.persistence.*;
-
-import java.util.ArrayList;
-import java.util.List;
+import javax.persistence.*;
 
 @Entity
 @Table(name = "Subcategoria") // Agrego para coincidir con el DER
@@ -24,19 +18,10 @@ public class Subcategoria {
     @Column(name="unidades")
     private Unidades unidades;
 
-    // Relaciones muchos a muchos
+    // Cada subcategoria pertenece a una categoria
     @ManyToOne
     @JoinColumn(name = "categoria_id")
     private Categoria categoria;
-
-    @OneToMany(mappedBy = "subcategoria")
-    private List<Necesidad> necesidades = new ArrayList<>();
-
-    @OneToMany(mappedBy = "subcategoria")
-    private List<Donacion> donaciones = new ArrayList<>();
-
-    @OneToMany(mappedBy = "subcategoria")
-    private List<Bien> bienes = new ArrayList<>();
 
     protected Subcategoria() {
     }

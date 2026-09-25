@@ -4,14 +4,16 @@ import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
+import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.repository.RepositorioPersonas;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class GestorEntidadesBeneficiarias {
+public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
 
   private final RepositorioEntidades repositorioEntidades =
       RepositorioEntidades.getInstance();
@@ -36,15 +38,17 @@ public class GestorEntidadesBeneficiarias {
   // DELETE /entidades/{id}
   public void eliminar(long id) {
     buscar(id);
-    repositorioEntidades.eliminar(id);
+    withTransaction(() -> repositorioEntidades.eliminar(id));
   }
 
   public void actualizarDireccion(long id, String nuevaDireccion) {
     if (nuevaDireccion == null || nuevaDireccion.isBlank()) {
       throw new IllegalArgumentException("La direccion de la beneficiaria no puede quedar vacia.");
     }
-    Beneficiaria beneficiaria = buscar(id);
-    beneficiaria.getPersona().setDireccion(nuevaDireccion.trim());
+    withTransaction(() -> {
+      Beneficiaria beneficiaria = buscar(id);
+      beneficiaria.getPersona().setDireccion(nuevaDireccion.trim());
+    });
   }
 
   public Optional<PersonaJuridica> buscarPorCuit(String cuit) {
@@ -64,18 +68,26 @@ public class GestorEntidadesBeneficiarias {
   }
 
   public Beneficiaria registrarDePersonaExistente(String cuit, DatosEntidad datos) {
-    PersonaJuridica juridica = repositorioPersonas.buscarJuridicaPorCuit(cuit)
-        .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe una persona juridica con CUIT " + cuit
-        ));
-    aplicarDatosDeBeneficiaria(juridica, datos);
-    return crearRol(juridica);
+    Beneficiaria[] resultado = new Beneficiaria[1];
+    withTransaction(() -> {
+      PersonaJuridica juridica = repositorioPersonas.buscarJuridicaPorCuit(cuit)
+          .orElseThrow(() -> new RecursoInexistenteException(
+              "No existe una persona juridica con CUIT " + cuit
+          ));
+      aplicarDatosDeBeneficiaria(juridica, datos);
+      resultado[0] = crearRol(juridica);
+    });
+    return resultado[0];
   }
 
   public Beneficiaria registrarConPersonaNueva(PersonaJuridica juridica, DatosEntidad datos) {
-    repositorioPersonas.guardar(juridica);
-    aplicarDatosDeBeneficiaria(juridica, datos);
-    return crearRol(juridica);
+    Beneficiaria[] resultado = new Beneficiaria[1];
+    withTransaction(() -> {
+      repositorioPersonas.guardar(juridica);
+      aplicarDatosDeBeneficiaria(juridica, datos);
+      resultado[0] = crearRol(juridica);
+    });
+    return resultado[0];
   }
 
   private void aplicarDatosDeBeneficiaria(PersonaJuridica juridica, DatosEntidad datos) {
@@ -87,6 +99,9 @@ public class GestorEntidadesBeneficiarias {
     juridica.setDireccion(datos.direccion());
     if (!juridica.tieneContacto(TipoContacto.TELEFONO, datos.telefono())) {
       juridica.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, datos.telefono()));
+    }
+    for (Representante r : datos.representantes()) {
+      juridica.agregarRepresentante(r);
     }
   }
 

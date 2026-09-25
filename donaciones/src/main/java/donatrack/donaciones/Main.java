@@ -31,6 +31,7 @@ import donatrack.donaciones.domain.necesidad.Periodo;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
+import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
 
 
@@ -70,7 +71,7 @@ public class Main {
 
         PersonaJuridica arcos = new PersonaJuridica("30-12345678-1", "Arcos Plateados S.A.", TipoOrganizacion.EMPRESA, "Construccion");
         arcos.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "contacto@arcos.com"));
-        arcos.agregarRepresentante(ana);
+        arcos.agregarRepresentante(new Representante("Ana", "Perez", "ana@mail.com"));
         System.out.println("Persona juridica creada: " + arcos.getNombreDisplay()
                 + " | Representantes: " + arcos.getRepresentantes().size());
         System.out.println();

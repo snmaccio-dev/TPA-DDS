@@ -1,33 +1,52 @@
 package donatrack.donaciones.repository;
 
 import donatrack.donaciones.domain.persona.Donante;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
-public class RepositorioDonantes {
-
-    private final Map<String, Donante> porDocumento = new HashMap<>();
+public class RepositorioDonantes implements WithSimplePersistenceUnit {
 
     public void guardar(Donante donante) {
-        porDocumento.put(donante.getPersona().getDocumento(), donante);
+        persist(donante);
     }
 
     public Optional<Donante> buscarPorDocumento(String documento) {
-        return Optional.ofNullable(porDocumento.get(documento));
+        Optional<Donante> porHumana = createQuery(
+            "select d from Donante d, PersonaHumana p "
+                + "where d.persona = p and p.documento = :documento",
+            Donante.class)
+            .setParameter("documento", documento)
+            .getResultList()
+            .stream()
+            .findFirst();
+        if (porHumana.isPresent()) {
+            return porHumana;
+        }
+        return createQuery(
+            "select d from Donante d, PersonaJuridica p "
+                + "where d.persona = p and p.cuit = :documento",
+            Donante.class)
+            .setParameter("documento", documento)
+            .getResultList()
+            .stream()
+            .findFirst();
     }
 
     public List<Donante> todos() {
-        return new ArrayList<>(porDocumento.values());
+        return createQuery("select d from Donante d", Donante.class).getResultList();
     }
 
     public List<Donante> queRequierenAvisoDeInactividad(LocalDate limite) {
-        return porDocumento.values().stream()
-            .filter(donante -> donante.requiereAvisoDeInactividad(limite))
-            .toList();
+        return createQuery(
+            "select d from Donante d "
+                + "where d.ultimaInteraccion < :limite "
+                + "and (d.fechaUltimoAvisoInactividad is null "
+                + "     or d.fechaUltimoAvisoInactividad < d.ultimaInteraccion)",
+            Donante.class)
+            .setParameter("limite", limite)
+            .getResultList();
     }
 }

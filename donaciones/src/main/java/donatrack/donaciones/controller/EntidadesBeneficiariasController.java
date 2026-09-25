@@ -3,15 +3,18 @@ package donatrack.donaciones.controller;
 import donatrack.donaciones.controller.dto.BeneficiariaDTO;
 import donatrack.donaciones.controller.dto.NuevaBeneficiariaExistenteRequest;
 import donatrack.donaciones.controller.dto.NuevaBeneficiariaNuevaRequest;
+import donatrack.donaciones.controller.dto.RepresentanteRequest;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
+import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.service.DatosEntidad;
 import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
+import java.util.List;
 import java.util.Optional;
 
 public class EntidadesBeneficiariasController {
@@ -66,7 +69,11 @@ public class EntidadesBeneficiariasController {
   private void altaDePersonaExistente(Context ctx) {
     NuevaBeneficiariaExistenteRequest request =
         ctx.bodyAsClass(NuevaBeneficiariaExistenteRequest.class);
-    DatosEntidad datos = new DatosEntidad(request.direccion(), request.telefono());
+    DatosEntidad datos = new DatosEntidad(
+        request.direccion(),
+        request.telefono(),
+        mapRepresentantes(request.representantes())
+    );
     ctx.status(201).json(BeneficiariaDTO.desde(
         gestor.registrarDePersonaExistente(request.cuit(), datos)
     ));
@@ -81,10 +88,21 @@ public class EntidadesBeneficiariasController {
         request.tipoOrganizacion() == null ? null : TipoOrganizacion.valueOf(request.tipoOrganizacion()),
         request.rubro()
     );
-    DatosEntidad datos = new DatosEntidad(request.direccion(), request.telefono());
+    DatosEntidad datos = new DatosEntidad(
+        request.direccion(),
+        request.telefono(),
+        mapRepresentantes(request.representantes())
+    );
     ctx.status(201).json(BeneficiariaDTO.desde(
         gestor.registrarConPersonaNueva(juridica, datos)
     ));
+  }
+
+  private List<Representante> mapRepresentantes(List<RepresentanteRequest> representantes) {
+    if (representantes == null) {
+      return List.of();
+    }
+    return representantes.stream().map(RepresentanteRequest::aRepresentante).toList();
   }
 
   private void eliminar(Context ctx) {

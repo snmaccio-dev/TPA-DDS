@@ -4,8 +4,10 @@ import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioPersonas;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
-public class ImportadorCSVPersonas extends ImportadorCSV<Persona> {
+public class ImportadorCSVPersonas extends ImportadorCSV<Persona>
+    implements WithSimplePersistenceUnit {
 
   private final RepositorioPersonas repositorio;
   private final RepositorioDonantes repositorioDonantes;
@@ -28,9 +30,11 @@ public class ImportadorCSVPersonas extends ImportadorCSV<Persona> {
     }
     creados++;
 
-    Donante donante = new Donante(persona);
-    repositorio.guardar(persona);
-    repositorioDonantes.guardar(donante);
+    withTransaction(() -> {
+      Donante donante = new Donante(persona);
+      repositorio.guardar(persona);
+      repositorioDonantes.guardar(donante);
+    });
 
     return persona;
   }

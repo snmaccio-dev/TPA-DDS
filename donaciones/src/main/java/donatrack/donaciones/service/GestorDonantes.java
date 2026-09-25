@@ -2,11 +2,12 @@ package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.repository.RepositorioDonantes;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.time.LocalDate;
 import java.util.List;
 
-public class GestorDonantes {
+public class GestorDonantes implements WithSimplePersistenceUnit {
 
     public static final int DIAS_SIN_INTERACCION = 20;
 
@@ -31,7 +32,7 @@ public class GestorDonantes {
                 gestorNotificaciones.notificarAusenciaPlataforma(donante.getPersona());
                 // Recien cuando la notificacion salio bien registramos el aviso, asi un
                 // fallo del canal no consume el aviso y el donante vuelve a intentarse.
-                donante.registrarAvisoDeInactividad();
+                withTransaction(donante::registrarAvisoDeInactividad);
                 avisados++;
             } catch (RuntimeException e) {
                 System.err.println(

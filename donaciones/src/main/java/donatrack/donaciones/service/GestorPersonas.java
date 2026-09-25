@@ -8,12 +8,13 @@ import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.domain.usuario.Usuario;
 import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioPersonas;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public class GestorPersonas {
+public class GestorPersonas implements WithSimplePersistenceUnit {
 
     private final RepositorioPersonas repositorio =
         RepositorioPersonas.getInstance();
@@ -27,34 +28,40 @@ public class GestorPersonas {
     }
 
     public void registrar(Persona persona, String email) {
-        Optional<Persona> existente = repositorio.buscarPorDocumento(persona.getDocumento());
+        String[] emailBienvenida = new String[1];
 
-        if (existente.isPresent()) {
-            Persona actual = existente.get();
-            if (!actual.tieneContacto(TipoContacto.EMAIL, email)) {
-                actual.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
+        withTransaction(() -> {
+            Optional<Persona> existente = repositorio.buscarPorDocumento(persona.getDocumento());
+
+            if (existente.isPresent()) {
+                Persona actual = existente.get();
+                if (!actual.tieneContacto(TipoContacto.EMAIL, email)) {
+                    actual.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
+                }
+                if (!actual.tieneRol(Donante.class)) {
+                    Donante donante = new Donante(actual);
+                    repositorioDonantes.guardar(donante);
+                }
+                System.out.println("[REGISTRO] Persona ya existente: " + persona.getDocumento());
+                return;
             }
-            if (!actual.tieneRol(Donante.class)) {
-                Donante donante = new Donante(actual);
-                repositorioDonantes.guardar(donante);
-            }
-            System.out.println("[REGISTRO] Persona ya existente: " + persona.getDocumento());
-            return;
+
+            String contrasena = generarContrasena();
+            persona.setUsuario(new Usuario(email, contrasena));
+            persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
+            Donante donante = new Donante(persona);
+            repositorio.guardar(persona);
+            repositorioDonantes.guardar(donante);
+
+            emailBienvenida[0] = "Bienvenido a DonaTrack. Su usuario: " + email
+                + " | Contrasena: " + contrasena;
+
+            System.out.println("[REGISTRO] Persona creada: " + persona.getDocumento());
+        });
+
+        if (emailBienvenida[0] != null) {
+            notificador.notificar(email, emailBienvenida[0]);
         }
-
-        String contrasena = generarContrasena();
-        persona.setUsuario(new Usuario(email, contrasena));
-        persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
-        Donante donante = new Donante(persona);
-        repositorio.guardar(persona);
-        repositorioDonantes.guardar(donante);
-
-        notificador.notificar(
-            email,
-            "Bienvenido a DonaTrack. Su usuario: " + email + " | Contrasena: " + contrasena
-        );
-
-        System.out.println("[REGISTRO] Persona creada: " + persona.getDocumento());
     }
 
     public Persona buscarPorDocumento(String documento) {
@@ -74,7 +81,9 @@ public class GestorPersonas {
     }
 
     public void eliminar(String documento) {
-        repositorio.buscarPorDocumento(documento).ifPresent(repositorio::eliminar);
+        withTransaction(() ->
+            repositorio.buscarPorDocumento(documento).ifPresent(repositorio::eliminar)
+        );
     }
 
     private String generarContrasena() {

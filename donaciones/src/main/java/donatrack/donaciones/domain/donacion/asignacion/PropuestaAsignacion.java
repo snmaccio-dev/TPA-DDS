@@ -2,7 +2,7 @@ package donatrack.donaciones.domain.donacion.asignacion;
 
 import donatrack.donaciones.domain.persona.Beneficiaria;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,7 +18,7 @@ public class PropuestaAsignacion {
     private Long id;
 
     @Column(name = "donacion_id")
-    private final long donacionId;
+    private long donacionId;
 
     // Relación de muchos a muchos con las entidades candidatas
     @ManyToMany
@@ -27,13 +27,14 @@ public class PropuestaAsignacion {
         joinColumns = @JoinColumn(name = "propuesta_id"),
         inverseJoinColumns = @JoinColumn(name = "beneficiaria_id")
     )
-    private final List<Beneficiaria> candidatas;
+    @OrderColumn(name = "orden")
+    private List<Beneficiaria> candidatas;
 
     @Column(name = "fecha_generacion")
-    private final LocalDateTime fechaGeneracion;
+    private LocalDateTime fechaGeneracion;
 
     @Column(name = "hubo_coincidencias")
-    private final boolean huboCoincidencias;
+    private boolean huboCoincidencias;
 
     protected PropuestaAsignacion() {
     }

@@ -1,11 +1,25 @@
 package donatrack.donaciones.domain.donacion.estado;
 
+import javax.persistence.Column;
+import javax.persistence.DiscriminatorColumn;
+import javax.persistence.DiscriminatorValue;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.Table;
+
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "Estado_Donacion")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
 @DiscriminatorColumn(name = "tipo_clase_estado") // Esto crea una columna extra para diferenciar si es un estado común o uno de entrega fallida
+@DiscriminatorValue("COMUN")
 public class EstadoDonacion {
 
     @Id
@@ -18,7 +32,7 @@ public class EstadoDonacion {
     private EstadosPosiblesDonacion estado;
 
     @Column(name = "fecha_inicio")
-    private final LocalDateTime fechaInicio;
+    private LocalDateTime fechaInicio;
 
     protected EstadoDonacion() {
     }

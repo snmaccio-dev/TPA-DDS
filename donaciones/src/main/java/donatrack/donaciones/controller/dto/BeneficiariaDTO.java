@@ -4,17 +4,19 @@ import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
+import donatrack.donaciones.domain.persona.Representante;
 
 import java.util.List;
 
 public record BeneficiariaDTO(
-    long id,
+    Long id,
     String cuit,
     String razonSocial,
     String direccion,
     String telefono,
     String tipoOrganizacion,
-    String rubro
+    String rubro,
+    List<RepresentanteRequest> representantes
 ) {
 
   public static BeneficiariaDTO desde(Beneficiaria beneficiaria) {
@@ -26,7 +28,8 @@ public record BeneficiariaDTO(
         juridica.getDireccion(),
         primerContactoDeTipo(juridica, TipoContacto.TELEFONO),
         juridica.getTipo() == null ? null : juridica.getTipo().name(),
-        juridica.getRubro()
+        juridica.getRubro(),
+        representantesDe(juridica)
     );
   }
 
@@ -40,5 +43,11 @@ public record BeneficiariaDTO(
         .map(MedioContacto::getValor)
         .findFirst()
         .orElse(null);
+  }
+
+  private static List<RepresentanteRequest> representantesDe(PersonaJuridica juridica) {
+    return juridica.getRepresentantes().stream()
+        .map(r -> new RepresentanteRequest(r.getNombre(), r.getApellido(), r.getEmail()))
+        .toList();
   }
 }
