@@ -13,7 +13,7 @@ public class BeneficiariaTest {
   @Test
   public void registrarNecesidadAgregaCorrectamenteALaLista() {
     Beneficiaria escuela = beneficiaria("Escuela Parroquial San Jose");
-    escuela.registrarNecesidad(necesidadBancosYSillas(30));
+    necesidadBancosYSillas(escuela, 30);
 
     assertEquals(1, escuela.getNecesidades().size());
     assertEquals("Reposicion tras inundacion", escuela.getNecesidades().get(0).getDescripcion());
@@ -49,7 +49,7 @@ public class BeneficiariaTest {
     return new Beneficiaria(organizacion);
   }
 
-  private Necesidad necesidadBancosYSillas(int cantidad) {
-    return new NecesidadExtraordinaria("Reposicion tras inundacion", cantidad, new Subcategoria("Bancos y Sillas escolares", new Categoria("Mobiliario"), Unidades.UNIDADES));
+  private Necesidad necesidadBancosYSillas(Beneficiaria entidad, int cantidad) {
+    return new NecesidadExtraordinaria("Reposicion tras inundacion", cantidad, new Subcategoria("Bancos y Sillas escolares", new Categoria("Mobiliario"), Unidades.UNIDADES), entidad);
   }
 }

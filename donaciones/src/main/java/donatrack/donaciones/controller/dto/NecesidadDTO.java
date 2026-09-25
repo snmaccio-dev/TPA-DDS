@@ -5,12 +5,13 @@ import donatrack.donaciones.domain.necesidad.Necesidad;
 import java.util.List;
 
 public record NecesidadDTO(
-    long id,
+    Long id,
     String descripcion,
     int cantidad,
     String subcategoria,
     String unidad,
-    boolean esExtraordinaria
+    boolean esExtraordinaria,
+    String cuitBeneficiaria
 ) {
 
   public static NecesidadDTO desde(Necesidad necesidad) {
@@ -20,7 +21,8 @@ public record NecesidadDTO(
         necesidad.getCantidad(),
         necesidad.getSubcategoria().getNombre(),
         necesidad.getUnidades().name(),
-        necesidad.esExtraordinaria()
+        necesidad.esExtraordinaria(),
+        necesidad.getEntidad().getPersona().getCuit()
     );
   }
 

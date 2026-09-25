@@ -8,6 +8,8 @@ import donatrack.donaciones.domain.necesidad.Necesidad;
 import donatrack.donaciones.domain.necesidad.NecesidadExtraordinaria;
 import donatrack.donaciones.domain.necesidad.NecesidadRecurrente;
 import donatrack.donaciones.domain.necesidad.Periodo;
+import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.service.GestorNecesidades;
 import donatrack.donaciones.service.RecursoInexistenteException;
@@ -18,11 +20,14 @@ public class NecesidadesController {
 
   private final GestorNecesidades gestor;
   private final RepositorioSubcategorias repositorioSubcategorias;
+  private final RepositorioEntidades repositorioEntidades;
 
   public NecesidadesController(GestorNecesidades gestor,
-                               RepositorioSubcategorias repositorioSubcategorias) {
+                               RepositorioSubcategorias repositorioSubcategorias,
+                               RepositorioEntidades repositorioEntidades) {
     this.gestor = gestor;
     this.repositorioSubcategorias = repositorioSubcategorias;
+    this.repositorioEntidades = repositorioEntidades;
   }
 
   public void registrarRutas(Javalin app) {
@@ -44,13 +49,19 @@ public class NecesidadesController {
   private void crear(Context ctx) {
     NuevaNecesidadRequest request = ctx.bodyAsClass(NuevaNecesidadRequest.class);
     Subcategoria subcategoria = subcategoriaDe(request.subcategoria());
+    Beneficiaria beneficiaria = beneficiariaDe(request.cuitBeneficiaria());
     Necesidad necesidad = "RECURRENTE".equalsIgnoreCase(request.tipo())
         ? new NecesidadRecurrente(
             request.descripcion(),
             request.cantidad(),
             subcategoria,
+            beneficiaria,
             request.periodo() == null ? null : Periodo.valueOf(request.periodo()))
-        : new NecesidadExtraordinaria(request.descripcion(), request.cantidad(), subcategoria);
+        : new NecesidadExtraordinaria(
+            request.descripcion(),
+            request.cantidad(),
+            subcategoria,
+            beneficiaria);
     ctx.status(201).json(NecesidadDTO.desde(gestor.crear(necesidad)));
   }
 
@@ -74,6 +85,13 @@ public class NecesidadesController {
     return repositorioSubcategorias.buscarPorNombre(nombre)
         .orElseThrow(() -> new RecursoInexistenteException(
             "No existe la subcategoría '" + nombre + "'."
+        ));
+  }
+
+  private Beneficiaria beneficiariaDe(String cuit) {
+    return repositorioEntidades.buscarPorCuit(cuit)
+        .orElseThrow(() -> new RecursoInexistenteException(
+            "No existe la entidad beneficiaria con CUIT " + cuit
         ));
   }
 

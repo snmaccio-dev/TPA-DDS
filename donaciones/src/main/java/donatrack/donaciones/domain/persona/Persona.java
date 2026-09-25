@@ -21,10 +21,10 @@ public abstract class Persona {
     @Column(name="Direccion")
     protected String direccion;
 
-    @OneToMany(mappedBy = "persona")
+    @OneToMany(mappedBy = "persona", cascade = CascadeType.ALL)
     protected List<MedioContacto> contactos = new ArrayList<>();
 
-    @OneToOne
+    @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "contacto_predeterminado_id")
     protected MedioContacto contactoPredeterminado;
 

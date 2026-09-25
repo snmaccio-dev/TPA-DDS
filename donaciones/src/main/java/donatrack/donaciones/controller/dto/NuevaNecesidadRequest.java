@@ -1,6 +1,7 @@
 package donatrack.donaciones.controller.dto;
 
 public record NuevaNecesidadRequest(
+    String cuitBeneficiaria,
     String descripcion,
     int cantidad,
     String subcategoria,

@@ -210,13 +210,13 @@ public class Main {
         escuelaOrg.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "escuela10@edu.ar"));
         escuelaOrg.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, "+54 2320 000000"));
         Beneficiaria escuela = new Beneficiaria(escuelaOrg);
-        escuela.registrarNecesidad(new NecesidadRecurrente("Reposicion tras inundacion", 30, bancos, Periodo.MENSUAL));
+        new NecesidadRecurrente("Reposicion tras inundacion", 30, bancos, escuela, Periodo.MENSUAL);
 
         PersonaJuridica comedorOrg = new PersonaJuridica("30-66666666-1", "Escobar Sonrisas", TipoOrganizacion.ONG, "Comedor");
         comedorOrg.setDireccion("Calle Falsa 123, Escobar");
         comedorOrg.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, "+54 3488 000000"));
         Beneficiaria comedor = new Beneficiaria(comedorOrg);
-        comedor.registrarNecesidad(new NecesidadRecurrente("Consumo semanal habitual", 100, fideos, Periodo.SEMANAL));
+        new NecesidadRecurrente("Consumo semanal habitual", 100, fideos, comedor, Periodo.SEMANAL);
 
         System.out.println("Necesidades de " + escuela.getPersona().getNombreDisplay() + ": " + escuela.getNecesidades().size());
         System.out.println("Necesidades de " + comedor.getPersona().getNombreDisplay() + ": " + comedor.getNecesidades().size());

@@ -1,6 +1,7 @@
 package donatrack.donaciones.domain.necesidad;
 
 import donatrack.donaciones.domain.catalogo.Subcategoria;
+import donatrack.donaciones.domain.persona.Beneficiaria;
 import javax.persistence.*;
 
 @Entity
@@ -17,8 +18,9 @@ public class NecesidadRecurrente extends Necesidad {
   public NecesidadRecurrente(String descripcion,
                              int cantidad,
                              Subcategoria subcategoria,
+                             Beneficiaria entidad,
                              Periodo periodo) {
-    super(descripcion, cantidad, subcategoria);
+    super(descripcion, cantidad, subcategoria, entidad);
     this.periodo = periodo;
   }
 

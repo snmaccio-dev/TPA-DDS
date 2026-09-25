@@ -69,7 +69,7 @@ public class DonacionesApp {
     new AsignacionesController(gestorAsignaciones, RepositorioDonaciones.getInstance(),
         repositorioEntidades, repositorioPersonas).registrarRutas(app);
     new EntidadesBeneficiariasController(gestorEntidades).registrarRutas(app);
-    new NecesidadesController(gestorNecesidades, repositorioSubcategorias).registrarRutas(app);
+    new NecesidadesController(gestorNecesidades, repositorioSubcategorias, repositorioEntidades).registrarRutas(app);
     new DonantesController(gestorPersonas, gestorDonantes).registrarRutas(app);
 
     registrarManejoDeErrores(app);

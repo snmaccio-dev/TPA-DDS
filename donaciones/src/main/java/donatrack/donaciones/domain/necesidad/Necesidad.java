@@ -36,15 +36,27 @@ public abstract class Necesidad {
   public Necesidad(
       String descripcion,
       int cantidad,
-      Subcategoria subcategoria
+      Subcategoria subcategoria,
+      Beneficiaria entidad
   ) {
+    if (entidad == null) {
+      throw new IllegalArgumentException(
+          "La necesidad debe pertenecer a una entidad beneficiaria."
+      );
+    }
     this.descripcion = descripcion;
     this.cantidad = cantidad;
     this.subcategoria = subcategoria;
+    this.entidad = entidad;
+    entidad.registrarNecesidad(this);
   }
 
   public Long getId() {
     return id;
+  }
+
+  public Beneficiaria getEntidad() {
+    return entidad;
   }
 
   public int getCantidad() {
