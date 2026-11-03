@@ -8,6 +8,9 @@ import donatrack.logistica.controller.PlanificacionController;
 import donatrack.logistica.controller.RutasCallbackController;
 import donatrack.logistica.controller.RutasController;
 import donatrack.logistica.controller.dto.ErrorDTO;
+import donatrack.logistica.domain.ConflictoDeNegocioException;
+import donatrack.logistica.domain.DatosInvalidosException;
+import donatrack.logistica.domain.TransicionNoPermitidaException;
 import donatrack.logistica.domain.integracion.ClienteDonaciones;
 import donatrack.logistica.domain.integracion.IntegracionExternaException;
 import donatrack.logistica.domain.integracion.SerializadorJson;
@@ -27,6 +30,7 @@ import donatrack.logistica.service.GestorRutas;
 import donatrack.logistica.service.RecursoInexistenteException;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import io.javalin.Javalin;
+import io.javalin.http.HttpResponseException;
 
 import java.time.LocalTime;
 
@@ -92,17 +96,25 @@ public class LogisticaApp {
     app.exception(RecursoInexistenteException.class, (e, ctx) ->
         ctx.status(404).json(new ErrorDTO(e.getMessage())));
 
-    app.exception(IllegalArgumentException.class, (e, ctx) ->
+    app.exception(DatosInvalidosException.class, (e, ctx) ->
         ctx.status(400).json(new ErrorDTO(e.getMessage())));
 
-    app.exception(IllegalStateException.class, (e, ctx) ->
+    app.exception(ConflictoDeNegocioException.class, (e, ctx) ->
         ctx.status(409).json(new ErrorDTO(e.getMessage())));
+
+    app.exception(TransicionNoPermitidaException.class, (e, ctx) ->
+        ctx.status(422).json(new ErrorDTO(e.getMessage())));
 
     app.exception(IntegracionExternaException.class, (e, ctx) ->
         ctx.status(502).json(new ErrorDTO(e.getMessage())));
 
-    app.exception(UnsupportedOperationException.class, (e, ctx) ->
-        ctx.status(501).json(new ErrorDTO(e.getMessage())));
+    app.exception(HttpResponseException.class, (e, ctx) ->
+        ctx.status(e.getStatus()).json(new ErrorDTO(e.getMessage())));
+
+    app.exception(Exception.class, (e, ctx) -> {
+      e.printStackTrace();
+      ctx.status(500).json(new ErrorDTO("Error interno del servicio de Logistica."));
+    });
   }
 
   private static String variable(String nombre, String valorPorDefecto) {

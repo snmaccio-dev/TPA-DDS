@@ -1,5 +1,6 @@
 package donatrack.donaciones.domain.persona;
 
+import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
@@ -41,7 +42,7 @@ public class BeneficiariaTest {
     PersonaJuridica organizacion = new PersonaJuridica("30-22222222-2", "Fundacion X", TipoOrganizacion.ONG, "Asistencia");
     new Beneficiaria(organizacion);
 
-    assertThrows(IllegalStateException.class, () -> new Beneficiaria(organizacion));
+    assertThrows(ConflictoDeNegocioException.class, () -> new Beneficiaria(organizacion));
   }
 
   private Beneficiaria beneficiaria(String razonSocial) {

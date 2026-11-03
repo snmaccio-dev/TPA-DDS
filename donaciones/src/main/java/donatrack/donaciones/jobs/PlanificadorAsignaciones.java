@@ -1,4 +1,7 @@
-package donatrack.donaciones.service;
+package donatrack.donaciones.jobs;
+
+import donatrack.donaciones.service.GestorAsignaciones;
+import donatrack.donaciones.service.ResultadoCorrida;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -47,12 +50,15 @@ public class PlanificadorAsignaciones {
 
     private void ejecutar() {
         // scheduleAtFixedRate cancela silenciosamente todas las corridas futuras si la
-        // tarea lanza una excepción — atrapar Throwable para que el job siga vivo.
+        // tarea lanza una excepción — atrapar RuntimeException para que el job siga vivo.
         try {
-            int procesadas = gestor.ejecutarMatchmakingProgramado();
-            System.out.println("[MATCHMAKING] Corrida programada — donaciones procesadas: " + procesadas);
-        } catch (Throwable t) {
-            System.err.println("[MATCHMAKING] Error en corrida programada: " + t.getMessage());
+            ResultadoCorrida resultado = gestor.ejecutarMatchmakingProgramado();
+            System.out.println("[MATCHMAKING] Corrida programada — donaciones procesadas: "
+                + resultado.exitosas() + ", fallidas: " + resultado.cantidadDeFallas());
+            resultado.fallidas().forEach(falla ->
+                System.err.println("[MATCHMAKING] " + falla));
+        } catch (RuntimeException e) {
+            System.err.println("[MATCHMAKING] Error en corrida programada: " + e.getMessage());
         }
     }
 

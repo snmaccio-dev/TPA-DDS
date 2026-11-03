@@ -1,5 +1,6 @@
-package donatrack.donaciones.service.importacion;
+package donatrack.donaciones.infrastructure.importacion;
 
+import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Genero;
@@ -14,19 +15,19 @@ public class PersonaFactory {
 
     public static Persona crear(String[] campos) {
         if (campos.length < 6) {
-            throw new IllegalArgumentException("Fila CSV con campos insuficientes: " + campos.length);
+            throw new DatosInvalidosException("Fila CSV con campos insuficientes: " + campos.length);
         }
         String tipo = campos[0].trim().toUpperCase();
         return switch (tipo) {
             case "HUMANA"   -> crearPersonaHumana(campos);
             case "JURIDICA" -> crearPersonaJuridica(campos);
-            default -> throw new IllegalArgumentException("TipoPersona desconocido: " + tipo);
+            default -> throw new DatosInvalidosException("TipoPersona desconocido: " + tipo);
         };
     }
 
     public static String extraerEmail(String[] campos) {
         if (campos.length < 6) {
-            throw new IllegalArgumentException("Fila CSV con campos insuficientes: " + campos.length);
+            throw new DatosInvalidosException("Fila CSV con campos insuficientes: " + campos.length);
         }
         return campos[4].trim();
     }

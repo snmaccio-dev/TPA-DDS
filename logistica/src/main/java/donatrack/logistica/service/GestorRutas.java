@@ -1,5 +1,6 @@
 package donatrack.logistica.service;
 
+import donatrack.logistica.domain.TransicionNoPermitidaException;
 import donatrack.logistica.domain.ruta.EstadoRuta;
 import donatrack.logistica.domain.ruta.RutaReparto;
 import donatrack.logistica.repository.RepositorioRutas;
@@ -44,7 +45,7 @@ public class GestorRutas implements WithSimplePersistenceUnit {
       RutaReparto ruta = buscar(id);
 
       if (ruta.getEstado() != EstadoRuta.PLANIFICADA) {
-        throw new IllegalStateException(
+        throw new TransicionNoPermitidaException(
             "La ruta " + id + " ya fue iniciada: no se puede eliminar."
         );
       }

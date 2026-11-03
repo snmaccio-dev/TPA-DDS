@@ -1,5 +1,6 @@
-package donatrack.donaciones.service.importacion;
+package donatrack.donaciones.infrastructure.importacion;
 
+import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
@@ -26,14 +27,14 @@ public class PersonaFactoryTest {
 
   @Test
   public void crearLanzaExcepcionConCamposInsuficientes() {
-    assertThrows(IllegalArgumentException.class, () -> {
+    assertThrows(DatosInvalidosException.class, () -> {
       PersonaFactory.crear(camposIncompletos());
     });
   }
 
   @Test
   public void crearLanzaExcepcionConTipoPersonaDesconocido() {
-    assertThrows(IllegalArgumentException.class, () -> {
+    assertThrows(DatosInvalidosException.class, () -> {
       PersonaFactory.crear(camposRaros());
     });
   }

@@ -1,12 +1,15 @@
 package donatrack.logistica.domain.entrega;
 
 import donatrack.logistica.contrato.DonacionParaPlanificar;
+import donatrack.logistica.domain.DatosInvalidosException;
+import donatrack.logistica.domain.TransicionNoPermitidaException;
 import donatrack.logistica.domain.ruta.DestinoEntrega;
 import donatrack.logistica.domain.ruta.RutaReparto;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -92,10 +95,10 @@ public class Entrega {
                  double cantidad,
                  String unidad) {
     if (direccionDestino == null || direccionDestino.isBlank()) {
-      throw new IllegalArgumentException("La entrega debe tener una direccion de destino.");
+      throw new DatosInvalidosException("La entrega debe tener una direccion de destino.");
     }
     if (descripcionDonacion == null || descripcionDonacion.isBlank()) {
-      throw new IllegalArgumentException("La entrega debe tener una descripcion de la donacion.");
+      throw new DatosInvalidosException("La entrega debe tener una descripcion de la donacion.");
     }
     this.donacionId = donacionId;
     this.beneficiariaId = beneficiariaId;
@@ -126,10 +129,10 @@ public class Entrega {
   public void registrarMedicion(double pesoKg, double volumenM3) {
     exigirEstado("registrar la medicion", EstadoEntrega.PENDIENTE);
     if (pesoKg <= 0) {
-      throw new IllegalArgumentException("El peso de la entrega debe ser mayor a cero.");
+      throw new DatosInvalidosException("El peso de la entrega debe ser mayor a cero.");
     }
     if (volumenM3 <= 0) {
-      throw new IllegalArgumentException("El volumen de la entrega debe ser mayor a cero.");
+      throw new DatosInvalidosException("El volumen de la entrega debe ser mayor a cero.");
     }
     this.pesoKg = pesoKg;
     this.volumenM3 = volumenM3;
@@ -139,11 +142,9 @@ public class Entrega {
 
   public void asignarARuta(RutaReparto ruta) {
     exigirEstado("asignar a una ruta", EstadoEntrega.PENDIENTE);
-    if (ruta == null) {
-      throw new IllegalArgumentException("Debe indicarse la ruta a la que se asigna la entrega.");
-    }
+    Objects.requireNonNull(ruta, "Debe indicarse la ruta a la que se asigna la entrega.");
     if (!estaMedida()) {
-      throw new IllegalStateException(
+      throw new TransicionNoPermitidaException(
           "La entrega " + id + " todavia no tiene medicion registrada."
       );
     }
@@ -153,9 +154,7 @@ public class Entrega {
   }
 
   public void asignarADestino(DestinoEntrega destino) {
-    if (destino == null) {
-      throw new IllegalArgumentException("Debe indicarse el destino al que se asigna la entrega.");
-    }
+    Objects.requireNonNull(destino, "Debe indicarse el destino al que se asigna la entrega.");
     this.destino = destino;
   }
 
@@ -182,7 +181,7 @@ public class Entrega {
   public void marcarNoRecibida(String motivo) {
     exigirEstado("marcar como no recibida", EstadoEntrega.EN_TRASLADO);
     if (motivo == null || motivo.isBlank()) {
-      throw new IllegalArgumentException(
+      throw new DatosInvalidosException(
           "Debe registrarse el motivo por el que la entrega no fue recibida."
       );
     }
@@ -208,7 +207,7 @@ public class Entrega {
         return;
       }
     }
-    throw new IllegalStateException(
+    throw new TransicionNoPermitidaException(
         "No se puede " + accion + " desde el estado " + estado.getNombre() + "."
     );
   }

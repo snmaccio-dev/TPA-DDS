@@ -1,5 +1,6 @@
 package donatrack.donaciones.repository;
 
+import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
@@ -24,7 +25,7 @@ public class RepositorioPersonas implements WithSimplePersistenceUnit {
     public void guardar(Persona persona) {
         String documento = persona.getDocumento();
         if (documento == null || documento.isBlank()) {
-            throw new IllegalArgumentException("La persona no tiene documento.");
+            throw new DatosInvalidosException("La persona no tiene documento.");
         }
         persist(persona);
     }

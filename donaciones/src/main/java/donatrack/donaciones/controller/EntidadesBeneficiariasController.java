@@ -4,6 +4,7 @@ import donatrack.donaciones.controller.dto.BeneficiariaDTO;
 import donatrack.donaciones.controller.dto.NuevaBeneficiariaExistenteRequest;
 import donatrack.donaciones.controller.dto.NuevaBeneficiariaNuevaRequest;
 import donatrack.donaciones.controller.dto.RepresentanteRequest;
+import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
@@ -50,7 +51,7 @@ public class EntidadesBeneficiariasController {
   private void consultarPorCuit(Context ctx) {
     String cuit = ctx.queryParam("cuit");
     if (cuit == null || cuit.isBlank()) {
-      throw new IllegalArgumentException("Debe indicarse el CUIT en el query param.");
+      throw new DatosInvalidosException("Debe indicarse el CUIT en el query param.");
     }
     Optional<PersonaJuridica> encontrada = gestor.buscarPorCuit(cuit);
     if (encontrada.isEmpty()) {

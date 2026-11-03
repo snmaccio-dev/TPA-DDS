@@ -1,4 +1,4 @@
-package donatrack.donaciones.service.importacion;
+package donatrack.donaciones.infrastructure.importacion;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -27,12 +27,13 @@ public abstract class ImportadorCSV<T> {
                     if (entidad != null) {
                         resultado.add(entidad);
                     }
-                } catch (Exception e) {
+                } catch (RuntimeException e) {
                     System.out.println("[CSV] Error en fila: " + linea + " → " + e.getMessage());
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException("No se pudo leer el archivo CSV: " + rutaArchivo, e);
+            throw new ImportacionCsvException(
+                "No se pudo leer el archivo CSV: " + rutaArchivo, e);
         }
         return resultado;
     }

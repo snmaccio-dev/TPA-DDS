@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import donatrack.logistica.domain.ConflictoDeNegocioException;
 import donatrack.logistica.domain.flota.Chofer;
 import io.github.flbulgarelli.jpa.extras.test.SimplePersistenceTest;
 import org.junit.jupiter.api.Test;
@@ -24,8 +25,8 @@ class GestorChoferesTest implements SimplePersistenceTest {
   void noSePuedeCrearDosChoferesConElMismoDocumento() {
     gestor.crear(new Chofer("Jose", "Perez", "25999000", "C2"));
 
-    IllegalStateException error = assertThrows(
-        IllegalStateException.class,
+    ConflictoDeNegocioException error = assertThrows(
+        ConflictoDeNegocioException.class,
         () -> gestor.crear(new Chofer("Otro", "Distinto", "25999000", "D3"))
     );
 

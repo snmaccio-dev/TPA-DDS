@@ -1,5 +1,6 @@
 package donatrack.logistica.domain.ruta;
 
+import donatrack.logistica.domain.DatosInvalidosException;
 import donatrack.logistica.domain.entrega.Entrega;
 
 import java.util.ArrayList;
@@ -34,13 +35,13 @@ public class DestinoEntrega {
 
   public DestinoEntrega(int orden, String direccion, List<Entrega> entregas) {
     if (orden < 0) {
-      throw new IllegalArgumentException("El orden del destino no puede ser negativo.");
+      throw new DatosInvalidosException("El orden del destino no puede ser negativo.");
     }
     if (direccion == null || direccion.isBlank()) {
-      throw new IllegalArgumentException("El destino debe tener una direccion.");
+      throw new DatosInvalidosException("El destino debe tener una direccion.");
     }
     if (entregas == null || entregas.isEmpty()) {
-      throw new IllegalArgumentException("El destino debe tener al menos una entrega.");
+      throw new DatosInvalidosException("El destino debe tener al menos una entrega.");
     }
     this.orden = orden;
     this.direccion = direccion;

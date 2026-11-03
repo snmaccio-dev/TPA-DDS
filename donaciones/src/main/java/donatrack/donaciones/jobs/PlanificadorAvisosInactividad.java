@@ -1,4 +1,7 @@
-package donatrack.donaciones.service;
+package donatrack.donaciones.jobs;
+
+import donatrack.donaciones.service.GestorDonantes;
+import donatrack.donaciones.service.ResultadoCorrida;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -49,12 +52,15 @@ public class PlanificadorAvisosInactividad {
 
     private void ejecutar() {
         // scheduleAtFixedRate cancela silenciosamente todas las corridas futuras si la
-        // tarea lanza una excepción — atrapar Throwable para que el job siga vivo.
+        // tarea lanza una excepción — atrapar RuntimeException para que el job siga vivo.
         try {
-            int avisados = gestor.avisarInactivos();
-            System.out.println("[AVISO-INACTIVIDAD] Corrida programada — donantes avisados: " + avisados);
-        } catch (Throwable t) {
-            System.err.println("[AVISO-INACTIVIDAD] Error en corrida programada: " + t.getMessage());
+            ResultadoCorrida resultado = gestor.avisarInactivos();
+            System.out.println("[AVISO-INACTIVIDAD] Corrida programada — donantes avisados: "
+                + resultado.exitosas() + ", fallidos: " + resultado.cantidadDeFallas());
+            resultado.fallidas().forEach(falla ->
+                System.err.println("[AVISO-INACTIVIDAD] " + falla));
+        } catch (RuntimeException e) {
+            System.err.println("[AVISO-INACTIVIDAD] Error en corrida programada: " + e.getMessage());
         }
     }
 
