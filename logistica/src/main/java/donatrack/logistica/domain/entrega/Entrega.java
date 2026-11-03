@@ -3,7 +3,6 @@ package donatrack.logistica.domain.entrega;
 import donatrack.logistica.contrato.DonacionParaPlanificar;
 import donatrack.logistica.domain.DatosInvalidosException;
 import donatrack.logistica.domain.TransicionNoPermitidaException;
-import donatrack.logistica.domain.ruta.DestinoEntrega;
 import donatrack.logistica.domain.ruta.RutaReparto;
 
 import java.time.LocalDateTime;
@@ -58,15 +57,12 @@ public class Entrega {
   @Column(nullable = false)
   private EstadoEntrega estado;
 
-  // Redundancia controlada: la ruta se deduce del destino, pero se guarda
-  // directo porque Entrega es raiz de agregado y se consulta sin cargar la ruta.
   @ManyToOne
   @JoinColumn(name = "ruta_id")
   private RutaReparto ruta;
 
-  @ManyToOne
-  @JoinColumn(name = "destino_id")
-  private DestinoEntrega destino;
+  @Column(name = "orden_destino")
+  private Integer ordenDestino;
 
   @Column(name = "patente_camion")
   private String patenteCamion;
@@ -153,15 +149,17 @@ public class Entrega {
     this.estado = EstadoEntrega.PLANIFICADA;
   }
 
-  public void asignarADestino(DestinoEntrega destino) {
-    Objects.requireNonNull(destino, "Debe indicarse el destino al que se asigna la entrega.");
-    this.destino = destino;
+  public void asignarADestino(int orden) {
+    if (orden < 0) {
+      throw new DatosInvalidosException("El orden del destino no puede ser negativo.");
+    }
+    this.ordenDestino = orden;
   }
 
   public void desasignarDeRuta() {
     exigirEstado("desasignar de la ruta", EstadoEntrega.PLANIFICADA);
     this.ruta = null;
-    this.destino = null;
+    this.ordenDestino = null;
     this.patenteCamion = null;
     this.estado = EstadoEntrega.PENDIENTE;
   }
@@ -193,7 +191,7 @@ public class Entrega {
   public void retornarADeposito() {
     exigirEstado("retornar al deposito", EstadoEntrega.NO_RECIBIDA);
     this.ruta = null;
-    this.destino = null;
+    this.ordenDestino = null;
     this.patenteCamion = null;
     this.fechaHoraEntrega = null;
     this.motivoNoRecepcion = null;
@@ -266,6 +264,10 @@ public class Entrega {
 
   public EstadoEntrega getEstado() {
     return estado;
+  }
+
+  public Integer getOrdenDestino() {
+    return ordenDestino;
   }
 
   public RutaReparto getRuta() {

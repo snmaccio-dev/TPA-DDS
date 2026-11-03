@@ -6,20 +6,11 @@ import donatrack.logistica.domain.entrega.Entrega;
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.Table;
+import javax.persistence.Embeddable;
+import javax.persistence.Transient;
 
-@Entity
-@Table(name = "destino_entrega")
+@Embeddable
 public class DestinoEntrega {
-
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
 
   @Column(nullable = false)
   private int orden;
@@ -27,8 +18,8 @@ public class DestinoEntrega {
   @Column(nullable = false)
   private String direccion;
 
-  @OneToMany(mappedBy = "destino")
-  private List<Entrega> entregas;
+  @Transient
+  private final List<Entrega> entregasIniciales = new ArrayList<>();
 
   protected DestinoEntrega() {
   }
@@ -45,12 +36,12 @@ public class DestinoEntrega {
     }
     this.orden = orden;
     this.direccion = direccion;
-    this.entregas = new ArrayList<>(entregas);
-    this.entregas.forEach(entrega -> entrega.asignarADestino(this));
+    this.entregasIniciales.addAll(entregas);
+    this.entregasIniciales.forEach(entrega -> entrega.asignarADestino(orden));
   }
 
-  public Long getId() {
-    return id;
+  List<Entrega> getEntregasIniciales() {
+    return new ArrayList<>(entregasIniciales);
   }
 
   public int getOrden() {
@@ -59,9 +50,5 @@ public class DestinoEntrega {
 
   public String getDireccion() {
     return direccion;
-  }
-
-  public List<Entrega> getEntregas() {
-    return new ArrayList<>(entregas);
   }
 }

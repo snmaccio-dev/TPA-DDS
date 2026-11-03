@@ -12,8 +12,9 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import javax.persistence.CascadeType;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -26,6 +27,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "ruta_reparto")
@@ -39,10 +41,17 @@ public class RutaReparto {
   @JoinColumn(name = "camion_id", nullable = false)
   private Camion camion;
 
-  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "ruta_id", nullable = false)
+  @ElementCollection
+  @CollectionTable(
+      name = "destino_entrega",
+      joinColumns = @JoinColumn(name = "ruta_id"),
+      uniqueConstraints = @UniqueConstraint(columnNames = {"ruta_id", "orden"})
+  )
   @OrderBy("orden")
   private List<DestinoEntrega> destinos;
+
+  @OneToMany(mappedBy = "ruta")
+  private List<Entrega> entregas = new ArrayList<>();
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
@@ -70,7 +79,9 @@ public class RutaReparto {
     this.camion = camion;
     this.destinos = new ArrayList<>(destinos);
     this.estado = EstadoRuta.PLANIFICADA;
-    getEntregas().forEach(entrega -> entrega.asignarARuta(this));
+    this.entregas = new ArrayList<>();
+    this.destinos.forEach(destino -> this.entregas.addAll(destino.getEntregasIniciales()));
+    this.entregas.forEach(entrega -> entrega.asignarARuta(this));
   }
 
   // === Recorrido ===
@@ -158,8 +169,6 @@ public class RutaReparto {
   }
 
   public List<Entrega> getEntregas() {
-    return destinos.stream()
-        .flatMap(destino -> destino.getEntregas().stream())
-        .toList();
+    return new ArrayList<>(entregas);
   }
 }
