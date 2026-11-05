@@ -38,7 +38,7 @@ public class GestorPersonas implements WithSimplePersistenceUnit {
                 if (!actual.tieneContacto(TipoContacto.EMAIL, email)) {
                     actual.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
                 }
-                if (!actual.tieneRol(Donante.class)) {
+                if (repositorioDonantes.buscarPorPersona(actual).isEmpty()) {
                     Donante donante = new Donante(actual);
                     repositorioDonantes.guardar(donante);
                 }
