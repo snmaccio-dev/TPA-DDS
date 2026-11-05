@@ -2,6 +2,8 @@ package donatrack.donaciones.repository;
 
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
+import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.Donante;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.List;
@@ -46,6 +48,41 @@ public class RepositorioDonaciones implements WithSimplePersistenceUnit {
         return createQuery(
             "select d from Donacion d where d.estado.estado = :estado",
             Donacion.class)
+            .setParameter("estado", estado)
+            .getResultList();
+    }
+
+    public List<Donacion> deDonante(Donante donante) {
+        return createQuery(
+            "select d from Donacion d where d.donante = :donante",
+            Donacion.class)
+            .setParameter("donante", donante)
+            .getResultList();
+    }
+
+    public List<Donacion> deDonanteEnEstado(Donante donante, EstadosPosiblesDonacion estado) {
+        return createQuery(
+            "select d from Donacion d where d.donante = :donante and d.estado.estado = :estado",
+            Donacion.class)
+            .setParameter("donante", donante)
+            .setParameter("estado", estado)
+            .getResultList();
+    }
+
+    public List<Donacion> deBeneficiaria(Beneficiaria beneficiaria) {
+        return createQuery(
+            "select d from Donacion d where d.destinatarioAsignado = :beneficiaria",
+            Donacion.class)
+            .setParameter("beneficiaria", beneficiaria)
+            .getResultList();
+    }
+
+    public List<Donacion> deBeneficiariaEnEstado(Beneficiaria beneficiaria, EstadosPosiblesDonacion estado) {
+        return createQuery(
+            "select d from Donacion d "
+                + "where d.destinatarioAsignado = :beneficiaria and d.estado.estado = :estado",
+            Donacion.class)
+            .setParameter("beneficiaria", beneficiaria)
             .setParameter("estado", estado)
             .getResultList();
     }

@@ -9,7 +9,6 @@ import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
-import donatrack.donaciones.domain.usuario.Usuario;
 import donatrack.donaciones.service.GestorNotificaciones;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -32,7 +31,6 @@ public class NotificadorDonacionObserverTest {
 
   private Donante donanteAna() {
     PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO);
-    ana.setUsuario(new Usuario("ana.perez", "***"));
     return new Donante(ana);
   }
 

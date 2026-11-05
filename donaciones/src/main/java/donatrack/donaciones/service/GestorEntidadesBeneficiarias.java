@@ -1,19 +1,25 @@
 package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.DatosInvalidosException;
-import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
+import donatrack.donaciones.domain.usuario.Usuario;
 import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.repository.RepositorioPersonas;
+import donatrack.donaciones.repository.RepositorioUsuarios;
+import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
+import donatrack.donaciones.seguridad.RolDeAcceso;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+// Alta desde un administrador. Si la beneficiaria todavia no tiene ningun
+// Usuario, se crea una cuenta en Keycloak (sin contrasena) para el email del
+// primer representante, con el rol BENEFICIARIA.
 public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
 
   private final RepositorioEntidades repositorioEntidades =
@@ -21,6 +27,15 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
 
   private final RepositorioPersonas repositorioPersonas =
       RepositorioPersonas.getInstance();
+
+  private final RepositorioUsuarios repositorioUsuarios;
+  private final ProveedorDeIdentidad proveedor;
+
+  public GestorEntidadesBeneficiarias(RepositorioUsuarios repositorioUsuarios,
+                                      ProveedorDeIdentidad proveedor) {
+    this.repositorioUsuarios = repositorioUsuarios;
+    this.proveedor = proveedor;
+  }
 
   // GET /entidades
   public List<Beneficiaria> todas() {
@@ -69,41 +84,38 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
   }
 
   public Beneficiaria registrarDePersonaExistente(String cuit, DatosEntidad datos) {
+    if (datos == null) {
+      throw new DatosInvalidosException(
+          "Los datos de la beneficiaria (direccion y telefono) son obligatorios."
+      );
+    }
     Beneficiaria[] resultado = new Beneficiaria[1];
     withTransaction(() -> {
       PersonaJuridica juridica = repositorioPersonas.buscarJuridicaPorCuit(cuit)
           .orElseThrow(() -> new RecursoInexistenteException(
               "No existe una persona juridica con CUIT " + cuit
           ));
-      aplicarDatosDeBeneficiaria(juridica, datos);
+      datos.aplicarA(juridica);
       resultado[0] = crearBeneficiaria(juridica);
     });
+    asegurarCuenta(resultado[0], datos.representantes());
     return resultado[0];
   }
 
   public Beneficiaria registrarConPersonaNueva(PersonaJuridica juridica, DatosEntidad datos) {
-    Beneficiaria[] resultado = new Beneficiaria[1];
-    withTransaction(() -> {
-      repositorioPersonas.guardar(juridica);
-      aplicarDatosDeBeneficiaria(juridica, datos);
-      resultado[0] = crearBeneficiaria(juridica);
-    });
-    return resultado[0];
-  }
-
-  private void aplicarDatosDeBeneficiaria(PersonaJuridica juridica, DatosEntidad datos) {
     if (datos == null) {
       throw new DatosInvalidosException(
           "Los datos de la beneficiaria (direccion y telefono) son obligatorios."
       );
     }
-    juridica.setDireccion(datos.direccion());
-    if (!juridica.tieneContacto(TipoContacto.TELEFONO, datos.telefono())) {
-      juridica.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, datos.telefono()));
-    }
-    for (Representante r : datos.representantes()) {
-      juridica.agregarRepresentante(r);
-    }
+    Beneficiaria[] resultado = new Beneficiaria[1];
+    withTransaction(() -> {
+      repositorioPersonas.guardar(juridica);
+      datos.aplicarA(juridica);
+      resultado[0] = crearBeneficiaria(juridica);
+    });
+    asegurarCuenta(resultado[0], datos.representantes());
+    return resultado[0];
   }
 
   private Beneficiaria crearBeneficiaria(PersonaJuridica juridica) {
@@ -113,5 +125,36 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
           repositorioEntidades.guardar(beneficiaria);
           return beneficiaria;
         });
+  }
+
+  // Si la beneficiaria todavia no tiene ningun Usuario vinculado, le damos de
+  // alta una cuenta en Keycloak para el email del primer representante y
+  // persistimos el vinculo. Si falla el guardado despues del alta, hacemos
+  // rollback contra Keycloak.
+  private void asegurarCuenta(Beneficiaria beneficiaria, List<Representante> representantes) {
+    if (repositorioUsuarios.existeParaBeneficiaria(beneficiaria)) {
+      return;
+    }
+    if (representantes == null || representantes.isEmpty()) {
+      return;
+    }
+    String email = representantes.get(0).getEmail();
+    if (email == null || email.isBlank()) {
+      return;
+    }
+    String keycloakId = proveedor.crearUsuarioSinContrasena(email, RolDeAcceso.BENEFICIARIA);
+    try {
+      withTransaction(() ->
+          repositorioUsuarios.guardar(Usuario.deBeneficiaria(keycloakId, beneficiaria))
+      );
+    } catch (RuntimeException e) {
+      try {
+        proveedor.eliminarUsuario(keycloakId);
+      } catch (RuntimeException ignorado) {
+        System.err.println("[ENTIDADES] Rollback en Keycloak fallo para " + keycloakId
+            + ": " + ignorado.getMessage());
+      }
+      throw e;
+    }
   }
 }

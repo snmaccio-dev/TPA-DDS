@@ -1,10 +1,13 @@
 package donatrack.donaciones;
 
+import donatrack.donaciones.controller.AdministradoresController;
 import donatrack.donaciones.controller.AsignacionesController;
 import donatrack.donaciones.controller.DonacionesController;
 import donatrack.donaciones.controller.DonantesController;
 import donatrack.donaciones.controller.EntidadesBeneficiariasController;
 import donatrack.donaciones.controller.NecesidadesController;
+import donatrack.donaciones.controller.RegistroController;
+import donatrack.donaciones.controller.UsuariosController;
 import donatrack.donaciones.controller.dto.ErrorDTO;
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.DatosInvalidosException;
@@ -12,6 +15,7 @@ import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
+import donatrack.donaciones.infrastructure.identidad.ProveedorDeIdentidadKeycloak;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorEmail;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorSMS;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorWhatsApp;
@@ -23,6 +27,11 @@ import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioPropuestas;
 import donatrack.donaciones.repository.RepositorioSubcategorias;
+import donatrack.donaciones.repository.RepositorioUsuarios;
+import donatrack.donaciones.seguridad.FiltroDeAcceso;
+import donatrack.donaciones.seguridad.IntegracionConIdentidadException;
+import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
+import donatrack.donaciones.seguridad.VerificadorDeTokens;
 import donatrack.donaciones.service.EventoYaAplicadoException;
 import donatrack.donaciones.service.GestorAsignaciones;
 import donatrack.donaciones.service.GestorDonaciones;
@@ -31,6 +40,7 @@ import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
 import donatrack.donaciones.service.GestorNecesidades;
 import donatrack.donaciones.service.GestorNotificaciones;
 import donatrack.donaciones.service.GestorPersonas;
+import donatrack.donaciones.service.GestorRegistro;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
@@ -47,6 +57,24 @@ public class DonacionesApp {
   public static void main(String[] args) {
     String urlBase = variable("DONACIONES_URL_BASE", "http://localhost:" + PUERTO);
 
+    // Configuracion de Keycloak. El client secret no tiene default: si falta
+    // detenemos el arranque con un mensaje claro para que no se arranque un
+    // backend sin forma de hablar con el proveedor de identidad.
+    String keycloakUrl = variable("KEYCLOAK_URL", "http://localhost:8180");
+    String keycloakRealm = variable("KEYCLOAK_REALM", "donatrack");
+    String keycloakClientId = variable("KEYCLOAK_CLIENT_ID", "donaciones-backend");
+    String keycloakClientSecret = variable("KEYCLOAK_CLIENT_SECRET", null);
+    if (keycloakClientSecret == null || keycloakClientSecret.isBlank()) {
+      throw new IllegalStateException(
+          "Falta la variable KEYCLOAK_CLIENT_SECRET. Sin ella el microservicio "
+              + "no puede autenticarse contra Keycloak."
+      );
+    }
+    // El issuer en Docker puede diferir de la URL interna (por ejemplo,
+    // http://keycloak:8080 interno vs http://localhost:8180 desde el navegador).
+    // KEYCLOAK_ISSUER permite forzar el valor exacto que trae el JWT.
+    String keycloakIssuer = variable("KEYCLOAK_ISSUER", null);
+
     RepositorioPropuestas repositorioPropuestas = new RepositorioPropuestas();
     RepositorioSubcategorias repositorioSubcategorias = new RepositorioSubcategorias();
     sembrarSubcategorias(repositorioSubcategorias);
@@ -54,6 +82,14 @@ public class DonacionesApp {
     RepositorioPersonas repositorioPersonas = RepositorioPersonas.getInstance();
     RepositorioEntidades repositorioEntidades = RepositorioEntidades.getInstance();
     RepositorioDonantes repositorioDonantes = new RepositorioDonantes();
+    RepositorioUsuarios repositorioUsuarios = new RepositorioUsuarios();
+
+    ProveedorDeIdentidad proveedor = new ProveedorDeIdentidadKeycloak(
+        keycloakUrl, keycloakRealm, keycloakClientId, keycloakClientSecret);
+
+    VerificadorDeTokens verificador =
+        new VerificadorDeTokens(keycloakUrl, keycloakRealm, keycloakIssuer);
+    FiltroDeAcceso filtro = new FiltroDeAcceso(verificador, repositorioUsuarios);
 
     GestorNotificaciones gestorNotificaciones = new GestorNotificaciones(List.of(
         new NotificadorEmail(),
@@ -62,13 +98,24 @@ public class DonacionesApp {
     ));
     GestorDonaciones gestorDonaciones = new GestorDonaciones(gestorNotificaciones, repositorioPropuestas);
     GestorAsignaciones gestorAsignaciones = new GestorAsignaciones(repositorioPropuestas);
-    GestorEntidadesBeneficiarias gestorEntidades = new GestorEntidadesBeneficiarias();
+    GestorEntidadesBeneficiarias gestorEntidades =
+        new GestorEntidadesBeneficiarias(repositorioUsuarios, proveedor);
     GestorNecesidades gestorNecesidades = new GestorNecesidades();
-    GestorPersonas gestorPersonas = new GestorPersonas(new NotificadorEmail(), repositorioDonantes);
+    GestorPersonas gestorPersonas =
+        new GestorPersonas(repositorioDonantes, repositorioUsuarios, proveedor);
     GestorDonantes gestorDonantes = new GestorDonantes(repositorioDonantes, gestorNotificaciones);
+    GestorRegistro gestorRegistro = new GestorRegistro(
+        proveedor, repositorioPersonas, repositorioDonantes, repositorioEntidades, repositorioUsuarios);
 
     Javalin app = Javalin.create().start(PUERTO);
 
+    // El filtro se registra antes que las rutas: todas las rutas tienen
+    // que declarar sus roles y el filtro las rechaza si no lo hacen.
+    filtro.registrarEn(app);
+
+    new RegistroController(gestorRegistro).registrarRutas(app);
+    new UsuariosController().registrarRutas(app);
+    new AdministradoresController(proveedor).registrarRutas(app);
     new DonacionesController(gestorDonaciones, repositorioPersonas, repositorioDonantes, repositorioSubcategorias).registrarRutas(app);
     new AsignacionesController(gestorAsignaciones, RepositorioDonaciones.getInstance(),
         repositorioEntidades).registrarRutas(app);
@@ -110,6 +157,15 @@ public class DonacionesApp {
     app.exception(TransicionNoPermitidaException.class, (e, ctx) ->
         ctx.status(422).json(new ErrorDTO(e.getMessage())));
 
+    // Fallas al hablar con Keycloak: 502 porque es un problema con un backend
+    // externo, no con la request del cliente.
+    app.exception(IntegracionConIdentidadException.class, (e, ctx) -> {
+      e.printStackTrace();
+      ctx.status(502).json(new ErrorDTO("Error al hablar con el proveedor de identidad."));
+    });
+
+    // Los 401 (UnauthorizedResponse) y 403 (ForbiddenResponse) del filtro de
+    // seguridad son HttpResponseException, asi que caen aca y devuelven ErrorDTO.
     app.exception(HttpResponseException.class, (e, ctx) ->
         ctx.status(e.getStatus()).json(new ErrorDTO(e.getMessage())));
 

@@ -3,12 +3,8 @@ package donatrack.donaciones.controller;
 import donatrack.donaciones.controller.dto.DonanteInactivoDTO;
 import donatrack.donaciones.controller.dto.NuevoDonanteRequest;
 import donatrack.donaciones.controller.dto.PersonaDTO;
-import donatrack.donaciones.domain.DatosInvalidosException;
-import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.Persona;
-import donatrack.donaciones.domain.persona.PersonaHumana;
-import donatrack.donaciones.domain.persona.PersonaJuridica;
-import donatrack.donaciones.domain.persona.TipoOrganizacion;
+import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.service.GestorDonantes;
 import donatrack.donaciones.service.GestorPersonas;
 import donatrack.donaciones.service.ResultadoCorrida;
@@ -28,14 +24,14 @@ public class DonantesController {
   }
 
   public void registrarRutas(Javalin app) {
-    app.get("/donantes", this::todas);
-    app.post("/donantes", this::registrar);
+    app.get("/donantes", this::todas, RolDeAcceso.ADMINISTRADOR);
+    app.post("/donantes", this::registrar, RolDeAcceso.ADMINISTRADOR);
     // Rutas mas especificas antes que /donantes/{documento}, para que Javalin no se coma
     // "inactivos" como si fuera un documento.
-    app.get("/donantes/inactivos", this::inactivos);
-    app.post("/donantes/avisar-inactivos", this::avisarInactivos);
-    app.get("/donantes/{documento}", this::buscar);
-    app.delete("/donantes/{documento}", this::eliminar);
+    app.get("/donantes/inactivos", this::inactivos, RolDeAcceso.ADMINISTRADOR);
+    app.post("/donantes/avisar-inactivos", this::avisarInactivos, RolDeAcceso.ADMINISTRADOR);
+    app.get("/donantes/{documento}", this::buscar, RolDeAcceso.ADMINISTRADOR);
+    app.delete("/donantes/{documento}", this::eliminar, RolDeAcceso.ADMINISTRADOR);
   }
 
   private void todas(Context ctx) {
@@ -57,7 +53,7 @@ public class DonantesController {
 
   private void registrar(Context ctx) {
     NuevoDonanteRequest request = ctx.bodyAsClass(NuevoDonanteRequest.class);
-    Persona persona = personaDe(request);
+    Persona persona = request.aPersona();
     if (request.direccion() != null && !request.direccion().isBlank()) {
       persona.setDireccion(request.direccion());
     }
@@ -68,29 +64,6 @@ public class DonantesController {
   private void eliminar(Context ctx) {
     gestor.eliminar(ctx.pathParam("documento"));
     ctx.status(204);
-  }
-
-  private Persona personaDe(NuevoDonanteRequest request) {
-    if ("HUMANA".equalsIgnoreCase(request.tipo())) {
-      return new PersonaHumana(
-          request.nombre(),
-          request.apellido(),
-          request.edad() == null ? 0 : request.edad(),
-          request.documento(),
-          request.genero() == null ? null : Genero.valueOf(request.genero())
-      );
-    }
-    if ("JURIDICA".equalsIgnoreCase(request.tipo())) {
-      return new PersonaJuridica(
-          request.cuit(),
-          request.razonSocial(),
-          request.tipoOrganizacion() == null ? null : TipoOrganizacion.valueOf(request.tipoOrganizacion()),
-          request.rubro()
-      );
-    }
-    throw new DatosInvalidosException(
-        "El tipo de persona debe ser HUMANA o JURIDICA (recibido: " + request.tipo() + ")."
-    );
   }
 
   public record AvisarInactivosResponse(int avisados, List<String> fallidos) {}

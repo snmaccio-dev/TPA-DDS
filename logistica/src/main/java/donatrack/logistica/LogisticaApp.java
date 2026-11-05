@@ -19,6 +19,7 @@ import donatrack.logistica.domain.planificacion.GeneradorRutas;
 import donatrack.logistica.infrastructure.almacenamiento.AlmacenEnDisco;
 import donatrack.logistica.infrastructure.integracion.ClienteDonacionesHttp;
 import donatrack.logistica.infrastructure.integracion.ClienteDonacionesSimulado;
+import donatrack.logistica.infrastructure.integracion.ProveedorDeTokenDeServicio;
 import donatrack.logistica.infrastructure.integracion.SerializadorJackson;
 import donatrack.logistica.infrastructure.planificacion.GeneradorRutasExterno;
 import donatrack.logistica.infrastructure.planificacion.GeneradorRutasSimulado;
@@ -55,9 +56,26 @@ public class LogisticaApp {
 
     AlmacenDeFotos almacenDeFotos = new AlmacenEnDisco(directorioFotos, urlBase + "/fotos");
 
-    ClienteDonaciones clienteDonaciones = simulado
-        ? new ClienteDonacionesSimulado()
-        : new ClienteDonacionesHttp(urlDonaciones, json);
+    ClienteDonaciones clienteDonaciones;
+    if (simulado) {
+      clienteDonaciones = new ClienteDonacionesSimulado();
+    } else {
+      // Keycloak. El client secret no tiene default: si falta el arranque falla
+      // porque sin token no se puede hablar con Donaciones.
+      String keycloakUrl = variable("KEYCLOAK_URL", "http://localhost:8180");
+      String keycloakRealm = variable("KEYCLOAK_REALM", "donatrack");
+      String keycloakClientId = variable("KEYCLOAK_CLIENT_ID", "logistica-backend");
+      String keycloakClientSecret = variable("KEYCLOAK_CLIENT_SECRET", null);
+      if (keycloakClientSecret == null || keycloakClientSecret.isBlank()) {
+        throw new IllegalStateException(
+            "Falta la variable KEYCLOAK_CLIENT_SECRET. Sin ella Logistica "
+                + "no puede obtener el token de servicio para llamar a Donaciones."
+        );
+      }
+      ProveedorDeTokenDeServicio proveedorToken = new ProveedorDeTokenDeServicio(
+          keycloakUrl, keycloakRealm, keycloakClientId, keycloakClientSecret);
+      clienteDonaciones = new ClienteDonacionesHttp(urlDonaciones, json, proveedorToken);
+    }
 
     GeneradorRutas generadorRutas = simulado
         ? new GeneradorRutasSimulado()

@@ -2,6 +2,7 @@ package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.necesidad.Necesidad;
+import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.repository.RepositorioNecesidades;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
@@ -21,6 +22,10 @@ public class GestorNecesidades implements WithSimplePersistenceUnit {
   // GET /necesidades
   public List<Necesidad> todas() {
     return repositorio.todas();
+  }
+
+  public List<Necesidad> deBeneficiaria(Beneficiaria beneficiaria) {
+    return repositorio.deBeneficiaria(beneficiaria);
   }
 
   // GET /necesidades/{id}

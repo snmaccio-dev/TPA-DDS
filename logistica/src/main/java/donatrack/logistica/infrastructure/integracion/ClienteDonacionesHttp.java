@@ -17,6 +17,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
+// Cliente HTTP contra el microservicio Donaciones. Donaciones exige un JWT
+// con el rol SERVICIO_LOGISTICA, que este cliente obtiene de Keycloak con
+// client_credentials y mantiene en una ProveedorDeTokenDeServicio.
 public class ClienteDonacionesHttp implements ClienteDonaciones {
 
   private static final String HEADER_EVENTO = "X-Evento-Id";
@@ -29,13 +32,20 @@ public class ClienteDonacionesHttp implements ClienteDonaciones {
 
   private final String urlBase;
   private final SerializadorJson json;
+  private final ProveedorDeTokenDeServicio proveedorToken;
 
-  public ClienteDonacionesHttp(String urlBase, SerializadorJson json) {
+  public ClienteDonacionesHttp(String urlBase,
+                               SerializadorJson json,
+                               ProveedorDeTokenDeServicio proveedorToken) {
     if (urlBase == null || urlBase.isBlank()) {
       throw new IllegalArgumentException("Debe indicarse la URL base del servicio de Donaciones.");
     }
+    if (proveedorToken == null) {
+      throw new IllegalArgumentException("Debe indicarse el proveedor de token de servicio.");
+    }
     this.urlBase = urlBase.endsWith("/") ? urlBase.substring(0, urlBase.length() - 1) : urlBase;
     this.json = json;
+    this.proveedorToken = proveedorToken;
   }
 
   @Override
@@ -44,6 +54,7 @@ public class ClienteDonacionesHttp implements ClienteDonaciones {
         HttpRequest.newBuilder()
             .uri(URI.create(urlBase + "/donaciones?estado=ASIGNACION_REALIZADA"))
             .header("Accept", "application/json")
+            .header("Authorization", "Bearer " + proveedorToken.obtener())
             .timeout(ESPERA)
             .GET()
             .build()
@@ -84,6 +95,7 @@ public class ClienteDonacionesHttp implements ClienteDonaciones {
         HttpRequest.newBuilder()
             .uri(URI.create(urlBase + recurso))
             .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + proveedorToken.obtener())
             .header(HEADER_EVENTO, UUID.randomUUID().toString())
             .timeout(ESPERA)
             .POST(HttpRequest.BodyPublishers.ofString(json.aJson(evento)))

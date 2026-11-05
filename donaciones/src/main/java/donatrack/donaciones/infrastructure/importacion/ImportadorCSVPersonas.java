@@ -6,6 +6,11 @@ import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
+// TODO: Keycloak. El CSV crea Donantes locales pero no da de alta la cuenta en
+// Keycloak, asi que los importados no pueden loguearse. Hay que decidir si
+// creamos las cuentas una por una durante el import (lento, N llamadas HTTP)
+// o si generamos un segundo paso en lote. Ninguna de las dos opciones
+// esta implementada por ahora.
 public class ImportadorCSVPersonas extends ImportadorCSV<Persona>
     implements WithSimplePersistenceUnit {
 

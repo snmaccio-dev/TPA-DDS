@@ -13,6 +13,10 @@
         <class>donatrack.donaciones.domain.persona.Donante</class>
         <class>donatrack.donaciones.domain.persona.Beneficiaria</class>
         <class>donatrack.donaciones.domain.contacto.MedioContacto</class>
+        <!--
+          Usuario ya no es una fila de credenciales: ahora representa el vinculo
+          entre una cuenta de Keycloak (por su "sub") y un perfil local.
+        -->
         <class>donatrack.donaciones.domain.usuario.Usuario</class>
         <class>donatrack.donaciones.domain.catalogo.Categoria</class>
         <class>donatrack.donaciones.domain.catalogo.Subcategoria</class>

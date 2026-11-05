@@ -18,6 +18,10 @@ import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioSubcategorias;
+import donatrack.donaciones.seguridad.Acceso;
+import donatrack.donaciones.seguridad.FiltroDeAcceso;
+import donatrack.donaciones.seguridad.RolDeAcceso;
+import donatrack.donaciones.seguridad.UsuarioActual;
 import donatrack.donaciones.service.EventoYaAplicadoException;
 import donatrack.donaciones.service.GestorDonaciones;
 import donatrack.donaciones.service.RecursoInexistenteException;
@@ -45,30 +49,46 @@ public class DonacionesController {
   }
 
   public void registrarRutas(Javalin app) {
-    app.get("/donaciones", this::listar);
-    app.post("/donaciones", this::crear);
-    app.get("/donaciones/{id}", this::buscar);
-    app.delete("/donaciones/{id}", this::eliminar);
-    app.get("/donaciones/{id}/comprobante", this::comprobante);
-    app.get("/donaciones/{id}/historial", this::historial);
-    app.post("/donaciones/{id}/vencer", this::vencer);
+    app.get("/donaciones", this::listar,
+        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA, RolDeAcceso.SERVICIO_LOGISTICA);
+    app.post("/donaciones", this::crear, RolDeAcceso.ADMINISTRADOR);
+    app.get("/donaciones/{id}", this::buscar,
+        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA);
+    app.delete("/donaciones/{id}", this::eliminar, RolDeAcceso.ADMINISTRADOR);
+    app.get("/donaciones/{id}/comprobante", this::comprobante,
+        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA);
+    app.get("/donaciones/{id}/historial", this::historial,
+        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA);
+    app.post("/donaciones/{id}/vencer", this::vencer, RolDeAcceso.ADMINISTRADOR);
 
-    app.post("/donaciones/eventos/rutas-planificadas", this::eventoRutasPlanificadas);
-    app.post("/donaciones/eventos/inicio-ruta", this::eventoInicioRuta);
-    app.post("/donaciones/eventos/entrega", this::eventoEntrega);
-    app.post("/donaciones/eventos/retorno-deposito", this::eventoRetornoDeposito);
+    app.post("/donaciones/eventos/rutas-planificadas", this::eventoRutasPlanificadas, RolDeAcceso.SERVICIO_LOGISTICA);
+    app.post("/donaciones/eventos/inicio-ruta", this::eventoInicioRuta, RolDeAcceso.SERVICIO_LOGISTICA);
+    app.post("/donaciones/eventos/entrega", this::eventoEntrega, RolDeAcceso.SERVICIO_LOGISTICA);
+    app.post("/donaciones/eventos/retorno-deposito", this::eventoRetornoDeposito, RolDeAcceso.SERVICIO_LOGISTICA);
   }
 
   private void listar(Context ctx) {
-    String estado = ctx.queryParam("estado");
-    List<Donacion> donaciones = estado == null
-        ? gestor.todas()
-        : gestor.porEstado(EstadosPosiblesDonacion.valueOf(estado));
+    UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
+    String estadoParam = ctx.queryParam("estado");
+    EstadosPosiblesDonacion estado = estadoParam == null ? null : EstadosPosiblesDonacion.valueOf(estadoParam);
+
+    List<Donacion> donaciones;
+    if (usuario.esAdministrador() || usuario.esServicioLogistica()) {
+      donaciones = estado == null ? gestor.todas() : gestor.porEstado(estado);
+    } else if (usuario.esDonante()) {
+      donaciones = gestor.deDonante(Acceso.perfilDonanteObligatorio(usuario), estado);
+    } else if (usuario.esBeneficiaria()) {
+      donaciones = gestor.deBeneficiaria(Acceso.perfilBeneficiariaObligatorio(usuario), estado);
+    } else {
+      donaciones = List.of();
+    }
     ctx.json(DonacionDTO.desde(donaciones));
   }
 
   private void buscar(Context ctx) {
-    ctx.json(DonacionDTO.desde(gestor.buscar(idDe(ctx))));
+    Donacion donacion = gestor.buscar(idDe(ctx));
+    Acceso.exigirPuedeVerDonacion(FiltroDeAcceso.usuarioDe(ctx), donacion);
+    ctx.json(DonacionDTO.desde(donacion));
   }
 
   private void crear(Context ctx) {
@@ -86,11 +106,15 @@ public class DonacionesController {
   }
 
   private void comprobante(Context ctx) {
-    ctx.json(ComprobanteDTO.desde(gestor.buscar(idDe(ctx)).generarComprobante()));
+    Donacion donacion = gestor.buscar(idDe(ctx));
+    Acceso.exigirPuedeVerDonacion(FiltroDeAcceso.usuarioDe(ctx), donacion);
+    ctx.json(ComprobanteDTO.desde(donacion.generarComprobante()));
   }
 
   private void historial(Context ctx) {
-    ctx.json(EstadoHistorialDTO.desde(gestor.historial(idDe(ctx))));
+    Donacion donacion = gestor.buscar(idDe(ctx));
+    Acceso.exigirPuedeVerDonacion(FiltroDeAcceso.usuarioDe(ctx), donacion);
+    ctx.json(EstadoHistorialDTO.desde(gestor.historial(donacion.getId())));
   }
 
   private void vencer(Context ctx) {

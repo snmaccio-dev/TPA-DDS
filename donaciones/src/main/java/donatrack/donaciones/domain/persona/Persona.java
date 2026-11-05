@@ -2,7 +2,6 @@ package donatrack.donaciones.domain.persona;
 
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
-import donatrack.donaciones.domain.usuario.Usuario;
 import javax.persistence.*;
 
 import java.util.ArrayList;
@@ -27,10 +26,6 @@ public abstract class Persona {
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "contacto_predeterminado_id")
     protected MedioContacto contactoPredeterminado;
-
-    @OneToOne(cascade = CascadeType.ALL)
-    @JoinColumn(name="usuario_id")
-    protected Usuario usuario;
 
     public abstract String getNombreDisplay();
 
@@ -78,13 +73,5 @@ public abstract class Persona {
 
     public void setContactoPredeterminado(MedioContacto contactoPredeterminado) {
         this.contactoPredeterminado = contactoPredeterminado;
-    }
-
-    public Usuario getUsuario() {
-        return usuario;
-    }
-
-    public void setUsuario(Usuario usuario) {
-        this.usuario = usuario;
     }
 }
