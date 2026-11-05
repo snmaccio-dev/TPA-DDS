@@ -9,6 +9,7 @@
         <class>donatrack.logistica.domain.flota.Camion</class>
         <class>donatrack.logistica.domain.flota.Chofer</class>
         <class>donatrack.logistica.domain.ruta.RutaReparto</class>
+        <class>donatrack.logistica.domain.ruta.DestinoEntrega</class>
         <class>donatrack.logistica.domain.entrega.Entrega</class>
         <class>donatrack.logistica.domain.monitoreo.ReporteUbicacion</class>
 

@@ -14,7 +14,6 @@ import donatrack.logistica.repository.RepositorioRutas;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.List;
-import java.util.Objects;
 
 public class GestorEntregas implements WithSimplePersistenceUnit {
 
@@ -29,8 +28,9 @@ public class GestorEntregas implements WithSimplePersistenceUnit {
       RepositorioChoferes.getInstance();
 
   public GestorEntregas(ClienteDonaciones clienteDonaciones, String urlBaseMonitoreo) {
-    Objects.requireNonNull(
-        clienteDonaciones, "Debe indicarse el cliente del servicio de Donaciones.");
+    if (clienteDonaciones == null) {
+      throw new IllegalArgumentException("Debe indicarse el cliente del servicio de Donaciones.");
+    }
     if (urlBaseMonitoreo == null || urlBaseMonitoreo.isBlank()) {
       throw new IllegalArgumentException("Debe indicarse la URL base del monitoreo.");
     }
@@ -110,10 +110,6 @@ public class GestorEntregas implements WithSimplePersistenceUnit {
 
   public List<Entrega> todas() {
     return repositorioEntregas.todas();
-  }
-
-  public List<Entrega> entregadas() {
-    return repositorioEntregas.entregadas();
   }
 
   public List<Entrega> deRuta(long rutaId) {

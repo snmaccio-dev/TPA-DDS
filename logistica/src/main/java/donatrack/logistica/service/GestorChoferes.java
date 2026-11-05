@@ -1,6 +1,5 @@
 package donatrack.logistica.service;
 
-import donatrack.logistica.domain.ConflictoDeNegocioException;
 import donatrack.logistica.domain.flota.Chofer;
 import donatrack.logistica.repository.RepositorioChoferes;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
@@ -26,7 +25,7 @@ public class GestorChoferes implements WithSimplePersistenceUnit {
 
   public Chofer crear(Chofer chofer) {
     if (repositorio.buscarPorDocumento(chofer.getDocumento()).isPresent()) {
-      throw new ConflictoDeNegocioException(
+      throw new IllegalStateException(
           "Ya existe un chofer con documento " + chofer.getDocumento() + "."
       );
     }

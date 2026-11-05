@@ -1,16 +1,24 @@
 package donatrack.logistica.domain.ruta;
 
-import donatrack.logistica.domain.DatosInvalidosException;
 import donatrack.logistica.domain.entrega.Entrega;
 
 import java.util.ArrayList;
 import java.util.List;
 import javax.persistence.Column;
-import javax.persistence.Embeddable;
-import javax.persistence.Transient;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
-@Embeddable
+@Entity
+@Table(name = "destino_entrega")
 public class DestinoEntrega {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
   @Column(nullable = false)
   private int orden;
@@ -18,30 +26,30 @@ public class DestinoEntrega {
   @Column(nullable = false)
   private String direccion;
 
-  @Transient
-  private final List<Entrega> entregasIniciales = new ArrayList<>();
+  @OneToMany(mappedBy = "destino")
+  private List<Entrega> entregas;
 
   protected DestinoEntrega() {
   }
 
   public DestinoEntrega(int orden, String direccion, List<Entrega> entregas) {
     if (orden < 0) {
-      throw new DatosInvalidosException("El orden del destino no puede ser negativo.");
+      throw new IllegalArgumentException("El orden del destino no puede ser negativo.");
     }
     if (direccion == null || direccion.isBlank()) {
-      throw new DatosInvalidosException("El destino debe tener una direccion.");
+      throw new IllegalArgumentException("El destino debe tener una direccion.");
     }
     if (entregas == null || entregas.isEmpty()) {
-      throw new DatosInvalidosException("El destino debe tener al menos una entrega.");
+      throw new IllegalArgumentException("El destino debe tener al menos una entrega.");
     }
     this.orden = orden;
     this.direccion = direccion;
-    this.entregasIniciales.addAll(entregas);
-    this.entregasIniciales.forEach(entrega -> entrega.asignarADestino(orden));
+    this.entregas = new ArrayList<>(entregas);
+    this.entregas.forEach(entrega -> entrega.asignarADestino(this));
   }
 
-  List<Entrega> getEntregasIniciales() {
-    return new ArrayList<>(entregasIniciales);
+  public Long getId() {
+    return id;
   }
 
   public int getOrden() {
@@ -50,5 +58,9 @@ public class DestinoEntrega {
 
   public String getDireccion() {
     return direccion;
+  }
+
+  public List<Entrega> getEntregas() {
+    return new ArrayList<>(entregas);
   }
 }

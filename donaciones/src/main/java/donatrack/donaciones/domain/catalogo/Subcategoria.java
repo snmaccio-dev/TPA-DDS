@@ -1,7 +1,5 @@
 package donatrack.donaciones.domain.catalogo;
 
-import donatrack.donaciones.domain.DatosInvalidosException;
-
 import javax.persistence.*;
 
 @Entity
@@ -30,7 +28,7 @@ public class Subcategoria {
 
     public Subcategoria(String nombre, Categoria categoria, Unidades unidades) {
         if (unidades == null) {
-            throw new DatosInvalidosException("La subcategoria debe tener una unidad de medida.");
+            throw new IllegalArgumentException("La subcategoria debe tener una unidad de medida.");
         }
         this.nombre = nombre;
         this.categoria = categoria;

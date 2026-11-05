@@ -2,7 +2,6 @@ package donatrack.logistica.controller;
 
 import donatrack.logistica.controller.dto.ConfirmarRecepcionRequest;
 import donatrack.logistica.controller.dto.EntregaDTO;
-import donatrack.logistica.controller.dto.EntregaPublicaDTO;
 import donatrack.logistica.controller.dto.NoRecepcionRequest;
 import donatrack.logistica.controller.dto.RegistrarMedidasRequest;
 import donatrack.logistica.service.GestorEntregas;
@@ -22,7 +21,6 @@ public class EntregasController {
     // Rutas mas especificas antes que /entregas/{id}, para que Javalin no se coma
     // "pendientes-de-medicion" como si fuera un id.
     app.get("/entregas/pendientes-de-medicion", this::pendientesDeMedicion);
-    app.get("/entregas/publicas", this::publicas);
     app.get("/entregas/{id}", this::buscar);
     app.post("/entregas/{id}/medidas", this::registrarMedidas);
     app.post("/entregas/{id}/confirmacion", this::confirmar);
@@ -40,10 +38,6 @@ public class EntregasController {
 
   private void pendientesDeMedicion(Context ctx) {
     ctx.json(EntregaDTO.desde(gestor.pendientesDeMedicion()));
-  }
-
-  private void publicas(Context ctx) {
-    ctx.json(EntregaPublicaDTO.desde(gestor.entregadas()));
   }
 
   private void registrarMedidas(Context ctx) {

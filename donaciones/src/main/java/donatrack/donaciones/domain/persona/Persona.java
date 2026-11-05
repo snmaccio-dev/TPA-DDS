@@ -1,6 +1,5 @@
 package donatrack.donaciones.domain.persona;
 
-import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.usuario.Usuario;
@@ -61,7 +60,7 @@ public abstract class Persona {
         boolean yaTiene = roles.stream()
             .anyMatch(existente -> existente.getClass().equals(rol.getClass()));
         if (yaTiene) {
-            throw new ConflictoDeNegocioException(
+            throw new IllegalStateException(
                 "La persona ya tiene un rol " + rol.getClass().getSimpleName() + " asignado."
             );
         }

@@ -1,6 +1,5 @@
 package donatrack.donaciones.service;
 
-import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.estado.EstadoDonacion;
@@ -131,7 +130,7 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
         }
 
         if (!imposibles.isEmpty()) {
-            throw new TransicionNoPermitidaException(
+            throw new IllegalStateException(
                 "Las donaciones " + imposibles
                     + " no pueden transicionar a " + estadoDestino + "."
             );

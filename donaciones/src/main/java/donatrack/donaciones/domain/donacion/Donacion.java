@@ -1,7 +1,5 @@
 package donatrack.donaciones.domain.donacion;
 
-import donatrack.donaciones.domain.DatosInvalidosException;
-import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.donacion.estado.EstadoDonacion;
@@ -71,13 +69,13 @@ public class Donacion {
                     Donante donante,
                     String descripcion) {
         if (bienes == null || bienes.isEmpty()) {
-            throw new DatosInvalidosException("La donacion debe contener al menos un bien.");
+            throw new IllegalArgumentException("La donacion debe contener al menos un bien.");
         }
         if (donante == null) {
-            throw new DatosInvalidosException("La donacion debe tener un donante.");
+            throw new IllegalArgumentException("La donacion debe tener un donante.");
         }
         if (descripcion == null || descripcion.isBlank()) {
-            throw new DatosInvalidosException("La donacion debe tener una descripcion.");
+            throw new IllegalArgumentException("La donacion debe tener una descripcion.");
         }
         this.bienes = new ArrayList<>(bienes);
         this.subcategoria = this.bienes.get(0).getSubcategoria();
@@ -92,7 +90,7 @@ public class Donacion {
     public void confirmarDestino(Beneficiaria destinatario) {
         exigirEstado("confirmar el destino", EstadosPosiblesDonacion.EN_DEPOSITO);
         if (destinatario == null) {
-            throw new DatosInvalidosException(
+            throw new IllegalArgumentException(
                 "Debe especificarse un destinatario para confirmar el destino."
             );
         }
@@ -132,7 +130,7 @@ public class Donacion {
     public void marcarVencida() {
         EstadosPosiblesDonacion actual = estado.getEstado();
         if (actual == EstadosPosiblesDonacion.ENTREGADA || actual == EstadosPosiblesDonacion.VENCIDA) {
-            throw new TransicionNoPermitidaException(
+            throw new IllegalStateException(
                 "No se puede vencer desde el estado " + estado.getNombre() + "."
             );
         }
@@ -143,14 +141,14 @@ public class Donacion {
         for (EstadosPosiblesDonacion permitido : permitidos) {
             if (estado.getEstado() == permitido) return;
         }
-        throw new TransicionNoPermitidaException(
+        throw new IllegalStateException(
             "No se puede " + accion + " desde el estado " + estado.getNombre() + "."
         );
     }
 
     public Comprobante generarComprobante() {
         if (estado.getEstado() != EstadosPosiblesDonacion.ENTREGADA) {
-            throw new TransicionNoPermitidaException("Solo se genera comprobante de una donacion entregada.");
+            throw new IllegalStateException("Solo se genera comprobante de una donacion entregada.");
         }
         return new Comprobante(
             id,

@@ -1,7 +1,5 @@
 package donatrack.logistica.contrato;
 
-import donatrack.logistica.domain.DatosInvalidosException;
-
 public record DonacionParaPlanificar(
     long donacionId,
     String descripcion,
@@ -14,10 +12,10 @@ public record DonacionParaPlanificar(
 
   public DonacionParaPlanificar {
     if (descripcion == null || descripcion.isBlank()) {
-      throw new DatosInvalidosException("La donacion a planificar debe tener descripcion.");
+      throw new IllegalArgumentException("La donacion a planificar debe tener descripcion.");
     }
     if (direccionDestino == null || direccionDestino.isBlank()) {
-      throw new DatosInvalidosException("La donacion a planificar debe tener direccion de destino.");
+      throw new IllegalArgumentException("La donacion a planificar debe tener direccion de destino.");
     }
   }
 }

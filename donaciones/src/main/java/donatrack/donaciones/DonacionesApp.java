@@ -6,17 +6,12 @@ import donatrack.donaciones.controller.DonantesController;
 import donatrack.donaciones.controller.EntidadesBeneficiariasController;
 import donatrack.donaciones.controller.NecesidadesController;
 import donatrack.donaciones.controller.dto.ErrorDTO;
-import donatrack.donaciones.domain.ConflictoDeNegocioException;
-import donatrack.donaciones.domain.DatosInvalidosException;
-import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorEmail;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorSMS;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorWhatsApp;
-import donatrack.donaciones.jobs.PlanificadorAsignaciones;
-import donatrack.donaciones.jobs.PlanificadorAvisosInactividad;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioEntidades;
@@ -31,9 +26,10 @@ import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
 import donatrack.donaciones.service.GestorNecesidades;
 import donatrack.donaciones.service.GestorNotificaciones;
 import donatrack.donaciones.service.GestorPersonas;
+import donatrack.donaciones.service.PlanificadorAsignaciones;
+import donatrack.donaciones.service.PlanificadorAvisosInactividad;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.Javalin;
-import io.javalin.http.HttpResponseException;
 
 import java.time.LocalTime;
 import java.util.List;
@@ -97,26 +93,15 @@ public class DonacionesApp {
     app.exception(EventoYaAplicadoException.class, (e, ctx) ->
         ctx.status(409).json(new ErrorDTO(e.getMessage())));
 
-    app.exception(DatosInvalidosException.class, (e, ctx) ->
+    app.exception(IllegalArgumentException.class, (e, ctx) ->
         ctx.status(400).json(new ErrorDTO(e.getMessage())));
 
-    app.exception(ConflictoDeNegocioException.class, (e, ctx) ->
-        ctx.status(409).json(new ErrorDTO(e.getMessage())));
-
-    // OJO: NO mapeamos las transiciones imposibles a 409. Logistica trata el 409 como
+    // OJO: NO mapeamos IllegalStateException a 409. Logistica trata el 409 como
     // "ya estaba aplicado, lo ignoro", asi que una transicion imposible respondida con 409
     // se comeria el error en silencio. Va a 422 (Unprocessable Entity) para que del otro
     // lado se convierta en IntegracionExternaException.
-    app.exception(TransicionNoPermitidaException.class, (e, ctx) ->
+    app.exception(IllegalStateException.class, (e, ctx) ->
         ctx.status(422).json(new ErrorDTO(e.getMessage())));
-
-    app.exception(HttpResponseException.class, (e, ctx) ->
-        ctx.status(e.getStatus()).json(new ErrorDTO(e.getMessage())));
-
-    app.exception(Exception.class, (e, ctx) -> {
-      e.printStackTrace();
-      ctx.status(500).json(new ErrorDTO("Error interno del servicio de Donaciones."));
-    });
   }
 
   private static void sembrarSubcategorias(RepositorioSubcategorias repo) {

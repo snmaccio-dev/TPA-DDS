@@ -1,7 +1,6 @@
 package donatrack.logistica.controller.dto;
 
 import donatrack.logistica.contrato.Fechas;
-import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.flota.Chofer;
 import donatrack.logistica.domain.ruta.RutaReparto;
 
@@ -18,8 +17,6 @@ public record RutaDTO(
 ) {
 
   public static RutaDTO desde(RutaReparto ruta) {
-    List<Entrega> entregas = ruta.getEntregas();
-
     return new RutaDTO(
         ruta.getId(),
         ruta.getCamion().getPatente(),
@@ -27,9 +24,7 @@ public record RutaDTO(
         nombreDe(ruta.getChofer()),
         Fechas.aTexto(ruta.getFechaHoraInicio()),
         ruta.getPorcentajeAvance(),
-        ruta.getDestinos().stream()
-            .map(destino -> DestinoDTO.desde(destino, entregas))
-            .toList()
+        ruta.getDestinos().stream().map(DestinoDTO::desde).toList()
     );
   }
 

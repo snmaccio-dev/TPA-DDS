@@ -12,7 +12,6 @@
     <modules>
         <module>donaciones</module>
         <module>logistica</module>
-        <module>web</module>
     </modules>
 
     <properties>
