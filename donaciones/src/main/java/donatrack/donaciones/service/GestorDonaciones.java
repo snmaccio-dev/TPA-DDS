@@ -7,6 +7,7 @@ import donatrack.donaciones.domain.donacion.estado.EstadoDonacion;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.donaciones.domain.notificacion.NotificadorDonacionObserver;
 import donatrack.donaciones.domain.notificacion.NotificarBeneficiariaAsignacionObserver;
+import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioPropuestas;
@@ -36,6 +37,18 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
 
     public List<Donacion> porEstado(EstadosPosiblesDonacion estado) {
         return repositorio.enEstado(estado);
+    }
+
+    public List<Donacion> deDonante(Donante donante, EstadosPosiblesDonacion estadoOpcional) {
+        return estadoOpcional == null
+            ? repositorio.deDonante(donante)
+            : repositorio.deDonanteEnEstado(donante, estadoOpcional);
+    }
+
+    public List<Donacion> deBeneficiaria(Beneficiaria beneficiaria, EstadosPosiblesDonacion estadoOpcional) {
+        return estadoOpcional == null
+            ? repositorio.deBeneficiaria(beneficiaria)
+            : repositorio.deBeneficiariaEnEstado(beneficiaria, estadoOpcional);
     }
 
     public Donacion buscar(long id) {

@@ -8,6 +8,7 @@ import donatrack.donaciones.domain.donacion.asignacion.PropuestaAsignacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioEntidades;
+import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.service.GestorAsignaciones;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import donatrack.donaciones.service.ResultadoCorrida;
@@ -31,11 +32,11 @@ public class AsignacionesController {
   }
 
   public void registrarRutas(Javalin app) {
-    app.get("/asignaciones/propuestas", this::propuestas);
-    app.post("/asignaciones/ejecutar", this::ejecutarMatchmaking);
-    app.get("/donaciones/{id}/propuesta", this::propuestaDeDonacion);
-    app.post("/donaciones/{id}/asignacion", this::ejecutarAsignacion);
-    app.post("/donaciones/{id}/destinatario", this::confirmarDestinatario);
+    app.get("/asignaciones/propuestas", this::propuestas, RolDeAcceso.ADMINISTRADOR);
+    app.post("/asignaciones/ejecutar", this::ejecutarMatchmaking, RolDeAcceso.ADMINISTRADOR);
+    app.get("/donaciones/{id}/propuesta", this::propuestaDeDonacion, RolDeAcceso.ADMINISTRADOR);
+    app.post("/donaciones/{id}/asignacion", this::ejecutarAsignacion, RolDeAcceso.ADMINISTRADOR);
+    app.post("/donaciones/{id}/destinatario", this::confirmarDestinatario, RolDeAcceso.ADMINISTRADOR);
   }
 
   private void propuestas(Context ctx) {

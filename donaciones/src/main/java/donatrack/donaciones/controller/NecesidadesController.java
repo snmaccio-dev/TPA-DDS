@@ -11,6 +11,10 @@ import donatrack.donaciones.domain.necesidad.Periodo;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.repository.RepositorioSubcategorias;
+import donatrack.donaciones.seguridad.Acceso;
+import donatrack.donaciones.seguridad.FiltroDeAcceso;
+import donatrack.donaciones.seguridad.RolDeAcceso;
+import donatrack.donaciones.seguridad.UsuarioActual;
 import donatrack.donaciones.service.GestorNecesidades;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.Javalin;
@@ -31,25 +35,33 @@ public class NecesidadesController {
   }
 
   public void registrarRutas(Javalin app) {
-    app.get("/necesidades", this::todas);
-    app.post("/necesidades", this::crear);
-    app.get("/necesidades/{id}", this::buscar);
-    app.put("/necesidades/{id}", this::actualizar);
-    app.delete("/necesidades/{id}", this::eliminar);
+    app.get("/necesidades", this::todas, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA);
+    app.post("/necesidades", this::crear, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA);
+    app.get("/necesidades/{id}", this::buscar, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA);
+    app.put("/necesidades/{id}", this::actualizar, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA);
+    app.delete("/necesidades/{id}", this::eliminar, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA);
   }
 
   private void todas(Context ctx) {
-    ctx.json(NecesidadDTO.desde(gestor.todas()));
+    UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
+    if (usuario.esAdministrador()) {
+      ctx.json(NecesidadDTO.desde(gestor.todas()));
+    } else {
+      Beneficiaria propia = Acceso.perfilBeneficiariaObligatorio(usuario);
+      ctx.json(NecesidadDTO.desde(gestor.deBeneficiaria(propia)));
+    }
   }
 
   private void buscar(Context ctx) {
-    ctx.json(NecesidadDTO.desde(gestor.buscar(idDe(ctx))));
+    Necesidad necesidad = gestor.buscar(idDe(ctx));
+    Acceso.exigirPuedeVerNecesidad(FiltroDeAcceso.usuarioDe(ctx), necesidad);
+    ctx.json(NecesidadDTO.desde(necesidad));
   }
 
   private void crear(Context ctx) {
     NuevaNecesidadRequest request = ctx.bodyAsClass(NuevaNecesidadRequest.class);
     Subcategoria subcategoria = subcategoriaDe(request.subcategoria());
-    Beneficiaria beneficiaria = beneficiariaDe(request.cuitBeneficiaria());
+    Beneficiaria beneficiaria = beneficiariaPara(FiltroDeAcceso.usuarioDe(ctx), request.cuitBeneficiaria());
     Necesidad necesidad = "RECURRENTE".equalsIgnoreCase(request.tipo())
         ? new NecesidadRecurrente(
             request.descripcion(),
@@ -66,9 +78,11 @@ public class NecesidadesController {
   }
 
   private void actualizar(Context ctx) {
+    Necesidad necesidad = gestor.buscar(idDe(ctx));
+    Acceso.exigirPuedeVerNecesidad(FiltroDeAcceso.usuarioDe(ctx), necesidad);
     ActualizarNecesidadRequest request = ctx.bodyAsClass(ActualizarNecesidadRequest.class);
     gestor.actualizar(
-        idDe(ctx),
+        necesidad.getId(),
         request.descripcion(),
         request.cantidad(),
         subcategoriaDe(request.subcategoria())
@@ -77,7 +91,9 @@ public class NecesidadesController {
   }
 
   private void eliminar(Context ctx) {
-    gestor.eliminar(idDe(ctx));
+    Necesidad necesidad = gestor.buscar(idDe(ctx));
+    Acceso.exigirPuedeVerNecesidad(FiltroDeAcceso.usuarioDe(ctx), necesidad);
+    gestor.eliminar(necesidad.getId());
     ctx.status(204);
   }
 
@@ -88,10 +104,15 @@ public class NecesidadesController {
         ));
   }
 
-  private Beneficiaria beneficiariaDe(String cuit) {
-    return repositorioEntidades.buscarPorCuit(cuit)
+  // Para BENEFICIARIA ignora el cuit del body y usa siempre la propia; para
+  // ADMINISTRADOR se respeta el cuit indicado.
+  private Beneficiaria beneficiariaPara(UsuarioActual usuario, String cuitDelBody) {
+    if (usuario.esBeneficiaria()) {
+      return Acceso.perfilBeneficiariaObligatorio(usuario);
+    }
+    return repositorioEntidades.buscarPorCuit(cuitDelBody)
         .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la entidad beneficiaria con CUIT " + cuit
+            "No existe la entidad beneficiaria con CUIT " + cuitDelBody
         ));
   }
 

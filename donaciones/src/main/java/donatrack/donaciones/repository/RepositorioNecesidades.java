@@ -1,6 +1,7 @@
 package donatrack.donaciones.repository;
 
 import donatrack.donaciones.domain.necesidad.Necesidad;
+import donatrack.donaciones.domain.persona.Beneficiaria;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.List;
@@ -31,6 +32,14 @@ public class RepositorioNecesidades implements WithSimplePersistenceUnit {
 
   public List<Necesidad> todas() {
     return createQuery("select n from Necesidad n", Necesidad.class).getResultList();
+  }
+
+  public List<Necesidad> deBeneficiaria(Beneficiaria beneficiaria) {
+    return createQuery(
+        "select n from Necesidad n where n.entidad = :beneficiaria",
+        Necesidad.class)
+        .setParameter("beneficiaria", beneficiaria)
+        .getResultList();
   }
 
   public void eliminar(long id) {

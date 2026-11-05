@@ -80,9 +80,9 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
     return repositorioPropuestas.todas();
   }
 
-  // Confirma el destino final de la donación validando la donación
+  // Confirma el destino final de la donación. El filtro de acceso ya garantiza
+  // que quien llega aca tiene rol ADMINISTRADOR.
   public void confirmarDestino(long donacionId, Beneficiaria destinatario) {
-    // TODO: validar con el token de Keycloak que quien confirma tenga rol ADMINISTRADOR
     Objects.requireNonNull(
         destinatario, "Debe indicarse la beneficiaria a confirmar como destinataria.");
     Donacion donacion = repositorioDonaciones.buscarPorId(donacionId)

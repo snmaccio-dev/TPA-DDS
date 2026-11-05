@@ -10,6 +10,7 @@ import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
+import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.service.DatosEntidad;
 import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
 import io.javalin.Javalin;
@@ -32,12 +33,12 @@ public class EntidadesBeneficiariasController {
                              String telefonoActual) {}
 
   public void registrarRutas(Javalin app) {
-    app.get("/entidades", this::todas);
-    app.get("/entidades/consulta", this::consultarPorCuit);
-    app.get("/entidades/{id}", this::buscar);
-    app.post("/entidades/existente", this::altaDePersonaExistente);
-    app.post("/entidades/nueva", this::altaConPersonaNueva);
-    app.delete("/entidades/{id}", this::eliminar);
+    app.get("/entidades", this::todas, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE);
+    app.get("/entidades/consulta", this::consultarPorCuit, RolDeAcceso.ADMINISTRADOR);
+    app.get("/entidades/{id}", this::buscar, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE);
+    app.post("/entidades/existente", this::altaDePersonaExistente, RolDeAcceso.ADMINISTRADOR);
+    app.post("/entidades/nueva", this::altaConPersonaNueva, RolDeAcceso.ADMINISTRADOR);
+    app.delete("/entidades/{id}", this::eliminar, RolDeAcceso.ADMINISTRADOR);
   }
 
   private void todas(Context ctx) {

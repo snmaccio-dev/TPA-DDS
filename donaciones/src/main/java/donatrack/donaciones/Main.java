@@ -22,7 +22,6 @@ import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
-import donatrack.donaciones.domain.usuario.Usuario;
 import donatrack.donaciones.infrastructure.importacion.ImportadorCSVPersonas;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorEmail;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorSMS;
@@ -119,7 +118,6 @@ public class Main {
 
         PersonaHumana luis = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
         luis.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
-        luis.setUsuario(new Usuario("luis.garcia", "***"));
         Donante donante = new Donante(luis);
 
         Categoria vestimenta = new Categoria("Vestimenta");
