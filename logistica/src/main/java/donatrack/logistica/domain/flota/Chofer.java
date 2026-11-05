@@ -7,8 +7,6 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import donatrack.logistica.domain.DatosInvalidosException;
-
 @Entity
 @Table(name = "chofer")
 public class Chofer {
@@ -34,16 +32,16 @@ public class Chofer {
 
     public Chofer(String nombre, String apellido, String documento, String licencia) {
         if (nombre == null || nombre.isBlank()) {
-            throw new DatosInvalidosException("El chofer debe tener un nombre.");
+            throw new IllegalArgumentException("El chofer debe tener un nombre.");
         }
         if (apellido == null || apellido.isBlank()) {
-            throw new DatosInvalidosException("El chofer debe tener un apellido.");
+            throw new IllegalArgumentException("El chofer debe tener un apellido.");
         }
         if (documento == null || documento.isBlank()) {
-            throw new DatosInvalidosException("El chofer debe tener un documento.");
+            throw new IllegalArgumentException("El chofer debe tener un documento.");
         }
         if (licencia == null || licencia.isBlank()) {
-            throw new DatosInvalidosException("El chofer debe tener una licencia.");
+            throw new IllegalArgumentException("El chofer debe tener una licencia.");
         }
         this.nombre = nombre;
         this.apellido = apellido;

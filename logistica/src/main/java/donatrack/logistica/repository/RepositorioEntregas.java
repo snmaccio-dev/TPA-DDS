@@ -59,16 +59,6 @@ public class RepositorioEntregas implements WithSimplePersistenceUnit {
         .getResultList();
   }
 
-  public List<Entrega> entregadas() {
-    return createQuery(
-        "select e from Entrega e "
-            + "where e.estado = :estado "
-            + "order by e.fechaHoraEntrega desc",
-        Entrega.class)
-        .setParameter("estado", EstadoEntrega.ENTREGADA)
-        .getResultList();
-  }
-
   public List<Entrega> pendientesDeMedicion() {
     return createQuery(
         "select e from Entrega e "

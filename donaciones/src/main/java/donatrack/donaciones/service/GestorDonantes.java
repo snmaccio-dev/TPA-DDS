@@ -5,7 +5,6 @@ import donatrack.donaciones.repository.RepositorioDonantes;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 
 public class GestorDonantes implements WithSimplePersistenceUnit {
@@ -26,9 +25,8 @@ public class GestorDonantes implements WithSimplePersistenceUnit {
         return repositorio.queRequierenAvisoDeInactividad(limite);
     }
 
-    public ResultadoCorrida avisarInactivos() {
+    public int avisarInactivos() {
         int avisados = 0;
-        List<String> fallidos = new ArrayList<>();
         for (Donante donante : inactivos()) {
             try {
                 gestorNotificaciones.notificarAusenciaPlataforma(donante.getPersona());
@@ -37,9 +35,12 @@ public class GestorDonantes implements WithSimplePersistenceUnit {
                 withTransaction(donante::registrarAvisoDeInactividad);
                 avisados++;
             } catch (RuntimeException e) {
-                fallidos.add(donante.getPersona().getDocumento() + ": " + e.getMessage());
+                System.err.println(
+                    "[AVISO-INACTIVIDAD] Fallo para "
+                        + donante.getPersona().getDocumento() + ": " + e.getMessage()
+                );
             }
         }
-        return new ResultadoCorrida(avisados, fallidos);
+        return avisados;
     }
 }

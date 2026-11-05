@@ -5,8 +5,6 @@ import donatrack.logistica.contrato.DonacionParaPlanificar;
 import donatrack.logistica.contrato.EventoRutasPlanificadas;
 import donatrack.logistica.contrato.PlanificacionRecibida;
 import donatrack.logistica.contrato.RutaPlanificada;
-import donatrack.logistica.domain.ConflictoDeNegocioException;
-import donatrack.logistica.domain.DatosInvalidosException;
 import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.flota.Camion;
 import donatrack.logistica.domain.integracion.ClienteDonaciones;
@@ -21,7 +19,6 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.IntStream;
 
 public class GestorLogistica implements WithSimplePersistenceUnit {
@@ -43,9 +40,12 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
   public GestorLogistica(GeneradorRutas generadorRutas,
                          ClienteDonaciones clienteDonaciones,
                          String urlCallback) {
-    Objects.requireNonNull(generadorRutas, "Debe indicarse el generador de rutas.");
-    Objects.requireNonNull(
-        clienteDonaciones, "Debe indicarse el cliente del servicio de Donaciones.");
+    if (generadorRutas == null) {
+      throw new IllegalArgumentException("Debe indicarse el generador de rutas.");
+    }
+    if (clienteDonaciones == null) {
+      throw new IllegalArgumentException("Debe indicarse el cliente del servicio de Donaciones.");
+    }
     if (urlCallback == null || urlCallback.isBlank()) {
       throw new IllegalArgumentException("Debe indicarse la URL de callback del planificador.");
     }
@@ -80,7 +80,7 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
 
   private List<String> planificarRutasInterno(List<Camion> camiones) {
     if (camiones == null || camiones.isEmpty()) {
-      throw new ConflictoDeNegocioException("No hay camiones disponibles para planificar rutas.");
+      throw new IllegalArgumentException("No hay camiones disponibles para planificar rutas.");
     }
 
     List<String> solicitudes = new ArrayList<>();
@@ -101,7 +101,7 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
 
   private void procesarResultadoPlanificacionInterno(ResultadoPlanificacion resultado) {
     if (resultado == null) {
-      throw new DatosInvalidosException("El planificador no devolvio un resultado.");
+      throw new IllegalArgumentException("El planificador no devolvio un resultado.");
     }
 
     List<RutaReparto> rutas = resultado.getRutas();
@@ -130,7 +130,7 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
   public ResultadoPlanificacion procesarCallbackDelProveedor(PlanificacionRecibida recibida) {
     return withTransaction(() -> {
       if (recibida == null) {
-        throw new DatosInvalidosException("El planificador no devolvio un resultado.");
+        throw new IllegalArgumentException("El planificador no devolvio un resultado.");
       }
 
       List<RutaReparto> rutas = recibida.rutas().stream()
@@ -159,7 +159,7 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
   private RutaReparto armarRuta(RutaPlanificada planificada) {
     Camion camion = repositorioCamiones.buscar(planificada.patenteCamion())
         .orElseThrow(() ->
-            new DatosInvalidosException(
+            new IllegalArgumentException(
                 "El planificador asigno un camion inexistente: " + planificada.patenteCamion()
             ));
 
@@ -182,7 +182,7 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
   private Entrega buscarEntrega(long entregaId) {
     return repositorioEntregas.buscarPorId(entregaId)
         .orElseThrow(() ->
-            new DatosInvalidosException(
+            new IllegalArgumentException(
                 "El planificador referencio una entrega inexistente: " + entregaId
             ));
   }

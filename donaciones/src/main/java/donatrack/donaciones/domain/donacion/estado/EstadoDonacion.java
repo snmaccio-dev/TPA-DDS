@@ -1,7 +1,5 @@
 package donatrack.donaciones.domain.donacion.estado;
 
-import donatrack.donaciones.domain.DatosInvalidosException;
-
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.DiscriminatorValue;
@@ -45,10 +43,10 @@ public class EstadoDonacion {
 
     public EstadoDonacion(EstadosPosiblesDonacion estado, LocalDateTime fechaInicio) {
         if (estado == null) {
-            throw new DatosInvalidosException("El estado no puede ser nulo.");
+            throw new IllegalArgumentException("El estado no puede ser nulo.");
         }
         if (fechaInicio == null) {
-            throw new DatosInvalidosException("La fecha de inicio no puede ser nula.");
+            throw new IllegalArgumentException("La fecha de inicio no puede ser nula.");
         }
         this.estado = estado;
         this.fechaInicio = fechaInicio;

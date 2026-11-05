@@ -1,5 +1,6 @@
 package donatrack.donaciones.controller;
 
+import donatrack.donaciones.contrato.Fechas;
 import donatrack.donaciones.controller.dto.ComprobanteDTO;
 import donatrack.donaciones.controller.dto.DonacionDTO;
 import donatrack.donaciones.controller.dto.EstadoHistorialDTO;
@@ -8,7 +9,6 @@ import donatrack.donaciones.controller.dto.EventoInicioRutaRequest;
 import donatrack.donaciones.controller.dto.EventoRetornoDepositoRequest;
 import donatrack.donaciones.controller.dto.EventoRutasPlanificadasRequest;
 import donatrack.donaciones.controller.dto.NuevaDonacionRequest;
-import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.CondicionBien;
@@ -131,7 +131,7 @@ public class DonacionesController {
             "La donación " + donacion.getId() + " ya estaba entregada."
         );
       }
-      gestor.marcarEntregada(donacion.getId(), evento.fechaHoraMedida(), evento.patenteCamion());
+      gestor.marcarEntregada(donacion.getId(), Fechas.aFechaHora(evento.fechaHora()), evento.patenteCamion());
     } else if ("NO_RECIBIDA".equals(evento.resultado())) {
       if (actual == EstadosPosiblesDonacion.ENTREGA_FALLIDA) {
         throw new EventoYaAplicadoException(
@@ -140,7 +140,7 @@ public class DonacionesController {
       }
       gestor.marcarEntregaFallida(donacion.getId(), evento.motivo());
     } else {
-      throw new DatosInvalidosException(
+      throw new IllegalArgumentException(
           "El resultado del evento debe ser ENTREGADA o NO_RECIBIDA (recibido: "
               + evento.resultado() + ")."
       );
@@ -169,7 +169,7 @@ public class DonacionesController {
             "No existe la persona con documento " + documento
         ));
     return persona.comoRol(Donante.class)
-        .orElseThrow(() -> new DatosInvalidosException(
+        .orElseThrow(() -> new IllegalArgumentException(
             "La persona con documento " + documento + " no tiene el rol Donante."
         ));
   }

@@ -1,6 +1,5 @@
 package donatrack.donaciones.domain.necesidad;
 
-import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.persona.Beneficiaria;
@@ -41,7 +40,7 @@ public abstract class Necesidad {
       Beneficiaria entidad
   ) {
     if (entidad == null) {
-      throw new DatosInvalidosException(
+      throw new IllegalArgumentException(
           "La necesidad debe pertenecer a una entidad beneficiaria."
       );
     }

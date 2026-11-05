@@ -1,6 +1,5 @@
 package donatrack.donaciones.service;
 
-import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Beneficiaria;
@@ -44,7 +43,7 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
 
   public void actualizarDireccion(long id, String nuevaDireccion) {
     if (nuevaDireccion == null || nuevaDireccion.isBlank()) {
-      throw new DatosInvalidosException("La direccion de la beneficiaria no puede quedar vacia.");
+      throw new IllegalArgumentException("La direccion de la beneficiaria no puede quedar vacia.");
     }
     withTransaction(() -> {
       Beneficiaria beneficiaria = buscar(id);
@@ -93,7 +92,7 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
 
   private void aplicarDatosDeBeneficiaria(PersonaJuridica juridica, DatosEntidad datos) {
     if (datos == null) {
-      throw new DatosInvalidosException(
+      throw new IllegalArgumentException(
           "Los datos de la beneficiaria (direccion y telefono) son obligatorios."
       );
     }

@@ -1,6 +1,5 @@
 package donatrack.donaciones.domain.donacion.estado;
 
-import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.donacion.Bien;
@@ -71,7 +70,7 @@ public class EstadoDonacionTest {
   @Test
   public void marcarEnDepositoSoloEsValidoTrasEntregaFallida() {
     Donacion donacion = donacionDeCampera();
-    assertThrows(TransicionNoPermitidaException.class, donacion::marcarEnDeposito);
+    assertThrows(IllegalStateException.class, donacion::marcarEnDeposito);
   }
 
   @Test
@@ -82,15 +81,15 @@ public class EstadoDonacionTest {
   }
 
   @Test
-  public void transicionInvalidaLanzaTransicionNoPermitida() {
+  public void transicionInvalidaLanzaIllegalStateException() {
     Donacion donacion = donacionDeCampera();
-    assertThrows(TransicionNoPermitidaException.class, donacion::marcarEnTraslado);
+    assertThrows(IllegalStateException.class, donacion::marcarEnTraslado);
   }
 
   @Test
   public void generarComprobanteRequiereEstarEntregada() {
     Donacion donacion = donacionDeCampera();
-    assertThrows(TransicionNoPermitidaException.class, donacion::generarComprobante);
+    assertThrows(IllegalStateException.class, donacion::generarComprobante);
   }
 
   // === helpers ===

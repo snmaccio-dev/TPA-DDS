@@ -3,7 +3,6 @@ package donatrack.donaciones.controller;
 import donatrack.donaciones.controller.dto.BeneficiariaDTO;
 import donatrack.donaciones.controller.dto.ConfirmarDestinatarioRequest;
 import donatrack.donaciones.controller.dto.PropuestaDTO;
-import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.asignacion.PropuestaAsignacion;
 import donatrack.donaciones.domain.persona.Administrador;
@@ -14,11 +13,8 @@ import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.service.GestorAsignaciones;
 import donatrack.donaciones.service.RecursoInexistenteException;
-import donatrack.donaciones.service.ResultadoCorrida;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
-
-import java.util.List;
 
 public class AsignacionesController {
 
@@ -50,8 +46,8 @@ public class AsignacionesController {
   }
 
   private void ejecutarMatchmaking(Context ctx) {
-    ResultadoCorrida resultado = gestor.ejecutarMatchmakingProgramado();
-    ctx.json(new EjecutarMatchmakingResponse(resultado.exitosas(), resultado.fallidas()));
+    int procesadas = gestor.ejecutarMatchmakingProgramado();
+    ctx.json(new EjecutarMatchmakingResponse(procesadas));
   }
 
   private void propuestaDeDonacion(Context ctx) {
@@ -93,7 +89,7 @@ public class AsignacionesController {
             "No existe la persona con documento " + documento
         ));
     return persona.comoRol(Administrador.class)
-        .orElseThrow(() -> new DatosInvalidosException(
+        .orElseThrow(() -> new IllegalArgumentException(
             "La persona con documento " + documento + " no tiene el rol Administrador."
         ));
   }
@@ -102,5 +98,5 @@ public class AsignacionesController {
     return ctx.pathParamAsClass("id", Long.class).get();
   }
 
-  public record EjecutarMatchmakingResponse(int procesadas, List<String> fallidas) {}
+  public record EjecutarMatchmakingResponse(int procesadas) {}
 }

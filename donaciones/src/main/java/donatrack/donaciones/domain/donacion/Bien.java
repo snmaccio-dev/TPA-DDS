@@ -1,6 +1,5 @@
 package donatrack.donaciones.domain.donacion;
 
-import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
@@ -45,13 +44,13 @@ public class Bien {
                 double cantidad,
                 CondicionBien condicion) {
         if (descripcion == null || descripcion.isBlank()) {
-            throw new DatosInvalidosException("El bien debe tener descripcion.");
+            throw new IllegalArgumentException("El bien debe tener descripcion.");
         }
         if (subcategoria == null) {
-            throw new DatosInvalidosException("El bien debe pertenecer a una subcategoria.");
+            throw new IllegalArgumentException("El bien debe pertenecer a una subcategoria.");
         }
         if (cantidad <= 0) {
-            throw new DatosInvalidosException("La cantidad del bien debe ser mayor a cero.");
+            throw new IllegalArgumentException("La cantidad del bien debe ser mayor a cero.");
         }
         this.descripcion = descripcion;
         this.subcategoria = subcategoria;

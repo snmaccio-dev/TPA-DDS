@@ -1,6 +1,5 @@
 package donatrack.donaciones.domain.persona;
 
-import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import javax.persistence.CollectionTable;
@@ -45,10 +44,10 @@ public class PersonaJuridica extends Persona {
 
     public PersonaJuridica(String cuit, String razonSocial, TipoOrganizacion tipo, String rubro) {
         if (cuit == null) {
-            throw new DatosInvalidosException("El CUIT es obligatorio.");
+            throw new IllegalArgumentException("El CUIT es obligatorio.");
         }
         if (razonSocial == null || razonSocial.isBlank()) {
-            throw new DatosInvalidosException("La razon social es obligatoria.");
+            throw new IllegalArgumentException("La razon social es obligatoria.");
         }
         this.cuit = cuit.replaceAll("[^0-9]", "");
         this.razonSocial = razonSocial.trim();
@@ -58,7 +57,7 @@ public class PersonaJuridica extends Persona {
 
     public void agregarRepresentante(Representante representante) {
         if (representante == null) {
-            throw new DatosInvalidosException("El representante es obligatorio.");
+            throw new IllegalArgumentException("El representante es obligatorio.");
         }
         if (representantes.contains(representante)) {
             return;

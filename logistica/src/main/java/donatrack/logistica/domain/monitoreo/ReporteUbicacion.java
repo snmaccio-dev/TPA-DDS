@@ -1,10 +1,8 @@
 package donatrack.logistica.domain.monitoreo;
 
-import donatrack.logistica.domain.DatosInvalidosException;
 import donatrack.logistica.domain.ruta.RutaReparto;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -50,21 +48,23 @@ public class ReporteUbicacion {
                           double longitud,
                           double velocidadKmh,
                           LocalDateTime momento) {
-    Objects.requireNonNull(ruta, "El reporte debe indicar la ruta a la que corresponde.");
+    if (ruta == null) {
+      throw new IllegalArgumentException("El reporte debe indicar la ruta a la que corresponde.");
+    }
     if (patenteCamion == null || patenteCamion.isBlank()) {
-      throw new DatosInvalidosException("El reporte debe indicar la patente del camion.");
+      throw new IllegalArgumentException("El reporte debe indicar la patente del camion.");
     }
     if (latitud < -90 || latitud > 90) {
-      throw new DatosInvalidosException("La latitud reportada esta fuera de rango.");
+      throw new IllegalArgumentException("La latitud reportada esta fuera de rango.");
     }
     if (longitud < -180 || longitud > 180) {
-      throw new DatosInvalidosException("La longitud reportada esta fuera de rango.");
+      throw new IllegalArgumentException("La longitud reportada esta fuera de rango.");
     }
     if (velocidadKmh < 0) {
-      throw new DatosInvalidosException("La velocidad reportada no puede ser negativa.");
+      throw new IllegalArgumentException("La velocidad reportada no puede ser negativa.");
     }
     if (momento == null) {
-      throw new DatosInvalidosException("El reporte debe indicar el momento de la medicion.");
+      throw new IllegalArgumentException("El reporte debe indicar el momento de la medicion.");
     }
     this.ruta = ruta;
     this.patenteCamion = patenteCamion;
