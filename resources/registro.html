@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Crear cuenta | DonaTrack</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/styles.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+</head><body data-page="register" data-role="public">
+<header class="public-header"><a class="brand" href="index.html"><span class="brand-mark">D</span><span>DonaTrack</span></a>
+        <nav><a href="donaciones-publicas.html">Donaciones entregadas</a><a href="privacidad.html">Privacidad</a></nav>
+        <div class="header-actions"><a class="btn btn-ghost" href="login.html">Ingresar</a><a class="btn btn-primary" href="registro.html">Crear cuenta</a></div></header>
+<main class="public-main"><section class="auth-wrap">
+        <div class="auth-intro">
+                <span class="eyebrow">FORMÁ PARTE DEL CAMBIO</span>
+                <h1>Una comunidad.<br><em>Muchas formas de ayudar.</em></h1>
+                <p>Creá tu cuenta para donar, registrar necesidades o gestionar entregas.</p>
+                <div class="auth-benefit">✓ Seguimiento transparente de cada entrega</div>
+                <div class="auth-benefit">✓ Conexión directa con organizaciones</div>
+                <div class="auth-benefit">✓ Historial y notificaciones</div>
+        </div><form class="panel form-panel demo-form"><div class="form-title">
+        <h2>Crear cuenta</h2>
+        <p>Completá tus datos para comenzar.</p>
+</div><label>Tipo de cuenta<select required>
+        <option value="">Seleccionar perfil</option>
+        <option>Persona donante</option>
+        <option>Entidad beneficiaria</option>
+        <option>Persona Administradora</option>
+</select></label><div class="form-row">
+        <label>Nombre / Razón social<input required placeholder="Tu nombre o entidad"></label>
+        <label>Correo electrónico<input type="email" required placeholder="nombre@correo.com">
+        </label></div><label>Contraseña<input type="password" required minlength="8" placeholder="Mínimo 8 caracteres"></label>
+        <label class="check-label"><input type="checkbox" required> Acepto los <a href="privacidad.html">términos y la política de privacidad</a>.</label>
+        <button class="btn btn-primary btn-block">Crear cuenta</button><p class="form-bottom">¿Ya tenés cuenta? <a href="login.html">Iniciá sesión</a></p></form></section></main>
+<footer class="public-footer"><span>© 2026 DonaTrack</span><a href="privacidad.html">Privacidad y términos</a><span>Transparencia que conecta.</span></footer>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="assets/js/app.js"></script></body></html>
