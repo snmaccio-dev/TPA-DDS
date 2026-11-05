@@ -2,6 +2,88 @@
 <body data-page="trucks" data-role="admin">
 {{> templates/partials/sidebar}}
 {{> templates/partials/topbar}}
-<main class="app-main"><div class="page-heading"><div><span class="eyebrow">FLOTA</span><h1>Gestión de camiones</h1><p>Administrá los vehículos disponibles para las entregas.</p></div><button class="btn btn-primary" data-open-modal="truck-modal">＋ Agregar camión</button></div><div class="metric-grid compact"><article class="metric-card"><strong>12</strong><span>Total de vehículos</span></article><article class="metric-card"><strong>8</strong><span>Disponibles</span></article><article class="metric-card"><strong>3</strong><span>En reparto</span></article><article class="metric-card"><strong>1</strong><span>En mantenimiento</span></article></div><section class="panel"><div class="table-wrap"><table><thead><tr><th>Identificador</th><th>Patente</th><th>Capacidad</th><th>Estado</th><th>Última actualización</th><th></th></tr></thead><tbody><tr><td>DT-02</td><td>AB 123 CD</td><td>1.500 kg</td><td><span class="status-pill success">Disponible</span></td><td>02/11/2026 09:30</td><td><button class="table-action" data-toast="Edición de camión de demostración.">Editar</button></td></tr><tr><td>DT-04</td><td>AC 456 EF</td><td>2.000 kg</td><td><span class="status-pill info">En reparto</span></td><td>02/11/2026 10:15</td><td><button class="table-action" data-toast="Edición de camión de demostración.">Editar</button></td></tr><tr><td>DT-05</td><td>AD 789 GH</td><td>1.000 kg</td><td><span class="status-pill warning">Mantenimiento</span></td><td>01/11/2026 17:00</td><td><button class="table-action" data-toast="Edición de camión de demostración.">Editar</button></td></tr></tbody></table></div></section><div class="modal" id="truck-modal"><form class="modal-card demo-form"><button type="button" class="modal-close" data-close-modal>×</button><h2>Agregar camión</h2><label>Identificador<input required placeholder="Ej. DT-06"></label><label>Patente<input required></label><label>Capacidad (kg)<input type="number" min="1" required></label><label>Estado<select><option>Disponible</option><option>En mantenimiento</option></select></label><button class="btn btn-primary btn-block">Guardar camión</button></form></div></main>
+<main class="app-main">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">FLOTA</span>
+      <h1>Gestión de camiones</h1>
+      <p>Administrá los vehículos disponibles para las entregas.</p>
+    </div>
+    <button class="btn btn-primary" data-open-modal="truck-modal">＋ Agregar camión</button>
+  </div>
+
+  {{#if errorDeServicio}}
+  <section class="panel">
+    <strong>{{errorDeServicio}}</strong>
+    <p class="muted">No se pudo mostrar la flota. Volvé a intentar en unos minutos.</p>
+  </section>
+  {{/if}}
+
+  {{#if errorDelFormulario}}
+  <section class="panel">
+    <strong>No se pudo guardar el camión</strong>
+    <p class="muted">{{errorDelFormulario}}</p>
+  </section>
+  {{/if}}
+
+  <div class="metric-grid compact">
+    <article class="metric-card">
+      <strong>{{flota.total}}</strong><span>Total de vehículos</span>
+    </article>
+    <article class="metric-card">
+      <strong>{{flota.disponibles}}</strong><span>Disponibles</span>
+    </article>
+    <article class="metric-card">
+      <strong>{{flota.enRuta}}</strong><span>En reparto</span>
+    </article>
+    <article class="metric-card">
+      <strong>{{flota.cargaTotalTexto}}</strong><span>Capacidad de carga total</span>
+    </article>
+  </div>
+
+  <section class="panel">
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Patente</th>
+          <th>Volumen</th>
+          <th>Altura</th>
+          <th>Carga</th>
+          <th>Situación</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#each flota.camiones}}
+        <tr>
+          <td>{{patente}}</td>
+          <td>{{volumenTexto}}</td>
+          <td>{{alturaTexto}}</td>
+          <td>{{cargaTexto}}</td>
+          <td><span class="status-pill {{situacionEstilo}}">{{situacionTexto}}</span></td>
+          <td><a class="table-action" href="/camiones/{{patente}}/editar">Editar</a></td>
+        </tr>
+        {{/each}}
+        </tbody>
+      </table>
+    </div>
+    {{#if flota.vacia}}
+    <p class="muted">No hay camiones registrados.</p>
+    {{/if}}
+  </section>
+
+  <div class="modal" id="truck-modal">
+    <form class="modal-card" method="post" action="/camiones">
+      <button type="button" class="modal-close" data-close-modal>×</button>
+      <h2>Agregar camión</h2>
+      <label>Patente<input name="patente" required placeholder="Ej. AB 123 CD"></label>
+      <label>Capacidad de volumen (m³)<input name="capacidadVolumen" type="number" step="0.1" min="0.1" required></label>
+      <label>Altura (m)<input name="altura" type="number" step="0.01" min="0.01" required></label>
+      <label>Capacidad de carga (kg)<input name="capacidadCarga" type="number" step="1" min="1" required></label>
+      <button class="btn btn-primary btn-block">Guardar camión</button>
+    </form>
+  </div>
+</main>
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}

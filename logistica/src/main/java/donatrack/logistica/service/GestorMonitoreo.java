@@ -62,9 +62,15 @@ public class GestorMonitoreo implements WithSimplePersistenceUnit {
   }
 
   public List<RutaReparto> rutasEnCurso() {
-    return repositorioRutas.todas().stream()
-        .filter(ruta -> ruta.getEstado() == EstadoRuta.EN_CURSO)
-        .toList();
+    return repositorioRutas.enCurso();
+  }
+
+  public List<RutaReparto> rutasEnCursoDeBeneficiaria(long beneficiariaId) {
+    return repositorioRutas.enCursoDeBeneficiaria(beneficiariaId);
+  }
+
+  public List<RutaReparto> rutasEnCursoDeDonaciones(List<Long> donacionIds) {
+    return repositorioRutas.enCursoDeDonaciones(donacionIds);
   }
 
   private RutaReparto buscarRuta(long rutaId) {

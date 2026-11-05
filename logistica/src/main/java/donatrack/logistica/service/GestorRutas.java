@@ -34,12 +34,6 @@ public class GestorRutas implements WithSimplePersistenceUnit {
   }
 
   // DELETE /rutas/{id}
-  // Cambio disparado por las FKs que introdujo la persistencia: el borrado directo dejaba
-  // entregas apuntando a destinos ya eliminados. Ahora solo se borra una ruta no iniciada,
-  // y antes se liberan sus entregas. Version anterior:
-  // public void eliminar(long id) {
-  //   withTransaction(() -> repositorio.eliminar(id));
-  // }
   public void eliminar(long id) {
     withTransaction(() -> {
       RutaReparto ruta = buscar(id);

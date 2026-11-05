@@ -2,11 +2,15 @@ package donatrack.logistica.controller;
 
 import donatrack.logistica.controller.dto.MonitoreoRutaDTO;
 import donatrack.logistica.controller.dto.ReporteUbicacionRequest;
+import donatrack.logistica.domain.DatosInvalidosException;
 import donatrack.logistica.domain.ruta.RutaReparto;
 import donatrack.logistica.service.GestorMonitoreo;
 import donatrack.logistica.service.GestorRutas;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+
+import java.util.Arrays;
+import java.util.List;
 
 public class MonitoreoController {
 
@@ -32,9 +36,37 @@ public class MonitoreoController {
   }
 
   private void rutasEnCurso(Context ctx) {
-    ctx.json(gestorMonitoreo.rutasEnCurso().stream()
-        .map(this::estadoDe)
-        .toList());
+    String beneficiaria = ctx.queryParam("beneficiaria");
+    String donaciones = ctx.queryParam("donaciones");
+
+    List<RutaReparto> rutas;
+    if (beneficiaria != null) {
+      rutas = gestorMonitoreo.rutasEnCursoDeBeneficiaria(comoId(beneficiaria, "beneficiaria"));
+    } else if (donaciones != null) {
+      rutas = gestorMonitoreo.rutasEnCursoDeDonaciones(comoIds(donaciones));
+    } else {
+      rutas = gestorMonitoreo.rutasEnCurso();
+    }
+
+    ctx.json(rutas.stream().map(this::estadoDe).toList());
+  }
+
+  private List<Long> comoIds(String valores) {
+    return Arrays.stream(valores.split(","))
+        .map(String::trim)
+        .filter(valor -> !valor.isEmpty())
+        .map(valor -> comoId(valor, "donaciones"))
+        .toList();
+  }
+
+  private long comoId(String valor, String parametro) {
+    try {
+      return Long.parseLong(valor.trim());
+    } catch (NumberFormatException e) {
+      throw new DatosInvalidosException(
+          "El parametro " + parametro + " debe contener identificadores numericos."
+      );
+    }
   }
 
   private void estadoDeRuta(Context ctx) {

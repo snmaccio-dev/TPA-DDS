@@ -7,7 +7,8 @@ import java.util.List;
 
 public interface GeneradorRutas {
 
-  String solicitarPlanificacion(
+  void solicitarPlanificacion(
+      String solicitudId,
       List<Entrega> entregas,
       List<Camion> camiones,
       String urlCallback

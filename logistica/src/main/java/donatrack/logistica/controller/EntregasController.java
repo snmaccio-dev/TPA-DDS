@@ -3,11 +3,19 @@ package donatrack.logistica.controller;
 import donatrack.logistica.controller.dto.ConfirmarRecepcionRequest;
 import donatrack.logistica.controller.dto.EntregaDTO;
 import donatrack.logistica.controller.dto.EntregaPublicaDTO;
+import donatrack.logistica.controller.dto.FotosSubidasDTO;
 import donatrack.logistica.controller.dto.NoRecepcionRequest;
 import donatrack.logistica.controller.dto.RegistrarMedidasRequest;
+import donatrack.logistica.domain.almacenamiento.FotoParaSubir;
+import donatrack.logistica.domain.integracion.IntegracionExternaException;
 import donatrack.logistica.service.GestorEntregas;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import io.javalin.http.UploadedFile;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
 
 public class EntregasController {
 
@@ -25,6 +33,7 @@ public class EntregasController {
     app.get("/entregas/publicas", this::publicas);
     app.get("/entregas/{id}", this::buscar);
     app.post("/entregas/{id}/medidas", this::registrarMedidas);
+    app.post("/entregas/{id}/fotos", this::subirFotos);
     app.post("/entregas/{id}/confirmacion", this::confirmar);
     app.post("/entregas/{id}/no-recepcion", this::noRecibida);
     app.post("/entregas/{id}/retorno-deposito", this::retornarADeposito);
@@ -51,6 +60,24 @@ public class EntregasController {
     ctx.json(EntregaDTO.desde(
         gestor.registrarMedicion(idDe(ctx), request.pesoKg(), request.volumenM3())
     ));
+  }
+
+  private void subirFotos(Context ctx) {
+    List<FotoParaSubir> fotos = ctx.uploadedFiles("fotos").stream()
+        .map(archivo -> new FotoParaSubir(archivo.filename(), contenidoDe(archivo)))
+        .toList();
+
+    ctx.status(201).json(new FotosSubidasDTO(gestor.subirFotos(idDe(ctx), fotos)));
+  }
+
+  private byte[] contenidoDe(UploadedFile archivo) {
+    try (InputStream contenido = archivo.content()) {
+      return contenido.readAllBytes();
+    } catch (IOException e) {
+      throw new IntegracionExternaException(
+          "No se pudo leer la foto " + archivo.filename() + ".", e
+      );
+    }
   }
 
   private void confirmar(Context ctx) {

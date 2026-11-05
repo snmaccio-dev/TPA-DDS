@@ -11,6 +11,7 @@
         <class>donatrack.logistica.domain.ruta.RutaReparto</class>
         <class>donatrack.logistica.domain.entrega.Entrega</class>
         <class>donatrack.logistica.domain.monitoreo.ReporteUbicacion</class>
+        <class>donatrack.logistica.domain.planificacion.SolicitudDePlanificacion</class>
 
         <properties>
             <property name="javax.persistence.jdbc.driver" value="org.hsqldb.jdbc.JDBCDriver" />
