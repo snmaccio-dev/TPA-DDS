@@ -1,8 +1,11 @@
 package donatrack.web;
 
+import donatrack.web.integracion.IntegracionException;
+
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 public class Modelo {
 
@@ -36,6 +39,14 @@ public class Modelo {
   public Modelo con(String clave, Object valor) {
     datos.put(clave, valor);
     return this;
+  }
+
+  public <T> Modelo conDatosDe(String clave, T valorPorDefecto, Supplier<T> consulta) {
+    try {
+      return con(clave, consulta.get());
+    } catch (IntegracionException e) {
+      return con(clave, valorPorDefecto).con("errorDeServicio", e.getMessage());
+    }
   }
 
   public Modelo comoDonante() {

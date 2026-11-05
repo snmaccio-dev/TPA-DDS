@@ -12,6 +12,7 @@
         <class>donatrack.logistica.domain.ruta.RutaReparto</class>
         <class>donatrack.logistica.domain.entrega.Entrega</class>
         <class>donatrack.logistica.domain.monitoreo.ReporteUbicacion</class>
+        <class>donatrack.logistica.domain.planificacion.SolicitudDePlanificacion</class>
 
         <properties>
             <!-- Conexión a PostgreSQL para despliegue local -->

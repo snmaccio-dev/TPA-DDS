@@ -2,6 +2,97 @@
 <body data-page="receipt" data-role="beneficiario">
 {{> templates/partials/sidebar}}
 {{> templates/partials/topbar}}
-<main class="app-main"><div class="page-heading"><div><span class="eyebrow">VALIDACIÓN DE ENTREGA</span><h1>Confirmar recepción</h1><p>Registrá la recepción de una donación y adjuntá fotografías como comprobante.</p></div></div><div class="receipt-layout"><section class="panel"><div class="panel-head"><h3>Donación pendiente de confirmación</h3><span class="status-pill warning">Pendiente</span></div><h2>Alimentos no perecederos</h2><p class="muted">Asignada a Comedor Los Pinos · Donante: Juan P.</p><div class="detail-pair"><span>Fecha de asignación</span><b>30/10/2026</b></div><div class="detail-pair"><span>Cantidad declarada</span><b>12 cajas</b></div><div class="detail-pair"><span>Transporte</span><b>Camión DT-02</b></div></section><form class="panel form-panel demo-form"><h3>Comprobante de recepción</h3><label>Fecha de recepción<input type="date" required></label><label>Observaciones<textarea rows="3" placeholder="Estado de los bienes recibidos..."></textarea></label><label class="upload-box"><span class="upload-symbol">⇧</span><b>Adjuntar fotografías</b><small>JPG o PNG · Podés seleccionar más de una</small><input type="file" accept="image/*" multiple required></label><label class="check-label"><input type="checkbox" required> Confirmo que recibimos la donación indicada.</label><button class="btn btn-primary btn-block">Confirmar recepción</button></form></div></main>
+<main class="app-main">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">VALIDACIÓN DE ENTREGA</span>
+      <h1>Confirmar recepción</h1>
+      <p>Registrá la recepción de una donación y adjuntá fotografías como comprobante.</p>
+    </div>
+  </div>
+
+  {{#if errorDeSesion}}
+  <section class="panel">
+    <strong>{{errorDeSesion}}</strong>
+    <p class="muted">Para esta pantalla: <code>/confirmar-recepcion?entrega=5</code></p>
+  </section>
+  {{/if}}
+
+  {{#if errorDeServicio}}
+  <section class="panel">
+    <strong>{{errorDeServicio}}</strong>
+    <p class="muted">No se pudo cargar la entrega. Volvé a intentar en unos minutos.</p>
+  </section>
+  {{/if}}
+
+  {{#if errorDelFormulario}}
+  <section class="panel">
+    <strong>No se pudo confirmar la recepción</strong>
+    <p class="muted">{{errorDelFormulario}}</p>
+  </section>
+  {{/if}}
+
+  {{#if entrega}}
+  <div class="receipt-layout">
+    <section class="panel">
+      <div class="panel-head">
+        <h3>Donación a confirmar</h3>
+        <span class="status-pill {{entrega.estadoEstilo}}">{{entrega.estadoTexto}}</span>
+      </div>
+      <h2>{{entrega.descripcionDonacion}}</h2>
+      <p class="muted">Destino: {{entrega.direccionDestino}}</p>
+      <div class="detail-pair"><span>Donación</span><b>#{{entrega.donacionId}}</b></div>
+      <div class="detail-pair"><span>Cantidad declarada</span><b>{{entrega.cantidadTexto}}</b></div>
+      <div class="detail-pair"><span>Transporte</span><b>{{entrega.patenteCamion}}</b></div>
+      {{#if entrega.fechaHoraEntregaTexto}}
+      <div class="detail-pair"><span>Recepción registrada</span><b>{{entrega.fechaHoraEntregaTexto}}</b></div>
+      {{/if}}
+      {{#if entrega.motivoNoRecepcion}}
+      <div class="detail-pair"><span>Motivo</span><b>{{entrega.motivoNoRecepcion}}</b></div>
+      {{/if}}
+    </section>
+
+    {{#if entrega.confirmable}}
+    <form class="panel form-panel" method="post" action="/confirmar-recepcion/{{entregaId}}"
+          enctype="multipart/form-data">
+      <h3>Comprobante de recepción</h3>
+      <label class="upload-box">
+        <span class="upload-symbol">⇧</span>
+        <b>Adjuntar fotografías</b>
+        <small>JPG, PNG o WEBP · Hasta 5 MB cada una · Podés seleccionar más de una</small>
+        <input type="file" name="fotos" accept="image/jpeg,image/png,image/webp" multiple required>
+      </label>
+      <label class="check-label">
+        <input type="checkbox" required> Confirmo que recibimos la donación indicada.
+      </label>
+      <button class="btn btn-primary btn-block">Confirmar recepción</button>
+    </form>
+    {{else}}
+    <section class="panel">
+      <h3>Esta entrega no está en condiciones de confirmarse</h3>
+      <p class="muted">Sólo se puede confirmar una entrega que esté en tránsito.</p>
+      {{#if entrega.fotos}}
+      <div class="table-wrap">
+        <table>
+          <thead>
+          <tr>
+            <th>Comprobantes</th>
+          </tr>
+          </thead>
+          <tbody>
+          {{#each entrega.fotos}}
+          <tr>
+            <td><a href="{{this}}" target="_blank" rel="noopener">{{this}}</a></td>
+          </tr>
+          {{/each}}
+          </tbody>
+        </table>
+      </div>
+      {{/if}}
+    </section>
+    {{/if}}
+  </div>
+  {{/if}}
+</main>
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}

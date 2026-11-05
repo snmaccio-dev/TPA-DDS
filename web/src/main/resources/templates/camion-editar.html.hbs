@@ -1,0 +1,51 @@
+{{> templates/partials/head}}
+<body data-page="trucks" data-role="admin">
+{{> templates/partials/sidebar}}
+{{> templates/partials/topbar}}
+<main class="app-main">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">FLOTA</span>
+      <h1>Editar camión</h1>
+      <p>Patente {{patente}}</p>
+    </div>
+    <a class="btn btn-ghost" href="/camiones">Volver a la flota</a>
+  </div>
+
+  {{#if errorDeServicio}}
+  <section class="panel">
+    <strong>{{errorDeServicio}}</strong>
+    <p class="muted">No se pudo cargar el camión. Volvé a intentar en unos minutos.</p>
+  </section>
+  {{/if}}
+
+  {{#if errorDelFormulario}}
+  <section class="panel">
+    <strong>No se pudo guardar el camión</strong>
+    <p class="muted">{{errorDelFormulario}}</p>
+  </section>
+  {{/if}}
+
+  {{#if camion}}
+  <form class="panel form-panel" method="post" action="/camiones/{{patente}}">
+    <h2>Capacidades</h2>
+    <p class="muted">La patente identifica al camión y no puede modificarse.</p>
+    <label>Capacidad de volumen (m³)
+      <input name="capacidadVolumen" type="number" step="0.1" min="0.1"
+             value="{{camion.capacidadVolumen}}" required>
+    </label>
+    <label>Altura (m)
+      <input name="altura" type="number" step="0.01" min="0.01"
+             value="{{camion.altura}}" required>
+    </label>
+    <label>Capacidad de carga (kg)
+      <input name="capacidadCarga" type="number" step="1" min="1"
+             value="{{camion.capacidadCarga}}" required>
+    </label>
+    <p class="muted">Situación actual: {{camion.situacionTexto}}</p>
+    <button class="btn btn-primary btn-block">Guardar cambios</button>
+  </form>
+  {{/if}}
+</main>
+{{> templates/partials/footer}}
+{{> templates/partials/scripts}}

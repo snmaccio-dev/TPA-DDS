@@ -12,11 +12,13 @@ import donatrack.logistica.domain.flota.Camion;
 import donatrack.logistica.domain.integracion.ClienteDonaciones;
 import donatrack.logistica.domain.planificacion.GeneradorRutas;
 import donatrack.logistica.domain.planificacion.ResultadoPlanificacion;
+import donatrack.logistica.domain.planificacion.SolicitudDePlanificacion;
 import donatrack.logistica.domain.ruta.DestinoEntrega;
 import donatrack.logistica.domain.ruta.RutaReparto;
 import donatrack.logistica.repository.RepositorioCamiones;
 import donatrack.logistica.repository.RepositorioEntregas;
 import donatrack.logistica.repository.RepositorioRutas;
+import donatrack.logistica.repository.RepositorioSolicitudes;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.ArrayList;
@@ -39,6 +41,8 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
       RepositorioEntregas.getInstance();
   private final RepositorioCamiones repositorioCamiones =
       RepositorioCamiones.getInstance();
+  private final RepositorioSolicitudes repositorioSolicitudes =
+      RepositorioSolicitudes.getInstance();
 
   public GestorLogistica(GeneradorRutas generadorRutas,
                          ClienteDonaciones clienteDonaciones,
@@ -87,9 +91,15 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
 
     for (List<Entrega> lote : dividirEnLotes(repositorioEntregas.queEsperanPlanificacion())) {
       lote.forEach(Entrega::registrarIntentoDePlanificacion);
-      solicitudes.add(
-          generadorRutas.solicitarPlanificacion(lote, camiones, urlCallback)
+
+      SolicitudDePlanificacion solicitud = new SolicitudDePlanificacion(lote.size());
+      repositorioSolicitudes.guardar(solicitud);
+
+      generadorRutas.solicitarPlanificacion(
+          solicitud.getId(), lote, camiones, urlCallback
       );
+
+      solicitudes.add(solicitud.getId());
     }
 
     return solicitudes;
@@ -132,6 +142,8 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
       if (recibida == null) {
         throw new DatosInvalidosException("El planificador no devolvio un resultado.");
       }
+
+      buscarSolicitud(recibida.solicitudId()).registrarRespuesta();
 
       List<RutaReparto> rutas = recibida.rutas().stream()
           .map(this::armarRuta)
@@ -184,6 +196,14 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
         .orElseThrow(() ->
             new DatosInvalidosException(
                 "El planificador referencio una entrega inexistente: " + entregaId
+            ));
+  }
+
+  private SolicitudDePlanificacion buscarSolicitud(String solicitudId) {
+    return repositorioSolicitudes.buscarPorId(solicitudId)
+        .orElseThrow(() ->
+            new DatosInvalidosException(
+                "El planificador respondio a una solicitud desconocida: " + solicitudId
             ));
   }
 

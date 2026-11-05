@@ -4,6 +4,9 @@ import donatrack.logistica.contrato.EventoEntrega;
 import donatrack.logistica.contrato.EventoInicioRuta;
 import donatrack.logistica.contrato.EventoRetornoDeposito;
 import donatrack.logistica.contrato.ResultadoEntrega;
+import donatrack.logistica.domain.DatosInvalidosException;
+import donatrack.logistica.domain.almacenamiento.AlmacenDeFotos;
+import donatrack.logistica.domain.almacenamiento.FotoParaSubir;
 import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.flota.Chofer;
 import donatrack.logistica.domain.integracion.ClienteDonaciones;
@@ -20,6 +23,7 @@ public class GestorEntregas implements WithSimplePersistenceUnit {
 
   private final ClienteDonaciones clienteDonaciones;
   private final String urlBaseMonitoreo;
+  private final AlmacenDeFotos almacenDeFotos;
 
   private final RepositorioEntregas repositorioEntregas =
       RepositorioEntregas.getInstance();
@@ -28,14 +32,28 @@ public class GestorEntregas implements WithSimplePersistenceUnit {
   private final RepositorioChoferes repositorioChoferes =
       RepositorioChoferes.getInstance();
 
-  public GestorEntregas(ClienteDonaciones clienteDonaciones, String urlBaseMonitoreo) {
+  public GestorEntregas(ClienteDonaciones clienteDonaciones,
+                        String urlBaseMonitoreo,
+                        AlmacenDeFotos almacenDeFotos) {
     Objects.requireNonNull(
         clienteDonaciones, "Debe indicarse el cliente del servicio de Donaciones.");
+    Objects.requireNonNull(almacenDeFotos, "Debe indicarse el almacen de fotos.");
     if (urlBaseMonitoreo == null || urlBaseMonitoreo.isBlank()) {
       throw new IllegalArgumentException("Debe indicarse la URL base del monitoreo.");
     }
     this.clienteDonaciones = clienteDonaciones;
     this.urlBaseMonitoreo = urlBaseMonitoreo;
+    this.almacenDeFotos = almacenDeFotos;
+  }
+
+  public List<String> subirFotos(long entregaId, List<FotoParaSubir> fotos) {
+    buscar(entregaId);
+
+    if (fotos == null || fotos.isEmpty()) {
+      throw new DatosInvalidosException("Debe adjuntarse al menos una foto.");
+    }
+
+    return fotos.stream().map(almacenDeFotos::guardar).toList();
   }
 
   public RutaReparto iniciarRuta(long rutaId, long choferId) {

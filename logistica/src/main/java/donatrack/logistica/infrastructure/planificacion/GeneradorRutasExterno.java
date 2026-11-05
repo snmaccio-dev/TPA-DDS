@@ -15,7 +15,6 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
-import java.util.UUID;
 
 public class GeneradorRutasExterno implements GeneradorRutas {
 
@@ -37,12 +36,11 @@ public class GeneradorRutasExterno implements GeneradorRutas {
   }
 
   @Override
-  public String solicitarPlanificacion(
+  public void solicitarPlanificacion(
+      String solicitudId,
       List<Entrega> entregas,
       List<Camion> camiones,
       String urlCallback) {
-
-    String solicitudId = UUID.randomUUID().toString();
 
     SolicitudPlanificacion solicitud = new SolicitudPlanificacion(
         solicitudId,
@@ -68,8 +66,6 @@ public class GeneradorRutasExterno implements GeneradorRutas {
               + " a la solicitud " + solicitudId + "."
       );
     }
-
-    return solicitudId;
   }
 
   private EntregaParaPlanificar comoEntregaDelProveedor(Entrega entrega) {

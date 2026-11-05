@@ -11,10 +11,12 @@ import donatrack.logistica.controller.dto.ErrorDTO;
 import donatrack.logistica.domain.ConflictoDeNegocioException;
 import donatrack.logistica.domain.DatosInvalidosException;
 import donatrack.logistica.domain.TransicionNoPermitidaException;
+import donatrack.logistica.domain.almacenamiento.AlmacenDeFotos;
 import donatrack.logistica.domain.integracion.ClienteDonaciones;
 import donatrack.logistica.domain.integracion.IntegracionExternaException;
 import donatrack.logistica.domain.integracion.SerializadorJson;
 import donatrack.logistica.domain.planificacion.GeneradorRutas;
+import donatrack.logistica.infrastructure.almacenamiento.AlmacenEnDisco;
 import donatrack.logistica.infrastructure.integracion.ClienteDonacionesHttp;
 import donatrack.logistica.infrastructure.integracion.ClienteDonacionesSimulado;
 import donatrack.logistica.infrastructure.integracion.SerializadorJackson;
@@ -31,6 +33,7 @@ import donatrack.logistica.service.RecursoInexistenteException;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
+import io.javalin.http.staticfiles.Location;
 
 import java.time.LocalTime;
 
@@ -46,7 +49,11 @@ public class LogisticaApp {
     String tokenPlanificador = variable("PLANIFICADOR_TOKEN", "token-de-desarrollo");
     boolean simulado = !"http".equalsIgnoreCase(variable("LOGISTICA_MODO", "simulado"));
 
+    String directorioFotos = variable("LOGISTICA_FOTOS_DIR", "fotos");
+
     SerializadorJson json = new SerializadorJackson();
+
+    AlmacenDeFotos almacenDeFotos = new AlmacenEnDisco(directorioFotos, urlBase + "/fotos");
 
     ClienteDonaciones clienteDonaciones = simulado
         ? new ClienteDonacionesSimulado()
@@ -59,7 +66,8 @@ public class LogisticaApp {
     GestorCamiones gestorCamiones = new GestorCamiones();
     GestorChoferes gestorChoferes = new GestorChoferes();
     GestorRutas gestorRutas = new GestorRutas();
-    GestorEntregas gestorEntregas = new GestorEntregas(clienteDonaciones, urlBase);
+    GestorEntregas gestorEntregas =
+        new GestorEntregas(clienteDonaciones, urlBase, almacenDeFotos);
     GestorMonitoreo gestorMonitoreo = new GestorMonitoreo();
     GestorLogistica gestorLogistica = new GestorLogistica(
         generadorRutas,
@@ -67,7 +75,13 @@ public class LogisticaApp {
         urlBase + "/planificacion/callback"
     );
 
-    Javalin app = Javalin.create().start(PUERTO);
+    Javalin app = Javalin.create(config ->
+        config.staticFiles.add(estaticos -> {
+          estaticos.directory = directorioFotos;
+          estaticos.location = Location.EXTERNAL;
+          estaticos.hostedPath = "/fotos";
+        })
+    ).start(PUERTO);
 
     app.after(ctx -> WithSimplePersistenceUnit.dispose());
 
