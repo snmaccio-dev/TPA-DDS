@@ -1,0 +1,12 @@
+<aside class="sidebar"><a class="brand" href="{{usuario.inicio}}"><span class="brand-mark">D</span><span>DonaTrack</span></a>
+<div class="side-caption">{{usuario.rolTexto}}</div>
+{{#if esDonante}}
+<nav class="side-nav"><a class="side-link {{activa.panel}}" href="/donante-dashboard"><span>◫</span>Panel</a><a class="side-link {{activa.misDonaciones}}" href="/mis-donaciones"><span>▤</span>Mis donaciones</a><a class="side-link {{activa.entidades}}" href="/entidades"><span>⌂</span>Entidades</a><a class="side-link {{activa.seguimiento}}" href="/seguimiento-donante"><span>⌖</span>Seguimiento</a></nav>
+{{/if}}
+{{#if esBeneficiaria}}
+<nav class="side-nav"><a class="side-link {{activa.panel}}" href="/beneficiario-dashboard"><span>◫</span>Panel</a><a class="side-link {{activa.necesidades}}" href="/necesidades"><span>＋</span>Mis necesidades</a><a class="side-link {{activa.asignadas}}" href="/donaciones-asignadas"><span>▤</span>Donaciones asignadas</a><a class="side-link {{activa.confirmar}}" href="/confirmar-recepcion"><span>✓</span>Confirmar recepción</a><a class="side-link {{activa.seguimiento}}" href="/seguimiento-beneficiario"><span>⌖</span>Seguimiento</a></nav>
+{{/if}}
+{{#if esAdmin}}
+<nav class="side-nav"><a class="side-link {{activa.panel}}" href="/admin-dashboard"><span>◫</span>Panel</a><a class="side-link {{activa.donantes}}" href="/admin-donantes"><span>♙</span>Donantes</a><a class="side-link {{activa.deposito}}" href="/deposito"><span>▣</span>Depósito</a><a class="side-link {{activa.asignaciones}}" href="/asignaciones"><span>⇄</span>Asignaciones</a><a class="side-link {{activa.camiones}}" href="/camiones"><span>▱</span>Camiones</a><a class="side-link {{activa.importar}}" href="/importar-csv"><span>⇧</span>Importar CSV</a></nav>
+{{/if}}
+<div class="sidebar-bottom"><div class="user-mini"><div class="avatar">{{usuario.iniciales}}</div><div><strong>{{usuario.nombre}}</strong><small>{{usuario.rolDescripcion}}</small></div></div><a class="side-link" href="/logout">↪ Cerrar sesión</a></div></aside>

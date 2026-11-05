@@ -112,6 +112,10 @@ public class GestorEntregas implements WithSimplePersistenceUnit {
     return repositorioEntregas.todas();
   }
 
+  public List<Entrega> entregadas() {
+    return repositorioEntregas.entregadas();
+  }
+
   public List<Entrega> deRuta(long rutaId) {
     return buscarRuta(rutaId).getEntregas();
   }

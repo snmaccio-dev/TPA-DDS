@@ -1,0 +1,27 @@
+{{> templates/partials/head}}
+<body data-page="register" data-role="public">
+{{> templates/partials/header-publico}}
+<main class="public-main"><section class="auth-wrap">
+        <div class="auth-intro">
+                <span class="eyebrow">FORMÁ PARTE DEL CAMBIO</span>
+                <h1>Una comunidad.<br><em>Muchas formas de ayudar.</em></h1>
+                <p>Creá tu cuenta para donar, registrar necesidades o gestionar entregas.</p>
+                <div class="auth-benefit">✓ Seguimiento transparente de cada entrega</div>
+                <div class="auth-benefit">✓ Conexión directa con organizaciones</div>
+                <div class="auth-benefit">✓ Historial y notificaciones</div>
+        </div><form class="panel form-panel demo-form"><div class="form-title">
+        <h2>Crear cuenta</h2>
+        <p>Completá tus datos para comenzar.</p>
+</div><label>Tipo de cuenta<select required>
+        <option value="">Seleccionar perfil</option>
+        <option>Persona donante</option>
+        <option>Entidad beneficiaria</option>
+        <option>Persona Administradora</option>
+</select></label><div class="form-row">
+        <label>Nombre / Razón social<input required placeholder="Tu nombre o entidad"></label>
+        <label>Correo electrónico<input type="email" required placeholder="nombre@correo.com">
+        </label></div><label>Contraseña<input type="password" required minlength="8" placeholder="Mínimo 8 caracteres"></label>
+        <label class="check-label"><input type="checkbox" required> Acepto los <a href="/privacidad">términos y la política de privacidad</a>.</label>
+        <button class="btn btn-primary btn-block">Crear cuenta</button><p class="form-bottom">¿Ya tenés cuenta? <a href="/login">Iniciá sesión</a></p></form></section></main>
+{{> templates/partials/footer}}
+{{> templates/partials/scripts}}

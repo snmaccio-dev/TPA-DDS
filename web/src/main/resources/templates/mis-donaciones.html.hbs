@@ -1,28 +1,7 @@
-<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mis donaciones | DonaTrack</title>
-        <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/css/styles.css">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
-</head><body data-page="my-donations" data-role="donante">
-<aside class="sidebar">
-        <a class="brand" href="donante-dashboard.html">
-                <span class="brand-mark">D</span>
-                <span>DonaTrack</span></a>
-        <div class="side-caption">DONANTE</div><nav class="side-nav">
-        <a class="side-link " href="donante-dashboard.html">
-                <span>◫</span>Panel</a><a class="side-link active" href="mis-donaciones.html">
-        <span>▤</span>Mis donaciones</a><a class="side-link " href="entidades.html">
-        <span>⌂</span>Entidades</a><a class="side-link " href="seguimiento-donante.html">
-        <span>⌖</span>Seguimiento</a></nav><div class="sidebar-bottom">
-        <div class="user-mini">
-                <div class="avatar">US</div><div><strong>Usuario de prueba</strong><small>Persona donante</small>
-        </div></div><a class="side-link" href="login.html">↪ Cerrar sesión</a></div></aside>
-        <header class="app-topbar"><button class="mobile-menu" aria-label="Abrir menú">☰</button>
-                <div class="breadcrumb">DonaTrack <span>/</span> Mis donaciones</div>
-                <div class="top-actions"><button class="icon-button" title="Notificaciones">♧<i></i></button>
-                        <div class="avatar small">US</div></div></header>
+{{> templates/partials/head}}
+<body data-page="my-donations" data-role="donante">
+{{> templates/partials/sidebar}}
+{{> templates/partials/topbar}}
 <main class="app-main"><div class="page-heading"><div><span class="eyebrow">HISTORIAL</span>
         <h1>Mis donaciones</h1><p>Consultá tus aportes y filtrá por estado o tipo de bien.</p>
 </div><button class="btn btn-primary" data-toast="La carga de donación se conectará al backend.">＋ Nueva donación</button>
@@ -68,20 +47,19 @@
                         <td>02/11/2026</td>
                         <td><span class="status-pill success">Entregada</span>
                         </td>
-                        <td><a href="seguimiento-donante.html">Ver →</a></td>
+                        <td><a href="/seguimiento-donante">Ver →</a></td>
                 </tr><tr><td>Ropa de abrigo</td>
                         <td>Indumentaria</td>
                         <td>Abrigo</td>
                         <td>Fundación Puentes</td>
                         <td>31/10/2026</td>
                         <td><span class="status-pill info">En tránsito</span></td>
-                        <td><a href="seguimiento-donante.html">Ver →</a>
+                        <td><a href="/seguimiento-donante">Ver →</a>
                         </td></tr><tr><td>Cuadernos y lápices</td>
                         <td>Útiles escolares</td>
                         <td>Combo lápices y cuadernos</td>
                         <td>Centro La Esperanza</td>
                         <td>28/10/2026</td><td><span class="status-pill warning">Pendiente</span>
-                        </td><td><a href="seguimiento-donante.html">Ver →</a></td></tr></tbody></table></div></section></main>
-<footer class="public-footer"><span>© 2026 DonaTrack</span><a href="privacidad.html">Privacidad y términos</a><span>Transparencia que conecta.</span></footer>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="assets/js/app.js"></script></body></html>
+                        </td><td><a href="/seguimiento-donante">Ver →</a></td></tr></tbody></table></div></section></main>
+{{> templates/partials/footer}}
+{{> templates/partials/scripts}}
