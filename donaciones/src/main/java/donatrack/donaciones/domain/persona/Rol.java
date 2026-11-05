@@ -1,5 +1,7 @@
 package donatrack.donaciones.domain.persona;
 
+import donatrack.donaciones.domain.DatosInvalidosException;
+
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorColumn;
 import javax.persistence.Entity;
@@ -33,7 +35,7 @@ public abstract class Rol {
 
     protected Rol(Persona persona) {
         if (persona == null) {
-            throw new IllegalArgumentException("El rol debe estar asociado a una persona.");
+            throw new DatosInvalidosException("El rol debe estar asociado a una persona.");
         }
         this.persona = persona;
         persona.registrarRol(this);

@@ -1,38 +1,39 @@
 package donatrack.donaciones;
 
-import donatrack.donaciones.repository.RepositorioDonantes;
-import donatrack.donaciones.repository.RepositorioPersonas;
-import donatrack.donaciones.repository.RepositorioPropuestas;
-import donatrack.donaciones.service.GestorAsignaciones;
-import donatrack.donaciones.service.GestorNotificaciones;
-import donatrack.donaciones.service.PlanificadorAsignaciones;
-import donatrack.donaciones.service.SegmentadorDonaciones;
-import donatrack.donaciones.service.importacion.ImportadorCSVPersonas;
+import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
+import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.CondicionBien;
+import donatrack.donaciones.domain.donacion.DatosEntrega;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.estado.EstadoEntregaFallida;
-import donatrack.donaciones.domain.catalogo.Unidades;
-import donatrack.donaciones.domain.donacion.DatosEntrega;
-import donatrack.donaciones.domain.usuario.Usuario;
-import donatrack.donaciones.domain.persona.Beneficiaria;
-import donatrack.donaciones.domain.persona.Donante;
-import donatrack.donaciones.domain.notificacion.Notificador;
-import donatrack.donaciones.domain.notificacion.NotificadorDonacionObserver;
-import donatrack.donaciones.infrastructure.notificacion.NotificadorWhatsApp;
-import donatrack.donaciones.infrastructure.notificacion.NotificadorEmail;
-import donatrack.donaciones.infrastructure.notificacion.NotificadorSMS;
 import donatrack.donaciones.domain.necesidad.NecesidadRecurrente;
 import donatrack.donaciones.domain.necesidad.Periodo;
+import donatrack.donaciones.domain.notificacion.Notificador;
+import donatrack.donaciones.domain.notificacion.NotificadorDonacionObserver;
+import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
+import donatrack.donaciones.domain.usuario.Usuario;
+import donatrack.donaciones.infrastructure.importacion.ImportadorCSVPersonas;
+import donatrack.donaciones.infrastructure.notificacion.NotificadorEmail;
+import donatrack.donaciones.infrastructure.notificacion.NotificadorSMS;
+import donatrack.donaciones.infrastructure.notificacion.NotificadorWhatsApp;
+import donatrack.donaciones.jobs.PlanificadorAsignaciones;
+import donatrack.donaciones.repository.RepositorioDonantes;
+import donatrack.donaciones.repository.RepositorioPersonas;
+import donatrack.donaciones.repository.RepositorioPropuestas;
+import donatrack.donaciones.service.GestorAsignaciones;
+import donatrack.donaciones.service.GestorNotificaciones;
+import donatrack.donaciones.service.SegmentadorDonaciones;
 
 
 import java.util.List;
@@ -166,7 +167,7 @@ public class Main {
         System.out.print("Transicion invalida (marcarEntregada desde EN_DEPOSITO): ");
         try {
             donacion.marcarEntregada(java.time.LocalDateTime.now(), "AAA111");
-        } catch (IllegalStateException e) {
+        } catch (TransicionNoPermitidaException e) {
             System.out.println("excepcion capturada correctamente → " + e.getMessage());
         }
         System.out.println();

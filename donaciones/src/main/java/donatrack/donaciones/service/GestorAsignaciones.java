@@ -1,5 +1,6 @@
 package donatrack.donaciones.service;
 
+import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.donacion.asignacion.Algoritmo;
 import donatrack.donaciones.domain.donacion.asignacion.CompatibilidadSemantica;
 import donatrack.donaciones.domain.donacion.asignacion.PrioridadSubatendidos;
@@ -16,6 +17,7 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -46,10 +48,11 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
   }
 
   // EJECUCIÓN PROGRAMADA
-  public int ejecutarMatchmakingProgramado() {
+  public ResultadoCorrida ejecutarMatchmakingProgramado() {
     List<Donacion> pendientes = repositorioDonaciones.enEstado(EstadosPosiblesDonacion.EN_DEPOSITO);
 
     int procesadas = 0;
+    List<String> fallidas = new ArrayList<>();
     for (Donacion donacion : pendientes) {
       try {
         ResultadoMatchmaking resultado = calcularPropuesta(donacion);
@@ -64,12 +67,10 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
         });
         procesadas++;
       } catch (RuntimeException e) {
-        System.err.println(
-            "[MATCHMAKING] Falló para donación " + donacion.getId() + ": " + e.getMessage()
-        );
+        fallidas.add("donación " + donacion.getId() + ": " + e.getMessage());
       }
     }
-    return procesadas;
+    return new ResultadoCorrida(procesadas, fallidas);
   }
 
   public Optional<PropuestaAsignacion> buscarPropuesta(long donacionId) {
@@ -84,16 +85,10 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
   public void confirmarDestino(long donacionId,
                                Beneficiaria destinatario,
                                Administrador administrador) {
-    if (administrador == null) {
-      throw new IllegalArgumentException(
-          "Debe indicarse el administrador que confirma el destino."
-      );
-    }
-    if (destinatario == null) {
-      throw new IllegalArgumentException(
-          "Debe indicarse la beneficiaria a confirmar como destinataria."
-      );
-    }
+    Objects.requireNonNull(
+        administrador, "Debe indicarse el administrador que confirma el destino.");
+    Objects.requireNonNull(
+        destinatario, "Debe indicarse la beneficiaria a confirmar como destinataria.");
     Donacion donacion = repositorioDonaciones.buscarPorId(donacionId)
         .orElseThrow(() -> new RecursoInexistenteException(
             "No existe la donación con ID " + donacionId
@@ -106,7 +101,7 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
 
   private ResultadoMatchmaking calcularPropuesta(Donacion donacion) {
     if (donacion.getEstado().getEstado() != EstadosPosiblesDonacion.EN_DEPOSITO) {
-      throw new IllegalStateException(
+      throw new TransicionNoPermitidaException(
           "Solo pueden asignarse donaciones en estado En Depósito."
       );
     }

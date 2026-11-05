@@ -1,0 +1,7 @@
+{{> templates/partials/head}}
+<body data-page="assigned" data-role="beneficiario">
+{{> templates/partials/sidebar}}
+{{> templates/partials/topbar}}
+<main class="app-main"><div class="page-heading"><div><span class="eyebrow">RECEPCIONES</span><h1>Donaciones asignadas</h1><p>Consultá las donaciones destinadas a tu organización.</p></div></div><section class="panel"><div class="filter-bar"><label>Estado<select><option>Todos</option><option>Pendiente</option><option>En tránsito</option><option>Entregada</option></select></label></div><div class="table-wrap"><table><thead><tr><th>Donación</th><th>Donante</th><th>Fecha asignación</th><th>Estado</th><th>Acción</th></tr></thead><tbody><tr><td>Ropa de abrigo</td><td>Martina A.</td><td>02/11/2026</td><td><span class="status-pill info">En tránsito</span></td><td><a href="/seguimiento-beneficiario">Seguir entrega →</a></td></tr><tr><td>Alimentos</td><td>Juan P.</td><td>30/10/2026</td><td><span class="status-pill warning">Pendiente</span></td><td><a href="/confirmar-recepcion">Ver detalle →</a></td></tr><tr><td>Útiles escolares</td><td>Lucía R.</td><td>25/10/2026</td><td><span class="status-pill success">Entregada</span></td><td><a href="/confirmar-recepcion">Ver detalle →</a></td></tr></tbody></table></div></section></main>
+{{> templates/partials/footer}}
+{{> templates/partials/scripts}}

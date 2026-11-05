@@ -1,5 +1,6 @@
 package donatrack.logistica.controller.dto;
 
+import donatrack.logistica.domain.DatosInvalidosException;
 import donatrack.logistica.domain.flota.Camion;
 
 public record CrearCamionRequest(
@@ -11,7 +12,7 @@ public record CrearCamionRequest(
 
   public Camion aCamion() {
     if (patente == null || patente.isBlank()) {
-      throw new IllegalArgumentException("El camion debe tener una patente.");
+      throw new DatosInvalidosException("El camion debe tener una patente.");
     }
     return new Camion(patente, capacidadVolumen, altura, capacidadCarga);
   }

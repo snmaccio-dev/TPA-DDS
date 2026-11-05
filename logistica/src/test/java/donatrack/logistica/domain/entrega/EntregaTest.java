@@ -50,7 +50,7 @@ class EntregaTest implements SimplePersistenceTest {
 
     Long sinDestino = createQuery(
         "select count(e) from Entrega e "
-            + "where e.donacionId = :donacionId and e.destino is null",
+            + "where e.donacionId = :donacionId and e.ordenDestino is null",
         Long.class)
         .setParameter("donacionId", 701L)
         .getSingleResult();

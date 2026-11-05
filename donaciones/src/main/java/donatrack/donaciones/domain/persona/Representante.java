@@ -1,5 +1,7 @@
 package donatrack.donaciones.domain.persona;
 
+import donatrack.donaciones.domain.DatosInvalidosException;
+
 import javax.persistence.Column;
 import javax.persistence.Embeddable;
 
@@ -22,7 +24,7 @@ public class Representante {
 
     public Representante(String nombre, String apellido, String email) {
         if (email == null || email.isBlank() || !email.contains("@")) {
-            throw new IllegalArgumentException("El correo del representante es obligatorio.");
+            throw new DatosInvalidosException("El correo del representante es obligatorio.");
         }
         this.email = email.trim().toLowerCase();
         this.nombre = normalizarOpcional(nombre);
