@@ -3,6 +3,7 @@ package donatrack.donaciones.controller;
 import donatrack.donaciones.controller.dto.DonanteInactivoDTO;
 import donatrack.donaciones.controller.dto.NuevoDonanteRequest;
 import donatrack.donaciones.controller.dto.PersonaDTO;
+import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.domain.persona.PersonaHumana;
@@ -10,8 +11,11 @@ import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.service.GestorDonantes;
 import donatrack.donaciones.service.GestorPersonas;
+import donatrack.donaciones.service.ResultadoCorrida;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+
+import java.util.List;
 
 public class DonantesController {
 
@@ -47,8 +51,8 @@ public class DonantesController {
   }
 
   private void avisarInactivos(Context ctx) {
-    int avisados = gestorDonantes.avisarInactivos();
-    ctx.json(new AvisarInactivosResponse(avisados));
+    ResultadoCorrida resultado = gestorDonantes.avisarInactivos();
+    ctx.json(new AvisarInactivosResponse(resultado.exitosas(), resultado.fallidas()));
   }
 
   private void registrar(Context ctx) {
@@ -84,10 +88,10 @@ public class DonantesController {
           request.rubro()
       );
     }
-    throw new IllegalArgumentException(
+    throw new DatosInvalidosException(
         "El tipo de persona debe ser HUMANA o JURIDICA (recibido: " + request.tipo() + ")."
     );
   }
 
-  public record AvisarInactivosResponse(int avisados) {}
+  public record AvisarInactivosResponse(int avisados, List<String> fallidos) {}
 }

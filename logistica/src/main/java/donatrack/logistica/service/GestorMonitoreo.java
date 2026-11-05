@@ -1,5 +1,8 @@
 package donatrack.logistica.service;
 
+import donatrack.logistica.domain.ConflictoDeNegocioException;
+import donatrack.logistica.domain.DatosInvalidosException;
+import donatrack.logistica.domain.TransicionNoPermitidaException;
 import donatrack.logistica.domain.monitoreo.EstadoRecorrido;
 import donatrack.logistica.domain.monitoreo.ReporteUbicacion;
 import donatrack.logistica.domain.ruta.EstadoRuta;
@@ -22,12 +25,12 @@ public class GestorMonitoreo implements WithSimplePersistenceUnit {
     RutaReparto ruta = reporte.getRuta();
 
     if (ruta.getEstado() != EstadoRuta.EN_CURSO) {
-      throw new IllegalStateException(
+      throw new TransicionNoPermitidaException(
           "La ruta " + ruta.getId() + " no esta en curso: no admite reportes de ubicacion."
       );
     }
     if (!ruta.getCamion().getPatente().equals(reporte.getPatenteCamion())) {
-      throw new IllegalArgumentException(
+      throw new DatosInvalidosException(
           "La patente reportada no coincide con el camion asignado a la ruta " + ruta.getId() + "."
       );
     }
@@ -43,7 +46,7 @@ public class GestorMonitoreo implements WithSimplePersistenceUnit {
 
     ReporteUbicacion ultimo = Optional.ofNullable(ruta.getUltimoReporte())
         .orElseThrow(() ->
-            new IllegalStateException(
+            new ConflictoDeNegocioException(
                 "Todavia no se recibieron posiciones para la ruta " + rutaId + "."
             ));
 

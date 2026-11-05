@@ -1,5 +1,7 @@
 package donatrack.logistica.contrato;
 
+import donatrack.logistica.domain.DatosInvalidosException;
+
 import java.util.List;
 
 public record EventoRutasPlanificadas(
@@ -9,7 +11,7 @@ public record EventoRutasPlanificadas(
 
   public EventoRutasPlanificadas {
     if (donacionIds == null || donacionIds.isEmpty()) {
-      throw new IllegalArgumentException("El evento debe indicar al menos una donacion.");
+      throw new DatosInvalidosException("El evento debe indicar al menos una donacion.");
     }
     donacionIds = List.copyOf(donacionIds);
   }

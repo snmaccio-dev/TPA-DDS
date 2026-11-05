@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import donatrack.logistica.domain.TransicionNoPermitidaException;
 import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.entrega.EstadoEntrega;
 import donatrack.logistica.domain.flota.Camion;
@@ -61,8 +62,8 @@ class GestorRutasTest implements SimplePersistenceTest {
     ruta.iniciarRuta(chofer);
     commitTransaction();
 
-    IllegalStateException error = assertThrows(
-        IllegalStateException.class,
+    TransicionNoPermitidaException error = assertThrows(
+        TransicionNoPermitidaException.class,
         () -> gestor.eliminar(ruta.getId())
     );
 

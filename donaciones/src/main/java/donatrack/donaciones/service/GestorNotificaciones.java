@@ -1,5 +1,6 @@
 package donatrack.donaciones.service;
 
+import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.donacion.Comprobante;
@@ -31,7 +32,7 @@ public class GestorNotificaciones {
 
   public void notificar(Persona destinatario, String mensaje) {
     MedioContacto medio = destinatario.getContactoParaNotificar()
-        .orElseThrow(() -> new IllegalStateException(
+        .orElseThrow(() -> new ConflictoDeNegocioException(
             "La persona no tiene ningun medio de contacto cargado"));
     Notificador notificador = porTipo.get(medio.getTipo());
     if (notificador == null) {

@@ -1,5 +1,7 @@
 package donatrack.logistica.contrato;
 
+import donatrack.logistica.domain.DatosInvalidosException;
+
 import java.time.LocalDateTime;
 
 public record EventoEntrega(
@@ -12,18 +14,17 @@ public record EventoEntrega(
 
   public EventoEntrega {
     if (resultado == null) {
-      throw new IllegalArgumentException("El evento de entrega debe indicar un resultado.");
+      throw new DatosInvalidosException("El evento de entrega debe indicar un resultado.");
     }
     if (fechaHora == null || fechaHora.isBlank()) {
-      throw new IllegalArgumentException("El evento de entrega debe indicar la fecha y hora.");
+      throw new DatosInvalidosException("El evento de entrega debe indicar la fecha y hora.");
     }
-    Fechas.aFechaHora(fechaHora);
     if (resultado == ResultadoEntrega.ENTREGADA
         && (patenteCamion == null || patenteCamion.isBlank())) {
-      throw new IllegalArgumentException("El evento de entrega debe indicar el camion responsable.");
+      throw new DatosInvalidosException("El evento de entrega debe indicar el camion responsable.");
     }
     if (resultado == ResultadoEntrega.NO_RECIBIDA && (motivo == null || motivo.isBlank())) {
-      throw new IllegalArgumentException("Una entrega no recibida debe indicar el motivo.");
+      throw new DatosInvalidosException("Una entrega no recibida debe indicar el motivo.");
     }
   }
 

@@ -1,5 +1,7 @@
 package donatrack.logistica.domain.ruta;
 
+import donatrack.logistica.domain.DatosInvalidosException;
+import donatrack.logistica.domain.TransicionNoPermitidaException;
 import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.entrega.EstadoEntrega;
 import donatrack.logistica.domain.flota.Camion;
@@ -9,8 +11,10 @@ import donatrack.logistica.domain.monitoreo.ReporteUbicacion;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import javax.persistence.CascadeType;
+import java.util.Objects;
+import javax.persistence.CollectionTable;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
@@ -23,6 +27,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.OrderBy;
 import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
 
 @Entity
 @Table(name = "ruta_reparto")
@@ -36,10 +41,17 @@ public class RutaReparto {
   @JoinColumn(name = "camion_id", nullable = false)
   private Camion camion;
 
-  @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
-  @JoinColumn(name = "ruta_id", nullable = false)
+  @ElementCollection
+  @CollectionTable(
+      name = "destino_entrega",
+      joinColumns = @JoinColumn(name = "ruta_id"),
+      uniqueConstraints = @UniqueConstraint(columnNames = {"ruta_id", "orden"})
+  )
   @OrderBy("orden")
   private List<DestinoEntrega> destinos;
+
+  @OneToMany(mappedBy = "ruta")
+  private List<Entrega> entregas = new ArrayList<>();
 
   @Enumerated(EnumType.STRING)
   @Column(nullable = false)
@@ -60,29 +72,27 @@ public class RutaReparto {
   }
 
   public RutaReparto(Camion camion, List<DestinoEntrega> destinos) {
-    if (camion == null) {
-      throw new IllegalArgumentException("La ruta debe tener un camion asignado.");
-    }
+    Objects.requireNonNull(camion, "La ruta debe tener un camion asignado.");
     if (destinos == null || destinos.isEmpty()) {
-      throw new IllegalArgumentException("La ruta debe tener al menos un destino.");
+      throw new DatosInvalidosException("La ruta debe tener al menos un destino.");
     }
     this.camion = camion;
     this.destinos = new ArrayList<>(destinos);
     this.estado = EstadoRuta.PLANIFICADA;
-    getEntregas().forEach(entrega -> entrega.asignarARuta(this));
+    this.entregas = new ArrayList<>();
+    this.destinos.forEach(destino -> this.entregas.addAll(destino.getEntregasIniciales()));
+    this.entregas.forEach(entrega -> entrega.asignarARuta(this));
   }
 
   // === Recorrido ===
 
   public List<Long> iniciarRuta(Chofer chofer) {
     if (estado != EstadoRuta.PLANIFICADA) {
-      throw new IllegalStateException(
+      throw new TransicionNoPermitidaException(
           "La ruta " + id + " ya fue iniciada."
       );
     }
-    if (chofer == null) {
-      throw new IllegalArgumentException("Debe indicarse el chofer que inicia la ruta.");
-    }
+    Objects.requireNonNull(chofer, "Debe indicarse el chofer que inicia la ruta.");
     this.chofer = chofer;
     this.fechaHoraInicio = LocalDateTime.now();
     this.estado = EstadoRuta.EN_CURSO;
@@ -109,9 +119,7 @@ public class RutaReparto {
   }
 
   public void registrarUbicacion(ReporteUbicacion reporte) {
-    if (reporte == null) {
-      throw new IllegalArgumentException("Debe indicarse el reporte de ubicacion.");
-    }
+    Objects.requireNonNull(reporte, "Debe indicarse el reporte de ubicacion.");
     if (ultimoReporte == null || !reporte.getMomento().isBefore(ultimoReporte.getMomento())) {
       this.ultimoReporte = reporte;
     }
@@ -161,8 +169,6 @@ public class RutaReparto {
   }
 
   public List<Entrega> getEntregas() {
-    return destinos.stream()
-        .flatMap(destino -> destino.getEntregas().stream())
-        .toList();
+    return new ArrayList<>(entregas);
   }
 }
