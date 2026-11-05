@@ -15,7 +15,7 @@ import donatrack.donaciones.domain.donacion.CondicionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.donaciones.domain.persona.Donante;
-import donatrack.donaciones.domain.persona.Persona;
+import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.service.EventoYaAplicadoException;
@@ -31,13 +31,16 @@ public class DonacionesController {
 
   private final GestorDonaciones gestor;
   private final RepositorioPersonas repositorioPersonas;
+  private final RepositorioDonantes repositorioDonantes;
   private final RepositorioSubcategorias repositorioSubcategorias;
 
   public DonacionesController(GestorDonaciones gestor,
                               RepositorioPersonas repositorioPersonas,
+                              RepositorioDonantes repositorioDonantes,
                               RepositorioSubcategorias repositorioSubcategorias) {
     this.gestor = gestor;
     this.repositorioPersonas = repositorioPersonas;
+    this.repositorioDonantes = repositorioDonantes;
     this.repositorioSubcategorias = repositorioSubcategorias;
   }
 
@@ -164,14 +167,16 @@ public class DonacionesController {
   // === Helpers ===
 
   private Donante donanteDe(String documento) {
-    Persona persona = repositorioPersonas.buscarPorDocumento(documento)
-        .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la persona con documento " + documento
-        ));
-    return persona.comoRol(Donante.class)
-        .orElseThrow(() -> new DatosInvalidosException(
-            "La persona con documento " + documento + " no tiene el rol Donante."
-        ));
+    return repositorioDonantes.buscarPorDocumento(documento)
+        .orElseGet(() -> {
+          repositorioPersonas.buscarPorDocumento(documento)
+              .orElseThrow(() -> new RecursoInexistenteException(
+                  "No existe la persona con documento " + documento
+              ));
+          throw new DatosInvalidosException(
+              "La persona con documento " + documento + " no tiene el rol Donante."
+          );
+        });
   }
 
   private Bien bienDe(NuevaDonacionRequest.BienRequest req) {

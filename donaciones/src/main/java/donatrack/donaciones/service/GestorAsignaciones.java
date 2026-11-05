@@ -7,7 +7,6 @@ import donatrack.donaciones.domain.donacion.asignacion.PrioridadSubatendidos;
 import donatrack.donaciones.domain.donacion.asignacion.PropuestaAsignacion;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.donaciones.domain.donacion.Donacion;
-import donatrack.donaciones.domain.persona.Administrador;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioEntidades;
@@ -81,12 +80,9 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
     return repositorioPropuestas.todas();
   }
 
-  // Confirma el destino final de la donación validando administrador y donación
-  public void confirmarDestino(long donacionId,
-                               Beneficiaria destinatario,
-                               Administrador administrador) {
-    Objects.requireNonNull(
-        administrador, "Debe indicarse el administrador que confirma el destino.");
+  // Confirma el destino final de la donación validando la donación
+  public void confirmarDestino(long donacionId, Beneficiaria destinatario) {
+    // TODO: validar con el token de Keycloak que quien confirma tenga rol ADMINISTRADOR
     Objects.requireNonNull(
         destinatario, "Debe indicarse la beneficiaria a confirmar como destinataria.");
     Donacion donacion = repositorioDonaciones.buscarPorId(donacionId)

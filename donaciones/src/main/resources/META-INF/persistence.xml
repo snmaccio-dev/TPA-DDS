@@ -10,10 +10,8 @@
         <class>donatrack.donaciones.domain.persona.Persona</class>
         <class>donatrack.donaciones.domain.persona.PersonaHumana</class>
         <class>donatrack.donaciones.domain.persona.PersonaJuridica</class>
-        <class>donatrack.donaciones.domain.persona.Rol</class>
         <class>donatrack.donaciones.domain.persona.Donante</class>
         <class>donatrack.donaciones.domain.persona.Beneficiaria</class>
-        <class>donatrack.donaciones.domain.persona.Administrador</class>
         <class>donatrack.donaciones.domain.contacto.MedioContacto</class>
         <class>donatrack.donaciones.domain.usuario.Usuario</class>
         <class>donatrack.donaciones.domain.catalogo.Categoria</class>

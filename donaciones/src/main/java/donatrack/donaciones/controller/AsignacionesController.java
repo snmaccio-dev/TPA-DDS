@@ -3,15 +3,11 @@ package donatrack.donaciones.controller;
 import donatrack.donaciones.controller.dto.BeneficiariaDTO;
 import donatrack.donaciones.controller.dto.ConfirmarDestinatarioRequest;
 import donatrack.donaciones.controller.dto.PropuestaDTO;
-import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.asignacion.PropuestaAsignacion;
-import donatrack.donaciones.domain.persona.Administrador;
 import donatrack.donaciones.domain.persona.Beneficiaria;
-import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioEntidades;
-import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.service.GestorAsignaciones;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import donatrack.donaciones.service.ResultadoCorrida;
@@ -25,16 +21,13 @@ public class AsignacionesController {
   private final GestorAsignaciones gestor;
   private final RepositorioDonaciones repositorioDonaciones;
   private final RepositorioEntidades repositorioEntidades;
-  private final RepositorioPersonas repositorioPersonas;
 
   public AsignacionesController(GestorAsignaciones gestor,
                                 RepositorioDonaciones repositorioDonaciones,
-                                RepositorioEntidades repositorioEntidades,
-                                RepositorioPersonas repositorioPersonas) {
+                                RepositorioEntidades repositorioEntidades) {
     this.gestor = gestor;
     this.repositorioDonaciones = repositorioDonaciones;
     this.repositorioEntidades = repositorioEntidades;
-    this.repositorioPersonas = repositorioPersonas;
   }
 
   public void registrarRutas(Javalin app) {
@@ -75,8 +68,7 @@ public class AsignacionesController {
         .orElseThrow(() -> new RecursoInexistenteException(
             "No existe la beneficiaria con id " + request.beneficiariaId()
         ));
-    Administrador administrador = administradorDe(request.administradorDocumento());
-    gestor.confirmarDestino(idDe(ctx), destinatario, administrador);
+    gestor.confirmarDestino(idDe(ctx), destinatario);
     ctx.status(204);
   }
 
@@ -84,17 +76,6 @@ public class AsignacionesController {
     return repositorioDonaciones.buscarPorId(donacionId)
         .orElseThrow(() -> new RecursoInexistenteException(
             "No existe la donación con ID " + donacionId
-        ));
-  }
-
-  private Administrador administradorDe(String documento) {
-    Persona persona = repositorioPersonas.buscarPorDocumento(documento)
-        .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la persona con documento " + documento
-        ));
-    return persona.comoRol(Administrador.class)
-        .orElseThrow(() -> new DatosInvalidosException(
-            "La persona con documento " + documento + " no tiene el rol Administrador."
         ));
   }
 

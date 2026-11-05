@@ -1,19 +1,34 @@
 package donatrack.donaciones.domain.persona;
 
+import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.donacion.Donacion;
 
 import javax.persistence.Column;
-import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@DiscriminatorValue("DONANTE")
-public class Donante extends Rol {
+@Table(name = "donante")
+public class Donante {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "donante_id")
+    private Long id;
+
+    @OneToOne(optional = false)
+    @JoinColumn(name = "persona_id", nullable = false, unique = true)
+    private Persona persona;
 
     @Column(name = "ultima_interaccion")
     private LocalDate ultimaInteraccion;
@@ -28,7 +43,10 @@ public class Donante extends Rol {
     }
 
     public Donante(Persona persona) {
-        super(persona);
+        if (persona == null) {
+            throw new DatosInvalidosException("El rol debe estar asociado a una persona.");
+        }
+        this.persona = persona;
         this.ultimaInteraccion = LocalDate.now();
     }
 
@@ -50,6 +68,14 @@ public class Donante extends Rol {
         return ultimaInteraccion.isBefore(limite)
             && (fechaUltimoAvisoInactividad == null
                 || fechaUltimoAvisoInactividad.isBefore(ultimaInteraccion));
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public Persona getPersona() {
+        return persona;
     }
 
     public LocalDate getUltimaInteraccion() {

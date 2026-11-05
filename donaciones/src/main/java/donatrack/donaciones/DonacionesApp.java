@@ -69,9 +69,9 @@ public class DonacionesApp {
 
     Javalin app = Javalin.create().start(PUERTO);
 
-    new DonacionesController(gestorDonaciones, repositorioPersonas, repositorioSubcategorias).registrarRutas(app);
+    new DonacionesController(gestorDonaciones, repositorioPersonas, repositorioDonantes, repositorioSubcategorias).registrarRutas(app);
     new AsignacionesController(gestorAsignaciones, RepositorioDonaciones.getInstance(),
-        repositorioEntidades, repositorioPersonas).registrarRutas(app);
+        repositorioEntidades).registrarRutas(app);
     new EntidadesBeneficiariasController(gestorEntidades).registrarRutas(app);
     new NecesidadesController(gestorNecesidades, repositorioSubcategorias, repositorioEntidades).registrarRutas(app);
     new DonantesController(gestorPersonas, gestorDonantes).registrarRutas(app);

@@ -81,19 +81,20 @@ El modelo de clases respeta fielmente el diagrama de clases definido para la ent
 
 | Clase | Responsabilidad |
 |---|---|
-| `Persona` (abstract) | Base común para humanas, jurídicas y entidades beneficiarias |
-| `PersonaHumana` | Donante individual con datos personales y género |
-| `PersonaJuridica` | Organización donante con razón social y personas representantes |
-| `EntidadBeneficiaria` | Organización receptora; gestiona sus necesidades y personas representantes |
+| `Persona` (abstract) | Base común para humanas y jurídicas: dirección, contactos y usuario |
+| `PersonaHumana` | Persona individual con datos personales y género |
+| `PersonaJuridica` | Organización con razón social y representantes |
+| `Donante` | Entidad propia que referencia a una `Persona` (humana o jurídica); registra última interacción y donaciones realizadas |
+| `Beneficiaria` | Entidad propia que referencia a una `PersonaJuridica`; registra sus necesidades y donaciones recibidas |
 | `MedioContacto` | Canal de comunicación tipado (email, teléfono, WhatsApp) |
 | `Donacion` | Agrupación de bienes con misma subcategoría, condición y fecha de vencimiento; conoce a su donante y descripción general |
 | `Bien` | Ítem físico con descripción, subcategoría, cantidad, unidad de medida y (opcional) condición y fecha de vencimiento |
 | `Categoria` / `Subcategoria` | Jerarquía de clasificación de bienes (una subcategoría pertenece a una categoría) |
-| `Necesidad` | Requerimiento material de una entidad beneficiaria; subtipos `Recurrente` (con `Periodo`) y `Extraordinaria` |
+| `Necesidad` | Requerimiento material de una `Beneficiaria`; subtipos `Recurrente` (con `Periodo`) y `Extraordinaria` |
 
-**Por qué `Persona` es abstracta:** las tres variantes (humana, jurídica, beneficiaria) comparten dirección, contactos y usuario, pero tienen identidad distinta. La abstracción evita duplicación y permite tratar a cualquier persona de forma polimórfica en el servicio de notificaciones.
+**Por qué `Persona` es abstracta:** las dos variantes (humana y jurídica) comparten dirección, contactos y usuario, pero tienen identidad distinta. La abstracción evita duplicación y permite tratar a cualquier persona de forma polimórfica en el servicio de notificaciones.
 
-**Por qué `EntidadBeneficiaria` extiende `Persona`:** el enunciado la define como un tipo de actor registrable con contactos y dirección. Reutilizar la jerarquía evita duplicar la gestión de medios de contacto y usuario, y mantiene coherencia con el diagrama.
+**Por qué `Donante` y `Beneficiaria` son composición y no herencia sobre `Persona`:** ser donante o beneficiaria es un rol que se agrega después del registro y puede convivir con otro sobre la misma persona. Además, un donante puede ser una persona humana o jurídica, mientras que una beneficiaria es siempre una persona jurídica; forzar la herencia obligaba a resolverlo con un discriminador y un `instanceof`. Modeladas como entidades independientes con una referencia `@OneToOne` a su `Persona`, cada rol vive en su propia tabla y la unicidad "una persona no puede ser dos veces el mismo rol" se garantiza con el `unique` de la FK y un chequeo en los servicios.
 
 ---
 

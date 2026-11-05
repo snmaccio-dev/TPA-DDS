@@ -76,7 +76,7 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
               "No existe una persona juridica con CUIT " + cuit
           ));
       aplicarDatosDeBeneficiaria(juridica, datos);
-      resultado[0] = crearRol(juridica);
+      resultado[0] = crearBeneficiaria(juridica);
     });
     return resultado[0];
   }
@@ -86,7 +86,7 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
     withTransaction(() -> {
       repositorioPersonas.guardar(juridica);
       aplicarDatosDeBeneficiaria(juridica, datos);
-      resultado[0] = crearRol(juridica);
+      resultado[0] = crearBeneficiaria(juridica);
     });
     return resultado[0];
   }
@@ -106,7 +106,7 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
     }
   }
 
-  private Beneficiaria crearRol(PersonaJuridica juridica) {
+  private Beneficiaria crearBeneficiaria(PersonaJuridica juridica) {
     return repositorioEntidades.buscarPorCuit(juridica.getCuit())
         .orElseGet(() -> {
           Beneficiaria beneficiaria = new Beneficiaria(juridica);

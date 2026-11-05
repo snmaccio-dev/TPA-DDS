@@ -1,6 +1,5 @@
 package donatrack.donaciones.domain.persona;
 
-import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.usuario.Usuario;
@@ -33,9 +32,6 @@ public abstract class Persona {
     @JoinColumn(name="usuario_id")
     protected Usuario usuario;
 
-    @OneToMany(mappedBy = "persona")
-    protected List<Rol> roles = new ArrayList<>();
-
     public abstract String getNombreDisplay();
 
     public abstract String getDocumento();
@@ -55,32 +51,6 @@ public abstract class Persona {
         if (contactos.size() == 1) {
             contactoPredeterminado = medio;
         }
-    }
-
-    void registrarRol(Rol rol) {
-        boolean yaTiene = roles.stream()
-            .anyMatch(existente -> existente.getClass().equals(rol.getClass()));
-        if (yaTiene) {
-            throw new ConflictoDeNegocioException(
-                "La persona ya tiene un rol " + rol.getClass().getSimpleName() + " asignado."
-            );
-        }
-        roles.add(rol);
-    }
-
-    public <T extends Rol> Optional<T> comoRol(Class<T> tipo) {
-        return roles.stream()
-            .filter(tipo::isInstance)
-            .map(tipo::cast)
-            .findFirst();
-    }
-
-    public boolean tieneRol(Class<? extends Rol> tipo) {
-        return roles.stream().anyMatch(tipo::isInstance);
-    }
-
-    public List<Rol> getRoles() {
-        return List.copyOf(roles);
     }
 
     public String getDireccion() {

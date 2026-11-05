@@ -1,6 +1,7 @@
 package donatrack.donaciones.repository;
 
 import donatrack.donaciones.domain.persona.Donante;
+import donatrack.donaciones.domain.persona.Persona;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.time.LocalDate;
@@ -11,6 +12,16 @@ public class RepositorioDonantes implements WithSimplePersistenceUnit {
 
     public void guardar(Donante donante) {
         persist(donante);
+    }
+
+    public Optional<Donante> buscarPorPersona(Persona persona) {
+        return createQuery(
+            "select d from Donante d where d.persona = :persona",
+            Donante.class)
+            .setParameter("persona", persona)
+            .getResultList()
+            .stream()
+            .findFirst();
     }
 
     public Optional<Donante> buscarPorDocumento(String documento) {
