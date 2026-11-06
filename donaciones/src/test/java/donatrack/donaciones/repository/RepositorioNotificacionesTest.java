@@ -1,5 +1,6 @@
 package donatrack.donaciones.repository;
 
+import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
@@ -34,7 +35,7 @@ class RepositorioNotificacionesTest implements SimplePersistenceTest {
   @Test
   void donanteYBeneficiariaDeLaMismaPersonaJuridicaTienenListasSeparadas() {
     PersonaJuridica juridica = new PersonaJuridica(
-        "30-00000000-1", "Dual", TipoOrganizacion.ONG, "Rubro");
+        DatosDeTest.cuitUnico(), "Dual-" + DatosDeTest.textoUnico("x"), TipoOrganizacion.ONG, "Rubro");
     repoPersonas.guardar(juridica);
     Donante donante = new Donante(juridica);
     repoDonantes.guardar(donante);
@@ -63,7 +64,7 @@ class RepositorioNotificacionesTest implements SimplePersistenceTest {
 
   @Test
   void marcarLeidasDeDonanteAfectaMasDeCienYDevuelveLaCantidad() {
-    Donante donante = donantePersistido("Ana", "11111111");
+    Donante donante = donantePersistido("Ana", DatosDeTest.documentoUnico());
 
     for (int i = 0; i < 150; i++) {
       repositorio.guardar(Notificacion.paraDonante(
@@ -74,9 +75,7 @@ class RepositorioNotificacionesTest implements SimplePersistenceTest {
 
     Donante refrescado = entityManager().find(Donante.class, donante.getId());
 
-    entityManager().getTransaction().begin();
     int afectadas = repositorio.marcarLeidasDeDonante(refrescado, LocalDateTime.now());
-    entityManager().getTransaction().commit();
 
     assertEquals(150, afectadas);
     assertEquals(0, repositorio.cantidadNoLeidasDeDonante(refrescado));
@@ -84,7 +83,7 @@ class RepositorioNotificacionesTest implements SimplePersistenceTest {
 
   @Test
   void marcarLeidasDeAdministradoresAfectaSoloLasDeAdmin() {
-    Donante donante = donantePersistido("Luis", "22222222");
+    Donante donante = donantePersistido("Luis", DatosDeTest.documentoUnico());
 
     repositorio.guardar(Notificacion.paraDonante(
         donante, TipoNotificacion.CAMBIO_ESTADO, "personal", null));
@@ -95,20 +94,23 @@ class RepositorioNotificacionesTest implements SimplePersistenceTest {
     entityManager().flush();
     entityManager().clear();
 
-    entityManager().getTransaction().begin();
-    int afectadas = repositorio.marcarLeidasDeAdministradores(LocalDateTime.now());
-    entityManager().getTransaction().commit();
+    // Otras clases del mismo run pueden haber dejado notificaciones de admin
+    // sin leer, asi que no comparamos contra un numero absoluto: pedimos que
+    // despues del bulk no quede ninguna no leida, y que la personal del donante
+    // (no admin) no se haya tocado.
+    repositorio.marcarLeidasDeAdministradores(LocalDateTime.now());
 
     Donante refrescado = entityManager().find(Donante.class, donante.getId());
 
-    assertEquals(3, afectadas);
+    assertEquals(0, repositorio.cantidadNoLeidasAdministradores(),
+        "No deben quedar notificaciones de admin sin leer despues del bulk.");
     assertEquals(1, repositorio.cantidadNoLeidasDeDonante(refrescado),
         "La personal del donante no se tiene que haber marcado.");
   }
 
   @Test
   void eliminarDeDonacionBorraSoloLasDeEsaDonacion() {
-    Donante donante = donantePersistido("Delete", "33333333");
+    Donante donante = donantePersistido("Delete", DatosDeTest.documentoUnico());
     Donacion donacion = donacionDe(donante);
     Donacion otra = donacionDe(donante);
 
@@ -123,9 +125,8 @@ class RepositorioNotificacionesTest implements SimplePersistenceTest {
 
     Donacion refrescada = entityManager().find(Donacion.class, donacion.getId());
 
-    entityManager().getTransaction().begin();
     int borradas = repositorio.eliminarDeDonacion(refrescada);
-    entityManager().getTransaction().commit();
+    entityManager().flush();
     entityManager().clear();
 
     Donante refrescadoD = entityManager().find(Donante.class, donante.getId());
@@ -139,7 +140,7 @@ class RepositorioNotificacionesTest implements SimplePersistenceTest {
   @Test
   void eliminarDeDonanteYDeBeneficiariaBorranSoloLoDeCadaPerfil() {
     PersonaJuridica juridica = new PersonaJuridica(
-        "30-99999999-1", "Dual2", TipoOrganizacion.ONG, "Rubro");
+        DatosDeTest.cuitUnico(), "Dual2-" + DatosDeTest.textoUnico("x"), TipoOrganizacion.ONG, "Rubro");
     repoPersonas.guardar(juridica);
     Donante donante = new Donante(juridica);
     repoDonantes.guardar(donante);
@@ -159,17 +160,15 @@ class RepositorioNotificacionesTest implements SimplePersistenceTest {
     Donante refD = entityManager().find(Donante.class, donante.getId());
     Beneficiaria refB = entityManager().find(Beneficiaria.class, beneficiaria.getId());
 
-    entityManager().getTransaction().begin();
     int borradasD = repositorio.eliminarDeDonante(refD);
-    entityManager().getTransaction().commit();
+    entityManager().flush();
 
     assertEquals(2, borradasD);
     assertEquals(0, repositorio.deDonante(refD, false, 0, 10).size());
     assertEquals(1, repositorio.deBeneficiaria(refB, false, 0, 10).size());
 
-    entityManager().getTransaction().begin();
     int borradasB = repositorio.eliminarDeBeneficiaria(refB);
-    entityManager().getTransaction().commit();
+    entityManager().flush();
 
     assertEquals(1, borradasB);
     assertEquals(0, repositorio.deBeneficiaria(refB, false, 0, 10).size());
@@ -177,29 +176,31 @@ class RepositorioNotificacionesTest implements SimplePersistenceTest {
 
   @Test
   void deAdministradoresDevuelveSoloLasDeAdmin() {
-    Donante donante = donantePersistido("Ana", "44444444");
+    Donante donante = donantePersistido("Ana", DatosDeTest.documentoUnico());
+    String etiqueta = "para-admins-" + DatosDeTest.textoUnico("x");
     repositorio.guardar(Notificacion.paraDonante(
         donante, TipoNotificacion.CAMBIO_ESTADO, "personal", null));
     repositorio.guardar(Notificacion.paraAdministradores(
-        TipoNotificacion.ENTREGA_FALLIDA, "para admins", null));
+        TipoNotificacion.ENTREGA_FALLIDA, etiqueta, null));
     entityManager().flush();
     entityManager().clear();
 
-    List<Notificacion> deAdmins = repositorio.deAdministradores(false, 0, 10);
-    assertEquals(1, deAdmins.size());
-    assertEquals("para admins", deAdmins.get(0).getMensaje());
+    List<Notificacion> deAdmins = repositorio.deAdministradores(false, 0, 100);
+    assertTrue(deAdmins.stream().anyMatch(n -> etiqueta.equals(n.getMensaje())));
+    assertTrue(deAdmins.stream().noneMatch(n -> "personal".equals(n.getMensaje())));
   }
 
   @Test
   void todasFiltraPorEstadoEnvioYTipo() {
-    Donante donante = donantePersistido("Ana", "55555555");
+    Donante donante = donantePersistido("Ana", DatosDeTest.documentoUnico());
+    String etiquetaFallida = "fallida-" + DatosDeTest.textoUnico("x");
 
     Notificacion enviada = Notificacion.paraDonante(
-        donante, TipoNotificacion.CAMBIO_ESTADO, "enviada", null);
+        donante, TipoNotificacion.CAMBIO_ESTADO, "enviada-" + DatosDeTest.textoUnico("x"), null);
     enviada.marcarEnviada(
         donatrack.donaciones.domain.contacto.TipoContacto.EMAIL, "ana@mail.com");
     Notificacion fallida = Notificacion.paraDonante(
-        donante, TipoNotificacion.ENTREGA_FALLIDA, "fallida", null);
+        donante, TipoNotificacion.ENTREGA_FALLIDA, etiquetaFallida, null);
     fallida.marcarFallida("sin contacto");
     repositorio.guardar(enviada);
     repositorio.guardar(fallida);
@@ -207,13 +208,14 @@ class RepositorioNotificacionesTest implements SimplePersistenceTest {
     entityManager().flush();
     entityManager().clear();
 
-    List<Notificacion> soloFallidas = repositorio.todas(EstadoEnvio.FALLIDA, null, 0, 10);
-    assertEquals(1, soloFallidas.size());
-    assertEquals("fallida", soloFallidas.get(0).getMensaje());
+    List<Notificacion> soloFallidas = repositorio.todas(EstadoEnvio.FALLIDA, null, 0, 100);
+    assertTrue(soloFallidas.stream().anyMatch(n -> etiquetaFallida.equals(n.getMensaje())));
+    assertTrue(soloFallidas.stream().allMatch(n -> n.getEstadoEnvio() == EstadoEnvio.FALLIDA));
 
     List<Notificacion> soloEntregasFallidas =
-        repositorio.todas(null, TipoNotificacion.ENTREGA_FALLIDA, 0, 10);
-    assertEquals(1, soloEntregasFallidas.size());
+        repositorio.todas(null, TipoNotificacion.ENTREGA_FALLIDA, 0, 100);
+    assertTrue(soloEntregasFallidas.stream()
+        .anyMatch(n -> etiquetaFallida.equals(n.getMensaje())));
   }
 
   // === Helpers ===
@@ -226,16 +228,16 @@ class RepositorioNotificacionesTest implements SimplePersistenceTest {
     return donante;
   }
 
+  // La transaccion la abre SimplePersistenceTest; aca solo persistimos.
   private Donacion donacionDe(Donante donante) {
-    Categoria mobiliario = new Categoria("Mobiliario");
-    entityManager().getTransaction().begin();
+    Categoria mobiliario = new Categoria("Mobiliario-" + DatosDeTest.textoUnico("x"));
     entityManager().persist(mobiliario);
-    Subcategoria sillas = new Subcategoria("Sillas-" + System.nanoTime(), mobiliario, Unidades.UNIDADES);
+    Subcategoria sillas = new Subcategoria(
+        "Sillas-" + DatosDeTest.textoUnico("x"), mobiliario, Unidades.UNIDADES);
     entityManager().persist(sillas);
     Bien bien = new Bien("Silla", sillas, 1, CondicionBien.USADO);
     Donacion donacion = new Donacion(List.of(bien), donante, "demo");
     entityManager().persist(donacion);
-    entityManager().getTransaction().commit();
     return donacion;
   }
 }

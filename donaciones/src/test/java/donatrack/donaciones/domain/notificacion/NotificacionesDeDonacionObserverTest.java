@@ -62,11 +62,14 @@ public class NotificacionesDeDonacionObserverTest {
   }
 
   @Test
-  public void entregadaDisparaEntregaExitosaConComprobante() {
+  public void entregadaDisparaEntregaExitosaConComprobante() throws Exception {
     GestorNotificaciones gestor = mock(GestorNotificaciones.class);
     Donante donante = donante();
     Beneficiaria beneficiaria = beneficiaria();
     Donacion donacion = donacionAsignadaA(donante, beneficiaria);
+    // generarComprobante() exige id no null. Como no estamos en una DB, lo
+    // seteamos por reflexion.
+    forzarId(donacion, 42L);
     donacion.marcarListaParaEntregar();
     donacion.marcarEnTraslado();
     donacion.marcarEntregada(LocalDateTime.of(2026, 3, 1, 10, 0), "AAA111");
@@ -138,5 +141,14 @@ public class NotificacionesDeDonacionObserverTest {
     Donacion donacion = new Donacion(List.of(unaCampera()), donante, "una donacion");
     donacion.confirmarDestino(beneficiaria);
     return donacion;
+  }
+
+  // El id de Donacion se autogenera en la BD; en este test unitario sin DB lo
+  // forzamos por reflexion para que generarComprobante() no reviente al
+  // desreferenciar donacion.id.
+  private static void forzarId(Donacion donacion, long id) throws Exception {
+    java.lang.reflect.Field campo = Donacion.class.getDeclaredField("id");
+    campo.setAccessible(true);
+    campo.set(donacion, id);
   }
 }

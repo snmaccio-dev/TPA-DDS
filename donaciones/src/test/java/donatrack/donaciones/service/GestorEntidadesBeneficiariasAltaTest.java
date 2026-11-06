@@ -1,5 +1,6 @@
 package donatrack.donaciones.service;
 
+import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
@@ -38,13 +39,13 @@ class GestorEntidadesBeneficiariasAltaTest implements SimplePersistenceTest {
 
   @Test
   void registrarDePersonaExistenteYaConCuentaNoLlamaAKeycloak() {
-    String cuit = "30-11111111-1";
+    String cuit = DatosDeTest.cuitUnico();
     PersonaJuridica juridica = new PersonaJuridica(
-        cuit, "Benef X", TipoOrganizacion.ONG, "Rubro");
+        cuit, DatosDeTest.textoUnico("Benef"), TipoOrganizacion.ONG, "Rubro");
     repoPersonas.guardar(juridica);
     Beneficiaria beneficiaria = new Beneficiaria(juridica);
     repoEntidades.guardar(beneficiaria);
-    repoUsuarios.guardar(Usuario.deBeneficiaria("kc-benef", beneficiaria));
+    repoUsuarios.guardar(Usuario.deBeneficiaria(DatosDeTest.keycloakIdUnico(), beneficiaria));
     entityManager().flush();
     entityManager().clear();
 
@@ -56,14 +57,14 @@ class GestorEntidadesBeneficiariasAltaTest implements SimplePersistenceTest {
     DatosEntidad datos = new DatosEntidad(
         "Nueva direccion 123",
         "+54 11 0000-0000",
-        List.of(new Representante("Rep", "Uno", "rep@mail.com"))
+        List.of(new Representante("Rep", "Uno", DatosDeTest.emailUnico("rep")))
     );
 
     assertDoesNotThrow(() -> gestor.registrarDePersonaExistente(cuit, datos));
 
     assertTrue(proveedor.emailsCreados.isEmpty(),
         "No se tiene que llamar a Keycloak si la beneficiaria ya tenia cuenta.");
-    // Y los datos nuevos quedaron aplicados como en cualquier alta exitosa.
+    // Despues del gestor la transaccion esta cerrada: solo clear() para releer.
     entityManager().clear();
     Beneficiaria refrescada = repoEntidades.buscarPorCuit(juridica.getCuit()).orElseThrow();
     assertEquals("Nueva direccion 123", refrescada.getPersona().getDireccion());
@@ -71,23 +72,25 @@ class GestorEntidadesBeneficiariasAltaTest implements SimplePersistenceTest {
 
   @Test
   void registrarConPersonaNuevaCreaLaCuentaCuandoLaBeneficiariaEsNueva() {
-    ProveedorFalso proveedor = new ProveedorFalso("kc-alta");
+    String kcId = DatosDeTest.keycloakIdUnico();
+    ProveedorFalso proveedor = new ProveedorFalso(kcId);
     GestorEntidadesBeneficiarias gestor = new GestorEntidadesBeneficiarias(
         repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
         repoDonaciones, repoDonantes, proveedor);
 
     PersonaJuridica juridica = new PersonaJuridica(
-        "30-22222222-2", "Nueva Benef", TipoOrganizacion.ONG, "Rubro");
+        DatosDeTest.cuitUnico(), DatosDeTest.textoUnico("Nueva Benef"), TipoOrganizacion.ONG, "Rubro");
+    String emailRep = DatosDeTest.emailUnico("rep-nuevo");
     DatosEntidad datos = new DatosEntidad(
         "Direccion",
         "+54 11 0000-1111",
-        List.of(new Representante("Rep", "Nuevo", "rep.nuevo@mail.com"))
+        List.of(new Representante("Rep", "Nuevo", emailRep))
     );
 
     Beneficiaria creada = gestor.registrarConPersonaNueva(juridica, datos);
 
     assertEquals(1, proveedor.emailsCreados.size());
-    assertEquals("rep.nuevo@mail.com", proveedor.emailsCreados.get(0));
+    assertEquals(emailRep, proveedor.emailsCreados.get(0));
     assertTrue(repoUsuarios.existeParaBeneficiaria(creada));
   }
 

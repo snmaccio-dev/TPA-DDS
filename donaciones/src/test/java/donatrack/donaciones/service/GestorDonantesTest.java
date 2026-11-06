@@ -1,5 +1,6 @@
 package donatrack.donaciones.service;
 
+import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.notificacion.EstadoEnvio;
@@ -13,7 +14,6 @@ import io.github.flbulgarelli.jpa.extras.test.SimplePersistenceTest;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -28,25 +28,9 @@ class GestorDonantesTest implements SimplePersistenceTest {
 
   @Test
   void siLaNotificacionSaleFallidaNoRegistraElAvisoDeInactividad() {
-    // Donante con una ultima interaccion vieja, para que entre en inactivos().
-    PersonaHumana persona = new PersonaHumana("Ana", "Perez", 30, "99998888", Genero.FEMENINO);
-    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "ana@mail.com"));
-    repoPersonas.guardar(persona);
-
-    Donante donante = new Donante(persona);
-    // Lo envejecemos directamente en la BD para que queRequierenAvisoDeInactividad lo agarre.
-    entityManager().getTransaction().begin();
-    entityManager().persist(donante);
-    entityManager().getTransaction().commit();
-
-    entityManager().getTransaction().begin();
-    entityManager().createQuery(
-        "update Donante d set d.ultimaInteraccion = :vieja where d.id = :id")
-        .setParameter("vieja", LocalDate.now().minusDays(60))
-        .setParameter("id", donante.getId())
-        .executeUpdate();
-    entityManager().getTransaction().commit();
-    entityManager().clear();
+    String documento = DatosDeTest.documentoUnico();
+    Donante donante = donantePersistidoViejo(
+        documento, "Ana", DatosDeTest.emailUnico("ana-" + documento));
 
     GestorNotificaciones gestorNotificaciones = mock(GestorNotificaciones.class);
     Notificacion fallida = Notificacion.paraDonante(
@@ -63,6 +47,9 @@ class GestorDonantesTest implements SimplePersistenceTest {
         "Si la notificacion quedo FALLIDA no cuenta como avisado.");
     assertEquals(1, resultado.cantidadDeFallas());
 
+    // Despues del gestor la transaccion ya esta commiteada y cerrada; solo
+    // podemos limpiar la cache del EM y releer desde la base. Un flush() aca
+    // tiraria IllegalStateException por "Transaction not active".
     entityManager().clear();
     Donante recargado = entityManager().find(Donante.class, donante.getId());
     assertNull(recargado.getFechaUltimoAvisoInactividad(),
@@ -71,27 +58,14 @@ class GestorDonantesTest implements SimplePersistenceTest {
 
   @Test
   void siLaNotificacionSaleEnviadaRegistraElAviso() {
-    PersonaHumana persona = new PersonaHumana("Luis", "Garcia", 45, "77776666", Genero.MASCULINO);
-    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
-    repoPersonas.guardar(persona);
-    Donante donante = new Donante(persona);
-    entityManager().getTransaction().begin();
-    entityManager().persist(donante);
-    entityManager().getTransaction().commit();
-
-    entityManager().getTransaction().begin();
-    entityManager().createQuery(
-        "update Donante d set d.ultimaInteraccion = :vieja where d.id = :id")
-        .setParameter("vieja", LocalDate.now().minusDays(60))
-        .setParameter("id", donante.getId())
-        .executeUpdate();
-    entityManager().getTransaction().commit();
-    entityManager().clear();
+    String documento = DatosDeTest.documentoUnico();
+    Donante donante = donantePersistidoViejo(
+        documento, "Luis", DatosDeTest.emailUnico("luis-" + documento));
 
     GestorNotificaciones gestorNotificaciones = mock(GestorNotificaciones.class);
     Notificacion enviada = Notificacion.paraDonante(
         donante, TipoNotificacion.AUSENCIA_PLATAFORMA, "x", null);
-    enviada.marcarEnviada(TipoContacto.EMAIL, "luis@mail.com");
+    enviada.marcarEnviada(TipoContacto.EMAIL, "luis@mail");
     when(gestorNotificaciones.notificarAusenciaPlataforma(any())).thenReturn(enviada);
 
     RepositorioDonantes repoDonantes = new RepositorioDonantes();
@@ -102,6 +76,7 @@ class GestorDonantesTest implements SimplePersistenceTest {
     assertEquals(1, resultado.exitosas());
     assertEquals(0, resultado.cantidadDeFallas());
 
+    // Idem comentario arriba: sin flush() despues del gestor.
     entityManager().clear();
     Donante recargado = entityManager().find(Donante.class, donante.getId());
     assertEquals(EstadoEnvio.ENVIADA, enviada.getEstadoEnvio());
@@ -109,9 +84,24 @@ class GestorDonantesTest implements SimplePersistenceTest {
     assertEquals(LocalDate.now(), recargado.getFechaUltimoAvisoInactividad());
   }
 
-  // Lista aqui solo para cubrir la variable "List" que usan los tests al tipar; no se usa.
-  @SuppressWarnings("unused")
-  private List<Donante> noUsar() {
-    return List.of();
+  // === Helpers ===
+
+  // Persiste el donante y lo envejece dentro de la transaccion que abre
+  // SimplePersistenceTest (antes de llamar al gestor). flush para que el
+  // update por JPQL vea la fila recien persistida.
+  private Donante donantePersistidoViejo(String documento, String nombre, String email) {
+    PersonaHumana persona = new PersonaHumana(nombre, "Test", 30, documento, Genero.FEMENINO);
+    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
+    repoPersonas.guardar(persona);
+    Donante donante = new Donante(persona);
+    entityManager().persist(donante);
+    entityManager().flush();
+    entityManager().createQuery(
+        "update Donante d set d.ultimaInteraccion = :vieja where d.id = :id")
+        .setParameter("vieja", LocalDate.now().minusDays(60))
+        .setParameter("id", donante.getId())
+        .executeUpdate();
+    entityManager().clear();
+    return entityManager().find(Donante.class, donante.getId());
   }
 }

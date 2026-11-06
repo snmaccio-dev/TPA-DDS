@@ -1,5 +1,6 @@
 package donatrack.donaciones.service;
 
+import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
@@ -49,12 +50,14 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
 
   @Test
   void eliminarDonanteSinDonacionesBorraTodoYLlamaAKeycloak() {
-    PersonaHumana persona = new PersonaHumana("Ana", "Perez", 30, "11223344", Genero.FEMENINO);
-    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "ana@mail.com"));
+    String documento = DatosDeTest.documentoUnico();
+    String kcId = DatosDeTest.keycloakIdUnico();
+    PersonaHumana persona = new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
+    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, DatosDeTest.emailUnico("ana")));
     repoPersonas.guardar(persona);
     Donante donante = new Donante(persona);
     repoDonantes.guardar(donante);
-    Usuario usuario = Usuario.deDonante("kc-ana", donante);
+    Usuario usuario = Usuario.deDonante(kcId, donante);
     repoUsuarios.guardar(usuario);
     repoNotificaciones.guardar(Notificacion.paraDonante(
         donante, TipoNotificacion.CAMBIO_ESTADO, "hola", null));
@@ -65,19 +68,22 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     GestorPersonas gestor = new GestorPersonas(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
-    gestor.eliminar("11223344");
+    gestor.eliminar(documento);
 
+    // Despues del gestor la transaccion esta commiteada y cerrada; nada de
+    // flush aca: solo clear() y releer desde la base.
     entityManager().clear();
-    assertFalse(repoDonantes.buscarPorDocumento("11223344").isPresent());
-    assertFalse(repoPersonas.buscarPorDocumento("11223344").isPresent());
-    assertFalse(repoUsuarios.buscarPorKeycloakId("kc-ana").isPresent());
-    assertEquals(List.of("kc-ana"), proveedor.eliminados);
+    assertFalse(repoDonantes.buscarPorDocumento(documento).isPresent());
+    assertFalse(repoPersonas.buscarPorDocumento(documento).isPresent());
+    assertFalse(repoUsuarios.buscarPorKeycloakId(kcId).isPresent());
+    assertEquals(List.of(kcId), proveedor.eliminados);
   }
 
   @Test
   void eliminarDonanteConDonacionesDa409YNoTocaKeycloak() {
-    PersonaHumana persona = new PersonaHumana("Luis", "G", 30, "22334455", Genero.MASCULINO);
-    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
+    String documento = DatosDeTest.documentoUnico();
+    PersonaHumana persona = new PersonaHumana("Luis", "G", 30, documento, Genero.MASCULINO);
+    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, DatosDeTest.emailUnico("luis")));
     repoPersonas.guardar(persona);
     Donante donante = new Donante(persona);
     repoDonantes.guardar(donante);
@@ -87,18 +93,19 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     GestorPersonas gestor = new GestorPersonas(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
-    assertThrows(ConflictoDeNegocioException.class, () -> gestor.eliminar("22334455"));
+    assertThrows(ConflictoDeNegocioException.class, () -> gestor.eliminar(documento));
 
     entityManager().clear();
-    assertTrue(repoDonantes.buscarPorDocumento("22334455").isPresent());
+    assertTrue(repoDonantes.buscarPorDocumento(documento).isPresent());
     assertTrue(proveedor.eliminados.isEmpty());
   }
 
   @Test
   void eliminarDonanteDeUnaPersonaJuridicaQueTambienEsBeneficiariaNoBorraLaPersona() {
+    String cuit = DatosDeTest.cuitUnico();
     PersonaJuridica juridica = new PersonaJuridica(
-        "30-99887766-1", "Dual", TipoOrganizacion.ONG, "Rubro");
-    juridica.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "dual@mail.com"));
+        cuit, DatosDeTest.textoUnico("Dual"), TipoOrganizacion.ONG, "Rubro");
+    juridica.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, DatosDeTest.emailUnico("dual")));
     repoPersonas.guardar(juridica);
     Donante donante = new Donante(juridica);
     repoDonantes.guardar(donante);
@@ -110,12 +117,12 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     GestorPersonas gestor = new GestorPersonas(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
-    gestor.eliminar(juridica.getCuit());
+    gestor.eliminar(cuit);
 
     entityManager().clear();
-    assertFalse(repoDonantes.buscarPorDocumento(juridica.getCuit()).isPresent(),
+    assertFalse(repoDonantes.buscarPorDocumento(cuit).isPresent(),
         "El Donante tiene que haberse borrado.");
-    assertTrue(repoPersonas.buscarPorDocumento(juridica.getCuit()).isPresent(),
+    assertTrue(repoPersonas.buscarPorDocumento(cuit).isPresent(),
         "La persona sigue existiendo porque todavia es Beneficiaria.");
   }
 
@@ -129,12 +136,14 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
 
   @Test
   void siKeycloakFallaElBorradoNoSeDeshace() {
-    PersonaHumana persona = new PersonaHumana("Maria", "X", 30, "88776655", Genero.FEMENINO);
-    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "m@mail.com"));
+    String documento = DatosDeTest.documentoUnico();
+    String kcId = DatosDeTest.keycloakIdUnico();
+    PersonaHumana persona = new PersonaHumana("Maria", "X", 30, documento, Genero.FEMENINO);
+    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, DatosDeTest.emailUnico("m")));
     repoPersonas.guardar(persona);
     Donante donante = new Donante(persona);
     repoDonantes.guardar(donante);
-    repoUsuarios.guardar(Usuario.deDonante("kc-maria", donante));
+    repoUsuarios.guardar(Usuario.deDonante(kcId, donante));
     entityManager().flush();
     entityManager().clear();
 
@@ -142,25 +151,26 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     GestorPersonas gestor = new GestorPersonas(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
-    gestor.eliminar("88776655");
+    gestor.eliminar(documento);
 
     entityManager().clear();
-    assertFalse(repoDonantes.buscarPorDocumento("88776655").isPresent(),
+    assertFalse(repoDonantes.buscarPorDocumento(documento).isPresent(),
         "Aunque Keycloak haya fallado, el donante local se borro.");
   }
 
   // === Helpers ===
 
+  // Persistimos todo dentro de la transaccion que abre SimplePersistenceTest.
+  // flush fuerza visibilidad antes de los chequeos de "tiene donaciones".
   private Donacion donacionDe(Donante donante) {
-    Categoria cat = new Categoria("Cat-" + System.nanoTime());
-    entityManager().getTransaction().begin();
+    Categoria cat = new Categoria(DatosDeTest.textoUnico("Cat"));
     entityManager().persist(cat);
-    Subcategoria sub = new Subcategoria("Sub-" + System.nanoTime(), cat, Unidades.UNIDADES);
+    Subcategoria sub = new Subcategoria(DatosDeTest.textoUnico("Sub"), cat, Unidades.UNIDADES);
     entityManager().persist(sub);
     Bien bien = new Bien("Silla", sub, 1, CondicionBien.USADO);
     Donacion donacion = new Donacion(List.of(bien), donante, "demo");
     entityManager().persist(donacion);
-    entityManager().getTransaction().commit();
+    entityManager().flush();
     return donacion;
   }
 

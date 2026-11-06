@@ -1,5 +1,6 @@
 package donatrack.donaciones.service;
 
+import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Donante;
@@ -35,12 +36,15 @@ class GestorPersonasAltaTest implements SimplePersistenceTest {
 
   @Test
   void altaConPersonaExistenteQueYaTieneCuentaNoLlamaAKeycloakYAgregaElEmail() {
-    PersonaHumana persona = new PersonaHumana("Ana", "Perez", 30, "11111111", Genero.FEMENINO);
-    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "ana.vieja@mail.com"));
+    String documento = DatosDeTest.documentoUnico();
+    String emailVieja = DatosDeTest.emailUnico("ana-vieja");
+    String emailNueva = DatosDeTest.emailUnico("ana-nueva");
+    PersonaHumana persona = new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
+    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, emailVieja));
     repoPersonas.guardar(persona);
     Donante donante = new Donante(persona);
     repoDonantes.guardar(donante);
-    repoUsuarios.guardar(Usuario.deDonante("kc-ana", donante));
+    repoUsuarios.guardar(Usuario.deDonante(DatosDeTest.keycloakIdUnico(), donante));
     entityManager().flush();
     entityManager().clear();
 
@@ -49,44 +53,48 @@ class GestorPersonasAltaTest implements SimplePersistenceTest {
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
     PersonaHumana mismaPersonaMismoDocumento =
-        new PersonaHumana("Ana", "Perez", 30, "11111111", Genero.FEMENINO);
-    assertDoesNotThrow(() -> gestor.registrar(mismaPersonaMismoDocumento, "ana.nueva@mail.com"));
+        new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
+    assertDoesNotThrow(() -> gestor.registrar(mismaPersonaMismoDocumento, emailNueva));
 
     assertTrue(proveedor.emailsCreados.isEmpty(),
         "No se tiene que llamar a Keycloak si el perfil ya tenia cuenta.");
 
+    // Despues del gestor la transaccion esta cerrada: solo clear() para releer.
     entityManager().clear();
-    PersonaHumana refrescada = (PersonaHumana) repoPersonas.buscarPorDocumento("11111111")
+    PersonaHumana refrescada = (PersonaHumana) repoPersonas.buscarPorDocumento(documento)
         .orElseThrow();
     assertTrue(refrescada.getContactos().stream()
         .anyMatch(c -> c.getTipo() == TipoContacto.EMAIL
-            && "ana.nueva@mail.com".equals(c.getValor())),
+            && emailNueva.equals(c.getValor())),
         "El email nuevo tiene que haber quedado agregado como medio de contacto.");
   }
 
   @Test
   void altaConPersonaExistenteSinCuentaCreaLaCuenta() {
-    PersonaHumana persona = new PersonaHumana("Luis", "Garcia", 40, "22222222", Genero.MASCULINO);
-    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
+    String documento = DatosDeTest.documentoUnico();
+    String email = DatosDeTest.emailUnico("luis");
+    PersonaHumana persona = new PersonaHumana("Luis", "Garcia", 40, documento, Genero.MASCULINO);
+    persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
     repoPersonas.guardar(persona);
     Donante donante = new Donante(persona);
     repoDonantes.guardar(donante);
     entityManager().flush();
     entityManager().clear();
 
-    ProveedorFalso proveedor = new ProveedorFalso("kc-luis");
+    String kcId = DatosDeTest.keycloakIdUnico();
+    ProveedorFalso proveedor = new ProveedorFalso(kcId);
     GestorPersonas gestor = new GestorPersonas(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
     PersonaHumana reintento =
-        new PersonaHumana("Luis", "Garcia", 40, "22222222", Genero.MASCULINO);
-    gestor.registrar(reintento, "luis@mail.com");
+        new PersonaHumana("Luis", "Garcia", 40, documento, Genero.MASCULINO);
+    gestor.registrar(reintento, email);
 
     assertEquals(1, proveedor.emailsCreados.size());
-    assertEquals("luis@mail.com", proveedor.emailsCreados.get(0));
+    assertEquals(email, proveedor.emailsCreados.get(0));
 
     entityManager().clear();
-    Donante refrescado = repoDonantes.buscarPorDocumento("22222222").orElseThrow();
+    Donante refrescado = repoDonantes.buscarPorDocumento(documento).orElseThrow();
     assertTrue(repoUsuarios.existeParaDonante(refrescado));
   }
 

@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Genero;
@@ -27,73 +28,98 @@ class RepositorioPersonasTest implements SimplePersistenceTest {
 
   @Test
   void unaPersonaHumanaGuardadaSeRecuperaPorDocumento() {
-    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "12345678", Genero.FEMENINO);
+    String documento = DatosDeTest.documentoUnico();
+    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
     ana.setDireccion("Av. Corrientes 1234, CABA");
     repositorio.guardar(ana);
 
     entityManager().flush();
     entityManager().clear();
 
-    Optional<Persona> recuperada = repositorio.buscarPorDocumento("12345678");
+    Optional<Persona> recuperada = repositorio.buscarPorDocumento(documento);
 
     assertTrue(recuperada.isPresent());
     assertTrue(recuperada.get() instanceof PersonaHumana);
     assertEquals("Ana Perez", recuperada.get().getNombreDisplay());
-    assertEquals("12345678", recuperada.get().getDocumento());
+    assertEquals(documento, recuperada.get().getDocumento());
     assertEquals("Av. Corrientes 1234, CABA", recuperada.get().getDireccion());
   }
 
   @Test
   void unaPersonaJuridicaGuardadaSeRecuperaPorCuit() {
+    String cuitConGuiones = cuitConGuionesUnico();
     PersonaJuridica arcos = new PersonaJuridica(
-        "30-12345678-1", "Arcos S.A.", TipoOrganizacion.EMPRESA, "Construccion"
+        cuitConGuiones, "Arcos S.A.", TipoOrganizacion.EMPRESA, "Construccion"
     );
     repositorio.guardar(arcos);
 
     entityManager().flush();
     entityManager().clear();
 
-    Optional<PersonaJuridica> recuperada = repositorio.buscarJuridicaPorCuit("30123456781");
+    String cuitNormalizado = PersonaJuridica.normalizarCuit(cuitConGuiones);
+    Optional<PersonaJuridica> recuperada = repositorio.buscarJuridicaPorCuit(cuitNormalizado);
 
     assertTrue(recuperada.isPresent());
     assertEquals("Arcos S.A.", recuperada.get().getRazonSocial());
-    assertEquals("30123456781", recuperada.get().getCuit());
+    assertEquals(cuitNormalizado, recuperada.get().getCuit());
+  }
+
+  @Test
+  void buscarJuridicaPorCuitFuncionaConYSinGuiones() {
+    String cuitConGuiones = "30-12345678-9";
+    PersonaJuridica arcos = new PersonaJuridica(
+        cuitConGuiones, "Arcos Normalizado", TipoOrganizacion.EMPRESA, "Rubro"
+    );
+    repositorio.guardar(arcos);
+
+    entityManager().flush();
+    entityManager().clear();
+
+    Optional<PersonaJuridica> conGuiones = repositorio.buscarJuridicaPorCuit("30-12345678-9");
+    Optional<PersonaJuridica> sinGuiones = repositorio.buscarJuridicaPorCuit("30123456789");
+
+    assertTrue(conGuiones.isPresent(), "Tiene que encontrarla con el CUIT con guiones.");
+    assertTrue(sinGuiones.isPresent(), "Y tambien sin guiones.");
+    assertEquals(conGuiones.get().getCuit(), sinGuiones.get().getCuit());
   }
 
   @Test
   void buscarPorDocumentoDeHumanaNoDevuelveUnaJuridica() {
     PersonaJuridica arcos = new PersonaJuridica(
-        "30-99999999-1", "Arcos S.A.", TipoOrganizacion.EMPRESA, "Construccion"
+        cuitConGuionesUnico(), "Arcos S.A.", TipoOrganizacion.EMPRESA, "Construccion"
     );
     repositorio.guardar(arcos);
 
     entityManager().flush();
     entityManager().clear();
 
-    Optional<Persona> resultado = repositorio.buscarPorDocumento("12345678");
+    Optional<Persona> resultado = repositorio.buscarPorDocumento(DatosDeTest.documentoUnico());
 
     assertTrue(resultado.isEmpty());
   }
 
   @Test
   void buscarPorEmailEncuentraLaPersonaPorSuMedioContacto() {
-    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "12345678", Genero.FEMENINO);
-    ana.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "ana@mail.com"));
+    String documento = DatosDeTest.documentoUnico();
+    String email = DatosDeTest.emailUnico("ana");
+    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
+    ana.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
     repositorio.guardar(ana);
 
     entityManager().flush();
     entityManager().clear();
 
-    Optional<Persona> recuperada = repositorio.buscarPorEmail("ana@mail.com");
+    Optional<Persona> recuperada = repositorio.buscarPorEmail(email);
 
     assertTrue(recuperada.isPresent());
-    assertEquals("12345678", recuperada.get().getDocumento());
+    assertEquals(documento, recuperada.get().getDocumento());
   }
 
   @Test
   void eliminarPersonaHumanaConContactoPredeterminadoBorraLaPersonaYSusMedios() {
-    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "66666666", Genero.FEMENINO);
-    ana.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "ana@mail.com"));
+    String documento = DatosDeTest.documentoUnico();
+    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
+    ana.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, DatosDeTest.emailUnico("ana")));
     ana.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, "+54 11 0000-0000"));
     repositorio.guardar(ana);
     entityManager().flush();
@@ -104,12 +130,14 @@ class RepositorioPersonasTest implements SimplePersistenceTest {
         .map(MedioContacto::getId)
         .toList();
 
-    entityManager().getTransaction().begin();
+    // La transaccion la abre SimplePersistenceTest; el repositorio ya hace
+    // flush interno para ordenar los deletes. Solo hace falta clear() despues
+    // para releer desde la base.
     repositorio.eliminar(ana);
-    entityManager().getTransaction().commit();
+    entityManager().flush();
     entityManager().clear();
 
-    assertTrue(repositorio.buscarPorDocumento("66666666").isEmpty());
+    assertTrue(repositorio.buscarPorDocumento(documento).isEmpty());
     for (Long id : mediosIds) {
       assertNull(entityManager().find(MedioContacto.class, id),
           "Los medios de contacto tienen que haber caido por cascade.");
@@ -119,43 +147,43 @@ class RepositorioPersonasTest implements SimplePersistenceTest {
 
   @Test
   void eliminarPersonaJuridicaConRepresentantesYContactoPredeterminadoBorraTodo() {
+    String cuit = cuitConGuionesUnico();
     PersonaJuridica arcos = new PersonaJuridica(
-        "30-55555555-5", "Arcos", TipoOrganizacion.EMPRESA, "Rubro");
-    arcos.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "arcos@mail.com"));
-    arcos.agregarRepresentante(new Representante("Rep", "Uno", "rep1@mail.com"));
-    arcos.agregarRepresentante(new Representante("Rep", "Dos", "rep2@mail.com"));
+        cuit, DatosDeTest.textoUnico("Arcos"), TipoOrganizacion.EMPRESA, "Rubro");
+    arcos.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, DatosDeTest.emailUnico("arcos")));
+    arcos.agregarRepresentante(new Representante("Rep", "Uno", DatosDeTest.emailUnico("rep1")));
+    arcos.agregarRepresentante(new Representante("Rep", "Dos", DatosDeTest.emailUnico("rep2")));
     repositorio.guardar(arcos);
     entityManager().flush();
     assertNotNull(arcos.getContactoPredeterminado());
 
-    entityManager().getTransaction().begin();
     repositorio.eliminar(arcos);
-    entityManager().getTransaction().commit();
+    entityManager().flush();
     entityManager().clear();
 
-    assertTrue(repositorio.buscarJuridicaPorCuit("30555555555").isEmpty());
+    assertTrue(repositorio.buscarJuridicaPorCuit(cuit).isEmpty());
   }
 
   @Test
   void eliminarPersonaSinContactoPredeterminadoTambienFunciona() {
-    PersonaHumana sinContacto = new PersonaHumana("X", "Y", 30, "77777777", Genero.FEMENINO);
+    String documento = DatosDeTest.documentoUnico();
+    PersonaHumana sinContacto = new PersonaHumana("X", "Y", 30, documento, Genero.FEMENINO);
     repositorio.guardar(sinContacto);
     entityManager().flush();
     assertNull(sinContacto.getContactoPredeterminado());
 
-    entityManager().getTransaction().begin();
     repositorio.eliminar(sinContacto);
-    entityManager().getTransaction().commit();
+    entityManager().flush();
     entityManager().clear();
 
-    assertTrue(repositorio.buscarPorDocumento("77777777").isEmpty());
+    assertTrue(repositorio.buscarPorDocumento(documento).isEmpty());
   }
 
   @Test
   void todosDevuelveTantoHumanasComoJuridicas() {
-    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "12345678", Genero.FEMENINO);
+    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, DatosDeTest.documentoUnico(), Genero.FEMENINO);
     PersonaJuridica arcos = new PersonaJuridica(
-        "30-12345678-1", "Arcos S.A.", TipoOrganizacion.EMPRESA, "Construccion"
+        cuitConGuionesUnico(), DatosDeTest.textoUnico("Arcos"), TipoOrganizacion.EMPRESA, "Construccion"
     );
     repositorio.guardar(ana);
     repositorio.guardar(arcos);
@@ -165,10 +193,19 @@ class RepositorioPersonasTest implements SimplePersistenceTest {
 
     List<Persona> todos = repositorio.todos();
 
-    assertEquals(2, todos.size());
+    // Otros tests del run pueden haber dejado filas; por eso no comparamos
+    // contra 2 absoluto: pedimos que esten las dos que acabamos de guardar.
     assertTrue(todos.stream().anyMatch(p -> p instanceof PersonaHumana));
     assertTrue(todos.stream().anyMatch(p -> p instanceof PersonaJuridica));
     assertFalse(todos.isEmpty());
     assertNotNull(todos.get(0));
+  }
+
+  // Helper local: cuando el test necesita verificar que la normalizacion de
+  // guiones funciona, armamos el CUIT con guiones. En los tests que no lo
+  // necesitan directamente usamos DatosDeTest.cuitUnico().
+  private static String cuitConGuionesUnico() {
+    String cuit = DatosDeTest.cuitUnico();
+    return cuit.substring(0, 2) + "-" + cuit.substring(2, 10) + "-" + cuit.substring(10);
   }
 }

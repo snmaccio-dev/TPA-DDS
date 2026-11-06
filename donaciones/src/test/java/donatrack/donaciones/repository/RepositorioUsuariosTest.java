@@ -1,5 +1,6 @@
 package donatrack.donaciones.repository;
 
+import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
@@ -26,26 +27,27 @@ class RepositorioUsuariosTest implements SimplePersistenceTest {
 
   @Test
   void guardarYBuscarPorKeycloakId() {
-    Donante donante = donantePersistido("Ana", "11111111");
+    Donante donante = donantePersistido("Ana");
+    String kcId = DatosDeTest.keycloakIdUnico();
 
-    repositorio.guardar(Usuario.deDonante("kc-111", donante));
+    repositorio.guardar(Usuario.deDonante(kcId, donante));
 
     entityManager().flush();
     entityManager().clear();
 
-    Optional<Usuario> recuperado = repositorio.buscarPorKeycloakId("kc-111");
+    Optional<Usuario> recuperado = repositorio.buscarPorKeycloakId(kcId);
 
     assertTrue(recuperado.isPresent());
-    assertEquals("kc-111", recuperado.get().getKeycloakId());
+    assertEquals(kcId, recuperado.get().getKeycloakId());
     assertEquals(donante.getId(), recuperado.get().getDonante().getId());
   }
 
   @Test
   void unSegundoUsuarioParaElMismoDonanteFallaAlFlush() {
-    Donante donante = donantePersistido("Luis", "22222222");
+    Donante donante = donantePersistido("Luis");
 
-    repositorio.guardar(Usuario.deDonante("kc-A", donante));
-    repositorio.guardar(Usuario.deDonante("kc-B", donante));
+    repositorio.guardar(Usuario.deDonante(DatosDeTest.keycloakIdUnico(), donante));
+    repositorio.guardar(Usuario.deDonante(DatosDeTest.keycloakIdUnico(), donante));
 
     assertThrows(RuntimeException.class, () -> entityManager().flush(),
         "La columna unique de donante_id debe rechazar el segundo usuario.");
@@ -53,8 +55,9 @@ class RepositorioUsuariosTest implements SimplePersistenceTest {
 
   @Test
   void deDonanteEncuentraElVinculo() {
-    Donante donante = donantePersistido("Maria", "33333333");
-    repositorio.guardar(Usuario.deDonante("kc-maria", donante));
+    Donante donante = donantePersistido("Maria");
+    String kcId = DatosDeTest.keycloakIdUnico();
+    repositorio.guardar(Usuario.deDonante(kcId, donante));
 
     entityManager().flush();
     entityManager().clear();
@@ -63,13 +66,14 @@ class RepositorioUsuariosTest implements SimplePersistenceTest {
     Optional<Usuario> usuario = repositorio.deDonante(refrescado);
 
     assertTrue(usuario.isPresent());
-    assertEquals("kc-maria", usuario.get().getKeycloakId());
+    assertEquals(kcId, usuario.get().getKeycloakId());
   }
 
   @Test
   void deBeneficiariaEncuentraElVinculo() {
-    Beneficiaria beneficiaria = beneficiariaPersistida("30-11111111-1");
-    repositorio.guardar(Usuario.deBeneficiaria("kc-benef", beneficiaria));
+    Beneficiaria beneficiaria = beneficiariaPersistida();
+    String kcId = DatosDeTest.keycloakIdUnico();
+    repositorio.guardar(Usuario.deBeneficiaria(kcId, beneficiaria));
 
     entityManager().flush();
     entityManager().clear();
@@ -78,31 +82,33 @@ class RepositorioUsuariosTest implements SimplePersistenceTest {
     Optional<Usuario> usuario = repositorio.deBeneficiaria(refrescada);
 
     assertTrue(usuario.isPresent());
-    assertEquals("kc-benef", usuario.get().getKeycloakId());
+    assertEquals(kcId, usuario.get().getKeycloakId());
   }
 
   @Test
   void eliminarQuitaElVinculo() {
-    Donante donante = donantePersistido("Delete", "44444444");
-    repositorio.guardar(Usuario.deDonante("kc-del", donante));
+    Donante donante = donantePersistido("Delete");
+    String kcId = DatosDeTest.keycloakIdUnico();
+    repositorio.guardar(Usuario.deDonante(kcId, donante));
 
     entityManager().flush();
     entityManager().clear();
 
-    Usuario usuario = repositorio.buscarPorKeycloakId("kc-del").orElseThrow();
-    entityManager().getTransaction().begin();
+    Usuario usuario = repositorio.buscarPorKeycloakId(kcId).orElseThrow();
+    // La transaccion la abre SimplePersistenceTest. flush + clear para
+    // que el delete se refleje al releer.
     repositorio.eliminar(usuario);
-    entityManager().getTransaction().commit();
+    entityManager().flush();
     entityManager().clear();
 
-    assertFalse(repositorio.buscarPorKeycloakId("kc-del").isPresent());
+    assertFalse(repositorio.buscarPorKeycloakId(kcId).isPresent());
   }
 
   @Test
   void existeParaDonanteDistingueDonantes() {
-    Donante conUsuario = donantePersistido("Con", "55555555");
-    Donante sinUsuario = donantePersistido("Sin", "66666666");
-    repositorio.guardar(Usuario.deDonante("kc-con", conUsuario));
+    Donante conUsuario = donantePersistido("Con");
+    Donante sinUsuario = donantePersistido("Sin");
+    repositorio.guardar(Usuario.deDonante(DatosDeTest.keycloakIdUnico(), conUsuario));
 
     entityManager().flush();
     entityManager().clear();
@@ -114,15 +120,17 @@ class RepositorioUsuariosTest implements SimplePersistenceTest {
     assertFalse(repositorio.existeParaDonante(refrescadoSin));
   }
 
-  private Donante donantePersistido(String nombre, String documento) {
-    PersonaHumana persona = new PersonaHumana(nombre, "Test", 30, documento, Genero.FEMENINO);
+  private Donante donantePersistido(String nombre) {
+    PersonaHumana persona = new PersonaHumana(
+        nombre, "Test", 30, DatosDeTest.documentoUnico(), Genero.FEMENINO);
     repoPersonas.guardar(persona);
     Donante donante = new Donante(persona);
     repoDonantes.guardar(donante);
     return donante;
   }
 
-  private Beneficiaria beneficiariaPersistida(String cuit) {
+  private Beneficiaria beneficiariaPersistida() {
+    String cuit = DatosDeTest.cuitUnico();
     PersonaJuridica juridica = new PersonaJuridica(
         cuit, "Beneficiaria " + cuit, TipoOrganizacion.ONG, "Rubro");
     repoPersonas.guardar(juridica);
@@ -130,4 +138,5 @@ class RepositorioUsuariosTest implements SimplePersistenceTest {
     repoEntidades.guardar(beneficiaria);
     return beneficiaria;
   }
+
 }

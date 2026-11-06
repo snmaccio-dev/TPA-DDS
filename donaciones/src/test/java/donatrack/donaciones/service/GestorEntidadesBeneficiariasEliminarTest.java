@@ -1,5 +1,6 @@
 package donatrack.donaciones.service;
 
+import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
@@ -31,6 +32,7 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -38,6 +40,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest {
+
+  // Para la clave artificial donacion_id de la PropuestaAsignacion. No sale
+  // de DatosDeTest porque conceptualmente es otro contador (ids de donaciones
+  // ficticias que no persistimos como Donacion).
+  private static final AtomicLong DONACION_ID = new AtomicLong(1_000_000);
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioEntidades repoEntidades = RepositorioEntidades.getInstance();
@@ -50,7 +57,7 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
 
   @Test
   void entidadConDonacionesAsignadasDa409() {
-    Beneficiaria beneficiaria = beneficiariaPersistida("30-11111111-1");
+    Beneficiaria beneficiaria = beneficiariaPersistida();
     donacionAsignadaA(beneficiaria);
 
     ProveedorFalso proveedor = new ProveedorFalso();
@@ -63,14 +70,12 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
 
   @Test
   void entidadSinDonacionesBorraTodo() {
-    Beneficiaria beneficiaria = beneficiariaPersistida("30-22222222-2");
+    Beneficiaria beneficiaria = beneficiariaPersistida();
 
     Subcategoria sub = subcategoriaPersistida("Bancos");
-    entityManager().getTransaction().begin();
     NecesidadExtraordinaria necesidad =
         new NecesidadExtraordinaria("Bancos", 10, sub, beneficiaria);
     entityManager().persist(necesidad);
-    entityManager().getTransaction().commit();
 
     repoNotificaciones.guardar(Notificacion.paraBeneficiaria(
         beneficiaria, TipoNotificacion.DONACION_ASIGNADA, "msj", null));
@@ -85,6 +90,7 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
 
     gestor.eliminar(beneficiaria.getId());
 
+    // Despues del gestor la transaccion esta cerrada: solo clear() para releer.
     entityManager().clear();
     assertFalse(repoEntidades.buscarPorId(beneficiaria.getId()).isPresent());
     Beneficiaria refrescada = entityManager().find(Beneficiaria.class, beneficiaria.getId());
@@ -93,15 +99,14 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
 
   @Test
   void laBeneficiariaDesaparaceDeCandidatasSinBorrarLaPropuesta() {
-    Beneficiaria aBorrar = beneficiariaPersistida("30-33333333-3");
-    Beneficiaria otra = beneficiariaPersistida("30-44444444-4");
+    Beneficiaria aBorrar = beneficiariaPersistida();
+    Beneficiaria otra = beneficiariaPersistida();
+    long donacionId = DONACION_ID.incrementAndGet();
 
-    // Armamos una propuesta con las dos como candidatas.
-    entityManager().getTransaction().begin();
     PropuestaAsignacion propuesta = new PropuestaAsignacion(
-        1L, List.of(aBorrar, otra), LocalDateTime.now(), true);
+        donacionId, List.of(aBorrar, otra), LocalDateTime.now(), true);
     entityManager().persist(propuesta);
-    entityManager().getTransaction().commit();
+    entityManager().flush();
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
@@ -113,7 +118,7 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
 
     entityManager().clear();
     PropuestaAsignacion refrescada =
-        repoPropuestas.buscarPorDonacion(1L).orElseThrow();
+        repoPropuestas.buscarPorDonacion(donacionId).orElseThrow();
     assertEquals(1, refrescada.getCandidatas().size(),
         "La propuesta queda con la otra candidata.");
     assertEquals(otra.getId(), refrescada.getCandidatas().get(0).getId());
@@ -121,7 +126,8 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
 
   // === Helpers ===
 
-  private Beneficiaria beneficiariaPersistida(String cuit) {
+  private Beneficiaria beneficiariaPersistida() {
+    String cuit = DatosDeTest.cuitUnico();
     PersonaJuridica juridica = new PersonaJuridica(
         cuit, "Benef " + cuit, TipoOrganizacion.ONG, "Rubro");
     repoPersonas.guardar(juridica);
@@ -132,28 +138,27 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
   }
 
   private Subcategoria subcategoriaPersistida(String nombre) {
-    Categoria cat = new Categoria("Cat-" + System.nanoTime());
-    entityManager().getTransaction().begin();
+    Categoria cat = new Categoria(DatosDeTest.textoUnico("Cat"));
     entityManager().persist(cat);
-    Subcategoria sub = new Subcategoria(nombre + "-" + System.nanoTime(), cat, Unidades.UNIDADES);
+    Subcategoria sub = new Subcategoria(DatosDeTest.textoUnico(nombre), cat, Unidades.UNIDADES);
     entityManager().persist(sub);
-    entityManager().getTransaction().commit();
+    entityManager().flush();
     return sub;
   }
 
   private void donacionAsignadaA(Beneficiaria beneficiaria) {
+    String cuit = DatosDeTest.cuitUnico();
     PersonaJuridica juridica = new PersonaJuridica(
-        "30-00000099-9", "Donador", TipoOrganizacion.EMPRESA, "Rubro");
+        cuit, DatosDeTest.textoUnico("Donador"), TipoOrganizacion.EMPRESA, "Rubro");
     repoPersonas.guardar(juridica);
     Donante donante = new Donante(juridica);
     repoDonantes.guardar(donante);
     Subcategoria sub = subcategoriaPersistida("Sillas");
     Bien bien = new Bien("Silla", sub, 1, CondicionBien.USADO);
-    entityManager().getTransaction().begin();
     Donacion donacion = new Donacion(List.of(bien), donante, "demo");
     donacion.confirmarDestino(beneficiaria);
     entityManager().persist(donacion);
-    entityManager().getTransaction().commit();
+    entityManager().flush();
   }
 
   private static class ProveedorFalso implements ProveedorDeIdentidad {

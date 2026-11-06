@@ -47,7 +47,8 @@ public class RepositorioDonantes implements WithSimplePersistenceUnit {
             "select d from Donante d, PersonaJuridica p "
                 + "where d.persona = p and p.cuit = :documento",
             Donante.class)
-            .setParameter("documento", documento)
+            .setParameter("documento",
+                donatrack.donaciones.domain.persona.PersonaJuridica.normalizarCuit(documento))
             .getResultList()
             .stream()
             .findFirst();

@@ -127,11 +127,16 @@ public class DonacionesController {
   private void eventoRutasPlanificadas(Context ctx) {
     EventoRutasPlanificadasRequest evento =
         ctx.bodyAsClass(EventoRutasPlanificadasRequest.class);
+    // Pasamos el metodo del dominio directo: la donacion ya la cargo
+    // aplicarEventoEnLote y la transicion ocurre dentro de su propio
+    // withTransaction. Si usaramos gestor.marcarListaParaEntregar(id) la
+    // llamada abriria un withTransaction anidado y, al salir, haria commit
+    // de la transaccion de afuera: el lote dejaria de ser "todo o nada".
     gestor.aplicarEventoEnLote(
         evento.donacionIds(),
         EstadosPosiblesDonacion.LISTA_PARA_ENTREGAR,
         List.of(EstadosPosiblesDonacion.ASIGNACION_REALIZADA),
-        d -> gestor.marcarListaParaEntregar(d.getId())
+        Donacion::marcarListaParaEntregar
     );
     ctx.status(200);
   }
@@ -142,7 +147,7 @@ public class DonacionesController {
         evento.donacionIds(),
         EstadosPosiblesDonacion.EN_TRASLADO,
         List.of(EstadosPosiblesDonacion.LISTA_PARA_ENTREGAR),
-        d -> gestor.marcarEnTraslado(d.getId())
+        Donacion::marcarEnTraslado
     );
     ctx.status(200);
   }

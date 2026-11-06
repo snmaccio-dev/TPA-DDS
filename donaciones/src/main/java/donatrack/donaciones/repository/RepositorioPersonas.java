@@ -41,10 +41,12 @@ public class RepositorioPersonas implements WithSimplePersistenceUnit {
         if (humana.isPresent()) {
             return humana;
         }
+        // Para la parte de jurídicas normalizamos el documento como un CUIT:
+        // asi un "30-12345678-9" matchea con el "30123456789" guardado.
         return createQuery(
             "select p from PersonaJuridica p where p.cuit = :documento",
             Persona.class)
-            .setParameter("documento", documento)
+            .setParameter("documento", PersonaJuridica.normalizarCuit(documento))
             .getResultList()
             .stream()
             .findFirst();
@@ -54,7 +56,7 @@ public class RepositorioPersonas implements WithSimplePersistenceUnit {
         return createQuery(
             "select p from PersonaJuridica p where p.cuit = :cuit",
             PersonaJuridica.class)
-            .setParameter("cuit", cuit)
+            .setParameter("cuit", PersonaJuridica.normalizarCuit(cuit))
             .getResultList()
             .stream()
             .findFirst();
