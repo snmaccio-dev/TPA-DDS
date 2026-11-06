@@ -56,7 +56,15 @@ public class LogisticaApp {
     String urlDonaciones = variable("DONACIONES_URL_BASE", "http://localhost:8080");
     String urlPlanificador = variable("PLANIFICADOR_URL", "http://localhost:9090/planificaciones");
     String tokenPlanificador = variable("PLANIFICADOR_TOKEN", "token-de-desarrollo");
-    boolean simulado = !"http".equalsIgnoreCase(variable("LOGISTICA_MODO", "simulado"));
+    boolean donacionesSimuladas =
+        !"http".equalsIgnoreCase(variable("LOGISTICA_MODO", "simulado"));
+
+    // El planificador de rutas es un servicio de terceros y vive aparte del modo de
+    // integracion con Donaciones: se puede consumir Donaciones por HTTP y seguir
+    // generando rutas localmente, que es la situacion mientras no haya un
+    // planificador desplegado.
+    boolean planificadorSimulado =
+        !"http".equalsIgnoreCase(variable("LOGISTICA_PLANIFICADOR", "simulado"));
     boolean seguridadActiva = !"off".equalsIgnoreCase(variable("LOGISTICA_SEGURIDAD", "on"));
 
     String keycloakUrl = variable("KEYCLOAK_URL", "http://localhost:8180");
@@ -69,7 +77,7 @@ public class LogisticaApp {
     AlmacenDeFotos almacenDeFotos = new AlmacenEnDisco(directorioFotos, urlBase + "/fotos");
 
     ClienteDonaciones clienteDonaciones;
-    if (simulado) {
+    if (donacionesSimuladas) {
       clienteDonaciones = ClienteDonacionesSimulado.conDonacionesDeEjemplo();
     } else {
       // Keycloak. El client secret no tiene default: si falta el arranque falla
@@ -87,7 +95,7 @@ public class LogisticaApp {
       clienteDonaciones = new ClienteDonacionesHttp(urlDonaciones, json, proveedorToken);
     }
 
-    GeneradorRutas generadorRutas = simulado
+    GeneradorRutas generadorRutas = planificadorSimulado
         ? new GeneradorRutasSimulado()
         : new GeneradorRutasExterno(urlPlanificador, json);
 
@@ -150,7 +158,8 @@ public class LogisticaApp {
     Runtime.getRuntime().addShutdownHook(new Thread(job::detener));
 
     System.out.println("Microservicio Logistica escuchando en " + urlBase
-        + " | modo: " + (simulado ? "simulado" : "http")
+        + " | donaciones: " + (donacionesSimuladas ? "simulado" : "http")
+        + " | planificador: " + (planificadorSimulado ? "simulado" : "http")
         + " | seguridad: " + (seguridadActiva ? "on" : "off"));
   }
 
