@@ -13,6 +13,7 @@ import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioUsuarios;
+import donatrack.donaciones.seguridad.PoliticaDeContrasenas;
 import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.RolDeAcceso;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
@@ -23,7 +24,6 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 // ni se loguean.
 public class GestorRegistro implements WithSimplePersistenceUnit {
 
-    private static final int LARGO_MINIMO_CONTRASENA = 8;
     private static final String MENSAJE_PERSONA_DUPLICADA =
         "Ya existe una persona registrada con ese documento. "
             + "Si te dieron de alta en el deposito, revisa el correo de bienvenida.";
@@ -48,7 +48,7 @@ public class GestorRegistro implements WithSimplePersistenceUnit {
 
     public Donante registrarDonante(Persona persona, String email, String contrasena) {
         validarEmail(email);
-        validarContrasena(contrasena);
+        PoliticaDeContrasenas.validar(contrasena);
         if (persona == null) {
             throw new DatosInvalidosException("Los datos de la persona son obligatorios.");
         }
@@ -81,7 +81,7 @@ public class GestorRegistro implements WithSimplePersistenceUnit {
                                               String email,
                                               String contrasena) {
         validarEmail(email);
-        validarContrasena(contrasena);
+        PoliticaDeContrasenas.validar(contrasena);
         if (juridica == null) {
             throw new DatosInvalidosException("Los datos de la persona juridica son obligatorios.");
         }
@@ -128,14 +128,6 @@ public class GestorRegistro implements WithSimplePersistenceUnit {
     private static void validarEmail(String email) {
         if (email == null || email.isBlank() || !email.contains("@")) {
             throw new DatosInvalidosException("El email es obligatorio y debe ser valido.");
-        }
-    }
-
-    private static void validarContrasena(String contrasena) {
-        if (contrasena == null || contrasena.length() < LARGO_MINIMO_CONTRASENA) {
-            throw new DatosInvalidosException(
-                "La contrasena debe tener al menos " + LARGO_MINIMO_CONTRASENA + " caracteres."
-            );
         }
     }
 }

@@ -83,9 +83,13 @@ Solo hace falta si no se usa el export. Si lo importaste, salteate esta seccion 
 - Crear un realm llamado **`donatrack`**.
 - En *Realm settings > Login*, activar **Email as username** (asi el `username` en Keycloak
   queda igual al `email` que mandan los microservicios).
-- En *Realm settings > Email*, cargar el SMTP. Hace falta solo para el alta de usuarios por
-  un administrador, donde Keycloak manda el mail de `UPDATE_PASSWORD`. Para desarrollo sirve
-  [MailHog](https://github.com/mailhog/MailHog) en `localhost:1025`.
+- En *Realm settings > Email*, cargar el SMTP. Hace falta para las altas que Donaciones
+  hace **sin contrasena**: los donantes cargados en el deposito (`POST /donantes`) y las
+  beneficiarias dadas de alta por un administrador (`POST /entidades/*`). En esos casos
+  Keycloak le manda al usuario el correo de `UPDATE_PASSWORD` para que la configure.
+  Los administradores (`POST /administradores`) reciben la contrasena directamente de
+  quien los da de alta, asi que para ese flujo el SMTP no es necesario.
+  Para desarrollo sirve [MailHog](https://github.com/mailhog/MailHog) en `localhost:1025`.
 
 ### 3.1 Roles de realm
 
@@ -131,10 +135,12 @@ El 8082 es el puerto del modulo `web`, que es una app Javalin server-rendered y 
 
 ## 4. Usuarios de prueba
 
-**El administrador se crea a mano** en la consola:
+El **administrador** se crea a mano en la consola: ver la seccion 6.
 
-Users > Create user > email, *Email verified* ON > Create > pestania **Credentials** >
-Set password con *Temporary* en **OFF** > pestania **Role mapping** > asignar `ADMINISTRADOR`.
+Los **choferes** tambien se crean en la consola, con el rol `CHOFER`, y despues hay que
+vincular la cuenta con el chofer de Logistica pasandole el `keycloakId` del usuario (el `sub`
+del token) en `POST /choferes`. Sin esa vinculacion, `GET /rutas/mias` responde que la cuenta
+no esta asociada a ningun chofer.
 
 **Los donantes y las entidades beneficiarias NO se crean en la consola.** El endpoint
 `GET /usuarios/yo` saca el `donanteId` y el `beneficiariaId` de la tabla `usuario` de
@@ -183,7 +189,31 @@ simulado evita las llamadas salientes a Donaciones, no la validacion de los toke
 Las dos variables de seguridad tienen default `on` a proposito: si esto se despliega sin setear
 nada, arranca cerrado.
 
-## 6. Prueba rapida con curl
+## 6. Primer administrador
+
+`POST /administradores` esta restringido al rol `ADMINISTRADOR`, asi que el primer
+administrador se crea a mano en la consola de Keycloak:
+
+1. *Users > Add user*: el `Username` es el email (el realm tiene *Email as username* en ON).
+2. *Credentials > Set password*: cargar la contrasena con **Temporary: OFF**. Si queda en
+   ON, Keycloak marca `UPDATE_PASSWORD` como required action y el login del web falla con
+   "Account is not fully set up".
+3. *Role mapping > Assign role*: asignar el rol de realm `ADMINISTRADOR`.
+
+Desde ese usuario ya se puede llamar a `POST /administradores` para dar de alta mas.
+
+## 7. Cambio de contrasena
+
+Cada usuario puede cambiar su contrasena en:
+
+```
+{KEYCLOAK_URL}/realms/donatrack/account
+```
+
+El web puede poner un link "Cambiar contrasena" que lleve ahi. No hace falta un endpoint
+propio en Donaciones: las credenciales las administra Keycloak.
+
+## 8. Prueba rapida con curl
 
 ```bash
 # 1. Pedir un token para un usuario real (Resource Owner Password Grant, solo para pruebas).
@@ -225,7 +255,30 @@ mientras tengan pendiente la accion `UPDATE_PASSWORD`: Keycloak las rechaza con 
 fully set up". Es esperado, y es la razon por la que el cliente web usa Authorization Code y no
 un formulario propio.
 
-## 7. Volver a exportar el realm
+## 9. Dar de alta otro administrador por API
+
+Con el token de un administrador ya existente:
+
+```bash
+curl -s -X POST http://localhost:8080/administradores \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"nuevo-admin@donatrack.ar","contrasena":"una-contrasena-larga"}'
+```
+
+Respuesta esperada (201):
+
+```json
+{"keycloakId":"f3c6..."}
+```
+
+Casos de error:
+
+- `400` si falta el email o la contrasena tiene menos de 8 caracteres.
+- `409` si ya existe una cuenta con ese correo en Keycloak.
+- `403` si el token no tiene el rol `ADMINISTRADOR`.
+
+## 10. Volver a exportar el realm
 
 Si cambias algo del realm y querias dejarlo en el repo, hay que exportar con Keycloak **detenido**:
 
@@ -241,3 +294,4 @@ enmascara nada**:
   llevan los permisos de los clients. Si se exporta con `--users skip` esos tambien se pierden y
   el import deja los clients sin permisos.
 - Verificar que no queden hashes de contrasena en el archivo.
+
