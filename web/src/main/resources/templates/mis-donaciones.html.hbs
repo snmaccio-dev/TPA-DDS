@@ -2,64 +2,78 @@
 <body data-page="my-donations" data-role="donante">
 {{> templates/partials/sidebar}}
 {{> templates/partials/topbar}}
-<main class="app-main"><div class="page-heading"><div><span class="eyebrow">HISTORIAL</span>
-        <h1>Mis donaciones</h1><p>Consultá tus aportes y filtrá por estado o tipo de bien.</p>
-</div><button class="btn btn-primary" data-toast="La carga de donación se conectará al backend.">＋ Nueva donación</button>
-</div><section class="panel"><div class="filter-bar">
-        <label>Estado<select><option>Todos los estados</option>
-                <option>Entregada</option>
-                <option>En tránsito</option>
-                <option>Pendiente</option>
-        </select></label>
-        <label>Categoría<select>
-                <option>Todas las categorías</option>
-                <option>Alimentos</option>
-                <option>Indumentaria</option>
-                <option>Útiles escolares</option>
-        </select>
+<main class="app-main">
+<div class="page-heading">
+    <div>
+        <span class="eyebrow">HISTORIAL</span>
+        <h1>Mis donaciones</h1>
+        <p>Consultá tus aportes y filtrá por estado o tipo de bien.</p>
+    </div>
+</div>
+<section class="panel">
+    <form class="filter-bar" method="get" action="/mis-donaciones">
+        <label>Estado
+            <select name="estado">
+                <option value="">Todos los estados</option>
+                <option value="EN_DEPOSITO">En depósito</option>
+                <option value="ASIGNACION_REALIZADA">Asignada</option>
+                <option value="LISTA_PARA_ENTREGAR">Lista para entregar</option>
+                <option value="EN_TRASLADO">En traslado</option>
+                <option value="ENTREGADA">Entregada</option>
+                <option value="ENTREGA_FALLIDA">Entrega fallida</option>
+                <option value="VENCIDA">Vencida</option>
+            </select>
+        </label>
+        <label>Categoría
+            <select name="categoria">
+                <option value="">Todas las categorías</option>
+                {{#each categorias}}
+                <option value="{{this}}">{{this}}</option>
+                {{/each}}
+            </select>
         </label>
         <label>Subcategoría
-                <select>
-                        <option value="">Todas las subcategorías</option>
-                        <option value="Sin conservantes">Sin conservantes</option>
-                        <option value="Abrigo">Abrigo</option>
-                        <option value="Combo lápices y cuadernos">Combo lápices y cuadernos</option>
-                </select>
+            <select name="subcategoria">
+                <option value="">Todas las subcategorías</option>
+                {{#each subcategorias}}
+                <option value="{{nombre}}">{{etiqueta}}</option>
+                {{/each}}
+            </select>
         </label>
-        <label>Buscar<input placeholder="Buscar donación..."></label></div><div class="table-wrap">
+        <button class="btn btn-primary" type="submit">Filtrar</button>
+    </form>
+    <div class="table-wrap">
         <table>
-                <thead>
+            <thead>
                 <tr>
-                        <th>Donación</th>
-                        <th>Categoría</th>
-                        <th>SubCategoría</th>
-                        <th>Entidad</th>
-                        <th>Fecha</th>
-                        <th>Estado</th>
-                        <th></th></tr>
-        </thead>
-                <tbody>
+                    <th>Donación</th>
+                    <th>Categoría</th>
+                    <th>Subcategoría</th>
+                    <th>Entidad</th>
+                    <th>Fecha entrega</th>
+                    <th>Cantidad</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each donaciones}}
                 <tr>
-                        <td>Alimentos no perecederos</td>
-                        <td>Alimentos</td>
-                        <td>Sin conservantes</td>
-                        <td>Comedor Los Pinos</td>
-                        <td>02/11/2026</td>
-                        <td><span class="status-pill success">Entregada</span>
-                        </td>
-                        <td><a href="/seguimiento-donante">Ver →</a></td>
-                </tr><tr><td>Ropa de abrigo</td>
-                        <td>Indumentaria</td>
-                        <td>Abrigo</td>
-                        <td>Fundación Puentes</td>
-                        <td>31/10/2026</td>
-                        <td><span class="status-pill info">En tránsito</span></td>
-                        <td><a href="/seguimiento-donante">Ver →</a>
-                        </td></tr><tr><td>Cuadernos y lápices</td>
-                        <td>Útiles escolares</td>
-                        <td>Combo lápices y cuadernos</td>
-                        <td>Centro La Esperanza</td>
-                        <td>28/10/2026</td><td><span class="status-pill warning">Pendiente</span>
-                        </td><td><a href="/seguimiento-donante">Ver →</a></td></tr></tbody></table></div></section></main>
+                    <td>{{descripcion}}</td>
+                    <td>{{categoria}}</td>
+                    <td>{{subcategoria}}</td>
+                    <td>{{razonSocialBeneficiaria}}</td>
+                    <td>{{fechaHoraEntregaTexto}}</td>
+                    <td>{{cantidadTexto}}</td>
+                    <td><span class="status-pill {{estadoClase}}">{{estadoTexto}}</span></td>
+                </tr>
+                {{/each}}
+                {{#unless donaciones}}
+                <tr><td colspan="7" class="muted">No hay donaciones para mostrar.</td></tr>
+                {{/unless}}
+            </tbody>
+        </table>
+    </div>
+</section>
+</main>
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}

@@ -171,7 +171,7 @@ public class ClienteHttp {
     }
 
     if (estado >= 400 && estado < 500) {
-      throw new OperacionRechazadaException(mensajeDe(respuesta.body()));
+      throw new OperacionRechazadaException(mensajeDe(respuesta.body()), estado);
     }
 
     if (estado < 200 || estado >= 300) {

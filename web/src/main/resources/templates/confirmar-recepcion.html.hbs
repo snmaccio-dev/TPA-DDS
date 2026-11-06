@@ -18,20 +18,6 @@
   </section>
   {{/if}}
 
-  {{#if errorDeServicio}}
-  <section class="panel">
-    <strong>{{errorDeServicio}}</strong>
-    <p class="muted">No se pudo cargar la entrega. Volvé a intentar en unos minutos.</p>
-  </section>
-  {{/if}}
-
-  {{#if errorDelFormulario}}
-  <section class="panel">
-    <strong>No se pudo confirmar la recepción</strong>
-    <p class="muted">{{errorDelFormulario}}</p>
-  </section>
-  {{/if}}
-
   {{#if entrega}}
   <div class="receipt-layout">
     <section class="panel">

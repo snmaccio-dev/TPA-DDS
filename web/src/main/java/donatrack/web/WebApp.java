@@ -8,6 +8,7 @@ import donatrack.web.integracion.ClienteDonaciones;
 import donatrack.web.integracion.ClienteDonacionesHttp;
 import donatrack.web.integracion.ClienteLogistica;
 import donatrack.web.integracion.ClienteLogisticaHttp;
+import donatrack.web.integracion.OperacionRechazadaException;
 import donatrack.web.sesion.ClienteOidc;
 import donatrack.web.sesion.ConfiguracionOidc;
 import donatrack.web.sesion.IdentidadDelUsuario;
@@ -18,6 +19,7 @@ import donatrack.web.sesion.UsuarioWeb;
 import donatrack.web.templates.JavalinHandlebars;
 import donatrack.web.templates.JavalinRenderer;
 import io.javalin.Javalin;
+import io.javalin.http.Context;
 import io.javalin.http.staticfiles.Location;
 
 import java.util.Set;
@@ -78,8 +80,6 @@ public class WebApp {
         return;
       }
 
-      // Renovamos antes de que venza, asi el usuario no se encuentra con un 401 a mitad
-      // de una pantalla. Si el refresh token tampoco sirve, la sesion se termino.
       if (usuario.estaPorVencer() && usuario.sePuedeRenovar()) {
         try {
           ctx.sessionAttribute(
@@ -94,8 +94,29 @@ public class WebApp {
 
     app.exception(SesionExpiradaException.class, (e, ctx) -> {
       ctx.sessionAttribute(IdentidadPorSesion.CLAVE_USUARIO, null);
+      Alertas.flashAdvertencia(ctx, "Tu sesión expiró, volvé a ingresar.");
       ctx.redirect("/login");
     });
+
+    app.exception(OperacionRechazadaException.class, (e, ctx) -> {
+      if (e.esProhibido()) {
+        redirigirConAlerta(ctx, identidad, Alertas.TIPO_ERROR,
+            "No tenés permisos para esa acción.");
+      } else {
+        redirigirConAlerta(ctx, identidad, Alertas.TIPO_ERROR, e.getMessage());
+      }
+    });
+
+    app.exception(Exception.class, (e, ctx) -> {
+      // Logueamos al stderr para que quede en el historial del servidor, sin exponer el
+      // stack trace al usuario.
+      e.printStackTrace();
+      redirigirConAlerta(ctx, identidad, Alertas.TIPO_ERROR,
+          "Ocurrió un error inesperado.");
+    });
+
+    app.error(404, ctx -> redirigirConAlerta(ctx, identidad, Alertas.TIPO_ERROR,
+        "La página que buscás no existe."));
 
     new PublicoController(clienteDonaciones, clienteLogistica).registrarRutas(app);
     new SesionController(oidc, clienteDonaciones).registrarRutas(app);
@@ -108,8 +129,41 @@ public class WebApp {
         + " | seguridad: " + (seguridadActiva ? "on" : "off"));
   }
 
-  // Los estaticos tienen que quedar afuera del filtro: si no, el CSS y el JS se van
-  // redirigidos al login y las pantallas se ven sin estilos.
+  // Mandamos al usuario a la pagina anterior (Referer) o, si no hay, al inicio que le
+  // corresponde por rol (o "/" si no tiene sesion). Si el destino del redirect es la
+  // misma ruta que fallo, caemos a "/" para no entrar en un bucle.
+  private static void redirigirConAlerta(Context ctx, IdentidadDelUsuario identidad,
+                                         String tipo, String texto) {
+    Alertas.flash(ctx, tipo, texto);
+    String destino = destinoSeguro(ctx, identidad);
+    ctx.redirect(destino);
+  }
+
+  private static String destinoSeguro(Context ctx, IdentidadDelUsuario identidad) {
+    String referer = ctx.header("Referer");
+    String actual = ctx.path();
+
+    if (referer != null && !referer.isBlank() && !mismaRuta(referer, actual)) {
+      return referer;
+    }
+
+    UsuarioWeb usuario = identidad.actual(ctx).orElse(null);
+    String inicio = usuario == null || usuario.perfil() == null
+        ? "/"
+        : usuario.perfil().inicioSegunRol();
+
+    if (mismaRuta(inicio, actual)) {
+      return "/";
+    }
+    return inicio;
+  }
+
+  private static boolean mismaRuta(String referencia, String path) {
+    if (referencia == null || path == null) return false;
+    // El Referer viene como URL absoluta; alcanza con comparar el final del path.
+    return referencia.endsWith(path);
+  }
+
   private static boolean esPublica(String ruta) {
     return RUTAS_PUBLICAS.contains(ruta)
         || ruta.startsWith("/assets/")

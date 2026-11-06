@@ -1,7 +1,104 @@
 {{> templates/partials/head}}
 <body data-page="beneficiary-dashboard" data-role="beneficiario">
-{{> templates/partials/sidebar}}
-{{> templates/partials/topbar}}
-<main class="app-main"><div class="page-heading"><div><span class="eyebrow">RESUMEN GENERAL</span><h1>Buen día, equipo 👋</h1><p>Gestioná las necesidades y las entregas de tu organización.</p></div><span class="date-chip">◷ Noviembre 2026</span></div><div class="metric-grid"><article class="metric-card"><span class="metric-icon green">▧</span><strong>6</strong><span>Donaciones asignadas</span><small>Datos de demostración</small></article><article class="metric-card"><span class="metric-icon blue">▧</span><strong>2</strong><span>En tránsito</span><small>Datos de demostración</small></article><article class="metric-card"><span class="metric-icon amber">▧</span><strong>3</strong><span>Recibidas</span><small>Datos de demostración</small></article><article class="metric-card"><span class="metric-icon lavender">▧</span><strong>4</strong><span>Necesidades activas</span><small>Datos de demostración</small></article></div><div class="dashboard-grid"><section class="panel"><div class="panel-head"><div><h3>Actividad reciente</h3><small>Últimos movimientos registrados</small></div><a href="/donaciones-asignadas">Ver todos →</a></div><div class="table-wrap"><table><thead><tr><th>Donación</th><th>Fecha</th><th>Estado</th></tr></thead><tbody><tr><td>Alimentos no perecederos</td><td>02/11/2026</td><td><span class="status-pill success">Entregada</span></td></tr><tr><td>Ropa de abrigo</td><td>31/10/2026</td><td><span class="status-pill info">En tránsito</span></td></tr><tr><td>Útiles escolares</td><td>28/10/2026</td><td><span class="status-pill warning">Pendiente</span></td></tr></tbody></table></div></section><section class="panel quick-panel"><div class="panel-head"><h3>Accesos rápidos</h3></div><a class="quick-link" href="/necesidades"><span>Registrar necesidad</span><b>→</b></a><a class="quick-link" href="/donaciones-asignadas"><span>Ver asignaciones</span><b>→</b></a><a class="quick-link" href="/confirmar-recepcion"><span>Confirmar recepción</span><b>→</b></a></section></div></main>
-{{> templates/partials/footer}}
-{{> templates/partials/scripts}}
+    {{> templates/partials/sidebar}}
+    {{> templates/partials/topbar}}
+    <main class="app-main">
+        <div class="page-heading">
+            <div>
+                <span class="eyebrow">RESUMEN GENERAL</span>
+                <h1>Buen día, equipo 👋</h1>
+                <p>Gestioná las necesidades y las entregas de tu organización.</p>
+            </div>
+            <span class="date-chip">◷ Noviembre 2026</span>
+        </div>
+        <div class="metric-grid">
+            <article class="metric-card">
+                <span class="metric-icon green">▧</span>
+                <strong>6</strong>
+                <span>Donaciones asignadas</span>
+                <small>Datos de demostración</small>
+            </article>
+            <article class="metric-card">
+                <span class="metric-icon blue">▧</span>
+                <strong>2</strong>
+                <span>En tránsito</span>
+                <small>Datos de demostración</small>
+            </article>
+            <article class="metric-card">
+                <span class="metric-icon amber">▧</span>
+                <strong>3</strong>
+                <span>Recibidas</span>
+                <small>Datos de demostración</small>
+            </article>
+            <article class="metric-card">
+                <span class="metric-icon lavender">▧</span>
+                <strong>4</strong>
+                <span>Necesidades activas</span>
+                <small>Datos de demostración</small>
+            </article>
+        </div>
+        <div class="dashboard-grid">
+            <section class="panel">
+                <div class="panel-head">
+                    <div>
+                        <h3>Actividad reciente</h3>
+                        <small>Últimos movimientos registrados</small>
+                    </div>
+                    <a href="/donaciones-asignadas">Ver todos →</a>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Donación</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Alimentos no perecederos</td>
+                                <td>02/11/2026</td>
+                                <td>
+                                    <span class="status-pill success">Entregada</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Ropa de abrigo</td>
+                                <td>31/10/2026</td>
+                                <td>
+                                    <span class="status-pill info">En tránsito</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Útiles escolares</td>
+                                <td>28/10/2026</td>
+                                <td>
+                                    <span class="status-pill warning">Pendiente</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <section class="panel quick-panel">
+                <div class="panel-head">
+                    <h3>Accesos rápidos</h3>
+                </div>
+                <a class="quick-link" href="/necesidades">
+                    <span>Registrar necesidad</span>
+                    <b>→</b>
+                </a>
+                <a class="quick-link" href="/donaciones-asignadas">
+                    <span>Ver asignaciones</span>
+                    <b>→</b>
+                </a>
+                <a class="quick-link" href="/confirmar-recepcion">
+                    <span>Confirmar recepción</span>
+                    <b>→</b>
+                </a>
+            </section>
+        </div>
+    </main>
+    {{> templates/partials/footer}}
+    {{> templates/partials/scripts}}

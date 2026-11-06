@@ -1,0 +1,14 @@
+{{#if alertaError}}
+<div class="alerta error" role="alert" data-alerta>
+    <span class="alerta-icono" aria-hidden="true">⚠</span>
+    <span class="alerta-texto">{{alertaError}}</span>
+    <button type="button" class="alerta-cerrar" aria-label="Cerrar alerta" data-alerta-cerrar>×</button>
+</div>
+{{/if}}
+{{#if alertaAdvertencia}}
+<div class="alerta advertencia" role="status" data-alerta>
+    <span class="alerta-icono" aria-hidden="true">!</span>
+    <span class="alerta-texto">{{alertaAdvertencia}}</span>
+    <button type="button" class="alerta-cerrar" aria-label="Cerrar alerta" data-alerta-cerrar>×</button>
+</div>
+{{/if}}

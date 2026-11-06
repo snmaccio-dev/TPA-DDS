@@ -12,13 +12,6 @@
     {{#if seguimiento}}<span class="status-pill info">{{seguimiento.total}} en tránsito</span>{{/if}}
   </div>
 
-  {{#if errorDeServicio}}
-  <section class="panel">
-    <strong>{{errorDeServicio}}</strong>
-    <p class="muted">No se pudo cargar el seguimiento. Volvé a intentar en unos minutos.</p>
-  </section>
-  {{/if}}
-
   <div class="tracking-layout">
     <section class="panel map-panel">
       <div class="panel-head">

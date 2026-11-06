@@ -12,20 +12,6 @@
     <a class="btn btn-ghost" href="/camiones">Volver a la flota</a>
   </div>
 
-  {{#if errorDeServicio}}
-  <section class="panel">
-    <strong>{{errorDeServicio}}</strong>
-    <p class="muted">No se pudo cargar el camión. Volvé a intentar en unos minutos.</p>
-  </section>
-  {{/if}}
-
-  {{#if errorDelFormulario}}
-  <section class="panel">
-    <strong>No se pudo guardar el camión</strong>
-    <p class="muted">{{errorDelFormulario}}</p>
-  </section>
-  {{/if}}
-
   {{#if camion}}
   <form class="panel form-panel" method="post" action="/camiones/{{patente}}">
     <h2>Capacidades</h2>

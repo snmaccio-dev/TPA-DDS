@@ -1,3 +1,28 @@
-<header class="app-topbar"><button class="mobile-menu" aria-label="Abrir menú">☰</button>
-<div class="breadcrumb">DonaTrack <span>/</span> {{seccion}}</div>
-<div class="top-actions"><a class="icon-button" href="/notificaciones" title="Notificaciones">♧<i></i></a><div class="avatar small" title="{{usuario.nombre}}">{{usuario.iniciales}}</div><form method="post" action="/logout"><button class="table-action" type="submit">Salir</button></form></div></header>
+<header class="app-topbar">
+    <button class="mobile-menu" aria-label="Abrir menú">☰</button>
+    <div class="breadcrumb">
+        DonaTrack
+        <span>/</span>
+        {{seccion}}
+    </div>
+    <div class="top-actions">
+        {{#if esDonante}}
+        <a class="icon-button" href="/notificaciones" title="Notificaciones">
+            ♧
+            <i>
+            </i>
+        </a>
+        {{/if}}
+        {{#if esBeneficiaria}}
+        <a class="icon-button" href="/notificaciones" title="Notificaciones">
+            ♧
+            <i>
+            </i>
+        </a>
+        {{/if}}
+        <div class="avatar small" title="{{usuario.nombre}}">{{usuario.iniciales}}</div>
+        <form method="post" action="/logout">
+            <button class="table-action" type="submit">Salir</button>
+        </form>
+    </div>
+</header>

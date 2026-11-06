@@ -4,8 +4,6 @@
 {{> templates/partials/topbar}}
 <main class="app-main">
 <div class="page-heading"><div><span class="eyebrow">GESTIÓN DE RECURSOS</span><h1>Mis necesidades</h1><p>Registrá los bienes materiales que necesita tu organización.</p></div><button class="btn btn-primary" data-open-modal="need-modal">＋ Nueva necesidad</button></div>
-{{#if errorDeServicio}}<p class="notice">{{errorDeServicio}}</p>{{/if}}
-{{#if errorDelFormulario}}<p class="notice">{{errorDelFormulario}}</p>{{/if}}
 <section class="panel"><div class="panel-head"><h3>Necesidades registradas</h3><span class="muted">{{necesidades.size}} registradas</span></div>
 <div class="table-wrap"><table>
 <thead><tr><th>Necesidad</th><th>Subcategoría</th><th>Cantidad</th><th>Tipo</th></tr></thead>

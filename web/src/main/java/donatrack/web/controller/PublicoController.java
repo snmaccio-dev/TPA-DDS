@@ -1,8 +1,10 @@
 package donatrack.web.controller;
 
+import donatrack.web.Alertas;
 import donatrack.web.Modelo;
 import donatrack.web.integracion.ClienteDonaciones;
 import donatrack.web.integracion.ClienteLogistica;
+import donatrack.web.integracion.IntegracionException;
 import donatrack.web.integracion.OperacionRechazadaException;
 import donatrack.web.integracion.RegistroBeneficiaria;
 import donatrack.web.integracion.RegistroDonante;
@@ -45,8 +47,6 @@ public class PublicoController {
   }
 
   private void donacionesPublicas(Context ctx) {
-    // conDatosDe degrada sola: si Logistica esta caida la pantalla se ve igual, con la
-    // lista vacia y el aviso, en vez de romper una pantalla publica.
     ctx.render("donaciones-publicas.html.hbs",
         Modelo.de("Donaciones entregadas")
             .conMapa()
@@ -61,6 +61,12 @@ public class PublicoController {
 
   private void crearCuenta(Context ctx) {
     String perfil = ctx.formParam("perfil");
+    String email = ctx.formParam("email");
+
+    if (email == null || email.isBlank()) {
+      mostrarRegistro(ctx, "El correo es obligatorio.");
+      return;
+    }
 
     try {
       if (DONANTE.equals(perfil)) {
@@ -68,16 +74,11 @@ public class PublicoController {
       } else if (BENEFICIARIA.equals(perfil)) {
         clienteDonaciones.registrarBeneficiaria(beneficiariaDelFormulario(ctx));
       } else {
-        mostrarRegistro(ctx, "Elegi un tipo de cuenta.");
+        mostrarRegistro(ctx, "Elegí un tipo de cuenta.");
         return;
       }
-    } catch (OperacionRechazadaException e) {
-      // El mensaje viene de Donaciones y ya esta en lenguaje de dominio: documento
-      // repetido, cuit invalido, email en uso. Se muestra tal cual.
-      mostrarRegistro(ctx, e.getMessage());
-      return;
-    } catch (ServicioNoDisponibleException e) {
-      mostrarRegistro(ctx, "El servicio no esta disponible en este momento. Proba de nuevo.");
+    } catch (IntegracionException e) {
+      mostrarRegistro(ctx, mensajeDe(e));
       return;
     }
 
@@ -115,9 +116,9 @@ public class PublicoController {
     );
   }
 
-  private void mostrarRegistro(Context ctx, String error) {
+  private void mostrarRegistro(Context ctx, String alertaError) {
     ctx.render("registro.html.hbs",
-        Modelo.de("Crear cuenta").con("error", error).mapa());
+        Modelo.de("Crear cuenta").conAlertaError(alertaError).mapa());
   }
 
   private void login(Context ctx) {
@@ -129,6 +130,16 @@ public class PublicoController {
 
   private void privacidad(Context ctx) {
     ctx.render("privacidad.html.hbs", Modelo.de("Privacidad").mapa());
+  }
+
+  static String mensajeDe(IntegracionException e) {
+    if (e instanceof ServicioNoDisponibleException) {
+      return Alertas.SERVICIO_NO_DISPONIBLE;
+    }
+    if (e instanceof OperacionRechazadaException) {
+      return e.getMessage();
+    }
+    return e.getMessage();
   }
 
   private static Integer entero(String valor) {

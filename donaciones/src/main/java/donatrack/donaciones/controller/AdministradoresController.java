@@ -27,7 +27,7 @@ public class AdministradoresController {
 
     private void crear(Context ctx) {
         NuevoAdministradorRequest request = ctx.bodyAsClass(NuevoAdministradorRequest.class);
-        if (request.email() == null || request.email().isBlank()) {
+    if (request.email() == null || request.email().isBlank()) {
             throw new DatosInvalidosException("El email del administrador es obligatorio.");
         }
         PoliticaDeContrasenas.validar(request.contrasena());

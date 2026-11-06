@@ -10,6 +10,9 @@ import java.util.function.Supplier;
 
 public class Modelo {
 
+  public static final String CLAVE_ALERTA_ERROR = "alertaError";
+  public static final String CLAVE_ALERTA_ADVERTENCIA = "alertaAdvertencia";
+
   private final Map<String, Object> datos = new HashMap<>();
   private final Map<String, String> activa = new LinkedHashMap<>();
   private final Map<String, Object> usuario = new HashMap<>();
@@ -44,11 +47,29 @@ public class Modelo {
     return this;
   }
 
+  public Modelo conAlertaError(String texto) {
+    if (texto != null && !texto.isBlank()) {
+      datos.put(CLAVE_ALERTA_ERROR, texto);
+    }
+    return this;
+  }
+
+  public Modelo conAlertaAdvertencia(String texto) {
+    if (texto != null && !texto.isBlank()) {
+      datos.put(CLAVE_ALERTA_ADVERTENCIA, texto);
+    }
+    return this;
+  }
+
   public <T> Modelo conDatosDe(String clave, T valorPorDefecto, Supplier<T> consulta) {
     try {
       return con(clave, consulta.get());
     } catch (IntegracionException e) {
-      return con(clave, valorPorDefecto).con("errorDeServicio", e.getMessage());
+      // Guardamos errorDeServicio por compatibilidad historica y, ademas, cargamos
+      // alertaAdvertencia para que el componente unico muestre el aviso en pantalla.
+      return con(clave, valorPorDefecto)
+          .con("errorDeServicio", e.getMessage())
+          .conAlertaAdvertencia("No se pudieron cargar los datos: " + e.getMessage());
     }
   }
 
