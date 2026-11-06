@@ -44,14 +44,16 @@ public class ClienteHttp {
     this.servicio = servicio;
   }
 
-  public <T> T obtener(String ruta, TypeReference<T> tipo) {
+  public <T> T obtener(String autorizacion, String ruta, TypeReference<T> tipo) {
     HttpResponse<String> respuesta = enviar(
-        HttpRequest.newBuilder()
-            .uri(URI.create(urlBase + ruta))
-            .header("Accept", "application/json")
-            .timeout(ESPERA)
-            .GET()
-            .build()
+        conAutorizacion(
+            HttpRequest.newBuilder()
+                .uri(URI.create(urlBase + ruta))
+                .header("Accept", "application/json")
+                .timeout(ESPERA)
+                .GET(),
+            autorizacion
+        ).build()
     );
 
     verificar(respuesta);
@@ -59,29 +61,32 @@ public class ClienteHttp {
     return deserializar(respuesta.body(), tipo);
   }
 
-  public void publicar(String ruta, Object cuerpo) {
-    escribir("POST", ruta, cuerpo);
+  public void publicar(String autorizacion, String ruta, Object cuerpo) {
+    escribir("POST", autorizacion, ruta, cuerpo);
   }
 
-  public void reemplazar(String ruta, Object cuerpo) {
-    escribir("PUT", ruta, cuerpo);
+  public void reemplazar(String autorizacion, String ruta, Object cuerpo) {
+    escribir("PUT", autorizacion, ruta, cuerpo);
   }
 
-  public <T> T publicarArchivos(String ruta,
+  public <T> T publicarArchivos(String autorizacion,
+                                String ruta,
                                 String campo,
                                 List<ArchivoSubido> archivos,
                                 TypeReference<T> tipo) {
     String frontera = "DonaTrack" + UUID.randomUUID();
 
     HttpResponse<String> respuesta = enviar(
-        HttpRequest.newBuilder()
-            .uri(URI.create(urlBase + ruta))
-            .header("Content-Type", "multipart/form-data; boundary=" + frontera)
-            .header("Accept", "application/json")
-            .timeout(ESPERA)
-            .POST(HttpRequest.BodyPublishers.ofByteArrays(
-                cuerpoMultiparte(frontera, campo, archivos)))
-            .build()
+        conAutorizacion(
+            HttpRequest.newBuilder()
+                .uri(URI.create(urlBase + ruta))
+                .header("Content-Type", "multipart/form-data; boundary=" + frontera)
+                .header("Accept", "application/json")
+                .timeout(ESPERA)
+                .POST(HttpRequest.BodyPublishers.ofByteArrays(
+                    cuerpoMultiparte(frontera, campo, archivos))),
+            autorizacion
+        ).build()
     );
 
     verificar(respuesta);
@@ -112,16 +117,24 @@ public class ClienteHttp {
     return valor.getBytes(StandardCharsets.UTF_8);
   }
 
-  private void escribir(String metodo, String ruta, Object cuerpo) {
+  private void escribir(String metodo, String autorizacion, String ruta, Object cuerpo) {
     verificar(enviar(
-        HttpRequest.newBuilder()
-            .uri(URI.create(urlBase + ruta))
-            .header("Content-Type", "application/json")
-            .header("Accept", "application/json")
-            .timeout(ESPERA)
-            .method(metodo, HttpRequest.BodyPublishers.ofString(serializar(cuerpo)))
-            .build()
+        conAutorizacion(
+            HttpRequest.newBuilder()
+                .uri(URI.create(urlBase + ruta))
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .timeout(ESPERA)
+                .method(metodo, HttpRequest.BodyPublishers.ofString(serializar(cuerpo))),
+            autorizacion
+        ).build()
     ));
+  }
+
+  private HttpRequest.Builder conAutorizacion(HttpRequest.Builder pedido, String autorizacion) {
+    return autorizacion == null || autorizacion.isBlank()
+        ? pedido
+        : pedido.header("Authorization", autorizacion);
   }
 
   private void verificar(HttpResponse<String> respuesta) {

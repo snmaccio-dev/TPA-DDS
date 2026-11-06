@@ -7,10 +7,12 @@ import donatrack.web.integracion.ClienteLogistica;
 import donatrack.web.integracion.NuevoCamion;
 import donatrack.web.integracion.OperacionRechazadaException;
 import donatrack.web.sesion.IdentidadDelUsuario;
+import donatrack.web.sesion.UsuarioWeb;
 import donatrack.web.vista.FlotaVista;
 import donatrack.web.vista.SeguimientoVista;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import io.javalin.http.InternalServerErrorResponse;
 import io.javalin.http.UploadedFile;
 
 import java.io.IOException;
@@ -48,6 +50,8 @@ public class LogisticaWebController {
   }
 
   private void crearCamion(Context ctx) {
+    String autorizacion = autorizacionDe(ctx);
+
     NuevoCamion nuevo = new NuevoCamion(
         ctx.formParam("patente"),
         numero(ctx, "capacidadVolumen"),
@@ -56,7 +60,7 @@ public class LogisticaWebController {
     );
 
     try {
-      clienteLogistica.crearCamion(nuevo);
+      clienteLogistica.crearCamion(autorizacion, nuevo);
     } catch (OperacionRechazadaException e) {
       mostrarCamiones(ctx, e.getMessage());
       return;
@@ -70,6 +74,7 @@ public class LogisticaWebController {
   }
 
   private void actualizarCamion(Context ctx) {
+    String autorizacion = autorizacionDe(ctx);
     String patente = ctx.pathParam("patente");
 
     CapacidadesDeCamion capacidades = new CapacidadesDeCamion(
@@ -79,7 +84,7 @@ public class LogisticaWebController {
     );
 
     try {
-      clienteLogistica.actualizarCamion(patente, capacidades);
+      clienteLogistica.actualizarCamion(autorizacion, patente, capacidades);
     } catch (OperacionRechazadaException e) {
       mostrarEdicion(ctx, patente, e.getMessage());
       return;
@@ -89,50 +94,34 @@ public class LogisticaWebController {
   }
 
   private void seguimientoDonante(Context ctx) {
-    List<Long> donaciones = identidad.donaciones(ctx).orElse(null);
-
-    Modelo modelo = Modelo.de("Seguimiento").seccion("Seguimiento")
-        .comoDonante().activa("seguimiento").conMapa()
-        .con("seguimiento", SeguimientoVista.VACIO);
-
-    if (donaciones == null) {
-      sinIdentidad(modelo);
-    } else {
-      modelo.conDatosDe("seguimiento", SeguimientoVista.VACIO,
-          () -> new SeguimientoVista(clienteLogistica.monitoreoDeDonaciones(donaciones)));
-    }
-
-    ctx.render("seguimiento-donante.html.hbs", modelo.mapa());
+    ctx.render("seguimiento-donante.html.hbs",
+        modeloBase(ctx, "Seguimiento", "Seguimiento")
+            .comoDonante().activa("seguimiento").conMapa()
+            .conDatosDe("seguimiento", SeguimientoVista.VACIO, () -> seguimiento(ctx))
+            .mapa());
   }
 
   private void seguimientoBeneficiaria(Context ctx) {
-    Long beneficiaria = identidad.beneficiaria(ctx).orElse(null);
-
-    Modelo modelo = Modelo.de("Seguimiento").seccion("Seguimiento")
-        .comoBeneficiaria().activa("seguimiento").conMapa()
-        .con("seguimiento", SeguimientoVista.VACIO);
-
-    if (beneficiaria == null) {
-      sinIdentidad(modelo);
-    } else {
-      modelo.conDatosDe("seguimiento", SeguimientoVista.VACIO,
-          () -> new SeguimientoVista(clienteLogistica.monitoreoDeBeneficiaria(beneficiaria)));
-    }
-
-    ctx.render("seguimiento-beneficiario.html.hbs", modelo.mapa());
+    ctx.render("seguimiento-beneficiario.html.hbs",
+        modeloBase(ctx, "Seguimiento", "Seguimiento")
+            .comoBeneficiaria().activa("seguimiento").conMapa()
+            .conDatosDe("seguimiento", SeguimientoVista.VACIO, () -> seguimiento(ctx))
+            .mapa());
   }
 
   private void confirmarRecepcion(Context ctx) {
-    mostrarConfirmacion(ctx, identidad.entregaAConfirmar(ctx).orElse(null), null);
+    mostrarConfirmacion(ctx, entregaPedida(ctx), null);
   }
 
   private void registrarRecepcion(Context ctx) {
+    String autorizacion = autorizacionDe(ctx);
     long entregaId = ctx.pathParamAsClass("id", Long.class).get();
 
     try {
       clienteLogistica.confirmarRecepcion(
+          autorizacion,
           entregaId,
-          clienteLogistica.subirFotos(entregaId, fotosDe(ctx))
+          clienteLogistica.subirFotos(autorizacion, entregaId, fotosDe(ctx))
       );
     } catch (OperacionRechazadaException e) {
       mostrarConfirmacion(ctx, entregaId, e.getMessage());
@@ -172,42 +161,75 @@ public class LogisticaWebController {
 
   private void mostrarCamiones(Context ctx, String errorDelFormulario) {
     ctx.render("camiones.html.hbs",
-        Modelo.de("Camiones").seccion("Camiones").comoAdmin().activa("camiones")
-            .conDatosDe("flota", FlotaVista.VACIA, this::flota)
+        modeloBase(ctx, "Camiones", "Camiones")
+            .comoAdmin().activa("camiones")
+            .conDatosDe("flota", FlotaVista.VACIA, () -> flota(ctx))
             .con("errorDelFormulario", errorDelFormulario)
             .mapa());
   }
 
   private void mostrarEdicion(Context ctx, String patente, String errorDelFormulario) {
     ctx.render("camion-editar.html.hbs",
-        Modelo.de("Editar camión").seccion("Camiones").comoAdmin().activa("camiones")
-            .conDatosDe("camion", null, () -> clienteLogistica.camion(patente))
+        modeloBase(ctx, "Editar camión", "Camiones")
+            .comoAdmin().activa("camiones")
+            .conDatosDe("camion", null,
+                () -> clienteLogistica.camion(autorizacionDe(ctx), patente))
             .con("patente", patente)
             .con("errorDelFormulario", errorDelFormulario)
             .mapa());
   }
 
   private void mostrarConfirmacion(Context ctx, Long entregaId, String errorDelFormulario) {
-    Modelo modelo = Modelo.de("Confirmar recepción").seccion("Confirmar recepción")
+    Modelo modelo = modeloBase(ctx, "Confirmar recepción", "Confirmar recepción")
         .comoBeneficiaria().activa("confirmar")
         .con("errorDelFormulario", errorDelFormulario);
 
     if (entregaId == null) {
-      sinIdentidad(modelo);
+      modelo.con("faltaLaEntrega", true);
     } else {
       modelo.con("entregaId", entregaId)
-          .conDatosDe("entrega", null, () -> clienteLogistica.entrega(entregaId));
+          .conDatosDe("entrega", null,
+              () -> clienteLogistica.entrega(autorizacionDe(ctx), entregaId));
     }
 
     ctx.render("confirmar-recepcion.html.hbs", modelo.mapa());
   }
 
-  private void sinIdentidad(Modelo modelo) {
-    modelo.con("errorDeSesion", identidad.comoIdentificarse());
+  private Modelo modeloBase(Context ctx, String titulo, String seccion) {
+    return Modelo.de(titulo).seccion(seccion).conUsuario(usuario(ctx).perfil());
   }
 
-  private FlotaVista flota() {
-    return new FlotaVista(clienteLogistica.camiones());
+  private FlotaVista flota(Context ctx) {
+    return new FlotaVista(clienteLogistica.camiones(autorizacionDe(ctx)));
+  }
+
+  private SeguimientoVista seguimiento(Context ctx) {
+    return new SeguimientoVista(
+        clienteLogistica.monitoreoDeRutasEnCurso(autorizacionDe(ctx))
+    );
+  }
+
+  private Long entregaPedida(Context ctx) {
+    String valor = ctx.queryParam("entrega");
+
+    if (valor == null || valor.isBlank()) {
+      return null;
+    }
+
+    try {
+      return Long.parseLong(valor.trim());
+    } catch (NumberFormatException e) {
+      return null;
+    }
+  }
+
+  private String autorizacionDe(Context ctx) {
+    return usuario(ctx).autorizacion();
+  }
+
+  private UsuarioWeb usuario(Context ctx) {
+    return identidad.actual(ctx).orElseThrow(() ->
+        new InternalServerErrorResponse("No hay una sesion iniciada."));
   }
 
   private double numero(Context ctx, String campo) {

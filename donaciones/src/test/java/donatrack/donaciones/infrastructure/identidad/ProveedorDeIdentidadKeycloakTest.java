@@ -16,6 +16,9 @@ import java.net.http.HttpClient;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,6 +34,7 @@ class ProveedorDeIdentidadKeycloakTest {
   private HttpServer servidor;
   private String urlBase;
   private final List<String> rutasLlamadas = new ArrayList<>();
+  private final Map<String, Secuencia> respuestas = new ConcurrentHashMap<>();
   private final AtomicInteger contadorTokens = new AtomicInteger(0);
   private final ObjectMapper json = new ObjectMapper();
 
@@ -188,28 +192,72 @@ class ProveedorDeIdentidadKeycloakTest {
     });
   }
 
+  // El HttpServer del JDK admite un solo contexto por path, asi que registrar la misma
+  // ruta dos veces no reemplaza al handler anterior. Por eso cada ruta guarda sus
+  // respuestas en orden de registro y un contador de llamadas: la llamada N devuelve la
+  // respuesta N, y a partir de ahi se repite la ultima. Eso cubre los endpoints que se
+  // registran una vez y se invocan varias, como el de roles.
   private void registrarEndpoint(String metodo, String ruta, int status,
                                  String cuerpo, String locationRelativo) {
+    Respuesta respuesta = new Respuesta(metodo, status, cuerpo, locationRelativo);
+    Secuencia existente = respuestas.get(ruta);
+
+    if (existente != null) {
+      existente.agregar(respuesta);
+      return;
+    }
+
+    Secuencia secuencia = new Secuencia();
+    secuencia.agregar(respuesta);
+    respuestas.put(ruta, secuencia);
+
     servidor.createContext(ruta, intercambio -> {
-      if (!metodo.equals(intercambio.getRequestMethod())) {
+      Respuesta actual = respuestas.get(ruta).siguiente();
+
+      if (actual == null || !actual.metodo().equals(intercambio.getRequestMethod())) {
         intercambio.sendResponseHeaders(405, -1);
         intercambio.close();
         return;
       }
-      rutasLlamadas.add(metodo + " " + intercambio.getRequestURI().getPath());
-      if (locationRelativo != null) {
-        intercambio.getResponseHeaders().add("Location", urlBase + locationRelativo);
+      rutasLlamadas.add(actual.metodo() + " " + intercambio.getRequestURI().getPath());
+      if (actual.locationRelativo() != null) {
+        intercambio.getResponseHeaders().add("Location", urlBase + actual.locationRelativo());
       }
-      byte[] bytes = cuerpo == null ? new byte[0] : cuerpo.getBytes(StandardCharsets.UTF_8);
+      byte[] bytes = actual.cuerpo() == null
+          ? new byte[0]
+          : actual.cuerpo().getBytes(StandardCharsets.UTF_8);
       if (bytes.length > 0) {
         intercambio.getResponseHeaders().add("Content-Type", "application/json");
-        intercambio.sendResponseHeaders(status, bytes.length);
+        intercambio.sendResponseHeaders(actual.status(), bytes.length);
         intercambio.getResponseBody().write(bytes);
       } else {
-        intercambio.sendResponseHeaders(status, -1);
+        intercambio.sendResponseHeaders(actual.status(), -1);
       }
       intercambio.close();
     });
+  }
+
+  private record Respuesta(String metodo, int status, String cuerpo, String locationRelativo) {
+  }
+
+  private static final class Secuencia {
+
+    private final List<Respuesta> respuestas = new CopyOnWriteArrayList<>();
+    private final AtomicInteger llamadas = new AtomicInteger(0);
+
+    private void agregar(Respuesta respuesta) {
+      respuestas.add(respuesta);
+    }
+
+    private Respuesta siguiente() {
+      if (respuestas.isEmpty()) {
+        return null;
+      }
+
+      return respuestas.get(
+          Math.min(llamadas.getAndIncrement(), respuestas.size() - 1)
+      );
+    }
   }
 
   // Helper de tests: parsea JSON. Actualmente no se usa pero lo dejamos

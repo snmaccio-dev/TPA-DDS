@@ -145,9 +145,17 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
 
       buscarSolicitud(recibida.solicitudId()).registrarRespuesta();
 
-      List<RutaReparto> rutas = recibida.rutas().stream()
-          .map(this::armarRuta)
-          .toList();
+      // Cada ruta se persiste apenas se arma. Armarla deja las entregas apuntando a ella,
+      // y la consulta del camion de la ruta siguiente dispara un auto-flush: si la ruta
+      // anterior todavia fuera transitoria, ese flush falla. Con mas de una ruta por
+      // callback, que es lo normal, hacerlo al final no alcanza.
+      List<RutaReparto> rutas = new ArrayList<>();
+
+      for (RutaPlanificada planificada : recibida.rutas()) {
+        RutaReparto ruta = armarRuta(planificada);
+        repositorioRutas.guardar(ruta);
+        rutas.add(ruta);
+      }
 
       List<Entrega> noAsignadas = recibida.entregaIdsNoAsignadas().stream()
           .map(this::buscarEntrega)

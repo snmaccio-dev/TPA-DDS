@@ -4,6 +4,9 @@ import donatrack.logistica.controller.dto.MonitoreoRutaDTO;
 import donatrack.logistica.controller.dto.ReporteUbicacionRequest;
 import donatrack.logistica.domain.DatosInvalidosException;
 import donatrack.logistica.domain.ruta.RutaReparto;
+import donatrack.logistica.seguridad.AlcanceDeMonitoreo;
+import donatrack.logistica.seguridad.ControlDeAcceso;
+import donatrack.logistica.seguridad.RolDeAcceso;
 import donatrack.logistica.service.GestorMonitoreo;
 import donatrack.logistica.service.GestorRutas;
 import io.javalin.Javalin;
@@ -16,16 +19,24 @@ public class MonitoreoController {
 
   private final GestorMonitoreo gestorMonitoreo;
   private final GestorRutas gestorRutas;
+  private final ControlDeAcceso control;
 
-  public MonitoreoController(GestorMonitoreo gestorMonitoreo, GestorRutas gestorRutas) {
+  public MonitoreoController(GestorMonitoreo gestorMonitoreo,
+                             GestorRutas gestorRutas,
+                             ControlDeAcceso control) {
     this.gestorMonitoreo = gestorMonitoreo;
     this.gestorRutas = gestorRutas;
+    this.control = control;
   }
 
   public void registrarRutas(Javalin app) {
-    app.post("/monitoreo/posiciones", this::registrarPosicion);
-    app.get("/monitoreo/rutas", this::rutasEnCurso);
-    app.get("/monitoreo/rutas/{id}", this::estadoDeRuta);
+    app.post("/monitoreo/posiciones", this::registrarPosicion,
+        RolDeAcceso.CHOFER, RolDeAcceso.SERVICIO_LOGISTICA);
+    app.get("/monitoreo/rutas", this::rutasEnCurso,
+        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA);
+    app.get("/monitoreo/rutas/{id}", this::estadoDeRuta,
+        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.CHOFER,
+        RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA);
   }
 
   private void registrarPosicion(Context ctx) {
@@ -36,14 +47,15 @@ public class MonitoreoController {
   }
 
   private void rutasEnCurso(Context ctx) {
-    String beneficiaria = ctx.queryParam("beneficiaria");
-    String donaciones = ctx.queryParam("donaciones");
+    AlcanceDeMonitoreo alcance = control.alcanceDeMonitoreo(ctx, alcancePedido(ctx));
 
     List<RutaReparto> rutas;
-    if (beneficiaria != null) {
-      rutas = gestorMonitoreo.rutasEnCursoDeBeneficiaria(comoId(beneficiaria, "beneficiaria"));
-    } else if (donaciones != null) {
-      rutas = gestorMonitoreo.rutasEnCursoDeDonaciones(comoIds(donaciones));
+    if (alcance.esDeBeneficiaria()) {
+      rutas = gestorMonitoreo.rutasEnCursoDeBeneficiaria(alcance.beneficiariaId());
+    } else if (alcance.esDeDonante()) {
+      rutas = gestorMonitoreo.rutasEnCursoDeDonante(alcance.donanteId());
+    } else if (alcance.esDeDonaciones()) {
+      rutas = gestorMonitoreo.rutasEnCursoDeDonaciones(alcance.donacionIds());
     } else {
       rutas = gestorMonitoreo.rutasEnCurso();
     }
@@ -51,7 +63,33 @@ public class MonitoreoController {
     ctx.json(rutas.stream().map(this::estadoDe).toList());
   }
 
+  private AlcanceDeMonitoreo alcancePedido(Context ctx) {
+    Long beneficiaria = comoIdOpcional(ctx.queryParam("beneficiaria"), "beneficiaria");
+    Long donante = comoIdOpcional(ctx.queryParam("donante"), "donante");
+
+    if (beneficiaria != null) {
+      return AlcanceDeMonitoreo.deBeneficiaria(beneficiaria);
+    }
+    if (donante != null) {
+      return AlcanceDeMonitoreo.deDonante(donante);
+    }
+
+    List<Long> donaciones = comoIds(ctx.queryParam("donaciones"));
+
+    return donaciones.isEmpty()
+        ? AlcanceDeMonitoreo.todas()
+        : AlcanceDeMonitoreo.deDonaciones(donaciones);
+  }
+
+  private Long comoIdOpcional(String valor, String parametro) {
+    return valor == null || valor.isBlank() ? null : comoId(valor, parametro);
+  }
+
   private List<Long> comoIds(String valores) {
+    if (valores == null || valores.isBlank()) {
+      return List.of();
+    }
+
     return Arrays.stream(valores.split(","))
         .map(String::trim)
         .filter(valor -> !valor.isEmpty())
@@ -70,8 +108,10 @@ public class MonitoreoController {
   }
 
   private void estadoDeRuta(Context ctx) {
-    long rutaId = ctx.pathParamAsClass("id", Long.class).get();
-    ctx.json(estadoDe(gestorRutas.buscar(rutaId)));
+    RutaReparto ruta = gestorRutas.buscar(ctx.pathParamAsClass("id", Long.class).get());
+    control.exigirAccesoARuta(ctx, ruta);
+
+    ctx.json(estadoDe(ruta));
   }
 
   private MonitoreoRutaDTO estadoDe(RutaReparto ruta) {

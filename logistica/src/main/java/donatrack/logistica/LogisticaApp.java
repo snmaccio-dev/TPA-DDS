@@ -19,11 +19,17 @@ import donatrack.logistica.domain.planificacion.GeneradorRutas;
 import donatrack.logistica.infrastructure.almacenamiento.AlmacenEnDisco;
 import donatrack.logistica.infrastructure.integracion.ClienteDonacionesHttp;
 import donatrack.logistica.infrastructure.integracion.ClienteDonacionesSimulado;
+import donatrack.logistica.infrastructure.integracion.DirectorioDeUsuariosHttp;
 import donatrack.logistica.infrastructure.integracion.ProveedorDeTokenDeServicio;
 import donatrack.logistica.infrastructure.integracion.SerializadorJackson;
 import donatrack.logistica.infrastructure.planificacion.GeneradorRutasExterno;
 import donatrack.logistica.infrastructure.planificacion.GeneradorRutasSimulado;
 import donatrack.logistica.jobs.JobPlanificacionRutas;
+import donatrack.logistica.seguridad.ControlDeAcceso;
+import donatrack.logistica.seguridad.ControlDeAccesoAbierto;
+import donatrack.logistica.seguridad.ControlDeAccesoPorToken;
+import donatrack.logistica.seguridad.FiltroDeAcceso;
+import donatrack.logistica.seguridad.VerificadorDeTokens;
 import donatrack.logistica.service.GestorCamiones;
 import donatrack.logistica.service.GestorChoferes;
 import donatrack.logistica.service.GestorEntregas;
@@ -49,6 +55,10 @@ public class LogisticaApp {
     String urlPlanificador = variable("PLANIFICADOR_URL", "http://localhost:9090/planificaciones");
     String tokenPlanificador = variable("PLANIFICADOR_TOKEN", "token-de-desarrollo");
     boolean simulado = !"http".equalsIgnoreCase(variable("LOGISTICA_MODO", "simulado"));
+    boolean seguridadActiva = !"off".equalsIgnoreCase(variable("LOGISTICA_SEGURIDAD", "on"));
+
+    String keycloakUrl = variable("KEYCLOAK_URL", "http://localhost:8180");
+    String keycloakRealm = variable("KEYCLOAK_REALM", "donatrack");
 
     String directorioFotos = variable("LOGISTICA_FOTOS_DIR", "fotos");
 
@@ -58,12 +68,10 @@ public class LogisticaApp {
 
     ClienteDonaciones clienteDonaciones;
     if (simulado) {
-      clienteDonaciones = new ClienteDonacionesSimulado();
+      clienteDonaciones = ClienteDonacionesSimulado.conDonacionesDeEjemplo();
     } else {
       // Keycloak. El client secret no tiene default: si falta el arranque falla
       // porque sin token no se puede hablar con Donaciones.
-      String keycloakUrl = variable("KEYCLOAK_URL", "http://localhost:8180");
-      String keycloakRealm = variable("KEYCLOAK_REALM", "donatrack");
       String keycloakClientId = variable("KEYCLOAK_CLIENT_ID", "logistica-backend");
       String keycloakClientSecret = variable("KEYCLOAK_CLIENT_SECRET", null);
       if (keycloakClientSecret == null || keycloakClientSecret.isBlank()) {
@@ -103,11 +111,26 @@ public class LogisticaApp {
 
     app.after(ctx -> WithSimplePersistenceUnit.dispose());
 
+    ControlDeAcceso control;
+    if (seguridadActiva) {
+      new FiltroDeAcceso(new VerificadorDeTokens(
+          keycloakUrl,
+          keycloakRealm,
+          variable("KEYCLOAK_ISSUER", null)
+      )).registrarEn(app);
+
+      control = new ControlDeAccesoPorToken(
+          new DirectorioDeUsuariosHttp(urlDonaciones, json)
+      );
+    } else {
+      control = new ControlDeAccesoAbierto();
+    }
+
     new CamionesController(gestorCamiones).registrarRutas(app);
     new ChoferesController(gestorChoferes).registrarRutas(app);
     new RutasController(gestorRutas, gestorEntregas).registrarRutas(app);
-    new EntregasController(gestorEntregas).registrarRutas(app);
-    new MonitoreoController(gestorMonitoreo, gestorRutas).registrarRutas(app);
+    new EntregasController(gestorEntregas, control).registrarRutas(app);
+    new MonitoreoController(gestorMonitoreo, gestorRutas, control).registrarRutas(app);
     new PlanificacionController(gestorLogistica).registrarRutas(app);
     new RutasCallbackController(gestorLogistica, tokenPlanificador).registrarRutas(app);
 
@@ -121,7 +144,8 @@ public class LogisticaApp {
     Runtime.getRuntime().addShutdownHook(new Thread(job::detener));
 
     System.out.println("Microservicio Logistica escuchando en " + urlBase
-        + " | modo: " + (simulado ? "simulado" : "http"));
+        + " | modo: " + (simulado ? "simulado" : "http")
+        + " | seguridad: " + (seguridadActiva ? "on" : "off"));
   }
 
   private static void registrarManejoDeErrores(Javalin app) {

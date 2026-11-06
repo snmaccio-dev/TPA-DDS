@@ -20,7 +20,7 @@ class EntregaTest implements SimplePersistenceTest {
     persist(camion);
     persist(chofer);
 
-    Entrega entrega = new Entrega(701L, 900L, "Calle Falsa 123", "Ropa", 3, "bolsas");
+    Entrega entrega = new Entrega(701L, 500L, 900L, "Calle Falsa 123", "Ropa", 3, "bolsas");
     entrega.registrarMedicion(6.0, 0.3);
     persist(entrega);
 

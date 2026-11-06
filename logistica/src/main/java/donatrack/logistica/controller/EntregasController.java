@@ -7,7 +7,10 @@ import donatrack.logistica.controller.dto.FotosSubidasDTO;
 import donatrack.logistica.controller.dto.NoRecepcionRequest;
 import donatrack.logistica.controller.dto.RegistrarMedidasRequest;
 import donatrack.logistica.domain.almacenamiento.FotoParaSubir;
+import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.integracion.IntegracionExternaException;
+import donatrack.logistica.seguridad.ControlDeAcceso;
+import donatrack.logistica.seguridad.RolDeAcceso;
 import donatrack.logistica.service.GestorEntregas;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -20,23 +23,32 @@ import java.util.List;
 public class EntregasController {
 
   private final GestorEntregas gestor;
+  private final ControlDeAcceso control;
 
-  public EntregasController(GestorEntregas gestor) {
+  public EntregasController(GestorEntregas gestor, ControlDeAcceso control) {
     this.gestor = gestor;
+    this.control = control;
   }
 
   public void registrarRutas(Javalin app) {
-    app.get("/entregas", this::todas);
+    app.get("/entregas", this::todas, RolDeAcceso.ADMINISTRADOR);
     // Rutas mas especificas antes que /entregas/{id}, para que Javalin no se coma
     // "pendientes-de-medicion" como si fuera un id.
-    app.get("/entregas/pendientes-de-medicion", this::pendientesDeMedicion);
-    app.get("/entregas/publicas", this::publicas);
-    app.get("/entregas/{id}", this::buscar);
-    app.post("/entregas/{id}/medidas", this::registrarMedidas);
-    app.post("/entregas/{id}/fotos", this::subirFotos);
-    app.post("/entregas/{id}/confirmacion", this::confirmar);
-    app.post("/entregas/{id}/no-recepcion", this::noRecibida);
-    app.post("/entregas/{id}/retorno-deposito", this::retornarADeposito);
+    app.get("/entregas/pendientes-de-medicion", this::pendientesDeMedicion,
+        RolDeAcceso.ADMINISTRADOR);
+    app.get("/entregas/publicas", this::publicas, RolDeAcceso.PUBLICO);
+    app.get("/entregas/{id}", this::buscar,
+        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA, RolDeAcceso.DONANTE);
+    app.post("/entregas/{id}/medidas", this::registrarMedidas,
+        RolDeAcceso.ADMINISTRADOR);
+    app.post("/entregas/{id}/fotos", this::subirFotos,
+        RolDeAcceso.BENEFICIARIA, RolDeAcceso.ADMINISTRADOR);
+    app.post("/entregas/{id}/confirmacion", this::confirmar,
+        RolDeAcceso.BENEFICIARIA, RolDeAcceso.ADMINISTRADOR);
+    app.post("/entregas/{id}/no-recepcion", this::noRecibida,
+        RolDeAcceso.BENEFICIARIA, RolDeAcceso.ADMINISTRADOR);
+    app.post("/entregas/{id}/retorno-deposito", this::retornarADeposito,
+        RolDeAcceso.CHOFER, RolDeAcceso.ADMINISTRADOR);
   }
 
   private void todas(Context ctx) {
@@ -44,7 +56,10 @@ public class EntregasController {
   }
 
   private void buscar(Context ctx) {
-    ctx.json(EntregaDTO.desde(gestor.buscar(idDe(ctx))));
+    Entrega entrega = gestor.buscar(idDe(ctx));
+    control.exigirAccesoAEntrega(ctx, entrega);
+
+    ctx.json(EntregaDTO.desde(entrega));
   }
 
   private void pendientesDeMedicion(Context ctx) {
@@ -67,7 +82,7 @@ public class EntregasController {
         .map(archivo -> new FotoParaSubir(archivo.filename(), contenidoDe(archivo)))
         .toList();
 
-    ctx.status(201).json(new FotosSubidasDTO(gestor.subirFotos(idDe(ctx), fotos)));
+    ctx.status(201).json(new FotosSubidasDTO(gestor.subirFotos(idAutorizado(ctx), fotos)));
   }
 
   private byte[] contenidoDe(UploadedFile archivo) {
@@ -82,16 +97,25 @@ public class EntregasController {
 
   private void confirmar(Context ctx) {
     ConfirmarRecepcionRequest request = ctx.bodyAsClass(ConfirmarRecepcionRequest.class);
-    ctx.json(EntregaDTO.desde(gestor.confirmarRecepcion(idDe(ctx), request.fotosOVacio())));
+    ctx.json(EntregaDTO.desde(
+        gestor.confirmarRecepcion(idAutorizado(ctx), request.fotosOVacio())
+    ));
   }
 
   private void noRecibida(Context ctx) {
     NoRecepcionRequest request = ctx.bodyAsClass(NoRecepcionRequest.class);
-    ctx.json(EntregaDTO.desde(gestor.marcarNoRecibida(idDe(ctx), request.motivo())));
+    ctx.json(EntregaDTO.desde(gestor.marcarNoRecibida(idAutorizado(ctx), request.motivo())));
   }
 
   private void retornarADeposito(Context ctx) {
     ctx.json(EntregaDTO.desde(gestor.retornarADeposito(idDe(ctx))));
+  }
+
+  private long idAutorizado(Context ctx) {
+    long id = idDe(ctx);
+    control.exigirAccesoAEntrega(ctx, gestor.buscar(id));
+
+    return id;
   }
 
   private long idDe(Context ctx) {

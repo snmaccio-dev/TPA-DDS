@@ -2,6 +2,7 @@ package donatrack.logistica.controller;
 
 import donatrack.logistica.contrato.PlanificacionRecibida;
 import donatrack.logistica.controller.dto.RutaDTO;
+import donatrack.logistica.seguridad.RolDeAcceso;
 import donatrack.logistica.service.GestorLogistica;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -20,7 +21,7 @@ public class RutasCallbackController {
   }
 
   public void registrarRutas(Javalin app) {
-    app.post("/planificacion/callback", this::recibirResultado);
+    app.post("/planificacion/callback", this::recibirResultado, RolDeAcceso.PUBLICO);
   }
 
   private void recibirResultado(Context ctx) {

@@ -1,6 +1,7 @@
 package donatrack.logistica.controller;
 
 import donatrack.logistica.controller.dto.CrearChoferRequest;
+import donatrack.logistica.seguridad.RolDeAcceso;
 import donatrack.logistica.service.GestorChoferes;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -14,10 +15,10 @@ public class ChoferesController {
   }
 
   public void registrarRutas(Javalin app) {
-    app.get("/choferes", this::todos);
-    app.get("/choferes/{id}", this::buscar);
-    app.post("/choferes", this::crear);
-    app.delete("/choferes/{id}", this::eliminar);
+    app.get("/choferes", this::todos, RolDeAcceso.ADMINISTRADOR);
+    app.get("/choferes/{id}", this::buscar, RolDeAcceso.ADMINISTRADOR);
+    app.post("/choferes", this::crear, RolDeAcceso.ADMINISTRADOR);
+    app.delete("/choferes/{id}", this::eliminar, RolDeAcceso.ADMINISTRADOR);
   }
 
   private void todos(Context ctx) {

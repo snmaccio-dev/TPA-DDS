@@ -69,6 +69,10 @@ public class GestorMonitoreo implements WithSimplePersistenceUnit {
     return repositorioRutas.enCursoDeBeneficiaria(beneficiariaId);
   }
 
+  public List<RutaReparto> rutasEnCursoDeDonante(long donanteId) {
+    return repositorioRutas.enCursoDeDonante(donanteId);
+  }
+
   public List<RutaReparto> rutasEnCursoDeDonaciones(List<Long> donacionIds) {
     return repositorioRutas.enCursoDeDonaciones(donacionIds);
   }

@@ -8,21 +8,19 @@ import java.util.List;
 
 public interface ClienteLogistica {
 
-  List<CamionVista> camiones();
+  List<CamionVista> camiones(String autorizacion);
 
-  CamionVista camion(String patente);
+  CamionVista camion(String autorizacion, String patente);
 
-  void crearCamion(NuevoCamion camion);
+  void crearCamion(String autorizacion, NuevoCamion camion);
 
-  void actualizarCamion(String patente, CapacidadesDeCamion capacidades);
+  void actualizarCamion(String autorizacion, String patente, CapacidadesDeCamion capacidades);
 
-  List<MonitoreoRutaVista> monitoreoDeBeneficiaria(long beneficiariaId);
+  List<MonitoreoRutaVista> monitoreoDeRutasEnCurso(String autorizacion);
 
-  List<MonitoreoRutaVista> monitoreoDeDonaciones(List<Long> donacionIds);
+  EntregaVista entrega(String autorizacion, long entregaId);
 
-  EntregaVista entrega(long entregaId);
+  List<String> subirFotos(String autorizacion, long entregaId, List<ArchivoSubido> fotos);
 
-  List<String> subirFotos(long entregaId, List<ArchivoSubido> fotos);
-
-  void confirmarRecepcion(long entregaId, List<String> fotos);
+  void confirmarRecepcion(String autorizacion, long entregaId, List<String> fotos);
 }

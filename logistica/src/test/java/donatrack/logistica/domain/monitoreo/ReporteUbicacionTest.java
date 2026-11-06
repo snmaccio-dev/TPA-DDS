@@ -21,7 +21,7 @@ class ReporteUbicacionTest implements SimplePersistenceTest {
     persist(camion);
     persist(chofer);
 
-    Entrega entrega = new Entrega(donacionId, 900L, "Destino 1", "Alimentos", 5, "cajas");
+    Entrega entrega = new Entrega(donacionId, 500L, 900L, "Destino 1", "Alimentos", 5, "cajas");
     entrega.registrarMedicion(4.0, 0.2);
     persist(entrega);
 

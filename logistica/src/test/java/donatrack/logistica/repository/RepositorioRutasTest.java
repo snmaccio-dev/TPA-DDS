@@ -17,7 +17,7 @@ class RepositorioRutasTest implements SimplePersistenceTest {
   private final RepositorioRutas repositorio = RepositorioRutas.getInstance();
 
   private Entrega entregaMedida(long donacionId, String direccion) {
-    Entrega entrega = new Entrega(donacionId, 900L, direccion, "Alimentos", 5, "cajas");
+    Entrega entrega = new Entrega(donacionId, 500L, 900L, direccion, "Alimentos", 5, "cajas");
     entrega.registrarMedicion(4.0, 0.2);
     persist(entrega);
     return entrega;
