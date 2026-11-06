@@ -19,7 +19,11 @@ import java.util.UUID;
 
 public class ClienteHttp {
 
-  private static final Duration ESPERA = Duration.ofSeconds(10);
+  // Un minuto, no diez segundos: en los planes gratuitos de PaaS los servicios se
+  // duermen por inactividad y tardan hasta un minuto en despertar. Con una espera corta,
+  // la primera pantalla despues de un rato mostraria "servicio no disponible" cuando en
+  // realidad el backend esta arrancando.
+  private static final Duration ESPERA = Duration.ofSeconds(60);
   private static final String RECHAZO_SIN_DETALLE = "El pedido fue rechazado.";
   private static final int NO_AUTORIZADO = 401;
 

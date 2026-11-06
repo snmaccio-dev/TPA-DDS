@@ -16,7 +16,7 @@ import java.util.Objects;
 public class ClienteOidc {
 
   private static final String SERVICIO = "identidad";
-  private static final Duration ESPERA = Duration.ofSeconds(10);
+  private static final Duration ESPERA = Duration.ofSeconds(30);
 
   private final HttpClient http = HttpClient.newBuilder()
       .connectTimeout(ESPERA)
