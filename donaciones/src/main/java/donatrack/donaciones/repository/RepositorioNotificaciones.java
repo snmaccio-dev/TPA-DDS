@@ -1,12 +1,15 @@
 package donatrack.donaciones.repository;
 
+import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.notificacion.EstadoEnvio;
 import donatrack.donaciones.domain.notificacion.Notificacion;
 import donatrack.donaciones.domain.notificacion.TipoNotificacion;
-import donatrack.donaciones.domain.persona.Persona;
+import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.Donante;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import javax.persistence.TypedQuery;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,21 +36,37 @@ public class RepositorioNotificaciones implements WithSimplePersistenceUnit {
         return Optional.ofNullable(find(Notificacion.class, id));
     }
 
-    public List<Notificacion> deDestinatario(Persona destinatario,
-                                             boolean soloNoLeidas,
-                                             int pagina,
-                                             int tamanio) {
-        if (destinatario == null) {
+    public List<Notificacion> deDonante(Donante donante,
+                                        boolean soloNoLeidas,
+                                        int pagina,
+                                        int tamanio) {
+        if (donante == null) {
             return List.of();
         }
-        String base = "select n from Notificacion n "
-            + "where n.destinatario = :destinatario and n.paraAdministradores = false";
+        String base = "select n from Notificacion n where n.donante = :donante";
         if (soloNoLeidas) {
             base += " and n.fechaHoraLectura is null";
         }
         base += " order by n.fechaHoraCreacion desc";
         TypedQuery<Notificacion> query = createQuery(base, Notificacion.class)
-            .setParameter("destinatario", destinatario);
+            .setParameter("donante", donante);
+        return paginar(query, pagina, tamanio);
+    }
+
+    public List<Notificacion> deBeneficiaria(Beneficiaria beneficiaria,
+                                             boolean soloNoLeidas,
+                                             int pagina,
+                                             int tamanio) {
+        if (beneficiaria == null) {
+            return List.of();
+        }
+        String base = "select n from Notificacion n where n.beneficiaria = :beneficiaria";
+        if (soloNoLeidas) {
+            base += " and n.fechaHoraLectura is null";
+        }
+        base += " order by n.fechaHoraCreacion desc";
+        TypedQuery<Notificacion> query = createQuery(base, Notificacion.class)
+            .setParameter("beneficiaria", beneficiaria);
         return paginar(query, pagina, tamanio);
     }
 
@@ -61,17 +80,27 @@ public class RepositorioNotificaciones implements WithSimplePersistenceUnit {
         return paginar(query, pagina, tamanio);
     }
 
-    public long cantidadNoLeidas(Persona destinatario) {
-        if (destinatario == null) {
+    public long cantidadNoLeidasDeDonante(Donante donante) {
+        if (donante == null) {
             return 0L;
         }
         return createQuery(
             "select count(n) from Notificacion n "
-                + "where n.destinatario = :destinatario "
-                + "and n.paraAdministradores = false "
-                + "and n.fechaHoraLectura is null",
+                + "where n.donante = :donante and n.fechaHoraLectura is null",
             Long.class)
-            .setParameter("destinatario", destinatario)
+            .setParameter("donante", donante)
+            .getSingleResult();
+    }
+
+    public long cantidadNoLeidasDeBeneficiaria(Beneficiaria beneficiaria) {
+        if (beneficiaria == null) {
+            return 0L;
+        }
+        return createQuery(
+            "select count(n) from Notificacion n "
+                + "where n.beneficiaria = :beneficiaria and n.fechaHoraLectura is null",
+            Long.class)
+            .setParameter("beneficiaria", beneficiaria)
             .getSingleResult();
     }
 
@@ -108,6 +137,69 @@ public class RepositorioNotificaciones implements WithSimplePersistenceUnit {
             query.setParameter("tipo", tipo);
         }
         return paginar(query, pagina, tamanio);
+    }
+
+    // === Marcar leidas en bloque (requieren transaccion abierta) ===
+
+    public int marcarLeidasDeDonante(Donante donante, LocalDateTime fechaHora) {
+        if (donante == null) {
+            return 0;
+        }
+        return createQuery(
+            "update Notificacion n set n.fechaHoraLectura = :fecha "
+                + "where n.donante = :donante and n.fechaHoraLectura is null")
+            .setParameter("fecha", fechaHora)
+            .setParameter("donante", donante)
+            .executeUpdate();
+    }
+
+    public int marcarLeidasDeBeneficiaria(Beneficiaria beneficiaria, LocalDateTime fechaHora) {
+        if (beneficiaria == null) {
+            return 0;
+        }
+        return createQuery(
+            "update Notificacion n set n.fechaHoraLectura = :fecha "
+                + "where n.beneficiaria = :beneficiaria and n.fechaHoraLectura is null")
+            .setParameter("fecha", fechaHora)
+            .setParameter("beneficiaria", beneficiaria)
+            .executeUpdate();
+    }
+
+    public int marcarLeidasDeAdministradores(LocalDateTime fechaHora) {
+        return createQuery(
+            "update Notificacion n set n.fechaHoraLectura = :fecha "
+                + "where n.paraAdministradores = true and n.fechaHoraLectura is null")
+            .setParameter("fecha", fechaHora)
+            .executeUpdate();
+    }
+
+    // === Delete en bloque (requieren transaccion abierta) ===
+
+    public int eliminarDeDonacion(Donacion donacion) {
+        if (donacion == null || donacion.getId() == null) {
+            return 0;
+        }
+        return createQuery("delete from Notificacion n where n.donacion = :donacion")
+            .setParameter("donacion", donacion)
+            .executeUpdate();
+    }
+
+    public int eliminarDeDonante(Donante donante) {
+        if (donante == null || donante.getId() == null) {
+            return 0;
+        }
+        return createQuery("delete from Notificacion n where n.donante = :donante")
+            .setParameter("donante", donante)
+            .executeUpdate();
+    }
+
+    public int eliminarDeBeneficiaria(Beneficiaria beneficiaria) {
+        if (beneficiaria == null || beneficiaria.getId() == null) {
+            return 0;
+        }
+        return createQuery("delete from Notificacion n where n.beneficiaria = :beneficiaria")
+            .setParameter("beneficiaria", beneficiaria)
+            .executeUpdate();
     }
 
     // Paginacion con limites defensivos: pagina mayor o igual a 0, tamanio

@@ -53,6 +53,7 @@ public class Main {
         GestorDonaciones gestorDonaciones = new GestorDonaciones(
             gestorNotificaciones,
             repositorioPropuestas,
+            repositorioNotificaciones,
             "http://localhost:8082/seguimiento-donante",
             "http://localhost:8082/seguimiento-beneficiario"
         );

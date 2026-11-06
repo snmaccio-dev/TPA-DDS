@@ -86,4 +86,26 @@ public class RepositorioDonaciones implements WithSimplePersistenceUnit {
             .setParameter("estado", estado)
             .getResultList();
     }
+
+    public boolean tieneDonacionesDe(Donante donante) {
+        if (donante == null || donante.getId() == null) {
+            return false;
+        }
+        return createQuery(
+            "select count(d) from Donacion d where d.donante = :donante",
+            Long.class)
+            .setParameter("donante", donante)
+            .getSingleResult() > 0;
+    }
+
+    public boolean tieneDonacionesAsignadasA(Beneficiaria beneficiaria) {
+        if (beneficiaria == null || beneficiaria.getId() == null) {
+            return false;
+        }
+        return createQuery(
+            "select count(d) from Donacion d where d.destinatarioAsignado = :beneficiaria",
+            Long.class)
+            .setParameter("beneficiaria", beneficiaria)
+            .getSingleResult() > 0;
+    }
 }

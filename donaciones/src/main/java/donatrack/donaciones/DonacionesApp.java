@@ -109,16 +109,30 @@ public class DonacionesApp {
     GestorDonaciones gestorDonaciones = new GestorDonaciones(
         gestorNotificaciones,
         repositorioPropuestas,
+        repositorioNotificaciones,
         urlWeb + "/seguimiento-donante",
         urlWeb + "/seguimiento-beneficiario"
     );
     GestorAsignaciones gestorAsignaciones =
         new GestorAsignaciones(repositorioPropuestas, gestorDonaciones);
     GestorEntidadesBeneficiarias gestorEntidades =
-        new GestorEntidadesBeneficiarias(repositorioUsuarios, proveedor);
+        new GestorEntidadesBeneficiarias(
+            repositorioUsuarios,
+            repositorioNotificaciones,
+            donatrack.donaciones.repository.RepositorioNecesidades.getInstance(),
+            repositorioPropuestas,
+            RepositorioDonaciones.getInstance(),
+            repositorioDonantes,
+            proveedor);
     GestorNecesidades gestorNecesidades = new GestorNecesidades();
     GestorPersonas gestorPersonas =
-        new GestorPersonas(repositorioDonantes, repositorioUsuarios, proveedor);
+        new GestorPersonas(
+            repositorioDonantes,
+            repositorioUsuarios,
+            repositorioNotificaciones,
+            RepositorioDonaciones.getInstance(),
+            repositorioEntidades,
+            proveedor);
     GestorDonantes gestorDonantes = new GestorDonantes(repositorioDonantes, gestorNotificaciones);
     GestorRegistro gestorRegistro = new GestorRegistro(
         proveedor, repositorioPersonas, repositorioDonantes, repositorioEntidades, repositorioUsuarios);

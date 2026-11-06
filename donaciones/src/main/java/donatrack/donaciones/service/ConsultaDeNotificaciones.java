@@ -3,19 +3,17 @@ package donatrack.donaciones.service;
 import donatrack.donaciones.domain.notificacion.EstadoEnvio;
 import donatrack.donaciones.domain.notificacion.Notificacion;
 import donatrack.donaciones.domain.notificacion.TipoNotificacion;
-import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.seguridad.UsuarioActual;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
+import io.javalin.http.ForbiddenResponse;
 
-import java.util.ArrayList;
-import java.util.Comparator;
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
-// Lecturas sobre el repositorio de notificaciones, con la logica para
-// combinar perfiles cuando el UsuarioActual tiene mas de uno (por ejemplo,
-// alguien que es DONANTE y BENEFICIARIA, o DONANTE y ADMINISTRADOR).
+// Lecturas sobre el repositorio de notificaciones. Cada cuenta tiene un
+// unico perfil, asi que cada metodo se resuelve con una sola llamada al
+// repo y la paginacion es la del repositorio: no juntamos listas.
 public class ConsultaDeNotificaciones implements WithSimplePersistenceUnit {
 
     private final RepositorioNotificaciones repositorio;
@@ -28,40 +26,30 @@ public class ConsultaDeNotificaciones implements WithSimplePersistenceUnit {
                                         boolean soloNoLeidas,
                                         int pagina,
                                         int tamanio) {
-        List<Notificacion> combinadas = new ArrayList<>();
-        Optional<Persona> comoDonante = usuario.donante().map(d -> d.getPersona());
-        Optional<Persona> comoBeneficiaria = usuario.beneficiaria().map(b -> b.getPersona());
-
-        comoDonante.ifPresent(persona -> combinadas.addAll(
-            repositorio.deDestinatario(persona, soloNoLeidas, pagina, tamanio)));
-        comoBeneficiaria
-            .filter(persona -> comoDonante.isEmpty() || !persona.getId().equals(comoDonante.get().getId()))
-            .ifPresent(persona -> combinadas.addAll(
-                repositorio.deDestinatario(persona, soloNoLeidas, pagina, tamanio)));
         if (usuario.esAdministrador()) {
-            combinadas.addAll(repositorio.deAdministradores(soloNoLeidas, pagina, tamanio));
+            return repositorio.deAdministradores(soloNoLeidas, pagina, tamanio);
         }
-
-        combinadas.sort(Comparator.comparing(Notificacion::getFechaHoraCreacion).reversed());
-        return combinadas;
+        if (usuario.donante().isPresent()) {
+            return repositorio.deDonante(usuario.donante().get(), soloNoLeidas, pagina, tamanio);
+        }
+        if (usuario.beneficiaria().isPresent()) {
+            return repositorio.deBeneficiaria(
+                usuario.beneficiaria().get(), soloNoLeidas, pagina, tamanio);
+        }
+        throw new ForbiddenResponse("La cuenta no tiene un perfil asociado.");
     }
 
     public long cantidadNoLeidasDe(UsuarioActual usuario) {
-        long total = 0;
-        Optional<Persona> comoDonante = usuario.donante().map(d -> d.getPersona());
-        Optional<Persona> comoBeneficiaria = usuario.beneficiaria().map(b -> b.getPersona());
-        if (comoDonante.isPresent()) {
-            total += repositorio.cantidadNoLeidas(comoDonante.get());
-        }
-        if (comoBeneficiaria.isPresent()
-            && (comoDonante.isEmpty()
-                || !comoBeneficiaria.get().getId().equals(comoDonante.get().getId()))) {
-            total += repositorio.cantidadNoLeidas(comoBeneficiaria.get());
-        }
         if (usuario.esAdministrador()) {
-            total += repositorio.cantidadNoLeidasAdministradores();
+            return repositorio.cantidadNoLeidasAdministradores();
         }
-        return total;
+        if (usuario.donante().isPresent()) {
+            return repositorio.cantidadNoLeidasDeDonante(usuario.donante().get());
+        }
+        if (usuario.beneficiaria().isPresent()) {
+            return repositorio.cantidadNoLeidasDeBeneficiaria(usuario.beneficiaria().get());
+        }
+        throw new ForbiddenResponse("La cuenta no tiene un perfil asociado.");
     }
 
     public List<Notificacion> todas(EstadoEnvio estadoEnvio,
@@ -80,26 +68,26 @@ public class ConsultaDeNotificaciones implements WithSimplePersistenceUnit {
         withTransaction(notificacion::marcarLeida);
     }
 
-    // Marca todas las propias del usuario como leidas. Para las de
-    // administradores esto afecta a todos los admins: las lee uno, quedan
-    // leidas para todos.
+    // Marca todas las propias del usuario como leidas, en un unico update JPQL.
+    // No usamos el tope de 100 del listado, porque aca el bulk es sobre todo
+    // lo no leido. Para las de administradores esto afecta a todos los admins:
+    // si uno las marca leidas, quedan leidas para todos.
     public void marcarTodasLeidasDe(UsuarioActual usuario) {
+        LocalDateTime ahora = LocalDateTime.now();
         withTransaction(() -> {
-            Optional<Persona> comoDonante = usuario.donante().map(d -> d.getPersona());
-            Optional<Persona> comoBeneficiaria = usuario.beneficiaria().map(b -> b.getPersona());
-            comoDonante.ifPresent(persona ->
-                repositorio.deDestinatario(persona, true, 0, 1000)
-                    .forEach(Notificacion::marcarLeida));
-            comoBeneficiaria
-                .filter(persona ->
-                    comoDonante.isEmpty() || !persona.getId().equals(comoDonante.get().getId()))
-                .ifPresent(persona ->
-                    repositorio.deDestinatario(persona, true, 0, 1000)
-                        .forEach(Notificacion::marcarLeida));
             if (usuario.esAdministrador()) {
-                repositorio.deAdministradores(true, 0, 1000)
-                    .forEach(Notificacion::marcarLeida);
+                repositorio.marcarLeidasDeAdministradores(ahora);
+                return;
             }
+            if (usuario.donante().isPresent()) {
+                repositorio.marcarLeidasDeDonante(usuario.donante().get(), ahora);
+                return;
+            }
+            if (usuario.beneficiaria().isPresent()) {
+                repositorio.marcarLeidasDeBeneficiaria(usuario.beneficiaria().get(), ahora);
+                return;
+            }
+            throw new ForbiddenResponse("La cuenta no tiene un perfil asociado.");
         });
     }
 }

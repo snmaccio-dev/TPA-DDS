@@ -49,8 +49,8 @@ class GestorDonantesTest implements SimplePersistenceTest {
     entityManager().clear();
 
     GestorNotificaciones gestorNotificaciones = mock(GestorNotificaciones.class);
-    Notificacion fallida = Notificacion.paraPersona(
-        persona, TipoNotificacion.AUSENCIA_PLATAFORMA, "x", null);
+    Notificacion fallida = Notificacion.paraDonante(
+        donante, TipoNotificacion.AUSENCIA_PLATAFORMA, "x", null);
     fallida.marcarFallida("sin canal");
     when(gestorNotificaciones.notificarAusenciaPlataforma(any())).thenReturn(fallida);
 
@@ -89,8 +89,8 @@ class GestorDonantesTest implements SimplePersistenceTest {
     entityManager().clear();
 
     GestorNotificaciones gestorNotificaciones = mock(GestorNotificaciones.class);
-    Notificacion enviada = Notificacion.paraPersona(
-        persona, TipoNotificacion.AUSENCIA_PLATAFORMA, "x", null);
+    Notificacion enviada = Notificacion.paraDonante(
+        donante, TipoNotificacion.AUSENCIA_PLATAFORMA, "x", null);
     enviada.marcarEnviada(TipoContacto.EMAIL, "luis@mail.com");
     when(gestorNotificaciones.notificarAusenciaPlataforma(any())).thenReturn(enviada);
 

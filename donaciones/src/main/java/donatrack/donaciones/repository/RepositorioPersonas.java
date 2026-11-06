@@ -77,6 +77,13 @@ public class RepositorioPersonas implements WithSimplePersistenceUnit {
     }
 
     public void eliminar(Persona persona) {
+        // Soltamos primero el contacto predeterminado (y hacemos flush) para
+        // que el update que pone la FK en null salga antes de los delete de
+        // Persona + MedioContacto. Si no, con las dos tablas referenciandose
+        // entre si Hibernate puede quedar atrapado en un orden que la base
+        // rechaza por foreign key.
+        persona.prepararParaEliminar();
+        entityManager().flush();
         remove(persona);
     }
 

@@ -35,7 +35,7 @@ public class GestorDonantes implements WithSimplePersistenceUnit {
             // GestorNotificaciones ya no propaga fallas de envio: nos devuelve
             // una Notificacion ENVIADA o FALLIDA y nosotros decidimos.
             Notificacion notificacion =
-                gestorNotificaciones.notificarAusenciaPlataforma(donante.getPersona());
+                gestorNotificaciones.notificarAusenciaPlataforma(donante);
             if (notificacion.getEstadoEnvio() == EstadoEnvio.ENVIADA) {
                 // Solo registramos el aviso cuando salio bien, para que un
                 // fallo del canal no lo consuma y el donante vuelva a intentarse.

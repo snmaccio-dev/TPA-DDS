@@ -5,7 +5,6 @@ import donatrack.donaciones.domain.necesidad.Necesidad;
 import donatrack.donaciones.domain.notificacion.Notificacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
-import donatrack.donaciones.domain.persona.Persona;
 import io.javalin.http.ForbiddenResponse;
 
 import java.util.Objects;
@@ -43,27 +42,26 @@ public final class Acceso {
     public static void exigirPuedeVerNotificacion(UsuarioActual usuario, Notificacion notificacion) {
         // Las notificaciones para administradores son compartidas: cualquier
         // admin puede verlas y, si marca una como leida, queda leida para
-        // todos. Las de un donante o una beneficiaria solo las ve el duenio
-        // del perfil asociado.
+        // todos. Las demas solo las ve el duenio del perfil asociado,
+        // comparando por id del perfil (no por persona, porque ahora cada
+        // perfil es un destinatario independiente).
         if (notificacion.esParaAdministradores()) {
             if (usuario.esAdministrador()) {
                 return;
             }
             throw new ForbiddenResponse("No podes acceder a esta notificacion.");
         }
-        Persona destinatario = notificacion.getDestinatario();
-        Long idDestino = destinatario == null ? null : personaId(destinatario);
-        if (usuario.esDonante()) {
+        Donante donanteNoti = notificacion.getDonante();
+        if (donanteNoti != null && usuario.esDonante()) {
             Donante propio = perfilDonanteObligatorio(usuario);
-            if (idDestino != null
-                && Objects.equals(idDestino, personaId(propio.getPersona()))) {
+            if (Objects.equals(idDe(donanteNoti), idDe(propio))) {
                 return;
             }
         }
-        if (usuario.esBeneficiaria()) {
+        Beneficiaria benefNoti = notificacion.getBeneficiaria();
+        if (benefNoti != null && usuario.esBeneficiaria()) {
             Beneficiaria propia = perfilBeneficiariaObligatorio(usuario);
-            if (idDestino != null
-                && Objects.equals(idDestino, personaId(propia.getPersona()))) {
+            if (Objects.equals(idDe(benefNoti), idDe(propia))) {
                 return;
             }
         }
@@ -107,9 +105,5 @@ public final class Acceso {
 
     private static Long idDe(Beneficiaria beneficiaria) {
         return beneficiaria == null ? null : beneficiaria.getId();
-    }
-
-    private static Long personaId(Persona persona) {
-        return persona == null ? null : persona.getId();
     }
 }

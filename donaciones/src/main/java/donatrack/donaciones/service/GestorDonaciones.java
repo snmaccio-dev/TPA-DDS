@@ -9,6 +9,7 @@ import donatrack.donaciones.domain.notificacion.NotificacionesDeDonacionObserver
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.repository.RepositorioDonaciones;
+import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPropuestas;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
@@ -23,6 +24,7 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
         RepositorioDonaciones.getInstance();
     private final GestorNotificaciones gestorNotificaciones;
     private final RepositorioPropuestas repositorioPropuestas;
+    private final RepositorioNotificaciones repositorioNotificaciones;
     // Links a la vista de seguimiento del web; se usan al armar la notificacion
     // INICIO_RUTA y los recibimos ya armados desde DonacionesApp para no leer
     // variables de entorno desde aca.
@@ -31,10 +33,12 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
 
     public GestorDonaciones(GestorNotificaciones gestorNotificaciones,
                             RepositorioPropuestas repositorioPropuestas,
+                            RepositorioNotificaciones repositorioNotificaciones,
                             String linkSeguimientoDonante,
                             String linkSeguimientoBeneficiario) {
         this.gestorNotificaciones = gestorNotificaciones;
         this.repositorioPropuestas = repositorioPropuestas;
+        this.repositorioNotificaciones = repositorioNotificaciones;
         this.linkSeguimientoDonante = linkSeguimientoDonante;
         this.linkSeguimientoBeneficiario = linkSeguimientoBeneficiario;
     }
@@ -99,8 +103,16 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
         repositorio.guardar(donacion);
     }
 
+    // Borrado en cascada de una donacion: primero sacamos sus notificaciones
+    // y la propuesta de asignacion (si quedo alguna). Los bienes y el historial
+    // de estados caen por cascade ALL del mapeo de Donacion.
     public void eliminar(long id) {
-        withTransaction(() -> repositorio.eliminar(id));
+        Donacion donacion = buscar(id);
+        withTransaction(() -> {
+            repositorioNotificaciones.eliminarDeDonacion(donacion);
+            repositorioPropuestas.eliminar(id);
+            repositorio.eliminar(id);
+        });
     }
 
     // === Transiciones del ciclo de la Donacion ===

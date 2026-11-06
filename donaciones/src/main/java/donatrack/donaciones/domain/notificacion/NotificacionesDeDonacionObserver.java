@@ -43,7 +43,7 @@ public class NotificacionesDeDonacionObserver implements DonacionObserver {
         switch (nuevo) {
             case ASIGNACION_REALIZADA -> {
                 if (donante != null) {
-                    gestor.notificarDonacionAsignadaDonante(donante.getPersona(), donacion);
+                    gestor.notificarDonacionAsignadaDonante(donante, donacion);
                 }
                 if (destinataria != null) {
                     gestor.notificarDonacionAsignadaBeneficiario(destinataria, donacion);
@@ -51,29 +51,28 @@ public class NotificacionesDeDonacionObserver implements DonacionObserver {
             }
             case EN_TRASLADO -> {
                 if (donante != null && linkSeguimientoDonante != null) {
-                    gestor.notificarInicioRuta(donante.getPersona(), donacion, linkSeguimientoDonante);
+                    gestor.notificarInicioRuta(donante, donacion, linkSeguimientoDonante);
                 }
                 if (destinataria != null && linkSeguimientoBeneficiario != null) {
-                    gestor.notificarInicioRuta(
-                        destinataria.getPersona(), donacion, linkSeguimientoBeneficiario);
+                    gestor.notificarInicioRuta(destinataria, donacion, linkSeguimientoBeneficiario);
                 }
             }
             case ENTREGADA -> {
                 if (donante != null && destinataria != null) {
                     gestor.notificarEntregaExitosa(
-                        donante.getPersona(), destinataria, donacion, donacion.generarComprobante());
+                        donante, destinataria, donacion, donacion.generarComprobante());
                 }
             }
             case ENTREGA_FALLIDA -> {
                 if (donante != null && destinataria != null) {
                     gestor.notificarEntregaFallida(
-                        donante.getPersona(), destinataria, donacion, motivoFallidaDe(donacion));
+                        donante, destinataria, donacion, motivoFallidaDe(donacion));
                 }
             }
             case LISTA_PARA_ENTREGAR, EN_DEPOSITO, VENCIDA -> {
                 if (donante != null) {
                     gestor.notificarCambioDeEstado(
-                        donante.getPersona(), donacion, estadoAnterior, estadoNuevo);
+                        donante, donacion, estadoAnterior, estadoNuevo);
                 }
             }
             default -> { /* Nada que hacer para los estados no listados. */ }

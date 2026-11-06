@@ -5,11 +5,11 @@ import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.donacion.Comprobante;
 import donatrack.donaciones.domain.donacion.Donacion;
-import donatrack.donaciones.domain.notificacion.EstadoEnvio;
 import donatrack.donaciones.domain.notificacion.Notificacion;
 import donatrack.donaciones.domain.notificacion.Notificador;
 import donatrack.donaciones.domain.notificacion.TipoNotificacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.repository.RepositorioNotificaciones;
 
@@ -17,6 +17,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 // Todas las notificaciones se persisten (incluso las fallidas y las de solo
 // plataforma) para que el web muestre a cada usuario su lista y para auditoria.
@@ -42,20 +43,31 @@ public class GestorNotificaciones {
     this.repositorio = repositorio;
   }
 
-  // Entry point principal. Nunca propaga fallas del canal externo: siempre
-  // guarda una Notificacion en estado ENVIADA o FALLIDA y la devuelve. Solo
-  // valida datos obligatorios con DatosInvalidosException.
-  public Notificacion notificar(Persona destinatario,
+  // Entry point principal para un donante. Nunca propaga fallas del canal
+  // externo: siempre guarda una Notificacion en estado ENVIADA o FALLIDA y
+  // la devuelve. Solo valida datos obligatorios con DatosInvalidosException.
+  public Notificacion notificar(Donante donante,
                                 TipoNotificacion tipo,
                                 String mensaje,
                                 Donacion donacion) {
-    if (destinatario == null) {
-      throw new DatosInvalidosException("El destinatario es obligatorio.");
+    if (donante == null) {
+      throw new DatosInvalidosException("El donante destinatario es obligatorio.");
     }
-    Notificacion notificacion = Notificacion.paraPersona(destinatario, tipo, mensaje, donacion);
-    intentarEnviar(notificacion);
-    repositorio.guardar(notificacion);
-    return notificacion;
+    return enviarYPersistir(
+        donante.getPersona(),
+        () -> Notificacion.paraDonante(donante, tipo, mensaje, donacion));
+  }
+
+  public Notificacion notificar(Beneficiaria beneficiaria,
+                                TipoNotificacion tipo,
+                                String mensaje,
+                                Donacion donacion) {
+    if (beneficiaria == null) {
+      throw new DatosInvalidosException("La beneficiaria destinataria es obligatoria.");
+    }
+    return enviarYPersistir(
+        beneficiaria.getPersona(),
+        () -> Notificacion.paraBeneficiaria(beneficiaria, tipo, mensaje, donacion));
   }
 
   // Notificacion solo de plataforma: queda guardada con estadoEnvio NO_APLICA,
@@ -67,14 +79,20 @@ public class GestorNotificaciones {
                                                String mensaje,
                                                Donacion donacion) {
     Notificacion notificacion = Notificacion.paraAdministradores(tipo, mensaje, donacion);
-    // Queda en NO_APLICA por default; la persistimos directo.
     repositorio.guardar(notificacion);
     return notificacion;
   }
 
-  private void intentarEnviar(Notificacion notificacion) {
-    Persona destinatario = notificacion.getDestinatario();
-    Optional<MedioContacto> medioOpt = destinatario.getContactoParaNotificar();
+  private Notificacion enviarYPersistir(Persona personaDeContacto,
+                                        Supplier<Notificacion> fabrica) {
+    Notificacion notificacion = fabrica.get();
+    intentarEnviar(notificacion, personaDeContacto);
+    repositorio.guardar(notificacion);
+    return notificacion;
+  }
+
+  private void intentarEnviar(Notificacion notificacion, Persona personaDeContacto) {
+    Optional<MedioContacto> medioOpt = personaDeContacto.getContactoParaNotificar();
     if (medioOpt.isEmpty()) {
       notificacion.marcarFallida("La persona no tiene ningun medio de contacto cargado.");
       return;
@@ -96,7 +114,7 @@ public class GestorNotificaciones {
 
   // === Metodos especificos armados sobre notificar/notificarAdministradores ===
 
-  public Notificacion notificarAusenciaPlataforma(Persona donante) {
+  public Notificacion notificarAusenciaPlataforma(Donante donante) {
     return notificar(
         donante,
         TipoNotificacion.AUSENCIA_PLATAFORMA,
@@ -109,7 +127,7 @@ public class GestorNotificaciones {
   public Notificacion notificarDonacionAsignadaBeneficiario(Beneficiaria beneficiaria,
                                                             Donacion donacion) {
     return notificar(
-        beneficiaria.getPersona(),
+        beneficiaria,
         TipoNotificacion.DONACION_ASIGNADA,
         "Se te asigno una nueva donacion de ["
             + donacion.getSubcategoria().getNombre() + "] segun tus necesidades.",
@@ -117,7 +135,7 @@ public class GestorNotificaciones {
     );
   }
 
-  public Notificacion notificarDonacionAsignadaDonante(Persona donante, Donacion donacion) {
+  public Notificacion notificarDonacionAsignadaDonante(Donante donante, Donacion donacion) {
     return notificar(
         donante,
         TipoNotificacion.DONACION_ASIGNADA,
@@ -127,9 +145,9 @@ public class GestorNotificaciones {
     );
   }
 
-  public Notificacion notificarInicioRuta(Persona destinatario, Donacion donacion, String linkMapa) {
+  public Notificacion notificarInicioRuta(Donante donante, Donacion donacion, String linkMapa) {
     return notificar(
-        destinatario,
+        donante,
         TipoNotificacion.INICIO_RUTA,
         "La ruta de entrega de [" + donacion.getSubcategoria().getNombre()
             + "] comenzo. Podes seguirla aqui: " + linkMapa,
@@ -137,7 +155,17 @@ public class GestorNotificaciones {
     );
   }
 
-  public void notificarEntregaExitosa(Persona donante,
+  public Notificacion notificarInicioRuta(Beneficiaria beneficiaria, Donacion donacion, String linkMapa) {
+    return notificar(
+        beneficiaria,
+        TipoNotificacion.INICIO_RUTA,
+        "La ruta de entrega de [" + donacion.getSubcategoria().getNombre()
+            + "] comenzo. Podes seguirla aqui: " + linkMapa,
+        donacion
+    );
+  }
+
+  public void notificarEntregaExitosa(Donante donante,
                                       Beneficiaria beneficiaria,
                                       Donacion donacion,
                                       Comprobante comprobante) {
@@ -152,14 +180,14 @@ public class GestorNotificaciones {
         donacion
     );
     notificar(
-        beneficiaria.getPersona(),
+        beneficiaria,
         TipoNotificacion.ENTREGA_EXITOSA,
         "Confirmaste la recepcion de la donacion. " + detalle,
         donacion
     );
   }
 
-  public void notificarEntregaFallida(Persona donante,
+  public void notificarEntregaFallida(Donante donante,
                                       Beneficiaria beneficiaria,
                                       Donacion donacion,
                                       String motivo) {
@@ -173,7 +201,7 @@ public class GestorNotificaciones {
         donacion
     );
     notificar(
-        beneficiaria.getPersona(),
+        beneficiaria,
         TipoNotificacion.ENTREGA_FALLIDA,
         "La entrega de [" + donacion.getSubcategoria().getNombre()
             + "] no pudo completarse: " + motivoSeguro,
@@ -188,12 +216,12 @@ public class GestorNotificaciones {
 
   // Mensaje generico de cambio de estado para los estados que no tienen uno
   // propio (LISTA_PARA_ENTREGAR, EN_DEPOSITO, VENCIDA).
-  public Notificacion notificarCambioDeEstado(Persona destinatario,
+  public Notificacion notificarCambioDeEstado(Donante donante,
                                               Donacion donacion,
                                               String estadoAnterior,
                                               String estadoNuevo) {
     return notificar(
-        destinatario,
+        donante,
         TipoNotificacion.CAMBIO_ESTADO,
         "Su donacion de [" + donacion.getSubcategoria().getNombre()
             + "] cambio de estado: " + estadoAnterior + " → " + estadoNuevo,

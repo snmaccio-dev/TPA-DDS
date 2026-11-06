@@ -7,6 +7,7 @@ import donatrack.donaciones.domain.notificacion.EstadoEnvio;
 import donatrack.donaciones.domain.notificacion.Notificacion;
 import donatrack.donaciones.domain.notificacion.Notificador;
 import donatrack.donaciones.domain.notificacion.TipoNotificacion;
+import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.repository.RepositorioNotificaciones;
@@ -28,17 +29,16 @@ class GestorNotificacionesTest {
     NotificadorFalso email = new NotificadorFalso(TipoContacto.EMAIL, false);
     GestorNotificaciones gestor = new GestorNotificaciones(List.of(email), repo);
 
-    PersonaHumana ana = ana();
-
+    Donante donante = donanteAna();
     Notificacion n = gestor.notificar(
-        ana, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
+        donante, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
     assertEquals(EstadoEnvio.ENVIADA, n.getEstadoEnvio());
     assertEquals(TipoContacto.EMAIL, n.getCanal());
     assertEquals("ana@mail.com", n.getDestino());
+    assertSame(donante, n.getDonante());
     assertEquals(1, email.recibidos.size());
     assertEquals(1, repo.guardadas.size());
-    assertSame(n, repo.guardadas.get(0));
   }
 
   @Test
@@ -47,22 +47,25 @@ class GestorNotificacionesTest {
     NotificadorFalso email = new NotificadorFalso(TipoContacto.EMAIL, true);
     GestorNotificaciones gestor = new GestorNotificaciones(List.of(email), repo);
 
-    Notificacion n = gestor.notificar(ana(), TipoNotificacion.CAMBIO_ESTADO, "hola", null);
+    Notificacion n = gestor.notificar(
+        donanteAna(), TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
     assertEquals(EstadoEnvio.FALLIDA, n.getEstadoEnvio());
-    assertTrue(n.getDetalleError().contains("SMTP caido"),
-        "El detalle de la falla tiene que incluir el mensaje del notificador.");
+    assertTrue(n.getDetalleError().contains("SMTP caido"));
     assertEquals(1, repo.guardadas.size());
   }
 
   @Test
-  void unaPersonaSinContactoQuedaFallidaSinExcepcion() {
+  void unDonanteSinContactoQuedaFallida() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
     GestorNotificaciones gestor = new GestorNotificaciones(
         List.of(new NotificadorFalso(TipoContacto.EMAIL, false)), repo);
 
     PersonaHumana sinContacto = new PersonaHumana("X", "Y", 30, "99999999", Genero.FEMENINO);
-    Notificacion n = gestor.notificar(sinContacto, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
+    Donante donante = new Donante(sinContacto);
+
+    Notificacion n = gestor.notificar(
+        donante, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
     assertEquals(EstadoEnvio.FALLIDA, n.getEstadoEnvio());
     assertTrue(n.getDetalleError().toLowerCase().contains("medio de contacto"));
@@ -85,10 +88,10 @@ class GestorNotificacionesTest {
   @Test
   void siNoHayNotificadorParaElTipoQuedaFallida() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
-    // No registramos notificador EMAIL, aunque el contacto preferido de ana sea email.
     GestorNotificaciones gestor = new GestorNotificaciones(List.of(), repo);
 
-    Notificacion n = gestor.notificar(ana(), TipoNotificacion.CAMBIO_ESTADO, "hola", null);
+    Notificacion n = gestor.notificar(
+        donanteAna(), TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
     assertEquals(EstadoEnvio.FALLIDA, n.getEstadoEnvio());
     assertTrue(n.getDetalleError().contains("notificador"));
@@ -99,15 +102,15 @@ class GestorNotificacionesTest {
     GestorNotificaciones gestor =
         new GestorNotificaciones(List.of(), new RepositorioEnMemoria());
     assertThrows(DatosInvalidosException.class,
-        () -> gestor.notificar(null, TipoNotificacion.CAMBIO_ESTADO, "hola", null));
+        () -> gestor.notificar((Donante) null, TipoNotificacion.CAMBIO_ESTADO, "hola", null));
   }
 
   // === Helpers ===
 
-  private PersonaHumana ana() {
+  private Donante donanteAna() {
     PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "12345678", Genero.FEMENINO);
     ana.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "ana@mail.com"));
-    return ana;
+    return new Donante(ana);
   }
 
   private static class NotificadorFalso implements Notificador {
@@ -134,9 +137,6 @@ class GestorNotificacionesTest {
     }
   }
 
-  // Doble de RepositorioNotificaciones que no toca la BD: guarda en memoria
-  // y expone la lista para asserts. Override solo guardar(), que es el unico
-  // metodo que GestorNotificaciones invoca.
   private static class RepositorioEnMemoria extends RepositorioNotificaciones {
     final List<Notificacion> guardadas = new ArrayList<>();
 

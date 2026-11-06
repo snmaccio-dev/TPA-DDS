@@ -14,6 +14,13 @@ public class RepositorioDonantes implements WithSimplePersistenceUnit {
         persist(donante);
     }
 
+    public void eliminar(Donante donante) {
+        if (donante == null) {
+            return;
+        }
+        remove(donante);
+    }
+
     public Optional<Donante> buscarPorPersona(Persona persona) {
         return createQuery(
             "select d from Donante d where d.persona = :persona",

@@ -42,7 +42,7 @@ public class NotificacionesDeDonacionObserverTest {
 
     observer.onCambioEstado(donacion, "EN_DEPOSITO", "ASIGNACION_REALIZADA");
 
-    verify(gestor).notificarDonacionAsignadaDonante(eq(donante.getPersona()), eq(donacion));
+    verify(gestor).notificarDonacionAsignadaDonante(eq(donante), eq(donacion));
     verify(gestor).notificarDonacionAsignadaBeneficiario(eq(beneficiaria), eq(donacion));
   }
 
@@ -57,8 +57,8 @@ public class NotificacionesDeDonacionObserverTest {
 
     observer.onCambioEstado(donacion, "LISTA_PARA_ENTREGAR", "EN_TRASLADO");
 
-    verify(gestor).notificarInicioRuta(eq(donante.getPersona()), eq(donacion), eq(LINK_DONANTE));
-    verify(gestor).notificarInicioRuta(eq(beneficiaria.getPersona()), eq(donacion), eq(LINK_BENEF));
+    verify(gestor).notificarInicioRuta(eq(donante), eq(donacion), eq(LINK_DONANTE));
+    verify(gestor).notificarInicioRuta(eq(beneficiaria), eq(donacion), eq(LINK_BENEF));
   }
 
   @Test
@@ -67,8 +67,6 @@ public class NotificacionesDeDonacionObserverTest {
     Donante donante = donante();
     Beneficiaria beneficiaria = beneficiaria();
     Donacion donacion = donacionAsignadaA(donante, beneficiaria);
-    // Llevamos la donacion a ENTREGADA en el objeto para que generarComprobante()
-    // funcione cuando el observer la consulte.
     donacion.marcarListaParaEntregar();
     donacion.marcarEnTraslado();
     donacion.marcarEntregada(LocalDateTime.of(2026, 3, 1, 10, 0), "AAA111");
@@ -78,7 +76,7 @@ public class NotificacionesDeDonacionObserverTest {
     observer.onCambioEstado(donacion, "EN_TRASLADO", "ENTREGADA");
 
     verify(gestor).notificarEntregaExitosa(
-        eq(donante.getPersona()), eq(beneficiaria), eq(donacion), any());
+        eq(donante), eq(beneficiaria), eq(donacion), any());
   }
 
   @Test
@@ -96,7 +94,7 @@ public class NotificacionesDeDonacionObserverTest {
     observer.onCambioEstado(donacion, "EN_TRASLADO", "ENTREGA_FALLIDA");
 
     verify(gestor).notificarEntregaFallida(
-        eq(donante.getPersona()), eq(beneficiaria), eq(donacion), eq("no habia nadie"));
+        eq(donante), eq(beneficiaria), eq(donacion), eq("no habia nadie"));
   }
 
   @Test
@@ -110,7 +108,7 @@ public class NotificacionesDeDonacionObserverTest {
     observer.onCambioEstado(donacion, "ASIGNACION_REALIZADA", "LISTA_PARA_ENTREGAR");
 
     verify(gestor).notificarCambioDeEstado(
-        eq(donante.getPersona()), eq(donacion),
+        eq(donante), eq(donacion),
         eq("ASIGNACION_REALIZADA"), eq("LISTA_PARA_ENTREGAR"));
     verify(gestor, never()).notificarDonacionAsignadaDonante(any(), any());
   }

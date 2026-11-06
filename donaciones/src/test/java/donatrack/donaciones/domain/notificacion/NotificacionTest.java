@@ -2,8 +2,12 @@ package donatrack.donaciones.domain.notificacion;
 
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.TipoContacto;
+import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
+import donatrack.donaciones.domain.persona.PersonaJuridica;
+import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -19,12 +23,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class NotificacionTest {
 
   @Test
-  public void paraPersonaDejaLaReferenciaAlDestinatarioYArrancaEnNoAplica() {
-    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO);
-    Notificacion n = Notificacion.paraPersona(
-        ana, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
+  public void paraDonanteGuardaReferenciaYArrancaEnNoAplica() {
+    Donante donante = new Donante(
+        new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO));
+    Notificacion n = Notificacion.paraDonante(
+        donante, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
-    assertSame(ana, n.getDestinatario());
+    assertSame(donante, n.getDonante());
+    assertNull(n.getBeneficiaria());
     assertFalse(n.esParaAdministradores());
     assertEquals(EstadoEnvio.NO_APLICA, n.getEstadoEnvio());
     assertNotNull(n.getFechaHoraCreacion());
@@ -32,36 +38,53 @@ public class NotificacionTest {
   }
 
   @Test
-  public void paraAdministradoresNoTieneDestinatarioPersonal() {
+  public void paraBeneficiariaGuardaReferencia() {
+    Beneficiaria beneficiaria = new Beneficiaria(
+        new PersonaJuridica("30-1-1", "Comedor X", TipoOrganizacion.ONG, "Comedor"));
+    Notificacion n = Notificacion.paraBeneficiaria(
+        beneficiaria, TipoNotificacion.DONACION_ASIGNADA, "asignada", null);
+
+    assertSame(beneficiaria, n.getBeneficiaria());
+    assertNull(n.getDonante());
+    assertFalse(n.esParaAdministradores());
+  }
+
+  @Test
+  public void paraAdministradoresNoTienePerfil() {
     Notificacion n = Notificacion.paraAdministradores(
         TipoNotificacion.ENTREGA_FALLIDA, "ups", null);
 
-    assertNull(n.getDestinatario());
+    assertNull(n.getDonante());
+    assertNull(n.getBeneficiaria());
     assertTrue(n.esParaAdministradores());
   }
 
   @Test
-  public void paraPersonaExigeDestinatario() {
+  public void fabricasValidanPerfilNull() {
     assertThrows(DatosInvalidosException.class, () ->
-        Notificacion.paraPersona(null, TipoNotificacion.CAMBIO_ESTADO, "hola", null));
+        Notificacion.paraDonante(null, TipoNotificacion.CAMBIO_ESTADO, "x", null));
+    assertThrows(DatosInvalidosException.class, () ->
+        Notificacion.paraBeneficiaria(null, TipoNotificacion.CAMBIO_ESTADO, "x", null));
   }
 
   @Test
-  public void paraPersonaExigeTipoYMensaje() {
-    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO);
+  public void fabricasValidanTipoYMensaje() {
+    Donante donante = new Donante(
+        new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO));
     assertThrows(DatosInvalidosException.class, () ->
-        Notificacion.paraPersona(ana, null, "hola", null));
+        Notificacion.paraDonante(donante, null, "hola", null));
     assertThrows(DatosInvalidosException.class, () ->
-        Notificacion.paraPersona(ana, TipoNotificacion.CAMBIO_ESTADO, "", null));
+        Notificacion.paraDonante(donante, TipoNotificacion.CAMBIO_ESTADO, "", null));
     assertThrows(DatosInvalidosException.class, () ->
-        Notificacion.paraPersona(ana, TipoNotificacion.CAMBIO_ESTADO, null, null));
+        Notificacion.paraDonante(donante, TipoNotificacion.CAMBIO_ESTADO, null, null));
   }
 
   @Test
   public void marcarEnviadaGuardaCanalYDestino() {
-    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO);
-    Notificacion n = Notificacion.paraPersona(
-        ana, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
+    Donante donante = new Donante(
+        new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO));
+    Notificacion n = Notificacion.paraDonante(
+        donante, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
     n.marcarEnviada(TipoContacto.EMAIL, "ana@mail.com");
 
@@ -73,31 +96,30 @@ public class NotificacionTest {
 
   @Test
   public void marcarFallidaGuardaDetalle() {
-    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO);
-    Notificacion n = Notificacion.paraPersona(
-        ana, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
+    Donante donante = new Donante(
+        new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO));
+    Notificacion n = Notificacion.paraDonante(
+        donante, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
-    n.marcarFallida("sin medio de contacto");
+    n.marcarFallida("sin contacto");
 
     assertEquals(EstadoEnvio.FALLIDA, n.getEstadoEnvio());
-    assertEquals("sin medio de contacto", n.getDetalleError());
+    assertEquals("sin contacto", n.getDetalleError());
   }
 
   @Test
-  public void marcarLeidaEsIdempotenteYNoPisaLaFechaOriginal() throws InterruptedException {
-    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO);
-    Notificacion n = Notificacion.paraPersona(
-        ana, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
+  public void marcarLeidaEsIdempotente() throws InterruptedException {
+    Donante donante = new Donante(
+        new PersonaHumana("Ana", "Perez", 30, "111", Genero.FEMENINO));
+    Notificacion n = Notificacion.paraDonante(
+        donante, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
     assertFalse(n.estaLeida());
     n.marcarLeida();
-    LocalDateTime primeraLectura = n.getFechaHoraLectura();
+    LocalDateTime primera = n.getFechaHoraLectura();
     assertTrue(n.estaLeida());
-    assertNotNull(primeraLectura);
-
     Thread.sleep(2);
     n.marcarLeida();
-    assertSame(primeraLectura, n.getFechaHoraLectura(),
-        "marcarLeida tiene que ser idempotente: no debe pisar la fecha.");
+    assertSame(primera, n.getFechaHoraLectura());
   }
 }

@@ -11,6 +11,7 @@ import donatrack.donaciones.domain.notificacion.NotificacionesDeDonacionObserver
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
+import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPropuestas;
 import org.junit.jupiter.api.Test;
 
@@ -27,6 +28,7 @@ public class GestorDonacionesTest {
     GestorDonaciones gestor = new GestorDonaciones(
         mock(GestorNotificaciones.class),
         mock(RepositorioPropuestas.class),
+        mock(RepositorioNotificaciones.class),
         "http://web/donante",
         "http://web/beneficiario"
     );
@@ -44,6 +46,7 @@ public class GestorDonacionesTest {
     GestorDonaciones gestor = new GestorDonaciones(
         mock(GestorNotificaciones.class),
         mock(RepositorioPropuestas.class),
+        mock(RepositorioNotificaciones.class),
         "http://web/donante",
         "http://web/beneficiario"
     );

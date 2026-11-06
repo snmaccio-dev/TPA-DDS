@@ -68,7 +68,7 @@ class NotificacionesControllerTest {
   void unDonanteVeSoloLasSuyas() throws Exception {
     PersonaHumana ana = personaConId(1L, "Ana");
     Donante donanteAna = donanteConId(10L, ana);
-    Notificacion suya = Notificacion.paraPersona(ana, TipoNotificacion.CAMBIO_ESTADO, "mi msj", null);
+    Notificacion suya = Notificacion.paraDonante(donanteAna, TipoNotificacion.CAMBIO_ESTADO, "mi msj", null);
 
     ConsultaDeNotificaciones consulta = mock(ConsultaDeNotificaciones.class);
     when(consulta.propiasDe(
@@ -117,8 +117,9 @@ class NotificacionesControllerTest {
     PersonaHumana ana = personaConId(1L, "Ana");
     PersonaHumana luis = personaConId(2L, "Luis");
     Donante donanteAna = donanteConId(10L, ana);
-    Notificacion ajena = Notificacion.paraPersona(
-        luis, TipoNotificacion.CAMBIO_ESTADO, "msj luis", null);
+    Donante donanteLuis = donanteConId(20L, luis);
+    Notificacion ajena = Notificacion.paraDonante(
+        donanteLuis, TipoNotificacion.CAMBIO_ESTADO, "msj luis", null);
 
     ConsultaDeNotificaciones consulta = mock(ConsultaDeNotificaciones.class);
     when(consulta.buscarPorId(99L)).thenReturn(ajena);
