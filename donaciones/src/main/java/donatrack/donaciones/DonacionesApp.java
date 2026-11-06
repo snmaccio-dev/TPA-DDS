@@ -207,16 +207,28 @@ public class DonacionesApp {
   }
 
   private static void sembrarSubcategorias(RepositorioSubcategorias repo) {
-    Categoria mobiliario = new Categoria("Mobiliario");
-    Categoria alimentos = new Categoria("Alimentos");
-    Categoria vestimenta = new Categoria("Vestimenta");
+    // Sin withTransaction el persist se queda en el contexto de persistencia y no se
+    // commitea nunca: el catalogo quedaba vacio y cualquier alta de donacion fallaba
+    // con "No existe la subcategoria". El resto de las escrituras del modulo ya pasan
+    // por el withTransaction de su gestor; esta sembrada corre suelta desde el main.
+    // La guarda es necesaria porque esto se ejecuta en cada arranque: sin ella, apenas
+    // el commit empieza a funcionar, cada reinicio duplicaria las seis filas.
+    if (!repo.todas().isEmpty()) {
+      return;
+    }
 
-    repo.guardar(new Subcategoria("Sillas", mobiliario, Unidades.UNIDADES));
-    repo.guardar(new Subcategoria("Mesas", mobiliario, Unidades.UNIDADES));
-    repo.guardar(new Subcategoria("Bancos escolares", mobiliario, Unidades.UNIDADES));
-    repo.guardar(new Subcategoria("Fideos secos", alimentos, Unidades.KILOGRAMOS));
-    repo.guardar(new Subcategoria("Tomate en tetrapak", alimentos, Unidades.UNIDADES));
-    repo.guardar(new Subcategoria("Camperas de abrigo", vestimenta, Unidades.UNIDADES));
+    repo.withTransaction(() -> {
+      Categoria mobiliario = new Categoria("Mobiliario");
+      Categoria alimentos = new Categoria("Alimentos");
+      Categoria vestimenta = new Categoria("Vestimenta");
+
+      repo.guardar(new Subcategoria("Sillas", mobiliario, Unidades.UNIDADES));
+      repo.guardar(new Subcategoria("Mesas", mobiliario, Unidades.UNIDADES));
+      repo.guardar(new Subcategoria("Bancos escolares", mobiliario, Unidades.UNIDADES));
+      repo.guardar(new Subcategoria("Fideos secos", alimentos, Unidades.KILOGRAMOS));
+      repo.guardar(new Subcategoria("Tomate en tetrapak", alimentos, Unidades.UNIDADES));
+      repo.guardar(new Subcategoria("Camperas de abrigo", vestimenta, Unidades.UNIDADES));
+    });
   }
 
   private static String variable(String nombre, String valorPorDefecto) {
