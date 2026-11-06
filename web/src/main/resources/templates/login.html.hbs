@@ -1,6 +1,21 @@
 {{> templates/partials/head}}
-<body data-page="login" data-role="public">
+<body data-page="login" data-role="publico">
 {{> templates/partials/header-publico}}
-<main class="public-main"><section class="auth-wrap login-wrap"><div class="auth-intro"><span class="eyebrow">BIENVENIDO/A</span><h1>Todo el impacto<br>en un solo lugar.</h1><p>Ingresá a DonaTrack para gestionar tus donaciones y entregas.</p><div class="login-illustration"><span>♡</span><span>⌖</span><span>✓</span></div></div><form class="panel form-panel demo-form"><div class="form-title"><h2>Iniciar sesión</h2><p>Ingresá tus credenciales para continuar.</p></div><label>Correo electrónico<input type="email" required placeholder="nombre@correo.com"></label><label>Contraseña<input type="password" required placeholder="Tu contraseña"></label><div class="form-between"><label class="check-label"><input type="checkbox"> Recordarme</label><a href="#">¿Olvidaste tu contraseña?</a></div><button class="btn btn-primary btn-block">Ingresar</button><p class="form-bottom">¿Todavía no tenés cuenta? <a href="/registro">Registrate</a></p><p class="demo-hint">Demo visual: la autenticación se conectará al backend.</p></form></section></main>
+<main class="public-main">
+  <section class="panel form-panel">
+    <div class="form-title">
+      <h2>Iniciar sesión</h2>
+      <p>DonaTrack delega la autenticación en su proveedor de identidad.</p>
+    </div>
+
+    {{#if errorDeIngreso}}
+    <p class="muted">{{errorDeIngreso}}</p>
+    {{/if}}
+
+    <a class="btn btn-primary btn-lg btn-block" href="/sesion/ingresar">Ingresar</a>
+    <p class="notice">Vas a ser redirigido para validar tus credenciales y volvés acá al terminar.</p>
+    <p class="muted">¿No tenés cuenta? <a href="/registro">Creá una</a></p>
+  </section>
+</main>
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}

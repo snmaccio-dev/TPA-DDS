@@ -12,13 +12,6 @@
     {{#if seguimiento}}<span class="status-pill info">{{seguimiento.total}} en tránsito</span>{{/if}}
   </div>
 
-  {{#if errorDeSesion}}
-  <section class="panel">
-    <strong>{{errorDeSesion}}</strong>
-    <p class="muted">Para esta pantalla: <code>/seguimiento-donante?donaciones=101,102</code></p>
-  </section>
-  {{/if}}
-
   {{#if errorDeServicio}}
   <section class="panel">
     <strong>{{errorDeServicio}}</strong>

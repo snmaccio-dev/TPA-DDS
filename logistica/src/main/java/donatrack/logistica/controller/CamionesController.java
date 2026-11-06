@@ -3,6 +3,7 @@ package donatrack.logistica.controller;
 import donatrack.logistica.controller.dto.ActualizarCamionRequest;
 import donatrack.logistica.controller.dto.CamionDTO;
 import donatrack.logistica.controller.dto.CrearCamionRequest;
+import donatrack.logistica.seguridad.RolDeAcceso;
 import donatrack.logistica.service.GestorCamiones;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -16,11 +17,11 @@ public class CamionesController {
   }
 
   public void registrarRutas(Javalin app) {
-    app.get("/camiones", this::todos);
-    app.get("/camiones/{patente}", this::buscar);
-    app.post("/camiones", this::crear);
-    app.put("/camiones/{patente}", this::actualizar);
-    app.delete("/camiones/{patente}", this::eliminar);
+    app.get("/camiones", this::todos, RolDeAcceso.ADMINISTRADOR);
+    app.get("/camiones/{patente}", this::buscar, RolDeAcceso.ADMINISTRADOR);
+    app.post("/camiones", this::crear, RolDeAcceso.ADMINISTRADOR);
+    app.put("/camiones/{patente}", this::actualizar, RolDeAcceso.ADMINISTRADOR);
+    app.delete("/camiones/{patente}", this::eliminar, RolDeAcceso.ADMINISTRADOR);
   }
 
   private void todos(Context ctx) {

@@ -3,6 +3,7 @@ package donatrack.logistica.controller;
 import donatrack.logistica.controller.dto.EntregaDTO;
 import donatrack.logistica.controller.dto.IniciarRutaRequest;
 import donatrack.logistica.controller.dto.RutaDTO;
+import donatrack.logistica.seguridad.RolDeAcceso;
 import donatrack.logistica.service.GestorEntregas;
 import donatrack.logistica.service.GestorRutas;
 import io.javalin.Javalin;
@@ -19,11 +20,14 @@ public class RutasController {
   }
 
   public void registrarRutas(Javalin app) {
-    app.get("/rutas", this::todas);
-    app.get("/rutas/{id}", this::buscar);
-    app.get("/rutas/{id}/entregas", this::entregas);
-    app.post("/rutas/{id}/inicio", this::iniciar);
-    app.delete("/rutas/{id}", this::eliminar);
+    app.get("/rutas", this::todas, RolDeAcceso.ADMINISTRADOR);
+    app.get("/rutas/{id}", this::buscar,
+        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.CHOFER);
+    app.get("/rutas/{id}/entregas", this::entregas,
+        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.CHOFER);
+    app.post("/rutas/{id}/inicio", this::iniciar,
+        RolDeAcceso.CHOFER, RolDeAcceso.ADMINISTRADOR);
+    app.delete("/rutas/{id}", this::eliminar, RolDeAcceso.ADMINISTRADOR);
   }
 
   private void todas(Context ctx) {

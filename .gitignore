@@ -40,3 +40,6 @@ build/
 
 ### Enunciados / documentos ###
 *.docx
+
+### Fotos de entregas subidas en local (AlmacenEnDisco) ###
+fotos/

@@ -33,6 +33,9 @@ public class Entrega {
   @Column(name = "donacion_id", nullable = false)
   private long donacionId;
 
+  @Column(name = "donante_id")
+  private Long donanteId;
+
   @Column(name = "beneficiaria_id", nullable = false)
   private long beneficiariaId;
 
@@ -85,6 +88,7 @@ public class Entrega {
   }
 
   public Entrega(long donacionId,
+                 Long donanteId,
                  long beneficiariaId,
                  String direccionDestino,
                  String descripcionDonacion,
@@ -97,6 +101,7 @@ public class Entrega {
       throw new DatosInvalidosException("La entrega debe tener una descripcion de la donacion.");
     }
     this.donacionId = donacionId;
+    this.donanteId = donanteId;
     this.beneficiariaId = beneficiariaId;
     this.direccionDestino = direccionDestino;
     this.descripcionDonacion = descripcionDonacion;
@@ -108,6 +113,7 @@ public class Entrega {
   public static Entrega desde(DonacionParaPlanificar donacion) {
     return new Entrega(
         donacion.donacionId(),
+        donacion.donanteId(),
         donacion.beneficiariaId(),
         donacion.direccionDestino(),
         donacion.descripcion(),
@@ -232,6 +238,10 @@ public class Entrega {
 
   public long getDonacionId() {
     return donacionId;
+  }
+
+  public Long getDonanteId() {
+    return donanteId;
   }
 
   public long getBeneficiariaId() {

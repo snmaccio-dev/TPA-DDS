@@ -2,6 +2,7 @@ package donatrack.logistica.controller;
 
 import donatrack.logistica.controller.dto.CorridaDTO;
 import donatrack.logistica.controller.dto.EntregaDTO;
+import donatrack.logistica.seguridad.RolDeAcceso;
 import donatrack.logistica.service.GestorLogistica;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -17,9 +18,9 @@ public class PlanificacionController {
   }
 
   public void registrarRutas(Javalin app) {
-    app.post("/planificacion/corridas", this::ejecutarCorrida);
-    app.get("/planificacion/pendientes", this::pendientes);
-    app.get("/planificacion/demoradas", this::demoradas);
+    app.post("/planificacion/corridas", this::ejecutarCorrida, RolDeAcceso.ADMINISTRADOR);
+    app.get("/planificacion/pendientes", this::pendientes, RolDeAcceso.ADMINISTRADOR);
+    app.get("/planificacion/demoradas", this::demoradas, RolDeAcceso.ADMINISTRADOR);
   }
 
   private void ejecutarCorrida(Context ctx) {

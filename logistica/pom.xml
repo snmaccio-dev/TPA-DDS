@@ -16,6 +16,7 @@
         <javalin.version>6.4.0</javalin.version>
         <jackson.version>2.17.2</jackson.version>
         <slf4j.version>2.0.13</slf4j.version>
+        <nimbus.version>9.37.3</nimbus.version>
         <db.url>jdbc:postgresql://localhost:5432/donatrack_logistica</db.url>
         <db.user>postgres</db.user>
         <db.password>${env.DONATRACK_DB_PASSWORD}</db.password>
@@ -44,6 +45,17 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-simple</artifactId>
             <version>${slf4j.version}</version>
+        </dependency>
+
+        <!--
+          Validacion y parsing de JWT contra el JWKS de Keycloak (RS256). Misma version
+          que declara Donaciones: los dos servicios validan tokens del mismo realm, asi
+          que conviene que lo hagan con la misma implementacion.
+        -->
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>${nimbus.version}</version>
         </dependency>
     </dependencies>
 

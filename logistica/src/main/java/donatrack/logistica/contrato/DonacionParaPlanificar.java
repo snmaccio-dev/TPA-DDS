@@ -9,7 +9,8 @@ public record DonacionParaPlanificar(
     String unidad,
     long beneficiariaId,
     String razonSocialBeneficiaria,
-    String direccionDestino
+    String direccionDestino,
+    Long donanteId
 ) {
 
   public DonacionParaPlanificar {

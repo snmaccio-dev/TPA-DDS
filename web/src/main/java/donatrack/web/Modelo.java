@@ -1,6 +1,7 @@
 package donatrack.web;
 
 import donatrack.web.integracion.IntegracionException;
+import donatrack.web.vista.PerfilVista;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -11,10 +12,12 @@ public class Modelo {
 
   private final Map<String, Object> datos = new HashMap<>();
   private final Map<String, String> activa = new LinkedHashMap<>();
+  private final Map<String, Object> usuario = new HashMap<>();
 
   private Modelo(String titulo) {
     datos.put("titulo", titulo);
     datos.put("activa", activa);
+    datos.put("usuario", usuario);
   }
 
   public static Modelo de(String titulo) {
@@ -49,33 +52,37 @@ public class Modelo {
     }
   }
 
+  public Modelo conUsuario(PerfilVista perfil) {
+    if (perfil != null) {
+      usuario.put("nombre", perfil.getNombre());
+      usuario.put("iniciales", perfil.getIniciales());
+      usuario.put("email", perfil.getEmail());
+    }
+
+    return this;
+  }
+
   public Modelo comoDonante() {
     datos.put("esDonante", true);
-    return usuario("Usuario de prueba", "US", "DONANTE",
-        "Persona donante", "/donante-dashboard");
+    return rol("DONANTE", "Persona donante", "/donante-dashboard");
   }
 
   public Modelo comoBeneficiaria() {
     datos.put("esBeneficiaria", true);
-    return usuario("Usuario de prueba", "US", "BENEFICIARIO",
-        "Entidad beneficiaria", "/beneficiario-dashboard");
+    return rol("BENEFICIARIO", "Entidad beneficiaria", "/beneficiario-dashboard");
   }
 
   public Modelo comoAdmin() {
     datos.put("esAdmin", true);
-    return usuario("Administrador", "AD", "ADMIN",
-        "Administración", "/admin-dashboard");
+    return rol("ADMIN", "Administración", "/admin-dashboard");
   }
 
-  private Modelo usuario(String nombre, String iniciales, String rolTexto,
-                         String rolDescripcion, String inicio) {
-    Map<String, Object> usuario = new HashMap<>();
-    usuario.put("nombre", nombre);
-    usuario.put("iniciales", iniciales);
+  private Modelo rol(String rolTexto, String rolDescripcion, String inicio) {
+    usuario.putIfAbsent("nombre", "Usuario de prueba");
+    usuario.putIfAbsent("iniciales", "US");
     usuario.put("rolTexto", rolTexto);
     usuario.put("rolDescripcion", rolDescripcion);
     usuario.put("inicio", inicio);
-    datos.put("usuario", usuario);
     return this;
   }
 

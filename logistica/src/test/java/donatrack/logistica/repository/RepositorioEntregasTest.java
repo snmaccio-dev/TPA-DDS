@@ -20,7 +20,7 @@ class RepositorioEntregasTest implements SimplePersistenceTest {
   private final RepositorioEntregas repositorio = RepositorioEntregas.getInstance();
 
   private Entrega nuevaEntrega(long donacionId) {
-    return new Entrega(donacionId, 900L, "Av. Siempreviva 742", "Frazadas", 20, "unidades");
+    return new Entrega(donacionId, 500L, 900L, "Av. Siempreviva 742", "Frazadas", 20, "unidades");
   }
 
   @Test

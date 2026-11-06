@@ -26,7 +26,7 @@ class GestorRutasTest implements SimplePersistenceTest {
     Camion camion = new Camion(patente, 40.0, 3.0, 2000.0);
     persist(camion);
 
-    Entrega entrega = new Entrega(donacionId, 900L, "Destino 1", "Alimentos", 5, "cajas");
+    Entrega entrega = new Entrega(donacionId, 500L, 900L, "Destino 1", "Alimentos", 5, "cajas");
     entrega.registrarMedicion(4.0, 0.2);
     persist(entrega);
 

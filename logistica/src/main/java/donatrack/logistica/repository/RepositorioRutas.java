@@ -58,6 +58,16 @@ public class RepositorioRutas implements WithSimplePersistenceUnit {
         .getResultList();
   }
 
+  public List<RutaReparto> enCursoDeDonante(long donanteId) {
+    return createQuery(
+        "select distinct r from RutaReparto r join r.entregas e "
+            + "where r.estado = :estado and e.donanteId = :donanteId",
+        RutaReparto.class)
+        .setParameter("estado", EstadoRuta.EN_CURSO)
+        .setParameter("donanteId", donanteId)
+        .getResultList();
+  }
+
   public List<RutaReparto> enCursoDeDonaciones(List<Long> donacionIds) {
     if (donacionIds == null || donacionIds.isEmpty()) {
       return List.of();

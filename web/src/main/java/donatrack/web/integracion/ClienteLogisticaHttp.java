@@ -8,7 +8,6 @@ import donatrack.web.vista.MonitoreoRutaVista;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ClienteLogisticaHttp implements ClienteLogistica {
 
@@ -21,49 +20,51 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
   }
 
   @Override
-  public List<CamionVista> camiones() {
-    return http.obtener("/camiones", new TypeReference<List<CamionVista>>() {});
+  public List<CamionVista> camiones(String autorizacion) {
+    return http.obtener(autorizacion, "/camiones", new TypeReference<List<CamionVista>>() {});
   }
 
   @Override
-  public CamionVista camion(String patente) {
-    return http.obtener(rutaDeCamion(patente), new TypeReference<CamionVista>() {});
+  public CamionVista camion(String autorizacion, String patente) {
+    return http.obtener(autorizacion, rutaDeCamion(patente), new TypeReference<CamionVista>() {});
   }
 
   @Override
-  public void crearCamion(NuevoCamion camion) {
-    http.publicar("/camiones", camion);
+  public void crearCamion(String autorizacion, NuevoCamion camion) {
+    http.publicar(autorizacion, "/camiones", camion);
   }
 
   @Override
-  public void actualizarCamion(String patente, CapacidadesDeCamion capacidades) {
-    http.reemplazar(rutaDeCamion(patente), capacidades);
+  public void actualizarCamion(String autorizacion,
+                               String patente,
+                               CapacidadesDeCamion capacidades) {
+    http.reemplazar(autorizacion, rutaDeCamion(patente), capacidades);
   }
 
   @Override
-  public List<MonitoreoRutaVista> monitoreoDeBeneficiaria(long beneficiariaId) {
-    return monitoreo("?beneficiaria=" + beneficiariaId);
+  public List<MonitoreoRutaVista> monitoreoDeRutasEnCurso(String autorizacion) {
+    return http.obtener(
+        autorizacion,
+        "/monitoreo/rutas",
+        new TypeReference<List<MonitoreoRutaVista>>() {}
+    );
   }
 
   @Override
-  public List<MonitoreoRutaVista> monitoreoDeDonaciones(List<Long> donacionIds) {
-    if (donacionIds == null || donacionIds.isEmpty()) {
-      return List.of();
-    }
-
-    return monitoreo("?donaciones=" + donacionIds.stream()
-        .map(String::valueOf)
-        .collect(Collectors.joining(",")));
+  public EntregaVista entrega(String autorizacion, long entregaId) {
+    return http.obtener(
+        autorizacion,
+        "/entregas/" + entregaId,
+        new TypeReference<EntregaVista>() {}
+    );
   }
 
   @Override
-  public EntregaVista entrega(long entregaId) {
-    return http.obtener("/entregas/" + entregaId, new TypeReference<EntregaVista>() {});
-  }
-
-  @Override
-  public List<String> subirFotos(long entregaId, List<ArchivoSubido> fotos) {
+  public List<String> subirFotos(String autorizacion,
+                                 long entregaId,
+                                 List<ArchivoSubido> fotos) {
     return http.publicarArchivos(
+        autorizacion,
         "/entregas/" + entregaId + "/fotos",
         "fotos",
         fotos,
@@ -72,17 +73,11 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
   }
 
   @Override
-  public void confirmarRecepcion(long entregaId, List<String> fotos) {
+  public void confirmarRecepcion(String autorizacion, long entregaId, List<String> fotos) {
     http.publicar(
+        autorizacion,
         "/entregas/" + entregaId + "/confirmacion",
         new ConfirmarRecepcion(fotos)
-    );
-  }
-
-  private List<MonitoreoRutaVista> monitoreo(String filtro) {
-    return http.obtener(
-        "/monitoreo/rutas" + filtro,
-        new TypeReference<List<MonitoreoRutaVista>>() {}
     );
   }
 

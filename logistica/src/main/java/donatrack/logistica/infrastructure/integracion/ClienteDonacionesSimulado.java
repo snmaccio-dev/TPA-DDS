@@ -17,6 +17,24 @@ public class ClienteDonacionesSimulado implements ClienteDonaciones {
     this(List.of());
   }
 
+  // Datos de ejemplo para poder ejercitar el flujo completo en modo simulado, donde no
+  // hay un Donaciones del otro lado. Las beneficiarias y las personas donantes se cruzan
+  // a proposito: ninguna de las dos dimensiones contiene a la otra, asi que sirven para
+  // verificar que cada una ve solo lo suyo.
+  public static ClienteDonacionesSimulado conDonacionesDeEjemplo() {
+    return new ClienteDonacionesSimulado(List.of(
+        new DonacionParaPlanificar(
+            101L, "Alimentos no perecederos", 12, "cajas",
+            900L, "Comedor Los Pinos", "Av. Hipolito Yrigoyen 1234, Lanus", 500L),
+        new DonacionParaPlanificar(
+            102L, "Ropa de abrigo", 8, "bolsas",
+            900L, "Comedor Los Pinos", "Av. Hipolito Yrigoyen 1234, Lanus", 501L),
+        new DonacionParaPlanificar(
+            103L, "Productos de higiene", 20, "unidades",
+            901L, "Centro La Esperanza", "Av. Meeks 820, Lomas de Zamora", 500L)
+    ));
+  }
+
   public ClienteDonacionesSimulado(List<DonacionParaPlanificar> donaciones) {
     this.donaciones = List.copyOf(donaciones);
   }
