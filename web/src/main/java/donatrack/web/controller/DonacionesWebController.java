@@ -8,6 +8,7 @@ import donatrack.web.sesion.IdentidadDelUsuario;
 import donatrack.web.sesion.UsuarioWeb;
 import donatrack.web.vista.EntidadVista;
 import donatrack.web.vista.NecesidadVista;
+import donatrack.web.vista.SubcategoriaVista;
 import io.javalin.Javalin;
 import io.javalin.http.InternalServerErrorResponse;
 
@@ -102,6 +103,8 @@ public class DonacionesWebController {
             .con("errorDelFormulario", errorDelFormulario)
             .conDatosDe("necesidades", List.<NecesidadVista>of(),
                 () -> clienteDonaciones.necesidades(autorizacionDe(ctx)))
+            .conDatosDe("subcategorias", List.<SubcategoriaVista>of(),
+                () -> clienteDonaciones.subcategorias(autorizacionDe(ctx)))
             .mapa());
   }
 

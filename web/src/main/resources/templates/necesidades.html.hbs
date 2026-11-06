@@ -23,12 +23,9 @@
 <label>Descripción<input name="descripcion" required placeholder="Ej. Fideos para el comedor"></label>
 <div class="form-row">
 <label>Subcategoría<select name="subcategoria" required>
-        <option value="Fideos secos">Fideos secos</option>
-        <option value="Tomate en tetrapak">Tomate en tetrapak</option>
-        <option value="Camperas de abrigo">Camperas de abrigo</option>
-        <option value="Sillas">Sillas</option>
-        <option value="Mesas">Mesas</option>
-        <option value="Bancos escolares">Bancos escolares</option>
+{{#each subcategorias}}
+        <option value="{{nombre}}">{{etiqueta}}</option>
+{{/each}}
 </select></label>
 <label>Cantidad<input name="cantidad" type="number" min="1" required></label>
 </div>

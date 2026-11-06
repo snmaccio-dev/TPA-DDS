@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import donatrack.web.vista.EntidadVista;
 import donatrack.web.vista.NecesidadVista;
 import donatrack.web.vista.PerfilVista;
+import donatrack.web.vista.SubcategoriaVista;
 
 import java.util.List;
 
@@ -48,5 +49,11 @@ public class ClienteDonacionesHttp implements ClienteDonaciones {
   @Override
   public void crearNecesidad(String autorizacion, NuevaNecesidad datos) {
     http.publicar(autorizacion, "/necesidades", datos);
+  }
+
+  @Override
+  public List<SubcategoriaVista> subcategorias(String autorizacion) {
+    return http.obtener(autorizacion, "/subcategorias",
+        new TypeReference<List<SubcategoriaVista>>() {});
   }
 }

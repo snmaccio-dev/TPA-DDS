@@ -3,6 +3,7 @@ package donatrack.web.integracion;
 import donatrack.web.vista.EntidadVista;
 import donatrack.web.vista.NecesidadVista;
 import donatrack.web.vista.PerfilVista;
+import donatrack.web.vista.SubcategoriaVista;
 
 import java.util.List;
 
@@ -22,4 +23,7 @@ public interface ClienteDonaciones {
   List<NecesidadVista> necesidades(String autorizacion);
 
   void crearNecesidad(String autorizacion, NuevaNecesidad datos);
+
+  // El catalogo de subcategorias, para que los formularios ofrezcan opciones validas.
+  List<SubcategoriaVista> subcategorias(String autorizacion);
 }
