@@ -2,6 +2,7 @@ package donatrack.web.controller;
 
 import donatrack.web.Modelo;
 import donatrack.web.integracion.ClienteDonaciones;
+import donatrack.web.integracion.IntegracionException;
 import donatrack.web.sesion.ClienteOidc;
 import donatrack.web.sesion.IdentidadPorSesion;
 import donatrack.web.sesion.Pkce;
@@ -62,8 +63,17 @@ public class SesionController {
     }
 
     TokensDeKeycloak tokens = oidc.intercambiar(codigo, verificador);
-    String autorizacion = "Bearer " + tokens.accessToken();
-    PerfilVista perfil = clienteDonaciones.perfil(autorizacion);
+    PerfilVista perfil;
+
+    // El token ya es valido: lo unico que puede fallar aca es el perfil, que vive en
+    // Donaciones. Sin el no hay sesion util, pero el usuario merece saber por que.
+    try {
+      perfil = clienteDonaciones.perfil("Bearer " + tokens.accessToken());
+    } catch (IntegracionException e) {
+      mostrarFalloDeIngreso(ctx, "Te autenticaste bien, pero no se pudo completar el ingreso: "
+          + e.getMessage());
+      return;
+    }
 
     ctx.sessionAttribute(IdentidadPorSesion.CLAVE_USUARIO, UsuarioWeb.de(tokens, perfil));
 

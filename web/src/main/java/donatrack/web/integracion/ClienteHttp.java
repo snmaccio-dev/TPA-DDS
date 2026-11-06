@@ -119,6 +119,24 @@ public class ClienteHttp {
     return valor.getBytes(StandardCharsets.UTF_8);
   }
 
+  public <T> T consultar(String autorizacion, String ruta, Object cuerpo, TypeReference<T> tipo) {
+    HttpResponse<String> respuesta = enviar(
+        conAutorizacion(
+            HttpRequest.newBuilder()
+                .uri(URI.create(urlBase + ruta))
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .timeout(ESPERA)
+                .POST(HttpRequest.BodyPublishers.ofString(serializar(cuerpo))),
+            autorizacion
+        ).build()
+    );
+
+    verificar(respuesta);
+
+    return deserializar(respuesta.body(), tipo);
+  }
+
   private void escribir(String metodo, String autorizacion, String ruta, Object cuerpo) {
     verificar(enviar(
         conAutorizacion(

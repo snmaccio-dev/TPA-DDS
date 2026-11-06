@@ -118,12 +118,7 @@ public class LogisticaWebController {
   }
 
   private PlanificacionVista planificacion(Context ctx) {
-    String autorizacion = autorizacionDe(ctx);
-
-    return new PlanificacionVista(
-        clienteLogistica.rutas(autorizacion),
-        clienteLogistica.entregasPendientesDePlanificacion(autorizacion)
-    );
+    return clienteLogistica.planificacion(autorizacionDe(ctx));
   }
 
   private void rutasDelChofer(Context ctx) {
