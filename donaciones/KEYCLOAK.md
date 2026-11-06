@@ -22,8 +22,12 @@ Consola de administracion: http://localhost:8180 (usuario `admin`, contrasena `a
 - Crear un realm nuevo llamado **`donatrack`**.
 - En *Realm settings > Login*, activar **Email as username** (asi el `username` en Keycloak
   queda igual al `email` que mandan los microservicios).
-- En *Realm settings > Email*, cargar el SMTP. Es obligatorio porque Keycloak manda el mail
-  de `UPDATE_PASSWORD` cuando los administradores dan de alta usuarios sin contrasena.
+- En *Realm settings > Email*, cargar el SMTP. Hace falta para las altas que Donaciones
+  hace **sin contrasena**: los donantes cargados en el deposito (`POST /donantes`) y las
+  beneficiarias dadas de alta por un administrador (`POST /entidades/*`). En esos casos
+  Keycloak le manda al usuario el correo de `UPDATE_PASSWORD` para que la configure.
+  Los administradores (`POST /administradores`) reciben la contrasena directamente de
+  quien los da de alta, asi que para ese flujo el SMTP no es necesario.
   Para desarrollo sirve [MailHog](https://github.com/mailhog/MailHog) en `localhost:1025`.
 
 ## 3. Roles de realm
@@ -92,7 +96,31 @@ Solo se usan cuando `LOGISTICA_MODO=http`; con el cliente simulado no hace falta
 Las variables tipicas de una SPA con Keycloak: `KEYCLOAK_URL`, `KEYCLOAK_REALM` y
 `KEYCLOAK_CLIENT_ID=donatrack-web`.
 
-## 6. Prueba rapida con curl
+## 6. Primer administrador
+
+`POST /administradores` esta restringido al rol `ADMINISTRADOR`, asi que el primer
+administrador se crea a mano en la consola de Keycloak:
+
+1. *Users > Add user*: el `Username` es el email (el realm tiene *Email as username* en ON).
+2. *Credentials > Set password*: cargar la contrasena con **Temporary: OFF**. Si queda en
+   ON, Keycloak marca `UPDATE_PASSWORD` como required action y el login del web falla con
+   "Account is not fully set up".
+3. *Role mapping > Assign role*: asignar el rol de realm `ADMINISTRADOR`.
+
+Desde ese usuario ya se puede llamar a `POST /administradores` para dar de alta mas.
+
+## 7. Cambio de contrasena
+
+Cada usuario puede cambiar su contrasena en:
+
+```
+{KEYCLOAK_URL}/realms/donatrack/account
+```
+
+El web puede poner un link "Cambiar contrasena" que lleve ahi. No hace falta un endpoint
+propio en Donaciones: las credenciales las administra Keycloak.
+
+## 8. Prueba rapida con curl
 
 ```bash
 # 1. Pedir un token para un usuario real (Resource Owner Password Grant, solo para pruebas).
@@ -124,3 +152,26 @@ Respuesta esperada:
 
 Si el token esta vencido, mal firmado o sin `Bearer`, Donaciones responde 401 con el
 `ErrorDTO` estandar. Si el rol del token no cubre la ruta, 403.
+
+## 9. Dar de alta otro administrador por API
+
+Con el token de un administrador ya existente:
+
+```bash
+curl -s -X POST http://localhost:8080/administradores \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"email":"nuevo-admin@donatrack.ar","contrasena":"una-contrasena-larga"}'
+```
+
+Respuesta esperada (201):
+
+```json
+{"keycloakId":"f3c6..."}
+```
+
+Casos de error:
+
+- `400` si falta el email o la contrasena tiene menos de 8 caracteres.
+- `409` si ya existe una cuenta con ese correo en Keycloak.
+- `403` si el token no tiene el rol `ADMINISTRADOR`.
