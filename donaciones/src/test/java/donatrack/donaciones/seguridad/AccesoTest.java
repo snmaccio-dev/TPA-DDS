@@ -8,6 +8,8 @@ import donatrack.donaciones.domain.donacion.CondicionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.necesidad.Necesidad;
 import donatrack.donaciones.domain.necesidad.NecesidadExtraordinaria;
+import donatrack.donaciones.domain.notificacion.Notificacion;
+import donatrack.donaciones.domain.notificacion.TipoNotificacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
@@ -79,6 +81,57 @@ class AccesoTest {
         Optional.empty(), Optional.empty());
 
     assertThrows(ForbiddenResponse.class, () -> Acceso.perfilDonanteObligatorio(sinPerfil));
+  }
+
+  @Test
+  void unDonanteVeSusNotificacionesYNoLasDeOtro() throws Exception {
+    Donante donanteAna = donanteConId("Ana", "11111111", 10L);
+    Donante donanteLuis = donanteConId("Luis", "22222222", 20L);
+
+    UsuarioActual usuario = usuarioDonante("kc-ana", "ana@mail.com", donanteAna);
+
+    Notificacion propia = Notificacion.paraDonante(
+        donanteAna, TipoNotificacion.CAMBIO_ESTADO, "mia", null);
+    Notificacion ajena = Notificacion.paraDonante(
+        donanteLuis, TipoNotificacion.CAMBIO_ESTADO, "ajena", null);
+
+    assertDoesNotThrow(() -> Acceso.exigirPuedeVerNotificacion(usuario, propia));
+    assertThrows(ForbiddenResponse.class,
+        () -> Acceso.exigirPuedeVerNotificacion(usuario, ajena));
+  }
+
+  @Test
+  void unaBeneficiariaVeSusNotificaciones() throws Exception {
+    Beneficiaria propia = beneficiariaConId("30-11111111-1", 100L);
+    Beneficiaria otra = beneficiariaConId("30-22222222-2", 200L);
+
+    UsuarioActual usuario = usuarioBeneficiaria("kc-benef", "benef@mail.com", propia);
+
+    Notificacion mia = Notificacion.paraBeneficiaria(
+        propia, TipoNotificacion.DONACION_ASIGNADA, "mia", null);
+    Notificacion otraN = Notificacion.paraBeneficiaria(
+        otra, TipoNotificacion.DONACION_ASIGNADA, "otra", null);
+
+    assertDoesNotThrow(() -> Acceso.exigirPuedeVerNotificacion(usuario, mia));
+    assertThrows(ForbiddenResponse.class,
+        () -> Acceso.exigirPuedeVerNotificacion(usuario, otraN));
+  }
+
+  @Test
+  void lasDeAdministradoresSoloLasVenAdmins() throws Exception {
+    Donante donante = donanteConId("Ana", "11111111", 10L);
+    UsuarioActual admin = new UsuarioActual(
+        "kc-admin", "admin@mail.com",
+        Set.of(RolDeAcceso.ADMINISTRADOR),
+        Optional.empty(), Optional.empty());
+    UsuarioActual donanteUsuario = usuarioDonante("kc-d", "d@mail.com", donante);
+
+    Notificacion paraAdmins = Notificacion.paraAdministradores(
+        TipoNotificacion.ENTREGA_FALLIDA, "ups", null);
+
+    assertDoesNotThrow(() -> Acceso.exigirPuedeVerNotificacion(admin, paraAdmins));
+    assertThrows(ForbiddenResponse.class,
+        () -> Acceso.exigirPuedeVerNotificacion(donanteUsuario, paraAdmins));
   }
 
   @Test

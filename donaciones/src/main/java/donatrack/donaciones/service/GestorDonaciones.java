@@ -5,11 +5,11 @@ import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.estado.EstadoDonacion;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
-import donatrack.donaciones.domain.notificacion.NotificadorDonacionObserver;
-import donatrack.donaciones.domain.notificacion.NotificarBeneficiariaAsignacionObserver;
+import donatrack.donaciones.domain.notificacion.NotificacionesDeDonacionObserver;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.repository.RepositorioDonaciones;
+import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPropuestas;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
@@ -24,39 +24,63 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
         RepositorioDonaciones.getInstance();
     private final GestorNotificaciones gestorNotificaciones;
     private final RepositorioPropuestas repositorioPropuestas;
+    private final RepositorioNotificaciones repositorioNotificaciones;
+    // Links a la vista de seguimiento del web; se usan al armar la notificacion
+    // INICIO_RUTA y los recibimos ya armados desde DonacionesApp para no leer
+    // variables de entorno desde aca.
+    private final String linkSeguimientoDonante;
+    private final String linkSeguimientoBeneficiario;
 
     public GestorDonaciones(GestorNotificaciones gestorNotificaciones,
-                            RepositorioPropuestas repositorioPropuestas) {
+                            RepositorioPropuestas repositorioPropuestas,
+                            RepositorioNotificaciones repositorioNotificaciones,
+                            String linkSeguimientoDonante,
+                            String linkSeguimientoBeneficiario) {
         this.gestorNotificaciones = gestorNotificaciones;
         this.repositorioPropuestas = repositorioPropuestas;
+        this.repositorioNotificaciones = repositorioNotificaciones;
+        this.linkSeguimientoDonante = linkSeguimientoDonante;
+        this.linkSeguimientoBeneficiario = linkSeguimientoBeneficiario;
+    }
+
+    // Agrega el observer unico a una donacion. Es idempotente del lado de
+    // Donacion.agregarObserver, asi que podemos llamar siempre sin chequear.
+    public Donacion conObservers(Donacion donacion) {
+        if (donacion == null) {
+            return null;
+        }
+        donacion.agregarObserver(new NotificacionesDeDonacionObserver(
+            gestorNotificaciones, linkSeguimientoDonante, linkSeguimientoBeneficiario));
+        return donacion;
     }
 
     public List<Donacion> todas() {
-        return repositorio.todas();
+        List<Donacion> lista = repositorio.todas();
+        lista.forEach(this::conObservers);
+        return lista;
     }
 
     public List<Donacion> porEstado(EstadosPosiblesDonacion estado) {
-        return repositorio.enEstado(estado);
+        List<Donacion> lista = repositorio.enEstado(estado);
+        lista.forEach(this::conObservers);
+        return lista;
     }
 
-    public List<Donacion> deDonante(Donante donante, EstadosPosiblesDonacion estadoOpcional) {
-        return estadoOpcional == null
-            ? repositorio.deDonante(donante)
-            : repositorio.deDonanteEnEstado(donante, estadoOpcional);
-    }
-
-    public List<Donacion> deBeneficiaria(Beneficiaria beneficiaria, EstadosPosiblesDonacion estadoOpcional) {
-        return estadoOpcional == null
-            ? repositorio.deBeneficiaria(beneficiaria)
-            : repositorio.deBeneficiariaEnEstado(beneficiaria, estadoOpcional);
+    public List<Donacion> buscar(FiltroDonaciones filtro,
+                                 Donante donanteOpcional,
+                                 Beneficiaria beneficiariaOpcional) {
+        List<Donacion> lista = repositorio.buscar(filtro, donanteOpcional, beneficiariaOpcional);
+        lista.forEach(this::conObservers);
+        return lista;
     }
 
     public Donacion buscar(long id) {
-        return repositorio.buscarPorId(id)
+        Donacion donacion = repositorio.buscarPorId(id)
             .orElseThrow(() ->
                 new RecursoInexistenteException(
                     "No existe la donación con ID " + id
                 ));
+        return conObservers(donacion);
     }
 
     public List<Donacion> crear(List<Bien> bienes, Donante donante, String descripcion) {
@@ -66,18 +90,21 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
     }
 
     private void registrarDonacion(Donacion donacion) {
-        donacion.agregarObserver(
-            new NotificadorDonacionObserver(donacion.getDonante(), gestorNotificaciones)
-        );
-        donacion.agregarObserver(
-            new NotificarBeneficiariaAsignacionObserver(gestorNotificaciones)
-        );
+        conObservers(donacion);
         donacion.getDonante().registrarDonacion(donacion);
         repositorio.guardar(donacion);
     }
 
+    // Borrado en cascada de una donacion: primero sacamos sus notificaciones
+    // y la propuesta de asignacion (si quedo alguna). Los bienes y el historial
+    // de estados caen por cascade ALL del mapeo de Donacion.
     public void eliminar(long id) {
-        withTransaction(() -> repositorio.eliminar(id));
+        Donacion donacion = buscar(id);
+        withTransaction(() -> {
+            repositorioNotificaciones.eliminarDeDonacion(donacion);
+            repositorioPropuestas.eliminar(id);
+            repositorio.eliminar(id);
+        });
     }
 
     // === Transiciones del ciclo de la Donacion ===
@@ -124,6 +151,7 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
                                     EstadosPosiblesDonacion estadoDestino,
                                     List<EstadosPosiblesDonacion> estadosOrigenValidos,
                                     Consumer<Donacion> transicion) {
+        // buscar(...) ya le enchufa el observer a cada donacion recuperada.
         List<Donacion> donaciones = donacionIds.stream()
             .map(this::buscar)
             .toList();

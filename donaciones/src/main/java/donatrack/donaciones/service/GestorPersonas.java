@@ -1,11 +1,16 @@
 package donatrack.donaciones.service;
 
+import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Persona;
+import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.usuario.Usuario;
+import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioDonantes;
+import donatrack.donaciones.repository.RepositorioEntidades;
+import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioUsuarios;
 import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
@@ -25,13 +30,22 @@ public class GestorPersonas implements WithSimplePersistenceUnit {
 
     private final RepositorioDonantes repositorioDonantes;
     private final RepositorioUsuarios repositorioUsuarios;
+    private final RepositorioNotificaciones repositorioNotificaciones;
+    private final RepositorioDonaciones repositorioDonaciones;
+    private final RepositorioEntidades repositorioEntidades;
     private final ProveedorDeIdentidad proveedor;
 
     public GestorPersonas(RepositorioDonantes repositorioDonantes,
                           RepositorioUsuarios repositorioUsuarios,
+                          RepositorioNotificaciones repositorioNotificaciones,
+                          RepositorioDonaciones repositorioDonaciones,
+                          RepositorioEntidades repositorioEntidades,
                           ProveedorDeIdentidad proveedor) {
         this.repositorioDonantes = repositorioDonantes;
         this.repositorioUsuarios = repositorioUsuarios;
+        this.repositorioNotificaciones = repositorioNotificaciones;
+        this.repositorioDonaciones = repositorioDonaciones;
+        this.repositorioEntidades = repositorioEntidades;
         this.proveedor = proveedor;
     }
 
@@ -45,6 +59,11 @@ public class GestorPersonas implements WithSimplePersistenceUnit {
             return;
         }
 
+        // El Donante lo creamos dentro de esta misma transaccion, asi que no
+        // puede tener cuenta previa: alcanza con el unique de la base como red
+        // de seguridad. No metemos un chequeo defensivo adentro del
+        // withTransaction para no dejar la persona a medio commitear si tiraramos
+        // 409 desde ahi.
         String keycloakId = proveedor.crearUsuarioSinContrasena(email, RolDeAcceso.DONANTE);
         try {
             withTransaction(() -> {
@@ -77,6 +96,10 @@ public class GestorPersonas implements WithSimplePersistenceUnit {
     }
 
     private void asegurarCuenta(Donante donante, String email) {
+        // Cada perfil tiene una unica cuenta: si ya hay una, la reutilizamos
+        // tal cual (no volvemos a crearla en Keycloak, ni la pisamos). El
+        // flujo del admin incluye confirmar que el donante ya cuenta con un
+        // usuario, asi que esto no es un error.
         if (repositorioUsuarios.existeParaDonante(donante)) {
             return;
         }
@@ -107,10 +130,51 @@ public class GestorPersonas implements WithSimplePersistenceUnit {
         return repositorio.todos();
     }
 
+    // Borrado en cascada de un donante. El contrato es:
+    // 1. 404 si no existe un donante con ese documento.
+    // 2. 409 si tiene donaciones registradas (conservamos trazabilidad).
+    // 3. Dentro de una unica transaccion: notificaciones, usuario, donante y
+    //    persona (la persona solo si no existe una Beneficiaria que la use).
+    // 4. Despues del commit, borramos la cuenta en Keycloak. Si Keycloak falla
+    //    se loguea y sigue: la cuenta queda sin perfil y el filtro la rechaza.
     public void eliminar(String documento) {
-        withTransaction(() ->
-            repositorio.buscarPorDocumento(documento).ifPresent(repositorio::eliminar)
-        );
+        Donante donante = repositorioDonantes.buscarPorDocumento(documento)
+            .orElseThrow(() -> new RecursoInexistenteException(
+                "No existe un donante con documento " + documento));
+
+        if (repositorioDonaciones.tieneDonacionesDe(donante)) {
+            throw new ConflictoDeNegocioException(
+                "El donante tiene donaciones registradas y no puede eliminarse "
+                    + "para conservar la trazabilidad.");
+        }
+
+        String[] keycloakIdAEliminar = new String[1];
+
+        withTransaction(() -> {
+            Persona persona = donante.getPersona();
+            repositorioNotificaciones.eliminarDeDonante(donante);
+            Optional<Usuario> usuario = repositorioUsuarios.deDonante(donante);
+            usuario.ifPresent(u -> {
+                keycloakIdAEliminar[0] = u.getKeycloakId();
+                repositorioUsuarios.eliminar(u);
+            });
+            repositorioDonantes.eliminar(donante);
+            if (!personaUsadaPorBeneficiaria(persona)) {
+                repositorio.eliminar(persona);
+            }
+        });
+
+        if (keycloakIdAEliminar[0] != null) {
+            intentarEliminar(keycloakIdAEliminar[0]);
+        }
+    }
+
+    private boolean personaUsadaPorBeneficiaria(Persona persona) {
+        // Solo una PersonaJuridica puede tener Beneficiaria.
+        if (!(persona instanceof PersonaJuridica juridica)) {
+            return false;
+        }
+        return repositorioEntidades.buscarPorCuit(juridica.getCuit()).isPresent();
     }
 
     private void intentarEliminar(String keycloakId) {

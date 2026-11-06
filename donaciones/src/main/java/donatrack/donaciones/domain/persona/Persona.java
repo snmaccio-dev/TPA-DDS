@@ -27,6 +27,10 @@ public abstract class Persona {
     @JoinColumn(name = "contacto_predeterminado_id")
     protected MedioContacto contactoPredeterminado;
 
+    public Long getId() {
+        return id;
+    }
+
     public abstract String getNombreDisplay();
 
     public abstract String getDocumento();
@@ -73,5 +77,15 @@ public abstract class Persona {
 
     public void setContactoPredeterminado(MedioContacto contactoPredeterminado) {
         this.contactoPredeterminado = contactoPredeterminado;
+    }
+
+    // Antes de borrar la persona, rompemos la referencia cruzada al
+    // contactoPredeterminado. Persona.contacto_predeterminado_id apunta a
+    // MedioContacto y MedioContacto.persona_id apunta a Persona, asi que si
+    // no la liberamos primero Hibernate puede pifiarle al orden de los
+    // delete y la base rechaza por foreign key. No borra el medio: eso lo
+    // hace el cascade del @OneToMany contactos.
+    public void prepararParaEliminar() {
+        this.contactoPredeterminado = null;
     }
 }

@@ -28,6 +28,7 @@
         <class>donatrack.donaciones.domain.necesidad.Necesidad</class>
         <class>donatrack.donaciones.domain.necesidad.NecesidadRecurrente</class>
         <class>donatrack.donaciones.domain.necesidad.NecesidadExtraordinaria</class>
+        <class>donatrack.donaciones.domain.notificacion.Notificacion</class>
 
         <properties>
             <!-- Conexión a PostgreSQL para despliegue local -->

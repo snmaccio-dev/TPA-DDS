@@ -54,6 +54,13 @@ public class PropuestaAsignacion {
         return donacionId;
     }
 
+    // Saca a la beneficiaria de la lista de candidatas (si estaba). Pensado
+    // para cuando se borra una entidad: la propuesta sigue existiendo con
+    // las demas candidatas en vez de quedar huerfana.
+    public boolean removerCandidata(Beneficiaria beneficiaria) {
+        return candidatas.remove(beneficiaria);
+    }
+
     public List<Beneficiaria> getCandidatas() {
         return List.copyOf(candidatas);
     }

@@ -14,7 +14,6 @@ import donatrack.donaciones.domain.donacion.estado.EstadoEntregaFallida;
 import donatrack.donaciones.domain.necesidad.NecesidadRecurrente;
 import donatrack.donaciones.domain.necesidad.Periodo;
 import donatrack.donaciones.domain.notificacion.Notificador;
-import donatrack.donaciones.domain.notificacion.NotificadorDonacionObserver;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
@@ -28,9 +27,11 @@ import donatrack.donaciones.infrastructure.notificacion.NotificadorSMS;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorWhatsApp;
 import donatrack.donaciones.jobs.PlanificadorAsignaciones;
 import donatrack.donaciones.repository.RepositorioDonantes;
+import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioPropuestas;
 import donatrack.donaciones.service.GestorAsignaciones;
+import donatrack.donaciones.service.GestorDonaciones;
 import donatrack.donaciones.service.GestorNotificaciones;
 import donatrack.donaciones.service.SegmentadorDonaciones;
 
@@ -43,7 +44,21 @@ public class Main {
         System.out.println("=== DonaTrack — Entrega 1 ===\n");
 
         RepositorioPropuestas repositorioPropuestas = new RepositorioPropuestas();
-        GestorAsignaciones gestorAsignaciones = new GestorAsignaciones(repositorioPropuestas);
+        RepositorioNotificaciones repositorioNotificaciones = new RepositorioNotificaciones();
+        GestorNotificaciones gestorNotificaciones = new GestorNotificaciones(List.of(
+            new NotificadorEmail(),
+            new NotificadorSMS(),
+            new NotificadorWhatsApp()
+        ), repositorioNotificaciones);
+        GestorDonaciones gestorDonaciones = new GestorDonaciones(
+            gestorNotificaciones,
+            repositorioPropuestas,
+            repositorioNotificaciones,
+            "http://localhost:8082/seguimiento-donante",
+            "http://localhost:8082/seguimiento-beneficiario"
+        );
+        GestorAsignaciones gestorAsignaciones =
+            new GestorAsignaciones(repositorioPropuestas, gestorDonaciones);
         PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(gestorAsignaciones);
         planificador.iniciar();
 
@@ -116,6 +131,8 @@ public class Main {
     static void demo3_estadosDonacion() {
         System.out.println("--- [3] Ciclo de estados de una donacion ---");
 
+        // Sin observer: en el demo no hay BD para persistir notificaciones.
+        // En el microservicio real, GestorDonaciones.conObservers se encarga.
         PersonaHumana luis = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
         luis.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
         Donante donante = new Donante(luis);
@@ -124,15 +141,6 @@ public class Main {
         Subcategoria ropa = new Subcategoria("Camperas de abrigo", vestimenta, Unidades.UNIDADES);
         Bien campera = new Bien("Campera talle M nueva", ropa, 1, CondicionBien.USADO);
         Donacion donacion = new Donacion(List.of(campera), donante, "Campera de abrigo en desuso");
-
-        GestorNotificaciones gestorNotificaciones = new GestorNotificaciones(List.of(
-            new NotificadorEmail(),
-            new NotificadorSMS(),
-            new NotificadorWhatsApp()
-        ));
-        donacion.agregarObserver(
-            new NotificadorDonacionObserver(donante, gestorNotificaciones)
-        );
 
         PersonaJuridica escuelaOrg = new PersonaJuridica("30-99999999-1", "Escuela Demo", TipoOrganizacion.INSTITUCION, "Educacion");
         escuelaOrg.setDireccion("Av. Siempreviva 742, CABA");

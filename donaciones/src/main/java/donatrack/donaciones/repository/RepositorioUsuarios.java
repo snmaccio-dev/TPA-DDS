@@ -13,29 +13,48 @@ public class RepositorioUsuarios implements WithSimplePersistenceUnit {
         persist(usuario);
     }
 
+    public void eliminar(Usuario usuario) {
+        if (usuario == null) {
+            return;
+        }
+        remove(usuario);
+    }
+
     public Optional<Usuario> buscarPorKeycloakId(String keycloakId) {
         return Optional.ofNullable(find(Usuario.class, keycloakId));
     }
 
-    public boolean existeParaDonante(Donante donante) {
+    public Optional<Usuario> deDonante(Donante donante) {
         if (donante == null || donante.getId() == null) {
-            return false;
+            return Optional.empty();
         }
         return createQuery(
-            "select count(u) from Usuario u where u.donante = :donante",
-            Long.class)
+            "select u from Usuario u where u.donante = :donante",
+            Usuario.class)
             .setParameter("donante", donante)
-            .getSingleResult() > 0;
+            .getResultList()
+            .stream()
+            .findFirst();
+    }
+
+    public Optional<Usuario> deBeneficiaria(Beneficiaria beneficiaria) {
+        if (beneficiaria == null || beneficiaria.getId() == null) {
+            return Optional.empty();
+        }
+        return createQuery(
+            "select u from Usuario u where u.beneficiaria = :beneficiaria",
+            Usuario.class)
+            .setParameter("beneficiaria", beneficiaria)
+            .getResultList()
+            .stream()
+            .findFirst();
+    }
+
+    public boolean existeParaDonante(Donante donante) {
+        return deDonante(donante).isPresent();
     }
 
     public boolean existeParaBeneficiaria(Beneficiaria beneficiaria) {
-        if (beneficiaria == null || beneficiaria.getId() == null) {
-            return false;
-        }
-        return createQuery(
-            "select count(u) from Usuario u where u.beneficiaria = :beneficiaria",
-            Long.class)
-            .setParameter("beneficiaria", beneficiaria)
-            .getSingleResult() > 0;
+        return deBeneficiaria(beneficiaria).isPresent();
     }
 }

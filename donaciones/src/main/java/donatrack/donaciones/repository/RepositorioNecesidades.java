@@ -45,4 +45,15 @@ public class RepositorioNecesidades implements WithSimplePersistenceUnit {
   public void eliminar(long id) {
     buscarPorId(id).ifPresent(this::remove);
   }
+
+  // Delete JPQL en bloque, pensado para el borrado en cascada de una
+  // beneficiaria. Requiere una transaccion abierta.
+  public int eliminarDeBeneficiaria(Beneficiaria beneficiaria) {
+    if (beneficiaria == null || beneficiaria.getId() == null) {
+      return 0;
+    }
+    return createQuery("delete from Necesidad n where n.entidad = :beneficiaria")
+        .setParameter("beneficiaria", beneficiaria)
+        .executeUpdate();
+  }
 }
