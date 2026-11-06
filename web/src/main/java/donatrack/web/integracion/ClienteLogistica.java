@@ -3,6 +3,7 @@ package donatrack.web.integracion;
 import donatrack.web.vista.CamionVista;
 import donatrack.web.vista.EntregaVista;
 import donatrack.web.vista.MonitoreoRutaVista;
+import donatrack.web.vista.RutaVista;
 
 import java.util.List;
 
@@ -17,6 +18,10 @@ public interface ClienteLogistica {
   void actualizarCamion(String autorizacion, String patente, CapacidadesDeCamion capacidades);
 
   List<MonitoreoRutaVista> monitoreoDeRutasEnCurso(String autorizacion);
+
+  List<RutaVista> rutas(String autorizacion);
+
+  List<EntregaVista> entregasPendientesDePlanificacion(String autorizacion);
 
   EntregaVista entrega(String autorizacion, long entregaId);
 

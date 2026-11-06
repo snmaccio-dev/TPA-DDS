@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import donatrack.web.vista.CamionVista;
 import donatrack.web.vista.EntregaVista;
 import donatrack.web.vista.MonitoreoRutaVista;
+import donatrack.web.vista.RutaVista;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +48,20 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
         autorizacion,
         "/monitoreo/rutas",
         new TypeReference<List<MonitoreoRutaVista>>() {}
+    );
+  }
+
+  @Override
+  public List<RutaVista> rutas(String autorizacion) {
+    return http.obtener(autorizacion, "/rutas", new TypeReference<List<RutaVista>>() {});
+  }
+
+  @Override
+  public List<EntregaVista> entregasPendientesDePlanificacion(String autorizacion) {
+    return http.obtener(
+        autorizacion,
+        "/planificacion/pendientes",
+        new TypeReference<List<EntregaVista>>() {}
     );
   }
 

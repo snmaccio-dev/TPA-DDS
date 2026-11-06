@@ -9,6 +9,7 @@ import donatrack.web.integracion.OperacionRechazadaException;
 import donatrack.web.sesion.IdentidadDelUsuario;
 import donatrack.web.sesion.UsuarioWeb;
 import donatrack.web.vista.FlotaVista;
+import donatrack.web.vista.PlanificacionVista;
 import donatrack.web.vista.SeguimientoVista;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -39,6 +40,7 @@ public class LogisticaWebController {
     app.post("/camiones/{patente}", this::actualizarCamion);
 
     app.get("/monitoreo-flota", this::monitoreoDeFlota);
+    app.get("/rutas-planificadas", this::rutasPlanificadas);
 
     app.get("/seguimiento-donante", this::seguimientoDonante);
     app.get("/seguimiento-beneficiario", this::seguimientoBeneficiaria);
@@ -101,6 +103,23 @@ public class LogisticaWebController {
             .comoAdmin().activa("monitoreo").conMapa()
             .conDatosDe("seguimiento", SeguimientoVista.VACIO, () -> seguimiento(ctx))
             .mapa());
+  }
+
+  private void rutasPlanificadas(Context ctx) {
+    ctx.render("rutas-planificadas.html.hbs",
+        modeloBase(ctx, "Rutas planificadas", "Planificación")
+            .comoAdmin().activa("rutasPlanificadas")
+            .conDatosDe("planificacion", PlanificacionVista.VACIA, () -> planificacion(ctx))
+            .mapa());
+  }
+
+  private PlanificacionVista planificacion(Context ctx) {
+    String autorizacion = autorizacionDe(ctx);
+
+    return new PlanificacionVista(
+        clienteLogistica.rutas(autorizacion),
+        clienteLogistica.entregasPendientesDePlanificacion(autorizacion)
+    );
   }
 
   private void seguimientoDonante(Context ctx) {
