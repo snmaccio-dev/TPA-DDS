@@ -9,19 +9,88 @@
                 <div class="auth-benefit">✓ Seguimiento transparente de cada entrega</div>
                 <div class="auth-benefit">✓ Conexión directa con organizaciones</div>
                 <div class="auth-benefit">✓ Historial y notificaciones</div>
-        </div><form class="panel form-panel demo-form"><div class="form-title">
+        </div><form class="panel form-panel" action="/registro" method="post"><div class="form-title">
         <h2>Crear cuenta</h2>
         <p>Completá tus datos para comenzar.</p>
-</div><label>Tipo de cuenta<select required>
+</div>
+{{#if error}}<p class="notice">{{error}}</p>{{/if}}
+<label>Tipo de cuenta<select id="perfil" name="perfil" required>
         <option value="">Seleccionar perfil</option>
-        <option>Persona donante</option>
-        <option>Entidad beneficiaria</option>
-        <option>Persona Administradora</option>
-</select></label><div class="form-row">
-        <label>Nombre / Razón social<input required placeholder="Tu nombre o entidad"></label>
-        <label>Correo electrónico<input type="email" required placeholder="nombre@correo.com">
-        </label></div><label>Contraseña<input type="password" required minlength="8" placeholder="Mínimo 8 caracteres"></label>
+        <option value="donante">Persona donante</option>
+        <option value="beneficiaria">Entidad beneficiaria</option>
+</select></label>
+
+<fieldset id="campos-donante" class="form-group" hidden disabled>
+        <div class="form-row">
+                <label>Nombre<input name="nombre" required placeholder="Tu nombre"></label>
+                <label>Apellido<input name="apellido" required placeholder="Tu apellido"></label>
+        </div>
+        <div class="form-row">
+                <label>Documento<input name="documento" required placeholder="Sin puntos"></label>
+                <label>Edad<input name="edad" type="number" min="18" max="120" required></label>
+        </div>
+        <label>Género<select name="genero" required>
+                <option value="FEMENINO">Femenino</option>
+                <option value="MASCULINO">Masculino</option>
+                <option value="OTRO">Otro</option>
+        </select></label>
+        <label>Dirección<input name="direccion" required placeholder="Calle, número, localidad"></label>
+</fieldset>
+
+<fieldset id="campos-beneficiaria" class="form-group" hidden disabled>
+        <div class="form-row">
+                <label>Razón social<input name="razonSocial" required placeholder="Nombre de la entidad"></label>
+                <label>CUIT<input name="cuit" required placeholder="30-12345678-9"></label>
+        </div>
+        <div class="form-row">
+                <label>Tipo de organización<select name="tipoOrganizacion" required>
+                        <option value="ONG">ONG</option>
+                        <option value="GUBERNAMENTAL">Gubernamental</option>
+                        <option value="EMPRESA">Empresa</option>
+                        <option value="INSTITUCION">Institución</option>
+                </select></label>
+                <label>Rubro<input name="rubro" required placeholder="Asistencia alimentaria"></label>
+        </div>
+        <div class="form-row">
+                <label>Dirección<input name="direccion" required placeholder="Calle, número, localidad"></label>
+                <label>Teléfono<input name="telefono" required placeholder="1145550101"></label>
+        </div>
+        <p class="muted">Persona representante de la entidad</p>
+        <div class="form-row">
+                <label>Nombre<input name="repNombre" required></label>
+                <label>Apellido<input name="repApellido" required></label>
+        </div>
+        <label>Correo de la persona representante<input name="repEmail" type="email" required placeholder="nombre@correo.com"></label>
+</fieldset>
+
+<div class="form-row">
+        <label>Correo electrónico<input name="email" type="email" required placeholder="nombre@correo.com"></label>
+        <label>Contraseña<input name="contrasena" type="password" required minlength="8" placeholder="Mínimo 8 caracteres"></label>
+</div>
         <label class="check-label"><input type="checkbox" required> Acepto los <a href="/privacidad">términos y la política de privacidad</a>.</label>
         <button class="btn btn-primary btn-block">Crear cuenta</button><p class="form-bottom">¿Ya tenés cuenta? <a href="/login">Iniciá sesión</a></p></form></section></main>
+<script>
+    // Muestra solo los campos del perfil elegido. Se usa `disabled` ademas de `hidden`
+    // porque un campo oculto pero habilitado igual se envia y, si tiene `required`,
+    // bloquea el submit sin que se vea por que.
+    (function () {
+        var perfil = document.getElementById("perfil");
+        var grupos = {
+            donante: document.getElementById("campos-donante"),
+            beneficiaria: document.getElementById("campos-beneficiaria")
+        };
+
+        function actualizar() {
+            Object.keys(grupos).forEach(function (clave) {
+                var activo = clave === perfil.value;
+                grupos[clave].hidden = !activo;
+                grupos[clave].disabled = !activo;
+            });
+        }
+
+        perfil.addEventListener("change", actualizar);
+        actualizar();
+    })();
+</script>
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}
