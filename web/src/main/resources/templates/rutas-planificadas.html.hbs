@@ -1,0 +1,109 @@
+{{> templates/partials/head}}
+<body data-page="rutas-planificadas" data-role="admin">
+{{> templates/partials/sidebar}}
+{{> templates/partials/topbar}}
+<main class="app-main">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">PLANIFICACIÓN</span>
+      <h1>Rutas planificadas</h1>
+      <p>Rutas armadas por el planificador y entregas que todavía esperan una.</p>
+    </div>
+  </div>
+
+  {{#if errorDeServicio}}
+  <section class="panel">
+    <strong>{{errorDeServicio}}</strong>
+    <p class="muted">No se pudo cargar la planificación. Volvé a intentar en unos minutos.</p>
+  </section>
+  {{/if}}
+
+  <div class="metric-grid compact">
+    <article class="metric-card">
+      <strong>{{planificacion.totalRutas}}</strong><span>Rutas totales</span>
+    </article>
+    <article class="metric-card">
+      <strong>{{planificacion.planificadas}}</strong><span>Sin iniciar</span>
+    </article>
+    <article class="metric-card">
+      <strong>{{planificacion.enCurso}}</strong><span>En curso</span>
+    </article>
+    <article class="metric-card">
+      <strong>{{planificacion.totalPendientes}}</strong><span>Entregas sin ruta</span>
+    </article>
+  </div>
+
+  <section class="panel">
+    <div class="panel-head"><h3>Rutas</h3></div>
+    {{#if planificacion.sinRutas}}
+    <p class="muted">Todavía no hay rutas. Corré una planificación para generarlas.</p>
+    {{else}}
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Ruta</th>
+          <th>Camión</th>
+          <th>Estado</th>
+          <th>Chofer</th>
+          <th>Destinos</th>
+          <th>Entregas</th>
+          <th>Avance</th>
+          <th>Inicio</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#each planificacion.rutas}}
+        <tr>
+          <td>#{{id}}</td>
+          <td>{{patenteCamion}}</td>
+          <td><span class="status-pill {{estadoEstilo}}">{{estadoTexto}}</span></td>
+          <td>{{choferTexto}}</td>
+          <td>{{cantidadDeDestinos}}</td>
+          <td>{{cantidadDeEntregas}}</td>
+          <td>{{avanceTexto}}</td>
+          <td>{{inicioTexto}}</td>
+        </tr>
+        {{/each}}
+        </tbody>
+      </table>
+    </div>
+    {{/if}}
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h3>Entregas esperando planificación</h3></div>
+    {{#if planificacion.sinPendientes}}
+    <p class="muted">No hay entregas medidas esperando una ruta.</p>
+    {{else}}
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Entrega</th>
+          <th>Donación</th>
+          <th>Descripción</th>
+          <th>Cantidad</th>
+          <th>Destino</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#each planificacion.pendientes}}
+        <tr>
+          <td>#{{id}}</td>
+          <td>#{{donacionId}}</td>
+          <td>{{descripcionDonacion}}</td>
+          <td>{{cantidadTexto}}</td>
+          <td>{{direccionDestino}}</td>
+        </tr>
+        {{/each}}
+        </tbody>
+      </table>
+    </div>
+    {{/if}}
+  </section>
+
+  <p class="notice">Una entrega entra en la planificación recién cuando tiene registrados su peso y su volumen.</p>
+</main>
+{{> templates/partials/footer}}
+{{> templates/partials/scripts}}

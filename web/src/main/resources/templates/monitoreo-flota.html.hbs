@@ -1,0 +1,70 @@
+{{> templates/partials/head}}
+<body data-page="monitoreo-flota" data-role="admin">
+{{> templates/partials/sidebar}}
+{{> templates/partials/topbar}}
+<main class="app-main">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">FLOTA EN CALLE</span>
+      <h1>Monitoreo de flota</h1>
+      <p>Posición de todos los vehículos con una ruta en curso.</p>
+    </div>
+    {{#if seguimiento}}<span class="status-pill info">{{seguimiento.total}} en tránsito</span>{{/if}}
+  </div>
+
+  {{#if errorDeServicio}}
+  <section class="panel">
+    <strong>{{errorDeServicio}}</strong>
+    <p class="muted">No se pudo cargar el monitoreo. Volvé a intentar en unos minutos.</p>
+  </section>
+  {{/if}}
+
+  <section class="panel map-panel">
+    <div class="panel-head">
+      <div>
+        <h3>Mapa de la flota</h3>
+        <small>Última posición reportada por cada vehículo</small>
+      </div>
+    </div>
+    <div id="seguimiento-map" class="map-canvas tracking-map"></div>
+  </section>
+
+  <section class="panel">
+    {{#if seguimiento.vacio}}
+    <p class="muted">No hay rutas en curso en este momento.</p>
+    {{else}}
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Ruta</th>
+          <th>Camión</th>
+          <th>Estado</th>
+          <th>Avance</th>
+          <th>Velocidad</th>
+          <th>Último reporte</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#each seguimiento.rutas}}
+        <tr>
+          <td>#{{rutaId}}</td>
+          <td>{{patenteCamion}}</td>
+          <td><span class="status-pill info">{{estadoTexto}}</span></td>
+          <td>{{avanceTexto}}</td>
+          <td>{{velocidadTexto}}</td>
+          <td>{{ultimoReporteTexto}}</td>
+        </tr>
+        {{/each}}
+        </tbody>
+      </table>
+    </div>
+    {{/if}}
+  </section>
+
+  <p class="notice">La posición proviene de los reportes de ubicación registrados en el servicio de Logística.</p>
+</main>
+{{> templates/partials/footer}}
+<script type="application/json" id="puntos-mapa">{{{seguimiento.puntosJson}}}</script>
+<script src="/assets/js/mapa-seguimiento.js"></script>
+{{> templates/partials/scripts}}

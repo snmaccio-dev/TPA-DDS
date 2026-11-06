@@ -29,6 +29,9 @@ public class Chofer {
     @Column(nullable = false)
     private String licencia;
 
+    @Column(name = "keycloak_id", unique = true)
+    private String keycloakId;
+
     protected Chofer() {
     }
 
@@ -69,5 +72,17 @@ public class Chofer {
 
     public String getLicencia() {
         return licencia;
+    }
+
+    public String getKeycloakId() {
+        return keycloakId;
+    }
+
+    public void vincularConCuenta(String keycloakId) {
+        if (keycloakId == null || keycloakId.isBlank()) {
+            throw new DatosInvalidosException(
+                "Debe indicarse la cuenta a vincular con el chofer.");
+        }
+        this.keycloakId = keycloakId;
     }
 }

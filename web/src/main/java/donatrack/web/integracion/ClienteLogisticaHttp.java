@@ -4,10 +4,12 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import donatrack.web.vista.CamionVista;
 import donatrack.web.vista.EntregaVista;
 import donatrack.web.vista.MonitoreoRutaVista;
+import donatrack.web.vista.RutaVista;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 public class ClienteLogisticaHttp implements ClienteLogistica {
 
@@ -48,6 +50,31 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
         "/monitoreo/rutas",
         new TypeReference<List<MonitoreoRutaVista>>() {}
     );
+  }
+
+  @Override
+  public List<RutaVista> rutas(String autorizacion) {
+    return http.obtener(autorizacion, "/rutas", new TypeReference<List<RutaVista>>() {});
+  }
+
+  @Override
+  public List<EntregaVista> entregasPendientesDePlanificacion(String autorizacion) {
+    return http.obtener(
+        autorizacion,
+        "/planificacion/pendientes",
+        new TypeReference<List<EntregaVista>>() {}
+    );
+  }
+
+  @Override
+  public List<RutaVista> rutasDelChofer(String autorizacion) {
+    return http.obtener(autorizacion, "/rutas/mias", new TypeReference<List<RutaVista>>() {});
+  }
+
+  @Override
+  public void iniciarRuta(String autorizacion, long rutaId) {
+    // Sin cuerpo: Logistica deduce que chofer inicia la ruta a partir del token.
+    http.publicar(autorizacion, "/rutas/" + rutaId + "/inicio", Map.of());
   }
 
   @Override

@@ -8,6 +8,7 @@ import io.javalin.http.Context;
 import io.javalin.http.ForbiddenResponse;
 
 import java.util.Objects;
+import java.util.Optional;
 
 public class ControlDeAccesoPorToken implements ControlDeAcceso {
 
@@ -18,6 +19,13 @@ public class ControlDeAccesoPorToken implements ControlDeAcceso {
   public ControlDeAccesoPorToken(DirectorioDeUsuarios directorio) {
     Objects.requireNonNull(directorio, "Debe indicarse el directorio de usuarios.");
     this.directorio = directorio;
+  }
+
+  @Override
+  public Optional<String> cuentaDelChofer(Context ctx) {
+    UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
+
+    return usuario.esChofer() ? Optional.of(usuario.keycloakId()) : Optional.empty();
   }
 
   @Override

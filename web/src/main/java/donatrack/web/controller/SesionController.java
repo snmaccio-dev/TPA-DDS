@@ -65,10 +65,7 @@ public class SesionController {
     String autorizacion = "Bearer " + tokens.accessToken();
     PerfilVista perfil = clienteDonaciones.perfil(autorizacion);
 
-    ctx.sessionAttribute(
-        IdentidadPorSesion.CLAVE_USUARIO,
-        new UsuarioWeb(tokens.accessToken(), tokens.idToken(), perfil)
-    );
+    ctx.sessionAttribute(IdentidadPorSesion.CLAVE_USUARIO, UsuarioWeb.de(tokens, perfil));
 
     ctx.redirect(perfil.inicioSegunRol());
   }

@@ -72,6 +72,11 @@ public class Modelo {
     return rol("BENEFICIARIO", "Entidad beneficiaria", "/beneficiario-dashboard");
   }
 
+  public Modelo comoChofer() {
+    datos.put("esChofer", true);
+    return rol("CHOFER", "Chofer", "/chofer-inicio-ruta");
+  }
+
   public Modelo comoAdmin() {
     datos.put("esAdmin", true);
     return rol("ADMIN", "Administración", "/admin-dashboard");

@@ -33,6 +33,20 @@ public class RepositorioChoferes implements WithSimplePersistenceUnit {
     return Optional.ofNullable(find(Chofer.class, id));
   }
 
+  public Optional<Chofer> buscarPorKeycloakId(String keycloakId) {
+    if (keycloakId == null || keycloakId.isBlank()) {
+      return Optional.empty();
+    }
+
+    return createQuery(
+        "select c from Chofer c where c.keycloakId = :keycloakId",
+        Chofer.class)
+        .setParameter("keycloakId", keycloakId)
+        .getResultList()
+        .stream()
+        .findFirst();
+  }
+
   public Optional<Chofer> buscarPorDocumento(String documento) {
     return createQuery(
         "select c from Chofer c where c.documento = :documento",

@@ -52,12 +52,20 @@ public class ClienteOidc {
   }
 
   public TokensDeKeycloak intercambiar(String codigo, String verificador) {
-    String cuerpo = "grant_type=authorization_code"
+    return pedirTokens("grant_type=authorization_code"
         + "&client_id=" + codificar(configuracion.clientId())
         + "&redirect_uri=" + codificar(configuracion.urlDeRetorno())
         + "&code=" + codificar(codigo)
-        + "&code_verifier=" + codificar(verificador);
+        + "&code_verifier=" + codificar(verificador));
+  }
 
+  public TokensDeKeycloak renovar(String refreshToken) {
+    return pedirTokens("grant_type=refresh_token"
+        + "&client_id=" + codificar(configuracion.clientId())
+        + "&refresh_token=" + codificar(refreshToken));
+  }
+
+  private TokensDeKeycloak pedirTokens(String cuerpo) {
     HttpResponse<String> respuesta = enviar(
         HttpRequest.newBuilder()
             .uri(URI.create(configuracion.urlDeToken()))
@@ -71,7 +79,7 @@ public class ClienteOidc {
     int estado = respuesta.statusCode();
 
     if (estado < 200 || estado >= 300) {
-      throw new ServicioNoDisponibleException(SERVICIO, "respondió " + estado + " al canjear el código");
+      throw new ServicioNoDisponibleException(SERVICIO, "respondió " + estado + " al pedir el token");
     }
 
     JsonNode nodo = interpretar(respuesta.body());
@@ -83,6 +91,7 @@ public class ClienteOidc {
 
     return new TokensDeKeycloak(
         accessToken,
+        nodo.path("refresh_token").asText(null),
         nodo.path("id_token").asText(null),
         nodo.path("expires_in").asLong(0)
     );

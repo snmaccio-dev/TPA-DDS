@@ -24,6 +24,14 @@ public class GestorChoferes implements WithSimplePersistenceUnit {
             ));
   }
 
+  public Chofer deLaCuenta(String keycloakId) {
+    return repositorio.buscarPorKeycloakId(keycloakId)
+        .orElseThrow(() ->
+            new RecursoInexistenteException(
+                "La cuenta no esta vinculada con ningun chofer."
+            ));
+  }
+
   public Chofer crear(Chofer chofer) {
     if (repositorio.buscarPorDocumento(chofer.getDocumento()).isPresent()) {
       throw new ConflictoDeNegocioException(
