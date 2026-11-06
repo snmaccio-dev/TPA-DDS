@@ -66,18 +66,10 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
         return lista;
     }
 
-    public List<Donacion> deDonante(Donante donante, EstadosPosiblesDonacion estadoOpcional) {
-        List<Donacion> lista = estadoOpcional == null
-            ? repositorio.deDonante(donante)
-            : repositorio.deDonanteEnEstado(donante, estadoOpcional);
-        lista.forEach(this::conObservers);
-        return lista;
-    }
-
-    public List<Donacion> deBeneficiaria(Beneficiaria beneficiaria, EstadosPosiblesDonacion estadoOpcional) {
-        List<Donacion> lista = estadoOpcional == null
-            ? repositorio.deBeneficiaria(beneficiaria)
-            : repositorio.deBeneficiariaEnEstado(beneficiaria, estadoOpcional);
+    public List<Donacion> buscar(FiltroDonaciones filtro,
+                                 Donante donanteOpcional,
+                                 Beneficiaria beneficiariaOpcional) {
+        List<Donacion> lista = repositorio.buscar(filtro, donanteOpcional, beneficiariaOpcional);
         lista.forEach(this::conObservers);
         return lista;
     }

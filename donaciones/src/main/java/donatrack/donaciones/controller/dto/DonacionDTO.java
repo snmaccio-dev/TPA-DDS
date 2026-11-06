@@ -22,6 +22,7 @@ public record DonacionDTO(
     Long donanteId,
     String estado,
     String subcategoria,
+    String categoria,
     String fechaHoraEntrega,
     List<BienDTO> bienes
 ) {
@@ -39,6 +40,9 @@ public record DonacionDTO(
         donacion.getDonante() == null ? null : donacion.getDonante().getId(),
         donacion.getEstado().getNombre(),
         donacion.getSubcategoria().getNombre(),
+        donacion.getSubcategoria().getCategoria() == null
+            ? null
+            : donacion.getSubcategoria().getCategoria().getNombre(),
         Fechas.aTexto(donacion.getFechaHoraEntrega()),
         donacion.getBienes().stream().map(BienDTO::desde).toList()
     );

@@ -14,6 +14,7 @@ import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.CondicionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
+import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioPersonas;
@@ -23,6 +24,7 @@ import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.seguridad.UsuarioActual;
 import donatrack.donaciones.service.EventoYaAplicadoException;
+import donatrack.donaciones.service.FiltroDonaciones;
 import donatrack.donaciones.service.GestorDonaciones;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.Javalin;
@@ -69,20 +71,41 @@ public class DonacionesController {
 
   private void listar(Context ctx) {
     UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
-    String estadoParam = ctx.queryParam("estado");
-    EstadosPosiblesDonacion estado = estadoParam == null ? null : EstadosPosiblesDonacion.valueOf(estadoParam);
+    FiltroDonaciones filtro = filtroDesde(ctx);
 
-    List<Donacion> donaciones;
+    Donante donanteFiltro = null;
+    Beneficiaria beneficiariaFiltro = null;
     if (usuario.esAdministrador() || usuario.esServicioLogistica()) {
-      donaciones = estado == null ? gestor.todas() : gestor.porEstado(estado);
+      // sin restriccion extra: el admin y el servicio de logistica ven todas.
     } else if (usuario.esDonante()) {
-      donaciones = gestor.deDonante(Acceso.perfilDonanteObligatorio(usuario), estado);
+      donanteFiltro = Acceso.perfilDonanteObligatorio(usuario);
     } else if (usuario.esBeneficiaria()) {
-      donaciones = gestor.deBeneficiaria(Acceso.perfilBeneficiariaObligatorio(usuario), estado);
+      beneficiariaFiltro = Acceso.perfilBeneficiariaObligatorio(usuario);
     } else {
-      donaciones = List.of();
+      ctx.json(DonacionDTO.desde(List.<Donacion>of()));
+      return;
     }
-    ctx.json(DonacionDTO.desde(donaciones));
+    ctx.json(DonacionDTO.desde(gestor.buscar(filtro, donanteFiltro, beneficiariaFiltro)));
+  }
+
+  private FiltroDonaciones filtroDesde(Context ctx) {
+    String estadoParam = ctx.queryParam("estado");
+    EstadosPosiblesDonacion estado = null;
+    if (estadoParam != null && !estadoParam.isBlank()) {
+      try {
+        estado = EstadosPosiblesDonacion.valueOf(estadoParam);
+      } catch (IllegalArgumentException e) {
+        throw new DatosInvalidosException(
+            "El estado '" + estadoParam + "' no es valido.");
+      }
+    }
+    String categoriaParam = ctx.queryParam("categoria");
+    String categoria = (categoriaParam == null || categoriaParam.isBlank()) ? null : categoriaParam;
+    List<String> subcategoriasParam = ctx.queryParams("subcategoria");
+    List<String> subcategorias = (subcategoriasParam == null || subcategoriasParam.isEmpty())
+        ? null
+        : subcategoriasParam;
+    return new FiltroDonaciones(estado, categoria, subcategorias);
   }
 
   private void buscar(Context ctx) {
