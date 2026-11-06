@@ -2,6 +2,7 @@ package donatrack.web.integracion;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import donatrack.web.vista.CamionVista;
+import donatrack.web.vista.EntregaPublicaVista;
 import donatrack.web.vista.EntregaVista;
 import donatrack.web.integracion.graphql.ConsultaGraphQl;
 import donatrack.web.integracion.graphql.RespuestaDePlanificacion;
@@ -22,6 +23,12 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
 
   public ClienteLogisticaHttp(String urlBase) {
     this.http = new ClienteHttp(urlBase, SERVICIO);
+  }
+
+  @Override
+  public List<EntregaPublicaVista> entregasPublicas() {
+    return http.obtener(null, "/entregas/publicas",
+        new TypeReference<List<EntregaPublicaVista>>() {});
   }
 
   @Override

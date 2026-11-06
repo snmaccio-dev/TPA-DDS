@@ -1,6 +1,7 @@
 package donatrack.web.integracion;
 
 import donatrack.web.vista.CamionVista;
+import donatrack.web.vista.EntregaPublicaVista;
 import donatrack.web.vista.EntregaVista;
 import donatrack.web.vista.MonitoreoRutaVista;
 import donatrack.web.vista.PlanificacionVista;
@@ -9,6 +10,10 @@ import donatrack.web.vista.RutaVista;
 import java.util.List;
 
 public interface ClienteLogistica {
+
+  // Sin autorizacion: el endpoint esta declarado PUBLICO en Logistica, porque alimenta
+  // la pantalla de transparencia que se ve sin iniciar sesion.
+  List<EntregaPublicaVista> entregasPublicas();
 
   List<CamionVista> camiones(String autorizacion);
 

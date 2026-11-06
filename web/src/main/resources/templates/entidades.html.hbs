@@ -2,6 +2,22 @@
 <body data-page="entities" data-role="donante">
 {{> templates/partials/sidebar}}
 {{> templates/partials/topbar}}
-<main class="app-main"><div class="page-heading"><div><span class="eyebrow">RED SOLIDARIA</span><h1>Entidades beneficiarias</h1><p>Conocé las organizaciones registradas en la plataforma.</p></div></div><div class="filter-bar panel"><label>Buscar entidad<input placeholder="Nombre o localidad"></label><label>Localidad<select><option>Todas las localidades</option><option>Lanús</option><option>Avellaneda</option><option>Lomas de Zamora</option></select></label><label>Tipo de organización<select><option>Todos los tipos</option><option>Comedor</option><option>Fundación</option><option>Centro comunitario</option></select></label></div><div class="entity-grid"><article class="panel entity-card"><div class="entity-symbol">⌂</div><span class="status-pill success">Verificada</span><h3>Comedor Los Pinos</h3><p>Lanús · Comedor comunitario</p><small>Necesita alimentos y artículos de higiene.</small><a href="#" data-toast="Detalle de entidad de demostración.">Ver entidad →</a></article><article class="panel entity-card"><div class="entity-symbol lavender">♡</div><span class="status-pill success">Verificada</span><h3>Fundación Puentes</h3><p>Avellaneda · Fundación</p><small>Necesita ropa, calzado y abrigo.</small><a href="#" data-toast="Detalle de entidad de demostración.">Ver entidad →</a></article><article class="panel entity-card"><div class="entity-symbol amber">▤</div><span class="status-pill success">Verificada</span><h3>Centro La Esperanza</h3><p>Lomas de Zamora · Centro comunitario</p><small>Necesita útiles escolares y mobiliario.</small><a href="#" data-toast="Detalle de entidad de demostración.">Ver entidad →</a></article></div></main>
+<main class="app-main">
+<div class="page-heading"><div><span class="eyebrow">RED SOLIDARIA</span><h1>Entidades beneficiarias</h1><p>Conocé las organizaciones registradas en la plataforma.</p></div></div>
+{{#if errorDeServicio}}<p class="notice">{{errorDeServicio}}</p>{{/if}}
+<div class="entity-grid">
+{{#each entidades}}
+<article class="panel entity-card">
+        <div class="entity-symbol">{{inicial}}</div>
+        <span class="status-pill success">Registrada</span>
+        <h3>{{razonSocial}}</h3>
+        <p>{{direccion}}</p>
+        <small>{{tipoTexto}} · {{rubro}}</small>
+        <small class="muted">CUIT {{cuit}}{{#if telefono}} · Tel. {{telefono}}{{/if}}</small>
+</article>
+{{/each}}
+</div>
+{{#unless entidades}}<p class="notice">Todavía no hay entidades beneficiarias registradas.</p>{{/unless}}
+</main>
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}
