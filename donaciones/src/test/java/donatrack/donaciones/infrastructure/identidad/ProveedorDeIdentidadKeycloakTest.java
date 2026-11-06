@@ -180,6 +180,10 @@ class ProveedorDeIdentidadKeycloakTest {
 
   private void registrarTokenEndpoint(long expiresInSegundos) {
     servidor.createContext("/realms/donatrack/protocol/openid-connect/token", intercambio -> {
+      // Leer el cuerpo siempre. Si no, la conexion queda con bytes pendientes
+      // y la proxima request del mismo HttpClient se cuelga con
+      // "Connection reset" / "HTTP/1.1 header parser received no bytes".
+      intercambio.getRequestBody().readAllBytes();
       contadorTokens.incrementAndGet();
       rutasLlamadas.add("POST /realms/donatrack/protocol/openid-connect/token");
       String cuerpo = "{\"access_token\":\"token-de-test-"
@@ -212,6 +216,10 @@ class ProveedorDeIdentidadKeycloakTest {
     respuestas.put(ruta, secuencia);
 
     servidor.createContext(ruta, intercambio -> {
+      // Idem registrarTokenEndpoint: drenamos el cuerpo antes de responder,
+      // para que la conexion persistente del HttpClient no quede con bytes
+      // pendientes y la siguiente request falle con "Connection reset".
+      intercambio.getRequestBody().readAllBytes();
       Respuesta actual = respuestas.get(ruta).siguiente();
 
       if (actual == null || !actual.metodo().equals(intercambio.getRequestMethod())) {

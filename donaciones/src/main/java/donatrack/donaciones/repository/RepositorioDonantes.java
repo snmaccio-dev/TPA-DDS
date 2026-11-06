@@ -14,6 +14,13 @@ public class RepositorioDonantes implements WithSimplePersistenceUnit {
         persist(donante);
     }
 
+    public void eliminar(Donante donante) {
+        if (donante == null) {
+            return;
+        }
+        remove(donante);
+    }
+
     public Optional<Donante> buscarPorPersona(Persona persona) {
         return createQuery(
             "select d from Donante d where d.persona = :persona",
@@ -40,7 +47,8 @@ public class RepositorioDonantes implements WithSimplePersistenceUnit {
             "select d from Donante d, PersonaJuridica p "
                 + "where d.persona = p and p.cuit = :documento",
             Donante.class)
-            .setParameter("documento", documento)
+            .setParameter("documento",
+                donatrack.donaciones.domain.persona.PersonaJuridica.normalizarCuit(documento))
             .getResultList()
             .stream()
             .findFirst();

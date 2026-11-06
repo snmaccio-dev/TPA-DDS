@@ -2,6 +2,7 @@ package donatrack.donaciones.seguridad;
 
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.necesidad.Necesidad;
+import donatrack.donaciones.domain.notificacion.Notificacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import io.javalin.http.ForbiddenResponse;
@@ -36,6 +37,35 @@ public final class Acceso {
             }
         }
         throw new ForbiddenResponse("No podes acceder a esta donacion.");
+    }
+
+    public static void exigirPuedeVerNotificacion(UsuarioActual usuario, Notificacion notificacion) {
+        // Las notificaciones para administradores son compartidas: cualquier
+        // admin puede verlas y, si marca una como leida, queda leida para
+        // todos. Las demas solo las ve el duenio del perfil asociado,
+        // comparando por id del perfil (no por persona, porque ahora cada
+        // perfil es un destinatario independiente).
+        if (notificacion.esParaAdministradores()) {
+            if (usuario.esAdministrador()) {
+                return;
+            }
+            throw new ForbiddenResponse("No podes acceder a esta notificacion.");
+        }
+        Donante donanteNoti = notificacion.getDonante();
+        if (donanteNoti != null && usuario.esDonante()) {
+            Donante propio = perfilDonanteObligatorio(usuario);
+            if (Objects.equals(idDe(donanteNoti), idDe(propio))) {
+                return;
+            }
+        }
+        Beneficiaria benefNoti = notificacion.getBeneficiaria();
+        if (benefNoti != null && usuario.esBeneficiaria()) {
+            Beneficiaria propia = perfilBeneficiariaObligatorio(usuario);
+            if (Objects.equals(idDe(benefNoti), idDe(propia))) {
+                return;
+            }
+        }
+        throw new ForbiddenResponse("No podes acceder a esta notificacion.");
     }
 
     public static void exigirPuedeVerNecesidad(UsuarioActual usuario, Necesidad necesidad) {

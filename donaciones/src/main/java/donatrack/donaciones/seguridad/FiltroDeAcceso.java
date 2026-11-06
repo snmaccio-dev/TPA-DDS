@@ -43,6 +43,19 @@ public class FiltroDeAcceso {
         VerificadorDeTokens.TokenVerificado token =
             verificador.verificar(ctx.header("Authorization"));
 
+        // Cada cuenta tiene que mapear a un unico perfil. CHOFER y
+        // SERVICIO_LOGISTICA no son perfiles de la base, asi que no entran
+        // en la cuenta.
+        long perfiles = token.roles().stream()
+            .filter(r -> r == RolDeAcceso.DONANTE
+                || r == RolDeAcceso.BENEFICIARIA
+                || r == RolDeAcceso.ADMINISTRADOR)
+            .count();
+        if (perfiles > 1) {
+            throw new ForbiddenResponse(
+                "La cuenta tiene mas de un perfil asignado. Cada perfil debe tener su propia cuenta.");
+        }
+
         boolean tieneAlgunRolPermitido = token.roles().stream().anyMatch(roles::contains);
         if (!tieneAlgunRolPermitido) {
             throw new ForbiddenResponse(

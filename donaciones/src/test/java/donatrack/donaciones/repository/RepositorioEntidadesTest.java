@@ -62,6 +62,26 @@ class RepositorioEntidadesTest implements SimplePersistenceTest {
   }
 
   @Test
+  void buscarPorCuitFuncionaConYSinGuiones() {
+    String cuitConGuiones = "30-12345678-9";
+    PersonaJuridica juridica = new PersonaJuridica(
+        cuitConGuiones, "Normalizada", TipoOrganizacion.ONG, "Rubro");
+    repoPersonas.guardar(juridica);
+    Beneficiaria beneficiaria = new Beneficiaria(juridica);
+    repositorio.guardar(beneficiaria);
+
+    entityManager().flush();
+    entityManager().clear();
+
+    Optional<Beneficiaria> conGuiones = repositorio.buscarPorCuit("30-12345678-9");
+    Optional<Beneficiaria> sinGuiones = repositorio.buscarPorCuit("30123456789");
+
+    assertTrue(conGuiones.isPresent(), "Tiene que encontrarla con el CUIT con guiones.");
+    assertTrue(sinGuiones.isPresent(), "Y tambien sin guiones.");
+    assertEquals(conGuiones.get().getId(), sinGuiones.get().getId());
+  }
+
+  @Test
   void buscarPorIdFuncionaConElIdAsignadoPorLaBase() {
     PersonaJuridica escuela = new PersonaJuridica(
         "30-88888888-1", "Escuela", TipoOrganizacion.INSTITUCION, "Educacion"

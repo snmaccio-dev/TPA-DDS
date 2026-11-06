@@ -1,5 +1,6 @@
 package donatrack.donaciones.repository;
 
+import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
@@ -14,7 +15,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RepositorioUsuariosTest implements SimplePersistenceTest {
@@ -26,86 +27,116 @@ class RepositorioUsuariosTest implements SimplePersistenceTest {
 
   @Test
   void guardarYBuscarPorKeycloakId() {
-    Donante donante = donantePersistido("Ana", "12345678");
+    Donante donante = donantePersistido("Ana");
+    String kcId = DatosDeTest.keycloakIdUnico();
 
-    Usuario usuario = Usuario.deDonante("kc-111", donante);
-    repositorio.guardar(usuario);
+    repositorio.guardar(Usuario.deDonante(kcId, donante));
 
     entityManager().flush();
     entityManager().clear();
 
-    Optional<Usuario> recuperado = repositorio.buscarPorKeycloakId("kc-111");
+    Optional<Usuario> recuperado = repositorio.buscarPorKeycloakId(kcId);
 
     assertTrue(recuperado.isPresent());
-    assertEquals("kc-111", recuperado.get().getKeycloakId());
+    assertEquals(kcId, recuperado.get().getKeycloakId());
     assertEquals(donante.getId(), recuperado.get().getDonante().getId());
   }
 
   @Test
-  void variosUsuariosPuedenApuntarAlMismoDonante() {
-    Donante donante = donantePersistido("Luis", "22222222");
+  void unSegundoUsuarioParaElMismoDonanteFallaAlFlush() {
+    Donante donante = donantePersistido("Luis");
 
-    repositorio.guardar(Usuario.deDonante("kc-A", donante));
-    repositorio.guardar(Usuario.deDonante("kc-B", donante));
+    repositorio.guardar(Usuario.deDonante(DatosDeTest.keycloakIdUnico(), donante));
+    repositorio.guardar(Usuario.deDonante(DatosDeTest.keycloakIdUnico(), donante));
+
+    assertThrows(RuntimeException.class, () -> entityManager().flush(),
+        "La columna unique de donante_id debe rechazar el segundo usuario.");
+  }
+
+  @Test
+  void deDonanteEncuentraElVinculo() {
+    Donante donante = donantePersistido("Maria");
+    String kcId = DatosDeTest.keycloakIdUnico();
+    repositorio.guardar(Usuario.deDonante(kcId, donante));
 
     entityManager().flush();
     entityManager().clear();
 
-    assertTrue(repositorio.existeParaDonante(donante));
-    assertTrue(repositorio.buscarPorKeycloakId("kc-A").isPresent());
-    assertTrue(repositorio.buscarPorKeycloakId("kc-B").isPresent());
+    Donante refrescado = entityManager().find(Donante.class, donante.getId());
+    Optional<Usuario> usuario = repositorio.deDonante(refrescado);
+
+    assertTrue(usuario.isPresent());
+    assertEquals(kcId, usuario.get().getKeycloakId());
+  }
+
+  @Test
+  void deBeneficiariaEncuentraElVinculo() {
+    Beneficiaria beneficiaria = beneficiariaPersistida();
+    String kcId = DatosDeTest.keycloakIdUnico();
+    repositorio.guardar(Usuario.deBeneficiaria(kcId, beneficiaria));
+
+    entityManager().flush();
+    entityManager().clear();
+
+    Beneficiaria refrescada = entityManager().find(Beneficiaria.class, beneficiaria.getId());
+    Optional<Usuario> usuario = repositorio.deBeneficiaria(refrescada);
+
+    assertTrue(usuario.isPresent());
+    assertEquals(kcId, usuario.get().getKeycloakId());
+  }
+
+  @Test
+  void eliminarQuitaElVinculo() {
+    Donante donante = donantePersistido("Delete");
+    String kcId = DatosDeTest.keycloakIdUnico();
+    repositorio.guardar(Usuario.deDonante(kcId, donante));
+
+    entityManager().flush();
+    entityManager().clear();
+
+    Usuario usuario = repositorio.buscarPorKeycloakId(kcId).orElseThrow();
+    // La transaccion la abre SimplePersistenceTest. flush + clear para
+    // que el delete se refleje al releer.
+    repositorio.eliminar(usuario);
+    entityManager().flush();
+    entityManager().clear();
+
+    assertFalse(repositorio.buscarPorKeycloakId(kcId).isPresent());
   }
 
   @Test
   void existeParaDonanteDistingueDonantes() {
-    Donante conUsuario = donantePersistido("Maria", "33333333");
-    Donante sinUsuario = donantePersistido("Pedro", "44444444");
-
-    repositorio.guardar(Usuario.deDonante("kc-M", conUsuario));
-
-    entityManager().flush();
-    entityManager().clear();
-
-    // Refresca los donantes despues del clear.
-    Donante refrescadoConUsuario = entityManager().find(Donante.class, conUsuario.getId());
-    Donante refrescadoSinUsuario = entityManager().find(Donante.class, sinUsuario.getId());
-
-    assertTrue(repositorio.existeParaDonante(refrescadoConUsuario));
-    assertFalse(repositorio.existeParaDonante(refrescadoSinUsuario));
-  }
-
-  @Test
-  void existeParaBeneficiariaDistingueBeneficiarias() {
-    Beneficiaria conUsuario = beneficiariaPersistida("30-11111111-1");
-    Beneficiaria sinUsuario = beneficiariaPersistida("30-22222222-2");
-
-    repositorio.guardar(Usuario.deBeneficiaria("kc-benef", conUsuario));
+    Donante conUsuario = donantePersistido("Con");
+    Donante sinUsuario = donantePersistido("Sin");
+    repositorio.guardar(Usuario.deDonante(DatosDeTest.keycloakIdUnico(), conUsuario));
 
     entityManager().flush();
     entityManager().clear();
 
-    Beneficiaria refrescadaConUsuario = entityManager().find(Beneficiaria.class, conUsuario.getId());
-    Beneficiaria refrescadaSinUsuario = entityManager().find(Beneficiaria.class, sinUsuario.getId());
+    Donante refrescadoCon = entityManager().find(Donante.class, conUsuario.getId());
+    Donante refrescadoSin = entityManager().find(Donante.class, sinUsuario.getId());
 
-    assertTrue(repositorio.existeParaBeneficiaria(refrescadaConUsuario));
-    assertFalse(repositorio.existeParaBeneficiaria(refrescadaSinUsuario));
+    assertTrue(repositorio.existeParaDonante(refrescadoCon));
+    assertFalse(repositorio.existeParaDonante(refrescadoSin));
   }
 
-  private Donante donantePersistido(String nombre, String documento) {
-    PersonaHumana persona = new PersonaHumana(nombre, "Test", 30, documento, Genero.FEMENINO);
+  private Donante donantePersistido(String nombre) {
+    PersonaHumana persona = new PersonaHumana(
+        nombre, "Test", 30, DatosDeTest.documentoUnico(), Genero.FEMENINO);
     repoPersonas.guardar(persona);
     Donante donante = new Donante(persona);
     repoDonantes.guardar(donante);
     return donante;
   }
 
-  private Beneficiaria beneficiariaPersistida(String cuit) {
+  private Beneficiaria beneficiariaPersistida() {
+    String cuit = DatosDeTest.cuitUnico();
     PersonaJuridica juridica = new PersonaJuridica(
-        cuit, "Beneficiaria " + cuit, TipoOrganizacion.ONG, "Rubro"
-    );
+        cuit, "Beneficiaria " + cuit, TipoOrganizacion.ONG, "Rubro");
     repoPersonas.guardar(juridica);
     Beneficiaria beneficiaria = new Beneficiaria(juridica);
     repoEntidades.guardar(beneficiaria);
     return beneficiaria;
   }
+
 }

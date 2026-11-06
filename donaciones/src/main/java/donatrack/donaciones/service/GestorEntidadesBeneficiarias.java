@@ -1,13 +1,19 @@
 package donatrack.donaciones.service;
 
+import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.usuario.Usuario;
+import donatrack.donaciones.repository.RepositorioDonaciones;
+import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioEntidades;
+import donatrack.donaciones.repository.RepositorioNecesidades;
+import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPersonas;
+import donatrack.donaciones.repository.RepositorioPropuestas;
 import donatrack.donaciones.repository.RepositorioUsuarios;
 import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.RolDeAcceso;
@@ -29,11 +35,26 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
       RepositorioPersonas.getInstance();
 
   private final RepositorioUsuarios repositorioUsuarios;
+  private final RepositorioNotificaciones repositorioNotificaciones;
+  private final RepositorioNecesidades repositorioNecesidades;
+  private final RepositorioPropuestas repositorioPropuestas;
+  private final RepositorioDonaciones repositorioDonaciones;
+  private final RepositorioDonantes repositorioDonantes;
   private final ProveedorDeIdentidad proveedor;
 
   public GestorEntidadesBeneficiarias(RepositorioUsuarios repositorioUsuarios,
+                                      RepositorioNotificaciones repositorioNotificaciones,
+                                      RepositorioNecesidades repositorioNecesidades,
+                                      RepositorioPropuestas repositorioPropuestas,
+                                      RepositorioDonaciones repositorioDonaciones,
+                                      RepositorioDonantes repositorioDonantes,
                                       ProveedorDeIdentidad proveedor) {
     this.repositorioUsuarios = repositorioUsuarios;
+    this.repositorioNotificaciones = repositorioNotificaciones;
+    this.repositorioNecesidades = repositorioNecesidades;
+    this.repositorioPropuestas = repositorioPropuestas;
+    this.repositorioDonaciones = repositorioDonaciones;
+    this.repositorioDonantes = repositorioDonantes;
     this.proveedor = proveedor;
   }
 
@@ -52,9 +73,45 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
   }
 
   // DELETE /entidades/{id}
+  // Borrado en cascada de una beneficiaria. Contrato:
+  // 1. 404 si no existe.
+  // 2. 409 si alguna donacion la tiene como destinatarioAsignado (cualquier
+  //    estado), para conservar la trazabilidad.
+  // 3. En una unica transaccion: notificaciones, la saca de las candidatas
+  //    de las propuestas sin borrarlas, borra sus necesidades, su usuario,
+  //    la beneficiaria y la persona juridica (si ningun donante la usa).
+  // 4. Despues del commit, borra la cuenta en Keycloak. Si Keycloak falla
+  //    solo se loguea.
   public void eliminar(long id) {
-    buscar(id);
-    withTransaction(() -> repositorioEntidades.eliminar(id));
+    Beneficiaria beneficiaria = buscar(id);
+
+    if (repositorioDonaciones.tieneDonacionesAsignadasA(beneficiaria)) {
+      throw new ConflictoDeNegocioException(
+          "La entidad tiene donaciones asignadas y no puede eliminarse para "
+              + "conservar la trazabilidad.");
+    }
+
+    String[] keycloakIdAEliminar = new String[1];
+
+    withTransaction(() -> {
+      PersonaJuridica juridica = beneficiaria.getPersona();
+      repositorioNotificaciones.eliminarDeBeneficiaria(beneficiaria);
+      repositorioPropuestas.quitarComoCandidata(beneficiaria);
+      repositorioNecesidades.eliminarDeBeneficiaria(beneficiaria);
+      Optional<Usuario> usuario = repositorioUsuarios.deBeneficiaria(beneficiaria);
+      usuario.ifPresent(u -> {
+        keycloakIdAEliminar[0] = u.getKeycloakId();
+        repositorioUsuarios.eliminar(u);
+      });
+      repositorioEntidades.eliminar(id);
+      if (!personaUsadaPorDonante(juridica)) {
+        repositorioPersonas.eliminar(juridica);
+      }
+    });
+
+    if (keycloakIdAEliminar[0] != null) {
+      intentarEliminar(keycloakIdAEliminar[0]);
+    }
   }
 
   public void actualizarDireccion(long id, String nuevaDireccion) {
@@ -132,6 +189,9 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
   // persistimos el vinculo. Si falla el guardado despues del alta, hacemos
   // rollback contra Keycloak.
   private void asegurarCuenta(Beneficiaria beneficiaria, List<Representante> representantes) {
+    // Cada perfil tiene una unica cuenta: si ya hay una, la reutilizamos tal
+    // cual. El admin puede re-enviar el alta sobre una beneficiaria que ya
+    // esta registrada sin que esto sea un error.
     if (repositorioUsuarios.existeParaBeneficiaria(beneficiaria)) {
       return;
     }
@@ -148,13 +208,21 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
           repositorioUsuarios.guardar(Usuario.deBeneficiaria(keycloakId, beneficiaria))
       );
     } catch (RuntimeException e) {
-      try {
-        proveedor.eliminarUsuario(keycloakId);
-      } catch (RuntimeException ignorado) {
-        System.err.println("[ENTIDADES] Rollback en Keycloak fallo para " + keycloakId
-            + ": " + ignorado.getMessage());
-      }
+      intentarEliminar(keycloakId);
       throw e;
+    }
+  }
+
+  private boolean personaUsadaPorDonante(PersonaJuridica juridica) {
+    return repositorioDonantes.buscarPorPersona(juridica).isPresent();
+  }
+
+  private void intentarEliminar(String keycloakId) {
+    try {
+      proveedor.eliminarUsuario(keycloakId);
+    } catch (RuntimeException ignorado) {
+      System.err.println("[ENTIDADES] Rollback en Keycloak fallo para " + keycloakId
+          + ": " + ignorado.getMessage());
     }
   }
 }

@@ -44,16 +44,23 @@ public class PersonaJuridica extends Persona {
     }
 
     public PersonaJuridica(String cuit, String razonSocial, TipoOrganizacion tipo, String rubro) {
-        if (cuit == null) {
-            throw new DatosInvalidosException("El CUIT es obligatorio.");
-        }
         if (razonSocial == null || razonSocial.isBlank()) {
             throw new DatosInvalidosException("La razon social es obligatoria.");
         }
-        this.cuit = cuit.replaceAll("[^0-9]", "");
+        this.cuit = normalizarCuit(cuit);
         this.razonSocial = razonSocial.trim();
         this.tipo = tipo;
         this.rubro = rubro;
+    }
+
+    // Deja un CUIT solo con digitos. Mismo criterio que usa el constructor:
+    // los repositorios lo aplican sobre el parametro de busqueda para que
+    // un "30-12345678-9" encuentre al que se guardo como "30123456789".
+    public static String normalizarCuit(String cuit) {
+        if (cuit == null) {
+            throw new DatosInvalidosException("El CUIT es obligatorio.");
+        }
+        return cuit.replaceAll("[^0-9]", "");
     }
 
     public void agregarRepresentante(Representante representante) {

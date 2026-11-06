@@ -136,6 +136,67 @@ class FiltroDeAccesoTest {
     });
   }
 
+  @Test
+  void unTokenConDosPerfilesDevuelve403() throws Exception {
+    RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
+    FiltroDeAcceso filtro = new FiltroDeAcceso(verificador, repoUsuarios);
+
+    Javalin app = Javalin.create();
+    filtro.registrarEn(app);
+    app.get("/privado", ctx -> ctx.result("no llega"), RolDeAcceso.DONANTE);
+
+    String jwt = firmar(Map.of(
+        "email", "x@mail.com",
+        "realm_access", Map.of("roles", List.of("DONANTE", "BENEFICIARIA"))));
+
+    JavalinTest.test(app, (server, client) -> {
+      var respuesta = client.get("/privado",
+          req -> req.header("Authorization", "Bearer " + jwt));
+      assertEquals(403, respuesta.code());
+    });
+  }
+
+  @Test
+  void unTokenConDonanteYAdministradorDevuelve403() throws Exception {
+    RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
+    FiltroDeAcceso filtro = new FiltroDeAcceso(verificador, repoUsuarios);
+
+    Javalin app = Javalin.create();
+    filtro.registrarEn(app);
+    app.get("/privado", ctx -> ctx.result("no llega"), RolDeAcceso.ADMINISTRADOR);
+
+    String jwt = firmar(Map.of(
+        "email", "x@mail.com",
+        "realm_access", Map.of("roles", List.of("DONANTE", "ADMINISTRADOR"))));
+
+    JavalinTest.test(app, (server, client) -> {
+      var respuesta = client.get("/privado",
+          req -> req.header("Authorization", "Bearer " + jwt));
+      assertEquals(403, respuesta.code());
+    });
+  }
+
+  @Test
+  void unTokenConSoloChoferNoSeVeAfectadoPorLaReglaDePerfilesUnicos() throws Exception {
+    RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
+    when(repoUsuarios.buscarPorKeycloakId("usuario-1")).thenReturn(Optional.empty());
+    FiltroDeAcceso filtro = new FiltroDeAcceso(verificador, repoUsuarios);
+
+    Javalin app = Javalin.create();
+    filtro.registrarEn(app);
+    app.get("/chofer", ctx -> ctx.result("ok"), RolDeAcceso.CHOFER);
+
+    String jwt = firmar(Map.of(
+        "email", "chofer@mail.com",
+        "realm_access", Map.of("roles", List.of("CHOFER"))));
+
+    JavalinTest.test(app, (server, client) -> {
+      var respuesta = client.get("/chofer",
+          req -> req.header("Authorization", "Bearer " + jwt));
+      assertEquals(200, respuesta.code());
+    });
+  }
+
   private static String firmar(Map<String, Object> claimsExtra) throws Exception {
     JWTClaimsSet.Builder builder = new JWTClaimsSet.Builder()
         .subject("usuario-1")

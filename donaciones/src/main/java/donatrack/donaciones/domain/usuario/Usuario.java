@@ -8,13 +8,15 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
-import javax.persistence.ManyToOne;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 // Representa el vinculo entre una cuenta de Keycloak y un perfil local
 // (donante o beneficiaria). Donaciones no persiste ni credenciales ni roles:
-// eso lo tiene Keycloak. Varios Usuarios pueden apuntar al mismo perfil
-// cuando una persona juridica tiene varios representantes con cuenta propia.
+// eso lo tiene Keycloak. Cada perfil tiene como maximo una cuenta asociada:
+// el unique de donante_id y beneficiaria_id en la base lo garantiza, y los
+// servicios chequean antes de llamar a Keycloak. Para los representantes de
+// una persona juridica, todos comparten la misma cuenta de la beneficiaria.
 @Entity
 @Table(name = "usuario")
 public class Usuario {
@@ -23,12 +25,12 @@ public class Usuario {
     @Column(name = "keycloak_id")
     private String keycloakId;
 
-    @ManyToOne
-    @JoinColumn(name = "donante_id")
+    @OneToOne
+    @JoinColumn(name = "donante_id", unique = true)
     private Donante donante;
 
-    @ManyToOne
-    @JoinColumn(name = "beneficiaria_id")
+    @OneToOne
+    @JoinColumn(name = "beneficiaria_id", unique = true)
     private Beneficiaria beneficiaria;
 
     protected Usuario() {

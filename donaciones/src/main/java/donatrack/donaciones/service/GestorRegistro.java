@@ -57,6 +57,10 @@ public class GestorRegistro implements WithSimplePersistenceUnit {
             throw new ConflictoDeNegocioException(MENSAJE_PERSONA_DUPLICADA);
         }
 
+        // La persona no existe y el Donante lo creamos aca mismo, asi que no
+        // hay forma de que ya tenga cuenta. El unique de usuario.donante_id
+        // alcanza como red de ultima instancia; no agregamos un throw dentro
+        // de withTransaction para no dejar datos a medio commitear.
         String keycloakId = proveedor.crearUsuario(email, contrasena, RolDeAcceso.DONANTE);
 
         Donante[] donanteCreado = new Donante[1];
@@ -96,6 +100,11 @@ public class GestorRegistro implements WithSimplePersistenceUnit {
 
         String keycloakId = proveedor.crearUsuario(email, contrasena, RolDeAcceso.BENEFICIARIA);
 
+        // La PersonaJuridica no existia y la Beneficiaria la creamos aca
+        // mismo, asi que no hay forma de que ya tenga cuenta. El unique de
+        // usuario.beneficiaria_id alcanza como red de ultima instancia; no
+        // agregamos un throw dentro de withTransaction para no dejar datos
+        // a medio commitear.
         Beneficiaria[] creada = new Beneficiaria[1];
         try {
             withTransaction(() -> {
