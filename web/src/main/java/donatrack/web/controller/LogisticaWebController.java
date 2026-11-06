@@ -38,6 +38,8 @@ public class LogisticaWebController {
     app.get("/camiones/{patente}/editar", this::formularioDeEdicion);
     app.post("/camiones/{patente}", this::actualizarCamion);
 
+    app.get("/monitoreo-flota", this::monitoreoDeFlota);
+
     app.get("/seguimiento-donante", this::seguimientoDonante);
     app.get("/seguimiento-beneficiario", this::seguimientoBeneficiaria);
 
@@ -91,6 +93,14 @@ public class LogisticaWebController {
     }
 
     ctx.redirect("/camiones");
+  }
+
+  private void monitoreoDeFlota(Context ctx) {
+    ctx.render("monitoreo-flota.html.hbs",
+        modeloBase(ctx, "Monitoreo de flota", "Monitoreo")
+            .comoAdmin().activa("monitoreo").conMapa()
+            .conDatosDe("seguimiento", SeguimientoVista.VACIO, () -> seguimiento(ctx))
+            .mapa());
   }
 
   private void seguimientoDonante(Context ctx) {
