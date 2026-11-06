@@ -2,12 +2,15 @@ package donatrack.web.controller;
 
 import donatrack.web.Modelo;
 import donatrack.web.integracion.ClienteDonaciones;
+import donatrack.web.integracion.ClienteLogistica;
 import donatrack.web.integracion.OperacionRechazadaException;
 import donatrack.web.integracion.RegistroBeneficiaria;
 import donatrack.web.integracion.RegistroDonante;
 import donatrack.web.integracion.ServicioNoDisponibleException;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+
+import donatrack.web.vista.EntregaPublicaVista;
 
 import java.util.List;
 import java.util.Objects;
@@ -18,10 +21,14 @@ public class PublicoController {
   private static final String BENEFICIARIA = "beneficiaria";
 
   private final ClienteDonaciones clienteDonaciones;
+  private final ClienteLogistica clienteLogistica;
 
-  public PublicoController(ClienteDonaciones clienteDonaciones) {
+  public PublicoController(ClienteDonaciones clienteDonaciones,
+                           ClienteLogistica clienteLogistica) {
     Objects.requireNonNull(clienteDonaciones, "Debe indicarse el cliente de Donaciones.");
+    Objects.requireNonNull(clienteLogistica, "Debe indicarse el cliente de Logistica.");
     this.clienteDonaciones = clienteDonaciones;
+    this.clienteLogistica = clienteLogistica;
   }
 
   public void registrarRutas(Javalin app) {
@@ -38,8 +45,14 @@ public class PublicoController {
   }
 
   private void donacionesPublicas(Context ctx) {
+    // conDatosDe degrada sola: si Logistica esta caida la pantalla se ve igual, con la
+    // lista vacia y el aviso, en vez de romper una pantalla publica.
     ctx.render("donaciones-publicas.html.hbs",
-        Modelo.de("Donaciones entregadas").conMapa().mapa());
+        Modelo.de("Donaciones entregadas")
+            .conMapa()
+            .conDatosDe("entregas", List.<EntregaPublicaVista>of(),
+                clienteLogistica::entregasPublicas)
+            .mapa());
   }
 
   private void registro(Context ctx) {

@@ -6,6 +6,7 @@ import donatrack.donaciones.controller.DonacionesController;
 import donatrack.donaciones.controller.DonantesController;
 import donatrack.donaciones.controller.EntidadesBeneficiariasController;
 import donatrack.donaciones.controller.NecesidadesController;
+import donatrack.donaciones.controller.SubcategoriasController;
 import donatrack.donaciones.controller.NotificacionesController;
 import donatrack.donaciones.controller.RegistroController;
 import donatrack.donaciones.controller.UsuariosController;
@@ -151,6 +152,7 @@ public class DonacionesApp {
         repositorioEntidades).registrarRutas(app);
     new EntidadesBeneficiariasController(gestorEntidades).registrarRutas(app);
     new NecesidadesController(gestorNecesidades, repositorioSubcategorias, repositorioEntidades).registrarRutas(app);
+    new SubcategoriasController(repositorioSubcategorias).registrarRutas(app);
     new DonantesController(gestorPersonas, gestorDonantes).registrarRutas(app);
     new NotificacionesController(consultaNotificaciones).registrarRutas(app);
 

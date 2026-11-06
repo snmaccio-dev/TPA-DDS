@@ -97,9 +97,9 @@ public class WebApp {
       ctx.redirect("/login");
     });
 
-    new PublicoController(clienteDonaciones).registrarRutas(app);
+    new PublicoController(clienteDonaciones, clienteLogistica).registrarRutas(app);
     new SesionController(oidc, clienteDonaciones).registrarRutas(app);
-    new DonacionesWebController().registrarRutas(app);
+    new DonacionesWebController(clienteDonaciones, identidad).registrarRutas(app);
     new LogisticaWebController(clienteLogistica, identidad).registrarRutas(app);
 
     System.out.println("Cliente web de DonaTrack escuchando en " + urlBase

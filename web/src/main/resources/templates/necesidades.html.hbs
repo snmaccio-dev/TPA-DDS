@@ -2,6 +2,46 @@
 <body data-page="needs" data-role="beneficiario">
 {{> templates/partials/sidebar}}
 {{> templates/partials/topbar}}
-<main class="app-main"><div class="page-heading"><div><span class="eyebrow">GESTIÓN DE RECURSOS</span><h1>Mis necesidades</h1><p>Registrá los bienes materiales que necesita tu organización.</p></div><button class="btn btn-primary" data-open-modal="need-modal">＋ Nueva necesidad</button></div><section class="panel"><div class="panel-head"><h3>Necesidades registradas</h3><span class="muted">4 activas</span></div><div class="table-wrap"><table><thead><tr><th>Necesidad</th><th>Categoría</th><th>Cantidad</th><th>Prioridad</th><th>Estado</th></tr></thead><tbody><tr><td>Leche larga vida</td><td>Alimentos</td><td>80 unidades</td><td><span class="priority high">Alta</span></td><td><span class="status-pill success">Activa</span></td></tr><tr><td>Frazadas</td><td>Indumentaria</td><td>25 unidades</td><td><span class="priority high">Alta</span></td><td><span class="status-pill success">Activa</span></td></tr><tr><td>Cuadernos</td><td>Útiles escolares</td><td>50 unidades</td><td><span class="priority medium">Media</span></td><td><span class="status-pill success">Activa</span></td></tr></tbody></table></div></section><div class="modal" id="need-modal"><form class="modal-card demo-form"><button type="button" class="modal-close" data-close-modal>×</button><h2>Registrar necesidad</h2><label>Descripción<input required placeholder="Ej. Leche larga vida"></label><div class="form-row"><label>Categoría<select><option>Alimentos</option><option>Indumentaria</option><option>Higiene</option><option>Útiles escolares</option><option>Mobiliario</option></select></label><label>Cantidad<input type="number" min="1" required></label></div><label>Prioridad<select><option>Alta</option><option>Media</option><option>Baja</option></select></label><label>Detalle<textarea rows="3" placeholder="Especificaciones adicionales"></textarea></label><button class="btn btn-primary btn-block">Guardar necesidad</button></form></div></main>
+<main class="app-main">
+<div class="page-heading"><div><span class="eyebrow">GESTIÓN DE RECURSOS</span><h1>Mis necesidades</h1><p>Registrá los bienes materiales que necesita tu organización.</p></div><button class="btn btn-primary" data-open-modal="need-modal">＋ Nueva necesidad</button></div>
+{{#if errorDeServicio}}<p class="notice">{{errorDeServicio}}</p>{{/if}}
+{{#if errorDelFormulario}}<p class="notice">{{errorDelFormulario}}</p>{{/if}}
+<section class="panel"><div class="panel-head"><h3>Necesidades registradas</h3><span class="muted">{{necesidades.size}} registradas</span></div>
+<div class="table-wrap"><table>
+<thead><tr><th>Necesidad</th><th>Subcategoría</th><th>Cantidad</th><th>Tipo</th></tr></thead>
+<tbody>
+{{#each necesidades}}
+<tr><td>{{descripcion}}</td><td>{{subcategoria}}</td><td>{{cantidadTexto}}</td><td><span class="status-pill {{tipoClase}}">{{tipoTexto}}</span></td></tr>
+{{/each}}
+{{#unless necesidades}}
+<tr><td colspan="4" class="muted">Todavía no registraste necesidades.</td></tr>
+{{/unless}}
+</tbody></table></div></section>
+<div class="modal" id="need-modal"><form class="modal-card" action="/necesidades" method="post">
+<button type="button" class="modal-close" data-close-modal>×</button>
+<h2>Registrar necesidad</h2>
+<label>Descripción<input name="descripcion" required placeholder="Ej. Fideos para el comedor"></label>
+<div class="form-row">
+<label>Subcategoría<select name="subcategoria" required>
+{{#each subcategorias}}
+        <option value="{{nombre}}">{{etiqueta}}</option>
+{{/each}}
+</select></label>
+<label>Cantidad<input name="cantidad" type="number" min="1" required></label>
+</div>
+<div class="form-row">
+<label>Tipo<select name="tipo" required>
+        <option value="EXTRAORDINARIA">Extraordinaria</option>
+        <option value="RECURRENTE">Recurrente</option>
+</select></label>
+<label>Período<select name="periodo">
+        <option value="">No aplica</option>
+        <option value="SEMANAL">Semanal</option>
+        <option value="MENSUAL">Mensual</option>
+</select></label>
+</div>
+<p class="muted">El período solo se usa en las necesidades recurrentes.</p>
+<button class="btn btn-primary btn-block">Guardar necesidad</button></form></div>
+</main>
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}
