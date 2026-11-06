@@ -27,6 +27,10 @@ public abstract class Persona {
     @JoinColumn(name = "contacto_predeterminado_id")
     protected MedioContacto contactoPredeterminado;
 
+    public Long getId() {
+        return id;
+    }
+
     public abstract String getNombreDisplay();
 
     public abstract String getDocumento();

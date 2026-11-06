@@ -6,6 +6,7 @@ import donatrack.donaciones.controller.DonacionesController;
 import donatrack.donaciones.controller.DonantesController;
 import donatrack.donaciones.controller.EntidadesBeneficiariasController;
 import donatrack.donaciones.controller.NecesidadesController;
+import donatrack.donaciones.controller.NotificacionesController;
 import donatrack.donaciones.controller.RegistroController;
 import donatrack.donaciones.controller.UsuariosController;
 import donatrack.donaciones.controller.dto.ErrorDTO;
@@ -24,6 +25,7 @@ import donatrack.donaciones.jobs.PlanificadorAvisosInactividad;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioEntidades;
+import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioPropuestas;
 import donatrack.donaciones.repository.RepositorioSubcategorias;
@@ -32,6 +34,7 @@ import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.IntegracionConIdentidadException;
 import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
+import donatrack.donaciones.service.ConsultaDeNotificaciones;
 import donatrack.donaciones.service.EventoYaAplicadoException;
 import donatrack.donaciones.service.GestorAsignaciones;
 import donatrack.donaciones.service.GestorDonaciones;
@@ -75,6 +78,10 @@ public class DonacionesApp {
     // KEYCLOAK_ISSUER permite forzar el valor exacto que trae el JWT.
     String keycloakIssuer = variable("KEYCLOAK_ISSUER", null);
 
+    // URL base del modulo web, usada para armar los links de la notificacion
+    // INICIO_RUTA. En Docker suele diferir del localhost del desarrollador.
+    String urlWeb = variable("WEB_URL_BASE", "http://localhost:8082");
+
     RepositorioPropuestas repositorioPropuestas = new RepositorioPropuestas();
     RepositorioSubcategorias repositorioSubcategorias = new RepositorioSubcategorias();
     sembrarSubcategorias(repositorioSubcategorias);
@@ -83,6 +90,7 @@ public class DonacionesApp {
     RepositorioEntidades repositorioEntidades = RepositorioEntidades.getInstance();
     RepositorioDonantes repositorioDonantes = new RepositorioDonantes();
     RepositorioUsuarios repositorioUsuarios = new RepositorioUsuarios();
+    RepositorioNotificaciones repositorioNotificaciones = new RepositorioNotificaciones();
 
     ProveedorDeIdentidad proveedor = new ProveedorDeIdentidadKeycloak(
         keycloakUrl, keycloakRealm, keycloakClientId, keycloakClientSecret);
@@ -95,9 +103,17 @@ public class DonacionesApp {
         new NotificadorEmail(),
         new NotificadorSMS(),
         new NotificadorWhatsApp()
-    ));
-    GestorDonaciones gestorDonaciones = new GestorDonaciones(gestorNotificaciones, repositorioPropuestas);
-    GestorAsignaciones gestorAsignaciones = new GestorAsignaciones(repositorioPropuestas);
+    ), repositorioNotificaciones);
+    ConsultaDeNotificaciones consultaNotificaciones =
+        new ConsultaDeNotificaciones(repositorioNotificaciones);
+    GestorDonaciones gestorDonaciones = new GestorDonaciones(
+        gestorNotificaciones,
+        repositorioPropuestas,
+        urlWeb + "/seguimiento-donante",
+        urlWeb + "/seguimiento-beneficiario"
+    );
+    GestorAsignaciones gestorAsignaciones =
+        new GestorAsignaciones(repositorioPropuestas, gestorDonaciones);
     GestorEntidadesBeneficiarias gestorEntidades =
         new GestorEntidadesBeneficiarias(repositorioUsuarios, proveedor);
     GestorNecesidades gestorNecesidades = new GestorNecesidades();
@@ -122,6 +138,7 @@ public class DonacionesApp {
     new EntidadesBeneficiariasController(gestorEntidades).registrarRutas(app);
     new NecesidadesController(gestorNecesidades, repositorioSubcategorias, repositorioEntidades).registrarRutas(app);
     new DonantesController(gestorPersonas, gestorDonantes).registrarRutas(app);
+    new NotificacionesController(consultaNotificaciones).registrarRutas(app);
 
     registrarManejoDeErrores(app);
 

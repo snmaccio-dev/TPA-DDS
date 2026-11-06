@@ -2,8 +2,10 @@ package donatrack.donaciones.seguridad;
 
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.necesidad.Necesidad;
+import donatrack.donaciones.domain.notificacion.Notificacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
+import donatrack.donaciones.domain.persona.Persona;
 import io.javalin.http.ForbiddenResponse;
 
 import java.util.Objects;
@@ -36,6 +38,36 @@ public final class Acceso {
             }
         }
         throw new ForbiddenResponse("No podes acceder a esta donacion.");
+    }
+
+    public static void exigirPuedeVerNotificacion(UsuarioActual usuario, Notificacion notificacion) {
+        // Las notificaciones para administradores son compartidas: cualquier
+        // admin puede verlas y, si marca una como leida, queda leida para
+        // todos. Las de un donante o una beneficiaria solo las ve el duenio
+        // del perfil asociado.
+        if (notificacion.esParaAdministradores()) {
+            if (usuario.esAdministrador()) {
+                return;
+            }
+            throw new ForbiddenResponse("No podes acceder a esta notificacion.");
+        }
+        Persona destinatario = notificacion.getDestinatario();
+        Long idDestino = destinatario == null ? null : personaId(destinatario);
+        if (usuario.esDonante()) {
+            Donante propio = perfilDonanteObligatorio(usuario);
+            if (idDestino != null
+                && Objects.equals(idDestino, personaId(propio.getPersona()))) {
+                return;
+            }
+        }
+        if (usuario.esBeneficiaria()) {
+            Beneficiaria propia = perfilBeneficiariaObligatorio(usuario);
+            if (idDestino != null
+                && Objects.equals(idDestino, personaId(propia.getPersona()))) {
+                return;
+            }
+        }
+        throw new ForbiddenResponse("No podes acceder a esta notificacion.");
     }
 
     public static void exigirPuedeVerNecesidad(UsuarioActual usuario, Necesidad necesidad) {
@@ -75,5 +107,9 @@ public final class Acceso {
 
     private static Long idDe(Beneficiaria beneficiaria) {
         return beneficiaria == null ? null : beneficiaria.getId();
+    }
+
+    private static Long personaId(Persona persona) {
+        return persona == null ? null : persona.getId();
     }
 }

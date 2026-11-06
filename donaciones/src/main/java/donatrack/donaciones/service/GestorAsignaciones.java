@@ -27,13 +27,18 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
   private final RepositorioDonaciones repositorioDonaciones;
   private final RepositorioEntidades repositorioEntidades;
   private final RepositorioPropuestas repositorioPropuestas;
+  // Se usa en confirmarDestino para que la donacion traiga enganchado el
+  // observer y las notificaciones de ASIGNACION_REALIZADA salgan.
+  private final GestorDonaciones gestorDonaciones;
 
-  public GestorAsignaciones(RepositorioPropuestas repositorioPropuestas) {
+  public GestorAsignaciones(RepositorioPropuestas repositorioPropuestas,
+                            GestorDonaciones gestorDonaciones) {
     this.compatibilidad = new CompatibilidadSemantica();
     this.prioridadSubAtendidos = new PrioridadSubatendidos();
     this.repositorioDonaciones = RepositorioDonaciones.getInstance();
     this.repositorioEntidades = RepositorioEntidades.getInstance();
     this.repositorioPropuestas = repositorioPropuestas;
+    this.gestorDonaciones = gestorDonaciones;
   }
 
   // EJECUCIÓN A DEMANDA
@@ -81,14 +86,13 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
   }
 
   // Confirma el destino final de la donación. El filtro de acceso ya garantiza
-  // que quien llega aca tiene rol ADMINISTRADOR.
+  // que quien llega aca tiene rol ADMINISTRADOR. Usamos GestorDonaciones.buscar
+  // para que la Donacion traiga el observer de notificaciones ya enganchado y
+  // la transicion dispare DONACION_ASIGNADA al donante y a la beneficiaria.
   public void confirmarDestino(long donacionId, Beneficiaria destinatario) {
     Objects.requireNonNull(
         destinatario, "Debe indicarse la beneficiaria a confirmar como destinataria.");
-    Donacion donacion = repositorioDonaciones.buscarPorId(donacionId)
-        .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la donación con ID " + donacionId
-        ));
+    Donacion donacion = gestorDonaciones.buscar(donacionId);
     withTransaction(() -> {
       donacion.confirmarDestino(destinatario);
       repositorioPropuestas.eliminar(donacionId);

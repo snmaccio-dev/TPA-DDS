@@ -222,7 +222,20 @@ public class Donacion {
 
     // === Observer ===
 
+    // Idempotente por tipo: si ya hay un observer de la misma clase, no lo
+    // vuelve a agregar. Los observers son @Transient, asi que se registran
+    // cada vez que la Donacion se carga de la base; con el EM pudiendo
+    // devolver la misma instancia mas de una vez dentro del mismo request,
+    // sin esta guarda terminariamos notificando duplicado.
     public void agregarObserver(DonacionObserver observer) {
+        if (observer == null) {
+            return;
+        }
+        for (DonacionObserver existente : observers) {
+            if (existente.getClass().equals(observer.getClass())) {
+                return;
+            }
+        }
         observers.add(observer);
     }
 
