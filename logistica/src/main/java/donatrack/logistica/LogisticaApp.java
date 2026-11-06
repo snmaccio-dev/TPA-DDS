@@ -128,7 +128,8 @@ public class LogisticaApp {
 
     new CamionesController(gestorCamiones).registrarRutas(app);
     new ChoferesController(gestorChoferes).registrarRutas(app);
-    new RutasController(gestorRutas, gestorEntregas).registrarRutas(app);
+    new RutasController(gestorRutas, gestorEntregas, gestorChoferes, control)
+        .registrarRutas(app);
     new EntregasController(gestorEntregas, control).registrarRutas(app);
     new MonitoreoController(gestorMonitoreo, gestorRutas, control).registrarRutas(app);
     new PlanificacionController(gestorLogistica).registrarRutas(app);

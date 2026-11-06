@@ -9,6 +9,7 @@ import donatrack.web.vista.RutaVista;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 public class ClienteLogisticaHttp implements ClienteLogistica {
 
@@ -63,6 +64,17 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
         "/planificacion/pendientes",
         new TypeReference<List<EntregaVista>>() {}
     );
+  }
+
+  @Override
+  public List<RutaVista> rutasDelChofer(String autorizacion) {
+    return http.obtener(autorizacion, "/rutas/mias", new TypeReference<List<RutaVista>>() {});
+  }
+
+  @Override
+  public void iniciarRuta(String autorizacion, long rutaId) {
+    // Sin cuerpo: Logistica deduce que chofer inicia la ruta a partir del token.
+    http.publicar(autorizacion, "/rutas/" + rutaId + "/inicio", Map.of());
   }
 
   @Override

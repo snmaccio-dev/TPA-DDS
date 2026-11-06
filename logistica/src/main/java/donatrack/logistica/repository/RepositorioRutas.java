@@ -48,6 +48,24 @@ public class RepositorioRutas implements WithSimplePersistenceUnit {
         .getResultList();
   }
 
+  public List<RutaReparto> planificadas() {
+    return createQuery(
+        "select r from RutaReparto r where r.estado = :estado",
+        RutaReparto.class)
+        .setParameter("estado", EstadoRuta.PLANIFICADA)
+        .getResultList();
+  }
+
+  public List<RutaReparto> enCursoDeChofer(long choferId) {
+    return createQuery(
+        "select r from RutaReparto r "
+            + "where r.estado = :estado and r.chofer.id = :choferId",
+        RutaReparto.class)
+        .setParameter("estado", EstadoRuta.EN_CURSO)
+        .setParameter("choferId", choferId)
+        .getResultList();
+  }
+
   public List<RutaReparto> enCursoDeBeneficiaria(long beneficiariaId) {
     return createQuery(
         "select distinct r from RutaReparto r join r.entregas e "

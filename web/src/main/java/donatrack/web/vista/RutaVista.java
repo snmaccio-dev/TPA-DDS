@@ -49,6 +49,10 @@ public record RutaVista(
     };
   }
 
+  public boolean isPuedeIniciarse() {
+    return "PLANIFICADA".equals(estado);
+  }
+
   public String getAvanceTexto() {
     return Formato.porcentaje(porcentajeAvance);
   }

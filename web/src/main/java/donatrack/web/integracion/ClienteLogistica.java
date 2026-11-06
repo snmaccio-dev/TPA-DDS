@@ -23,6 +23,10 @@ public interface ClienteLogistica {
 
   List<EntregaVista> entregasPendientesDePlanificacion(String autorizacion);
 
+  List<RutaVista> rutasDelChofer(String autorizacion);
+
+  void iniciarRuta(String autorizacion, long rutaId);
+
   EntregaVista entrega(String autorizacion, long entregaId);
 
   List<String> subirFotos(String autorizacion, long entregaId, List<ArchivoSubido> fotos);

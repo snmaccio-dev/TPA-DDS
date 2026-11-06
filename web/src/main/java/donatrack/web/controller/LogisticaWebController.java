@@ -10,6 +10,7 @@ import donatrack.web.sesion.IdentidadDelUsuario;
 import donatrack.web.sesion.UsuarioWeb;
 import donatrack.web.vista.FlotaVista;
 import donatrack.web.vista.PlanificacionVista;
+import donatrack.web.vista.RutaVista;
 import donatrack.web.vista.SeguimientoVista;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
@@ -41,6 +42,9 @@ public class LogisticaWebController {
 
     app.get("/monitoreo-flota", this::monitoreoDeFlota);
     app.get("/rutas-planificadas", this::rutasPlanificadas);
+
+    app.get("/chofer-inicio-ruta", this::rutasDelChofer);
+    app.post("/chofer-inicio-ruta/{id}", this::iniciarRuta);
 
     app.get("/seguimiento-donante", this::seguimientoDonante);
     app.get("/seguimiento-beneficiario", this::seguimientoBeneficiaria);
@@ -120,6 +124,37 @@ public class LogisticaWebController {
         clienteLogistica.rutas(autorizacion),
         clienteLogistica.entregasPendientesDePlanificacion(autorizacion)
     );
+  }
+
+  private void rutasDelChofer(Context ctx) {
+    mostrarRutasDelChofer(ctx, null);
+  }
+
+  private void iniciarRuta(Context ctx) {
+    try {
+      clienteLogistica.iniciarRuta(
+          autorizacionDe(ctx),
+          ctx.pathParamAsClass("id", Long.class).get()
+      );
+    } catch (OperacionRechazadaException e) {
+      mostrarRutasDelChofer(ctx, e.getMessage());
+      return;
+    }
+
+    ctx.redirect("/chofer-inicio-ruta");
+  }
+
+  private void mostrarRutasDelChofer(Context ctx, String errorDelFormulario) {
+    Modelo modelo = modeloBase(ctx, "Mis rutas", "Reparto")
+        .comoChofer().activa("misRutas")
+        .con("errorDelFormulario", errorDelFormulario)
+        .conDatosDe("rutas", List.<RutaVista>of(),
+            () -> clienteLogistica.rutasDelChofer(autorizacionDe(ctx)));
+
+    Object rutas = modelo.mapa().get("rutas");
+    modelo.con("sinRutas", rutas instanceof List<?> lista && lista.isEmpty());
+
+    ctx.render("chofer-inicio-ruta.html.hbs", modelo.mapa());
   }
 
   private void seguimientoDonante(Context ctx) {

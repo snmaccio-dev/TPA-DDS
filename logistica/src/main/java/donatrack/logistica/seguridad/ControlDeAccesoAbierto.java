@@ -4,7 +4,14 @@ import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.ruta.RutaReparto;
 import io.javalin.http.Context;
 
+import java.util.Optional;
+
 public class ControlDeAccesoAbierto implements ControlDeAcceso {
+
+  @Override
+  public Optional<String> cuentaDelChofer(Context ctx) {
+    return Optional.empty();
+  }
 
   @Override
   public void exigirAccesoAEntrega(Context ctx, Entrega entrega) {

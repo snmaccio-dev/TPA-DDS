@@ -79,6 +79,9 @@ public record PerfilVista(
     if (isDonante()) {
       return "/donante-dashboard";
     }
+    if (isChofer()) {
+      return "/chofer-inicio-ruta";
+    }
 
     return "/";
   }

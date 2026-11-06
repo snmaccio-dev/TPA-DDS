@@ -1,0 +1,82 @@
+{{> templates/partials/head}}
+<body data-page="chofer-rutas" data-role="chofer">
+{{> templates/partials/sidebar}}
+{{> templates/partials/topbar}}
+<main class="app-main">
+  <div class="page-heading">
+    <div>
+      <span class="eyebrow">REPARTO</span>
+      <h1>Mis rutas</h1>
+      <p>Tomá una ruta planificada para salir, o seguí la que ya tenés en curso.</p>
+    </div>
+  </div>
+
+  {{#if errorDeServicio}}
+  <section class="panel">
+    <strong>{{errorDeServicio}}</strong>
+    <p class="muted">No se pudieron cargar las rutas. Volvé a intentar en unos minutos.</p>
+  </section>
+  {{/if}}
+
+  {{#if errorDelFormulario}}
+  <section class="panel">
+    <strong>No se pudo iniciar la ruta</strong>
+    <p class="muted">{{errorDelFormulario}}</p>
+  </section>
+  {{/if}}
+
+  {{#if sinRutas}}
+  <section class="panel">
+    <h3>No tenés rutas asignadas</h3>
+    <p class="muted">Cuando el planificador arme una ruta para tu camión, va a aparecer acá.</p>
+  </section>
+  {{/if}}
+
+  {{#each rutas}}
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <span class="eyebrow">RUTA {{id}}</span>
+        <h3>Camión {{patenteCamion}}</h3>
+      </div>
+      <span class="status-pill {{estadoEstilo}}">{{estadoTexto}}</span>
+    </div>
+
+    <div class="detail-pair"><span>Destinos</span><b>{{cantidadDeDestinos}}</b></div>
+    <div class="detail-pair"><span>Entregas</span><b>{{cantidadDeEntregas}}</b></div>
+    <div class="detail-pair"><span>Avance</span><b>{{avanceTexto}}</b></div>
+    <div class="detail-pair"><span>Inicio</span><b>{{inicioTexto}}</b></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Orden</th>
+          <th>Dirección</th>
+          <th>Entregas</th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#each destinos}}
+        <tr>
+          <td>{{@index}}</td>
+          <td>{{direccion}}</td>
+          <td>{{cantidadDeEntregas}}</td>
+        </tr>
+        {{/each}}
+        </tbody>
+      </table>
+    </div>
+
+    {{#if puedeIniciarse}}
+    <form method="post" action="/chofer-inicio-ruta/{{id}}">
+      <button class="btn btn-primary btn-block">Iniciar esta ruta</button>
+    </form>
+    {{else}}
+    <p class="notice">Ruta en curso. Confirmá cada entrega a medida que la completes.</p>
+    {{/if}}
+  </section>
+  {{/each}}
+</main>
+{{> templates/partials/footer}}
+{{> templates/partials/scripts}}
