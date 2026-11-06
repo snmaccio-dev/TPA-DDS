@@ -8,6 +8,9 @@
       <p>DonaTrack delega la autenticación en su proveedor de identidad.</p>
     </div>
 
+    {{#if cuentaCreada}}
+    <p class="notice">Tu cuenta quedó creada. Ingresá con el correo y la contraseña que elegiste.</p>
+    {{/if}}
     {{#if errorDeIngreso}}
     <p class="muted">{{errorDeIngreso}}</p>
     {{/if}}

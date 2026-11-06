@@ -97,7 +97,7 @@ public class WebApp {
       ctx.redirect("/login");
     });
 
-    new PublicoController().registrarRutas(app);
+    new PublicoController(clienteDonaciones).registrarRutas(app);
     new SesionController(oidc, clienteDonaciones).registrarRutas(app);
     new DonacionesWebController().registrarRutas(app);
     new LogisticaWebController(clienteLogistica, identidad).registrarRutas(app);
