@@ -222,6 +222,13 @@ public class DonacionesApp {
       Categoria alimentos = new Categoria("Alimentos");
       Categoria vestimenta = new Categoria("Vestimenta");
 
+      // Las categorias se persisten aparte: el @ManyToOne de Subcategoria.categoria no
+      // tiene cascade, asi que guardar la subcategoria sola deja una referencia a una
+      // instancia transitoria y el flush del commit falla.
+      repo.persist(mobiliario);
+      repo.persist(alimentos);
+      repo.persist(vestimenta);
+
       repo.guardar(new Subcategoria("Sillas", mobiliario, Unidades.UNIDADES));
       repo.guardar(new Subcategoria("Mesas", mobiliario, Unidades.UNIDADES));
       repo.guardar(new Subcategoria("Bancos escolares", mobiliario, Unidades.UNIDADES));
