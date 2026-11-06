@@ -64,7 +64,7 @@ public class WebApp {
     }).start(PUERTO);
 
     app.beforeMatched(ctx -> {
-      if (RUTAS_PUBLICAS.contains(ctx.path()) || identidad.actual(ctx).isPresent()) {
+      if (esPublica(ctx.path()) || identidad.actual(ctx).isPresent()) {
         return;
       }
 
@@ -81,6 +81,14 @@ public class WebApp {
         + " | Logistica: " + urlLogistica
         + " | Donaciones: " + urlDonaciones
         + " | seguridad: " + (seguridadActiva ? "on" : "off"));
+  }
+
+  // Los estaticos tienen que quedar afuera del filtro: si no, el CSS y el JS se van
+  // redirigidos al login y las pantallas se ven sin estilos.
+  private static boolean esPublica(String ruta) {
+    return RUTAS_PUBLICAS.contains(ruta)
+        || ruta.startsWith("/assets/")
+        || "/favicon.ico".equals(ruta);
   }
 
   private static String variable(String nombre, String valorPorDefecto) {
