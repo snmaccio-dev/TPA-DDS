@@ -1,0 +1,38 @@
+type Query {
+  planificacion: Planificacion!
+}
+
+type Planificacion {
+  rutas: [Ruta!]!
+  pendientes: [Entrega!]!
+}
+
+type Ruta {
+  id: ID!
+  patenteCamion: String!
+  estado: String!
+  chofer: String
+  fechaHoraInicio: String
+  porcentajeAvance: Float!
+  destinos: [Destino!]!
+}
+
+type Destino {
+  direccion: String!
+  entregas: [Entrega!]!
+}
+
+type Entrega {
+  id: ID!
+  donacionId: ID!
+  beneficiariaId: ID!
+  descripcionDonacion: String!
+  cantidad: Float!
+  unidad: String
+  pesoKg: Float
+  volumenM3: Float
+  estado: String!
+  direccionDestino: String!
+  patenteCamion: String
+  fechaHoraEntrega: String
+}

@@ -3,7 +3,10 @@ package donatrack.web.integracion;
 import com.fasterxml.jackson.core.type.TypeReference;
 import donatrack.web.vista.CamionVista;
 import donatrack.web.vista.EntregaVista;
+import donatrack.web.integracion.graphql.ConsultaGraphQl;
+import donatrack.web.integracion.graphql.RespuestaDePlanificacion;
 import donatrack.web.vista.MonitoreoRutaVista;
+import donatrack.web.vista.PlanificacionVista;
 import donatrack.web.vista.RutaVista;
 
 import java.net.URLEncoder;
@@ -52,18 +55,32 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
     );
   }
 
-  @Override
-  public List<RutaVista> rutas(String autorizacion) {
-    return http.obtener(autorizacion, "/rutas", new TypeReference<List<RutaVista>>() {});
-  }
+  // Una sola consulta en lugar de GET /rutas mas GET /planificacion/pendientes, y de
+  // cada entrega de un destino se pide solo el id, que es lo unico que la pantalla usa
+  // para contarlas. Por REST venia el DTO completo de cada una.
+  private static final String CONSULTA_DE_PLANIFICACION = "{ planificacion {"
+      + " rutas { id patenteCamion estado chofer fechaHoraInicio porcentajeAvance"
+      + " destinos { direccion entregas { id } } }"
+      + " pendientes { id donacionId descripcionDonacion cantidad unidad direccionDestino }"
+      + " } }";
 
   @Override
-  public List<EntregaVista> entregasPendientesDePlanificacion(String autorizacion) {
-    return http.obtener(
+  public PlanificacionVista planificacion(String autorizacion) {
+    RespuestaDePlanificacion respuesta = http.consultar(
         autorizacion,
-        "/planificacion/pendientes",
-        new TypeReference<List<EntregaVista>>() {}
+        "/graphql",
+        new ConsultaGraphQl(CONSULTA_DE_PLANIFICACION),
+        new TypeReference<RespuestaDePlanificacion>() {}
     );
+
+    // GraphQL responde 200 aunque la consulta haya fallado: el error viaja en el cuerpo.
+    if (respuesta.tieneErrores()) {
+      throw new ServicioNoDisponibleException(
+          SERVICIO, "devolvió un error en la consulta: " + respuesta.primerError()
+      );
+    }
+
+    return respuesta.data().planificacion();
   }
 
   @Override

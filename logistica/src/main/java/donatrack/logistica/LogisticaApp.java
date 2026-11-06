@@ -24,6 +24,8 @@ import donatrack.logistica.infrastructure.integracion.ProveedorDeTokenDeServicio
 import donatrack.logistica.infrastructure.integracion.SerializadorJackson;
 import donatrack.logistica.infrastructure.planificacion.GeneradorRutasExterno;
 import donatrack.logistica.infrastructure.planificacion.GeneradorRutasSimulado;
+import donatrack.logistica.graphql.EsquemaGraphQl;
+import donatrack.logistica.graphql.GraphQlController;
 import donatrack.logistica.jobs.JobPlanificacionRutas;
 import donatrack.logistica.seguridad.ControlDeAcceso;
 import donatrack.logistica.seguridad.ControlDeAccesoAbierto;
@@ -134,6 +136,9 @@ public class LogisticaApp {
     new MonitoreoController(gestorMonitoreo, gestorRutas, control).registrarRutas(app);
     new PlanificacionController(gestorLogistica).registrarRutas(app);
     new RutasCallbackController(gestorLogistica, tokenPlanificador).registrarRutas(app);
+
+    new GraphQlController(EsquemaGraphQl.construir(gestorRutas, gestorLogistica))
+        .registrarRutas(app);
 
     registrarManejoDeErrores(app);
 

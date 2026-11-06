@@ -19,7 +19,11 @@ import java.util.UUID;
 
 public class ClienteHttp {
 
-  private static final Duration ESPERA = Duration.ofSeconds(10);
+  // Un minuto, no diez segundos: en los planes gratuitos de PaaS los servicios se
+  // duermen por inactividad y tardan hasta un minuto en despertar. Con una espera corta,
+  // la primera pantalla despues de un rato mostraria "servicio no disponible" cuando en
+  // realidad el backend esta arrancando.
+  private static final Duration ESPERA = Duration.ofSeconds(60);
   private static final String RECHAZO_SIN_DETALLE = "El pedido fue rechazado.";
   private static final int NO_AUTORIZADO = 401;
 
@@ -117,6 +121,24 @@ public class ClienteHttp {
 
   private byte[] texto(String valor) {
     return valor.getBytes(StandardCharsets.UTF_8);
+  }
+
+  public <T> T consultar(String autorizacion, String ruta, Object cuerpo, TypeReference<T> tipo) {
+    HttpResponse<String> respuesta = enviar(
+        conAutorizacion(
+            HttpRequest.newBuilder()
+                .uri(URI.create(urlBase + ruta))
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .timeout(ESPERA)
+                .POST(HttpRequest.BodyPublishers.ofString(serializar(cuerpo))),
+            autorizacion
+        ).build()
+    );
+
+    verificar(respuesta);
+
+    return deserializar(respuesta.body(), tipo);
   }
 
   private void escribir(String metodo, String autorizacion, String ruta, Object cuerpo) {

@@ -17,6 +17,7 @@
         <jackson.version>2.17.2</jackson.version>
         <slf4j.version>2.0.13</slf4j.version>
         <nimbus.version>9.37.3</nimbus.version>
+        <graphql.version>21.3</graphql.version>
         <db.url>jdbc:postgresql://localhost:5432/donatrack_logistica</db.url>
         <db.user>postgres</db.user>
         <db.password>${env.DONATRACK_DB_PASSWORD}</db.password>
@@ -56,6 +57,16 @@
             <groupId>com.nimbusds</groupId>
             <artifactId>nimbus-jose-jwt</artifactId>
             <version>${nimbus.version}</version>
+        </dependency>
+
+        <!--
+          Motor GraphQL. Resuelve el esquema y las consultas; el transporte sigue siendo
+          Javalin, asi que no suma ni un servidor ni un puerto nuevo.
+        -->
+        <dependency>
+            <groupId>com.graphql-java</groupId>
+            <artifactId>graphql-java</artifactId>
+            <version>${graphql.version}</version>
         </dependency>
     </dependencies>
 
