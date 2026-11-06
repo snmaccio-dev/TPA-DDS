@@ -9,6 +9,12 @@ FROM quay.io/keycloak/keycloak:24.0 AS build
 ENV KC_DB=postgres
 ENV KC_HEALTH_ENABLED=true
 
+# Cache local, no distribuido. Con el default de produccion, Infinispan levanta JGroups
+# y sale a descubrir otros nodos; en un PaaS compartido encuentra contenedores ajenos y
+# se queda minutos fallando contra ellos antes de arrancar. Tenemos una sola instancia,
+# asi que el clustering no aporta nada y ademas consume memoria que no sobra.
+ENV KC_CACHE=local
+
 RUN /opt/keycloak/bin/kc.sh build
 
 FROM quay.io/keycloak/keycloak:24.0
