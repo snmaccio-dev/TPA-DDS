@@ -13,6 +13,8 @@ import donatrack.web.sesion.ConfiguracionOidc;
 import donatrack.web.sesion.IdentidadDelUsuario;
 import donatrack.web.sesion.IdentidadPorSesion;
 import donatrack.web.sesion.IdentidadSimulada;
+import donatrack.web.sesion.SesionExpiradaException;
+import donatrack.web.sesion.UsuarioWeb;
 import donatrack.web.templates.JavalinHandlebars;
 import donatrack.web.templates.JavalinRenderer;
 import io.javalin.Javalin;
@@ -64,12 +66,35 @@ public class WebApp {
     }).start(PUERTO);
 
     app.beforeMatched(ctx -> {
-      if (esPublica(ctx.path()) || identidad.actual(ctx).isPresent()) {
+      if (esPublica(ctx.path())) {
         return;
       }
 
+      UsuarioWeb usuario = identidad.actual(ctx).orElse(null);
+
+      if (usuario == null) {
+        ctx.redirect("/login");
+        ctx.skipRemainingHandlers();
+        return;
+      }
+
+      // Renovamos antes de que venza, asi el usuario no se encuentra con un 401 a mitad
+      // de una pantalla. Si el refresh token tampoco sirve, la sesion se termino.
+      if (usuario.estaPorVencer() && usuario.sePuedeRenovar()) {
+        try {
+          ctx.sessionAttribute(
+              IdentidadPorSesion.CLAVE_USUARIO,
+              usuario.conTokens(oidc.renovar(usuario.refreshToken()))
+          );
+        } catch (RuntimeException e) {
+          throw new SesionExpiradaException("La sesión expiró. Volvé a ingresar.");
+        }
+      }
+    });
+
+    app.exception(SesionExpiradaException.class, (e, ctx) -> {
+      ctx.sessionAttribute(IdentidadPorSesion.CLAVE_USUARIO, null);
       ctx.redirect("/login");
-      ctx.skipRemainingHandlers();
     });
 
     new PublicoController().registrarRutas(app);

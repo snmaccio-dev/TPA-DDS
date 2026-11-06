@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import donatrack.web.sesion.SesionExpiradaException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -20,6 +21,7 @@ public class ClienteHttp {
 
   private static final Duration ESPERA = Duration.ofSeconds(10);
   private static final String RECHAZO_SIN_DETALLE = "El pedido fue rechazado.";
+  private static final int NO_AUTORIZADO = 401;
 
   private final HttpClient http = HttpClient.newBuilder()
       .connectTimeout(ESPERA)
@@ -139,6 +141,12 @@ public class ClienteHttp {
 
   private void verificar(HttpResponse<String> respuesta) {
     int estado = respuesta.statusCode();
+
+    if (estado == NO_AUTORIZADO) {
+      throw new SesionExpiradaException(
+          "El servicio de " + servicio + " rechazó el token de la sesión."
+      );
+    }
 
     if (estado >= 400 && estado < 500) {
       throw new OperacionRechazadaException(mensajeDe(respuesta.body()));
