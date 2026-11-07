@@ -37,14 +37,16 @@ document.addEventListener("DOMContentLoaded", () => {
         })
     );
 
-    document.querySelectorAll(".demo-form").forEach(form =>
-        form.addEventListener("submit", e => {
-            e.preventDefault();
-            toast("Formulario de demostración. Conectá esta acción con el backend Javalin.");
-            form.reset();
-            form.closest(".modal")?.classList.remove("open");
-        })
-    );
+    // ALERTAS FIJAS (abajo a la derecha): se cierran solas a los 6 segundos o con el x.
+    const cerrarAlerta = el => {
+        if (!el || el.classList.contains("oculta")) return;
+        el.classList.add("oculta");
+        setTimeout(() => el.remove(), 220);
+    };
+    document.querySelectorAll("[data-alerta]").forEach(el => {
+        el.querySelector("[data-alerta-cerrar]")?.addEventListener("click", () => cerrarAlerta(el));
+        setTimeout(() => cerrarAlerta(el), 6000);
+    });
 
     // MENÚ MÓVIL
     document.querySelector(".mobile-menu")?.addEventListener("click", () =>

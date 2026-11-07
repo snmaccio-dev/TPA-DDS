@@ -1,8 +1,10 @@
 package donatrack.web.controller;
 
+import donatrack.web.Alertas;
 import donatrack.web.Modelo;
 import donatrack.web.integracion.ClienteDonaciones;
 import donatrack.web.integracion.IntegracionException;
+import donatrack.web.integracion.ServicioNoDisponibleException;
 import donatrack.web.sesion.ClienteOidc;
 import donatrack.web.sesion.IdentidadPorSesion;
 import donatrack.web.sesion.Pkce;
@@ -62,7 +64,14 @@ public class SesionController {
       return;
     }
 
-    TokensDeKeycloak tokens = oidc.intercambiar(codigo, verificador);
+    TokensDeKeycloak tokens;
+    try {
+      tokens = oidc.intercambiar(codigo, verificador);
+    } catch (RuntimeException e) {
+      mostrarFalloDeIngreso(ctx, "El ingreso no se pudo completar. Volvé a intentarlo.");
+      return;
+    }
+
     PerfilVista perfil;
 
     // El token ya es valido: lo unico que puede fallar aca es el perfil, que vive en
@@ -70,8 +79,11 @@ public class SesionController {
     try {
       perfil = clienteDonaciones.perfil("Bearer " + tokens.accessToken());
     } catch (IntegracionException e) {
+      String detalle = e instanceof ServicioNoDisponibleException
+          ? Alertas.SERVICIO_NO_DISPONIBLE
+          : e.getMessage();
       mostrarFalloDeIngreso(ctx, "Te autenticaste bien, pero no se pudo completar el ingreso: "
-          + e.getMessage());
+          + detalle);
       return;
     }
 
@@ -90,7 +102,7 @@ public class SesionController {
 
   private void mostrarFalloDeIngreso(Context ctx, String mensaje) {
     ctx.status(400).render("login.html.hbs",
-        Modelo.de("Ingresar").seccion("Ingresar").con("errorDeIngreso", mensaje).mapa());
+        Modelo.de("Ingresar").seccion("Ingresar").conAlertaError(mensaje).mapa());
   }
 
   private String nuevoValorAlAzar() {

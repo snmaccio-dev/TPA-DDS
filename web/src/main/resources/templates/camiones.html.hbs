@@ -12,20 +12,6 @@
     <button class="btn btn-primary" data-open-modal="truck-modal">＋ Agregar camión</button>
   </div>
 
-  {{#if errorDeServicio}}
-  <section class="panel">
-    <strong>{{errorDeServicio}}</strong>
-    <p class="muted">No se pudo mostrar la flota. Volvé a intentar en unos minutos.</p>
-  </section>
-  {{/if}}
-
-  {{#if errorDelFormulario}}
-  <section class="panel">
-    <strong>No se pudo guardar el camión</strong>
-    <p class="muted">{{errorDelFormulario}}</p>
-  </section>
-  {{/if}}
-
   <div class="metric-grid compact">
     <article class="metric-card">
       <strong>{{flota.total}}</strong><span>Total de vehículos</span>

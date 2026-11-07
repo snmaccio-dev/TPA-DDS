@@ -2,6 +2,101 @@
 <body data-page="admin-donors" data-role="admin">
 {{> templates/partials/sidebar}}
 {{> templates/partials/topbar}}
-<main class="app-main"><div class="page-heading"><div><span class="eyebrow">ADMINISTRACIÓN</span><h1>Gestión de donantes</h1><p>Registrá personas donantes y administrá sus datos.</p></div><button class="btn btn-primary" data-open-modal="donor-modal">＋ Registrar donante</button></div><section class="panel"><div class="filter-bar"><label>Buscar donante<input placeholder="Nombre, correo o documento"></label><label>Estado<select><option>Todos</option><option>Con usuario</option><option>Sin usuario</option></select></label></div><div class="table-wrap"><table><thead><tr><th>Donante</th><th>Correo</th><th>Donaciones</th><th>Usuario</th><th></th></tr></thead><tbody><tr><td>Martina Álvarez</td><td>martina@email.com</td><td>12</td><td><span class="status-pill success">Activo</span></td><td><a href="#" data-toast="Ficha de donante de demostración.">Ver →</a></td></tr><tr><td>Juan Pérez</td><td>juan@email.com</td><td>5</td><td><span class="status-pill warning">Pendiente</span></td><td><a href="#" data-toast="Ficha de donante de demostración.">Ver →</a></td></tr></tbody></table></div></section><div class="modal" id="donor-modal"><form class="modal-card demo-form"><button type="button" class="modal-close" data-close-modal>×</button><h2>Registrar donante</h2><label>Nombre y apellido<input required></label><label>Correo electrónico<input type="email" required></label><label>Documento<input required></label><label>Teléfono<input></label><button class="btn btn-primary btn-block">Guardar donante</button></form></div></main>
+<main class="app-main">
+    <div class="page-heading">
+        <div>
+            <span class="eyebrow">ADMINISTRACIÓN</span>
+            <h1>Gestión de donantes</h1>
+            <p>Registrá personas donantes y administrá sus datos.</p>
+        </div>
+        <button class="btn btn-primary" data-open-modal="donor-modal">＋ Registrar donante</button>
+    </div>
+    <section class="panel">
+        <div class="panel-head">
+            <h3>Donantes registrados</h3>
+            <span class="muted">{{donantes.size}} registrados</span>
+        </div>
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Donante</th>
+                        <th>Tipo</th>
+                        <th>Documento</th>
+                        <th>Dirección</th>
+                        <th>Correo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each donantes}}
+                    <tr>
+                        <td>{{nombreDisplay}}</td>
+                        <td>{{tipoTexto}}</td>
+                        <td>{{documento}}</td>
+                        <td>{{direccion}}</td>
+                        <td>{{email}}</td>
+                    </tr>
+                    {{/each}}
+                    {{#unless donantes}}
+                    <tr><td colspan="5" class="muted">Todavía no hay donantes registrados.</td></tr>
+                    {{/unless}}
+                </tbody>
+            </table>
+        </div>
+    </section>
+    <div class="modal" id="donor-modal">
+        <form class="modal-card" action="/admin-donantes" method="post">
+            <button type="button" class="modal-close" data-close-modal>×</button>
+            <h2>Registrar donante</h2>
+            <label>Tipo
+                <select name="tipo" required>
+                    <option value="HUMANA">Persona humana</option>
+                    <option value="JURIDICA">Persona jurídica</option>
+                </select>
+            </label>
+            <label>Correo electrónico
+                <input type="email" name="email" required>
+            </label>
+            <label>Dirección
+                <input name="direccion" placeholder="Calle y número">
+            </label>
+            <fieldset>
+                <legend>Persona humana</legend>
+                <div class="form-row">
+                    <label>Nombre<input name="nombre"></label>
+                    <label>Apellido<input name="apellido"></label>
+                </div>
+                <div class="form-row">
+                    <label>Documento<input name="documento"></label>
+                    <label>Edad<input type="number" min="0" name="edad"></label>
+                </div>
+                <label>Género
+                    <select name="genero">
+                        <option value="">Sin especificar</option>
+                        <option value="FEMENINO">Femenino</option>
+                        <option value="MASCULINO">Masculino</option>
+                        <option value="OTRO">Otro</option>
+                    </select>
+                </label>
+            </fieldset>
+            <fieldset>
+                <legend>Persona jurídica</legend>
+                <label>CUIT<input name="cuit"></label>
+                <label>Razón social<input name="razonSocial"></label>
+                <label>Tipo de organización
+                    <select name="tipoOrganizacion">
+                        <option value="">Sin especificar</option>
+                        <option value="ONG">ONG</option>
+                        <option value="EMPRESA">Empresa</option>
+                        <option value="INSTITUCION">Institución</option>
+                    </select>
+                </label>
+                <label>Rubro<input name="rubro"></label>
+            </fieldset>
+            <p class="muted">Según el tipo elegido se usan los campos de persona humana o jurídica.</p>
+            <button class="btn btn-primary btn-block" type="submit">Guardar donante</button>
+        </form>
+    </div>
+</main>
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}

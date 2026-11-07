@@ -1,11 +1,14 @@
 package donatrack.web.controller;
 
+import donatrack.web.Alertas;
 import donatrack.web.Modelo;
 import donatrack.web.integracion.ArchivoSubido;
 import donatrack.web.integracion.CapacidadesDeCamion;
 import donatrack.web.integracion.ClienteLogistica;
+import donatrack.web.integracion.IntegracionException;
 import donatrack.web.integracion.NuevoCamion;
 import donatrack.web.integracion.OperacionRechazadaException;
+import donatrack.web.integracion.ServicioNoDisponibleException;
 import donatrack.web.sesion.IdentidadDelUsuario;
 import donatrack.web.sesion.UsuarioWeb;
 import donatrack.web.vista.FlotaVista;
@@ -60,17 +63,23 @@ public class LogisticaWebController {
   private void crearCamion(Context ctx) {
     String autorizacion = autorizacionDe(ctx);
 
-    NuevoCamion nuevo = new NuevoCamion(
-        ctx.formParam("patente"),
-        numero(ctx, "capacidadVolumen"),
-        numero(ctx, "altura"),
-        numero(ctx, "capacidadCarga")
-    );
+    Double volumen = parseDecimalForm(ctx, "capacidadVolumen");
+    Double altura = parseDecimalForm(ctx, "altura");
+    Double carga = parseDecimalForm(ctx, "capacidadCarga");
+    String patente = ctx.formParam("patente");
+
+    if (patente == null || patente.isBlank()
+        || volumen == null || altura == null || carga == null) {
+      mostrarCamiones(ctx, "Completá la patente y las tres medidas numéricas del camión.");
+      return;
+    }
+
+    NuevoCamion nuevo = new NuevoCamion(patente, volumen, altura, carga);
 
     try {
       clienteLogistica.crearCamion(autorizacion, nuevo);
-    } catch (OperacionRechazadaException e) {
-      mostrarCamiones(ctx, e.getMessage());
+    } catch (IntegracionException e) {
+      mostrarCamiones(ctx, mensajeDe(e));
       return;
     }
 
@@ -85,16 +94,21 @@ public class LogisticaWebController {
     String autorizacion = autorizacionDe(ctx);
     String patente = ctx.pathParam("patente");
 
-    CapacidadesDeCamion capacidades = new CapacidadesDeCamion(
-        numero(ctx, "capacidadVolumen"),
-        numero(ctx, "altura"),
-        numero(ctx, "capacidadCarga")
-    );
+    Double volumen = parseDecimalForm(ctx, "capacidadVolumen");
+    Double altura = parseDecimalForm(ctx, "altura");
+    Double carga = parseDecimalForm(ctx, "capacidadCarga");
+
+    if (volumen == null || altura == null || carga == null) {
+      mostrarEdicion(ctx, patente, "Las tres medidas tienen que ser números válidos.");
+      return;
+    }
+
+    CapacidadesDeCamion capacidades = new CapacidadesDeCamion(volumen, altura, carga);
 
     try {
       clienteLogistica.actualizarCamion(autorizacion, patente, capacidades);
-    } catch (OperacionRechazadaException e) {
-      mostrarEdicion(ctx, patente, e.getMessage());
+    } catch (IntegracionException e) {
+      mostrarEdicion(ctx, patente, mensajeDe(e));
       return;
     }
 
@@ -131,18 +145,17 @@ public class LogisticaWebController {
           autorizacionDe(ctx),
           ctx.pathParamAsClass("id", Long.class).get()
       );
-    } catch (OperacionRechazadaException e) {
-      mostrarRutasDelChofer(ctx, e.getMessage());
-      return;
+    } catch (IntegracionException e) {
+      Alertas.flashError(ctx, mensajeDe(e));
     }
 
     ctx.redirect("/chofer-inicio-ruta");
   }
 
-  private void mostrarRutasDelChofer(Context ctx, String errorDelFormulario) {
+  private void mostrarRutasDelChofer(Context ctx, String alertaError) {
     Modelo modelo = modeloBase(ctx, "Mis rutas", "Reparto")
         .comoChofer().activa("misRutas")
-        .con("errorDelFormulario", errorDelFormulario)
+        .conAlertaError(alertaError)
         .conDatosDe("rutas", List.<RutaVista>of(),
             () -> clienteLogistica.rutasDelChofer(autorizacionDe(ctx)));
 
@@ -176,14 +189,22 @@ public class LogisticaWebController {
     String autorizacion = autorizacionDe(ctx);
     long entregaId = ctx.pathParamAsClass("id", Long.class).get();
 
+    List<ArchivoSubido> fotos;
+    try {
+      fotos = fotosDe(ctx);
+    } catch (OperacionRechazadaException e) {
+      mostrarConfirmacion(ctx, entregaId, e.getMessage());
+      return;
+    }
+
     try {
       clienteLogistica.confirmarRecepcion(
           autorizacion,
           entregaId,
-          clienteLogistica.subirFotos(autorizacion, entregaId, fotosDe(ctx))
+          clienteLogistica.subirFotos(autorizacion, entregaId, fotos)
       );
-    } catch (OperacionRechazadaException e) {
-      mostrarConfirmacion(ctx, entregaId, e.getMessage());
+    } catch (IntegracionException e) {
+      mostrarConfirmacion(ctx, entregaId, mensajeDe(e));
       return;
     }
 
@@ -218,30 +239,30 @@ public class LogisticaWebController {
     }
   }
 
-  private void mostrarCamiones(Context ctx, String errorDelFormulario) {
+  private void mostrarCamiones(Context ctx, String alertaError) {
     ctx.render("camiones.html.hbs",
         modeloBase(ctx, "Camiones", "Camiones")
             .comoAdmin().activa("camiones")
             .conDatosDe("flota", FlotaVista.VACIA, () -> flota(ctx))
-            .con("errorDelFormulario", errorDelFormulario)
+            .conAlertaError(alertaError)
             .mapa());
   }
 
-  private void mostrarEdicion(Context ctx, String patente, String errorDelFormulario) {
+  private void mostrarEdicion(Context ctx, String patente, String alertaError) {
     ctx.render("camion-editar.html.hbs",
         modeloBase(ctx, "Editar camión", "Camiones")
             .comoAdmin().activa("camiones")
             .conDatosDe("camion", null,
                 () -> clienteLogistica.camion(autorizacionDe(ctx), patente))
             .con("patente", patente)
-            .con("errorDelFormulario", errorDelFormulario)
+            .conAlertaError(alertaError)
             .mapa());
   }
 
-  private void mostrarConfirmacion(Context ctx, Long entregaId, String errorDelFormulario) {
+  private void mostrarConfirmacion(Context ctx, Long entregaId, String alertaError) {
     Modelo modelo = modeloBase(ctx, "Confirmar recepción", "Confirmar recepción")
         .comoBeneficiaria().activa("confirmar")
-        .con("errorDelFormulario", errorDelFormulario);
+        .conAlertaError(alertaError);
 
     if (entregaId == null) {
       modelo.con("faltaLaEntrega", true);
@@ -291,7 +312,20 @@ public class LogisticaWebController {
         new InternalServerErrorResponse("No hay una sesion iniciada."));
   }
 
-  private double numero(Context ctx, String campo) {
-    return ctx.formParamAsClass(campo, Double.class).get();
+  static String mensajeDe(IntegracionException e) {
+    if (e instanceof ServicioNoDisponibleException) {
+      return Alertas.SERVICIO_NO_DISPONIBLE;
+    }
+    return e.getMessage();
+  }
+
+  private static Double parseDecimalForm(Context ctx, String campo) {
+    String raw = ctx.formParam(campo);
+    if (raw == null || raw.isBlank()) return null;
+    try {
+      return Double.parseDouble(raw.trim());
+    } catch (NumberFormatException e) {
+      return null;
+    }
   }
 }

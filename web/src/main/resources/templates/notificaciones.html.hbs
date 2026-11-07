@@ -1,0 +1,45 @@
+{{> templates/partials/head}}
+<body data-page="notifications">
+{{> templates/partials/sidebar}}
+{{> templates/partials/topbar}}
+<main class="app-main">
+    <div class="page-heading">
+        <div>
+            <span class="eyebrow">AVISOS</span>
+            <h1>Notificaciones</h1>
+            <p>Revisá los avisos del sistema vinculados a tus donaciones.</p>
+        </div>
+        <form method="post" action="/notificaciones/marcar-leidas">
+            <button class="btn btn-primary" type="submit">Marcar todas como leídas</button>
+        </form>
+    </div>
+    <section class="panel">
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Tipo</th>
+                        <th>Mensaje</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each notificaciones}}
+                    <tr>
+                        <td>{{fechaHoraTexto}}</td>
+                        <td>{{tipoTexto}}</td>
+                        <td>{{mensaje}}</td>
+                        <td><span class="status-pill {{estadoClase}}">{{estadoTexto}}</span></td>
+                    </tr>
+                    {{/each}}
+                    {{#unless notificaciones}}
+                    <tr><td colspan="4" class="muted">No tenés notificaciones.</td></tr>
+                    {{/unless}}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+{{> templates/partials/footer}}
+{{> templates/partials/scripts}}

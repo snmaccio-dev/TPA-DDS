@@ -11,20 +11,6 @@
     </div>
   </div>
 
-  {{#if errorDeServicio}}
-  <section class="panel">
-    <strong>{{errorDeServicio}}</strong>
-    <p class="muted">No se pudieron cargar las rutas. Volvé a intentar en unos minutos.</p>
-  </section>
-  {{/if}}
-
-  {{#if errorDelFormulario}}
-  <section class="panel">
-    <strong>No se pudo iniciar la ruta</strong>
-    <p class="muted">{{errorDelFormulario}}</p>
-  </section>
-  {{/if}}
-
   {{#if sinRutas}}
   <section class="panel">
     <h3>No tenés rutas asignadas</h3>
