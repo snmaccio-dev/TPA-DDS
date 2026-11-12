@@ -1,127 +1,250 @@
 {{> templates/partials/head}}
 <body data-page="landing" data-role="public">
     {{> templates/partials/header-publico}}
+
     <main class="public-main">
+
+        <!-- HERO -->
         <section class="hero">
             <div class="hero-copy">
                 <span class="eyebrow">
-                    <span class="eyebrow-dot">
-                    </span>
+                    <span class="eyebrow-dot"></span>
                     DONACIONES CON TRAZABILIDAD
                 </span>
+
                 <h1>
                     Donar mejor.
                     <br>
                     <em>Transformar más.</em>
                 </h1>
+
                 <p class="lead">
-                    Conectamos personas que quieren ayudar con organizaciones que necesitan apoyo. Cada donación cuenta, y cada entrega puede seguirse.
+                    Conectamos personas que quieren ayudar con organizaciones que necesitan apoyo.
+                    Cada donación cuenta, y cada entrega puede seguirse.
                 </p>
+
                 <div class="hero-actions">
                     <a class="btn btn-primary btn-lg" href="/registro">
                         Quiero colaborar
                         <span>→</span>
                     </a>
-                    <a class="btn btn-ghost btn-lg" href="/donaciones-publicas">Ver donaciones entregadas</a>
+
+                    <a class="btn btn-ghost btn-lg" href="/donaciones-publicas">
+                        Ver donaciones entregadas
+                    </a>
                 </div>
+
                 <div class="trust-row">
                     <div class="trust-avatars">
                         <span>MA</span>
                         <span>LU</span>
                         <span>SO</span>
                     </div>
-                    <small>Una red que convierte la solidaridad en impacto visible.</small>
+
+                    <small>
+                        Una red que convierte la solidaridad en impacto visible.
+                    </small>
                 </div>
             </div>
+
             <div class="hero-art">
-                <div class="hero-orbit orbit-one">
-                </div>
-                <div class="hero-orbit orbit-two">
-                </div>
+                <div class="hero-orbit orbit-one"></div>
+                <div class="hero-orbit orbit-two"></div>
+
                 <div class="hero-card card-main">
                     <div class="card-top">
-                        <span class="live-dot">
-                        </span>
+                        <span class="live-dot"></span>
                         ENTREGA CONFIRMADA
                         <span class="more">···</span>
                     </div>
+
                     <div class="package-icon">▧</div>
+
                     <h3>Alimentos no perecederos</h3>
-                    <p>Centro Comunitario La Esperanza</p>
+                    <p>Una red que transforma la solidaridad.</p>
+
                     <div class="progress-track">
-                        <span style="width:100%">
-                        </span>
+                        <span style="width:100%"></span>
                     </div>
+
                     <div class="card-foot">
                         <b>Entregada</b>
-                        <small>Hoy · 11:42</small>
+                        <small>Entrega verificada</small>
                     </div>
                 </div>
-                <div class="floating-chip chip-a">✓ Donación verificada</div>
+
+                <div class="floating-chip chip-a">
+                    ✓ Donación verificada
+                </div>
+
                 <div class="floating-chip chip-b">
                     <span class="mini-pin">⌖</span>
                     Seguimiento en tiempo real
                 </div>
-                <div class="hero-blob">
-                </div>
+
+                <div class="hero-blob"></div>
             </div>
         </section>
-        <section class="stats-strip">
-            <div>
-                <strong>100%</strong>
-                <span>Transparencia</span>
-            </div>
-            <div>
-                <strong>En red</strong>
-                <span>Donantes y organizaciones</span>
-            </div>
-            <div>
-                <strong>De punta a punta</strong>
-                <span>Trazabilidad de entregas</span>
-            </div>
-        </section>
-        <section class="section-block">
+
+        <!-- CARRUSEL DE ENTREGAS REALES -->
+        <section class="section-block deliveries-section">
+
             <div class="section-heading">
-                <span class="eyebrow">CÓMO FUNCIONA</span>
+                <span class="eyebrow">IMPACTO REAL</span>
+
                 <h2>
-                    La ayuda llega más lejos
+                    Donaciones que
                     <br>
-                    cuando estamos conectados.
+                    llegan a destino.
                 </h2>
-                <p>Una plataforma para organizar, asignar y seguir cada donación.</p>
+
+                <p>
+                    Conocé algunas de las entregas realizadas y confirmadas
+                    a través de DonaTrack.
+                </p>
             </div>
-            <div class="feature-grid">
-                <article class="feature-card">
+
+            {{#if entregas}}
+                <div class="deliveries-grid" id="deliveries-grid">
+
+                    {{#each entregas}}
+                        {{#each fotos}}
+                            <article class="delivery-card">
+                                <div class="delivery-image-container">
+                                    <img
+                                        src="{{this}}"
+                                        alt="Fotografía de una donación entregada"
+                                        class="delivery-image"
+                                        loading="lazy"
+                                    >
+                                </div>
+
+                                <div class="delivery-content">
+                                    <span class="delivery-status">
+                                        ✓ ENTREGA CONFIRMADA
+                                    </span>
+
+                                    <h3>{{../descripcion}}</h3>
+
+                                    <p class="delivery-quantity">
+                                        {{../cantidadTexto}}
+                                    </p>
+
+                                    <small class="delivery-date">
+                                        {{../fechaHoraEntrega}}
+                                    </small>
+                                </div>
+                            </article>
+                        {{/each}}
+                    {{/each}}
+
+                </div>
+
+                <div
+                    class="deliveries-pagination"
+                    id="deliveries-pagination"
+                    hidden
+                >
+                    <button
+                        type="button"
+                        class="btn btn-ghost"
+                        id="deliveries-prev"
+                    >
+                        ← Anterior
+                    </button>
+
+                    <span id="deliveries-page-info"></span>
+
+                    <button
+                        type="button"
+                        class="btn btn-primary"
+                        id="deliveries-next"
+                    >
+                        Siguiente →
+                    </button>
+                </div>
+
+            {{else}}
+                <div class="deliveries-empty">
                     <span class="feature-icon">♡</span>
-                    <h3>Doná</h3>
-                    <p>Registrá tus aportes y conocé el recorrido de cada donación.</p>
-                </article>
-                <article class="feature-card">
-                    <span class="feature-icon">⌂</span>
-                    <h3>Conectá</h3>
-                    <p>Las entidades registran necesidades concretas y reciben recursos.</p>
-                </article>
-                <article class="feature-card">
-                    <span class="feature-icon">⌖</span>
-                    <h3>Seguí</h3>
-                    <p>Consultá el estado de las entregas y su trazabilidad.</p>
-                </article>
+
+                    <h3>Pronto vas a ver nuevas entregas</h3>
+
+                    <p>
+                        Estamos trabajando para conectar más donantes
+                        con organizaciones que necesitan ayuda.
+                        Las entregas confirmadas aparecerán aquí.
+                    </p>
+                </div>
+            {{/if}}
+
+            <div class="deliveries-link">
+                <a href="/donaciones-publicas" class="btn btn-ghost">
+                    Ver todas las entregas →
+                </a>
             </div>
+
         </section>
-        <section class="cta-band">
-            <div>
-                <span class="eyebrow light">SUMATE A DONATRACK</span>
+
+        <!-- NUESTRO PROPÓSITO -->
+        <section class="section-block objectives-section">
+
+            <div class="section-heading">
+                <span class="eyebrow">NUESTRO PROPÓSITO</span>
+
                 <h2>
-                    La solidaridad también
+                    Tecnología al servicio
                     <br>
-                    puede ser transparente.
+                    de la solidaridad.
                 </h2>
+
+                <p>
+                    Buscamos hacer que las donaciones sean más eficientes,
+                    organizadas y transparentes, conectando a quienes
+                    quieren ayudar con quienes necesitan recibir ayuda.
+                </p>
             </div>
-            <a class="btn btn-white btn-lg" href="/registro">
-                Crear una cuenta
-                <span>→</span>
-            </a>
+
+            <div class="objectives-grid">
+
+                <article class="objective-card">
+                    <span class="feature-icon">↗</span>
+
+                    <h3>Conectar</h3>
+
+                    <p>
+                        Facilitar el vínculo entre donantes y organizaciones
+                        para acercar recursos a quienes más los necesitan.
+                    </p>
+                </article>
+
+                <article class="objective-card">
+                    <span class="feature-icon">◎</span>
+
+                    <h3>Optimizar</h3>
+
+                    <p>
+                        Mejorar la organización, asignación y gestión
+                        de las donaciones y necesidades.
+                    </p>
+                </article>
+
+                <article class="objective-card">
+                    <span class="feature-icon">⌖</span>
+
+                    <h3>Garantizar transparencia</h3>
+
+                    <p>
+                        Permitir el seguimiento de cada donación,
+                        desde su registro hasta su entrega.
+                    </p>
+                </article>
+
+            </div>
         </section>
+
     </main>
+
     {{> templates/partials/footer}}
     {{> templates/partials/scripts}}
+</body>

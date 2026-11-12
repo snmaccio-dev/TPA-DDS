@@ -5,7 +5,6 @@ import donatrack.web.Modelo;
 import donatrack.web.integracion.ClienteDonaciones;
 import donatrack.web.integracion.ClienteLogistica;
 import donatrack.web.integracion.IntegracionException;
-import donatrack.web.integracion.OperacionRechazadaException;
 import donatrack.web.integracion.RegistroBeneficiaria;
 import donatrack.web.integracion.RegistroDonante;
 import donatrack.web.integracion.ServicioNoDisponibleException;
@@ -43,7 +42,13 @@ public class PublicoController {
   }
 
   private void landing(Context ctx) {
-    ctx.render("index.html.hbs", Modelo.de("Inicio").mapa());
+    ctx.render("index.html.hbs",
+        Modelo.de("Inicio")
+            .conDatosDe("entregas", List.<EntregaPublicaVista>of(),
+                () -> clienteLogistica.entregasPublicas().stream()
+                    .filter(EntregaPublicaVista::getTieneFoto)
+                    .toList())
+            .mapa());
   }
 
   private void donacionesPublicas(Context ctx) {
@@ -135,9 +140,6 @@ public class PublicoController {
   static String mensajeDe(IntegracionException e) {
     if (e instanceof ServicioNoDisponibleException) {
       return Alertas.SERVICIO_NO_DISPONIBLE;
-    }
-    if (e instanceof OperacionRechazadaException) {
-      return e.getMessage();
     }
     return e.getMessage();
   }
