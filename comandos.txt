@@ -1,0 +1,10 @@
+Docker
+
+docker compose up --build
+
+Levantar app
+
+
+docker compose up -d
+docker compose ps
+mvn -pl web exec:java
