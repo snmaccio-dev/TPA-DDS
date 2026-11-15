@@ -53,7 +53,7 @@ public class DonacionesController {
   public void registrarRutas(Javalin app) {
     app.get("/donaciones", this::listar,
         RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA, RolDeAcceso.SERVICIO_LOGISTICA);
-    app.post("/donaciones", this::crear, RolDeAcceso.ADMINISTRADOR);
+    app.post("/donaciones", this::crear, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE);
     app.get("/donaciones/{id}", this::buscar,
         RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA);
     app.delete("/donaciones/{id}", this::eliminar, RolDeAcceso.ADMINISTRADOR);
@@ -114,6 +114,7 @@ public class DonacionesController {
     ctx.json(DonacionDTO.desde(donacion));
   }
 
+/*
   private void crear(Context ctx) {
     NuevaDonacionRequest request = ctx.bodyAsClass(NuevaDonacionRequest.class);
     Donante donante = donanteDe(request.donanteDocumento());
@@ -121,6 +122,25 @@ public class DonacionesController {
         .map(this::bienDe)
         .toList();
     ctx.status(201).json(DonacionDTO.desde(gestor.crear(bienes, donante, request.descripcion())));
+  }
+*/
+
+  private void crear(Context ctx) {
+      NuevaDonacionRequest request = ctx.bodyAsClass(NuevaDonacionRequest.class);
+
+      UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
+
+      Donante donante = usuario.esAdministrador()
+          ? donanteDe(request.donanteDocumento())
+          : Acceso.perfilDonanteObligatorio(usuario);
+
+      List<Bien> bienes = request.bienes().stream()
+          .map(this::bienDe)
+          .toList();
+
+      ctx.status(201).json(
+          DonacionDTO.desde(gestor.crear(bienes, donante, request.descripcion()))
+      );
   }
 
   private void eliminar(Context ctx) {

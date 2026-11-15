@@ -8,3 +8,25 @@ Levantar app
 docker compose up -d
 docker compose ps
 mvn -pl web exec:java
+
+http://localhost:8082
+
+Logearse 
+
+Organizacion
+
+Email de acceso	martin.fernandez@example.com
+Contraseña	Fundacion2026!
+
+Donante 
+
+mi mail de la utn frba
+MateAzul2026!
+
+Administrador
+
+
+
+Actualizar
+
+mvn clean package

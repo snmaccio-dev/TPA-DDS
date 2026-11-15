@@ -1857,8 +1857,9 @@
       }
     ]
   },
-  "internationalizationEnabled": false,
-  "supportedLocales": [],
+  "internationalizationEnabled": true,
+  "supportedLocales": ["es"],
+  "defaultLocale": "es",
   "authenticationFlows": [
     {
       "id": "d919181e-067e-415e-b731-2b5448b24781",
