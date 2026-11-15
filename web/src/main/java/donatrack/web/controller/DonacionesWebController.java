@@ -31,6 +31,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Comparator;
 
 public class DonacionesWebController {
 
@@ -66,34 +67,110 @@ public class DonacionesWebController {
 
     app.get("/notificaciones", this::notificaciones);
     app.post("/notificaciones/marcar-leidas", this::marcarNotificacionesLeidas);
+
+    // Donantes 
+    app.get("/donaciones/nueva", this::nuevaDonacion);
+    app.post("/donaciones/nueva", this::crearDonacion);
+
+    // Administrador 
+
+
+    // Entidad beneficiaria
   }
 
+  /*
   private void panelDonante(Context ctx) {
     ctx.render("donante-dashboard.html.hbs",
         Modelo.de("Panel de donante").seccion("Panel").comoDonante().activa("panel").mapa());
   }
+  */
+
+  private void panelDonante(Context ctx) {
+      List<DonacionVista> donaciones = new ArrayList<>();
+      boolean datosDisponibles = true;
+
+      try {
+          donaciones = new ArrayList<>(
+              clienteDonaciones.donaciones(
+                  autorizacionDe(ctx),
+                  FiltroDonacionesWeb.vacio()
+              )
+          );
+      } catch (IntegracionException e) {
+          datosDisponibles = false;
+      }
+
+      long entregadas = donaciones.stream()
+          .filter(d -> "ENTREGADA".equals(d.getEstado()))
+          .count();
+
+      long enTransito = donaciones.stream()
+          .filter(d -> "EN_TRASLADO".equals(d.getEstado()))
+          .count();
+
+      long pendientes = donaciones.stream()
+          .filter(d -> Set.of(
+              "EN_DEPOSITO",
+              "ASIGNACION_REALIZADA",
+              "LISTA_PARA_ENTREGAR"
+          ).contains(d.getEstado()))
+          .count();
+
+      donaciones.sort(
+          Comparator.comparing(
+              DonacionVista::getId,
+              Comparator.nullsLast(Comparator.reverseOrder())
+          )
+      );
+
+      List<DonacionVista> recientes = donaciones.stream()
+          .limit(3)
+          .toList();
+
+      Modelo modelo = Modelo.de("Panel de donante")
+          .seccion("Panel")
+          .conUsuario(usuario(ctx).perfil())
+          .comoDonante()
+          .activa("panel")
+          .con("datosDonacionesDisponibles", datosDisponibles)
+          .con("totalDonaciones", donaciones.size())
+          .con("donacionesEntregadas", entregadas)
+          .con("donacionesEnTransito", enTransito)
+          .con("donacionesPendientes", pendientes)
+          .con("donacionesRecientes", recientes);
+
+      if (!datosDisponibles) {
+          modelo.conAlertaAdvertencia(
+              "No se pudieron cargar tus donaciones. Intentá nuevamente más tarde."
+          );
+      }
+
+      ctx.render("donante-dashboard.html.hbs", modelo.mapa());
+  }
 
   private void misDonaciones(Context ctx) {
-    FiltroDonacionesWeb filtro = new FiltroDonacionesWeb(
-        ctx.queryParam("estado"),
-        ctx.queryParam("categoria"),
-        ctx.queryParams("subcategoria")
-    );
+      FiltroDonacionesWeb filtro = new FiltroDonacionesWeb(
+          ctx.queryParam("estado"),
+          ctx.queryParam("categoria"),
+          ctx.queryParams("subcategoria")
+      );
 
-    ctx.render("mis-donaciones.html.hbs",
-        Modelo.de("Mis donaciones").seccion("Mis donaciones")
-            .conUsuario(usuario(ctx).perfil())
-            .comoDonante().activa("misDonaciones")
-            .con("filtro", Map.of(
-                "estado", filtro.estado() == null ? "" : filtro.estado(),
-                "categoria", filtro.categoria() == null ? "" : filtro.categoria(),
-                "subcategorias", filtro.subcategorias()))
-            .conDatosDe("donaciones", List.<DonacionVista>of(),
-                () -> clienteDonaciones.donaciones(autorizacionDe(ctx), filtro))
-            .conDatosDe("subcategorias", List.<SubcategoriaVista>of(),
-                () -> clienteDonaciones.subcategorias(autorizacionDe(ctx)))
-            .con("categorias", categoriasDe(ctx))
-            .mapa());
+      ctx.render("mis-donaciones.html.hbs",
+          Modelo.de("Mis donaciones").seccion("Mis donaciones")
+              .conUsuario(usuario(ctx).perfil())
+              .comoDonante()
+              .activa("misDonaciones")
+              .con("donacionRegistrada", "1".equals(ctx.queryParam("registrada")))
+              .con("filtro", Map.of(
+                  "estado", filtro.estado() == null ? "" : filtro.estado(),
+                  "categoria", filtro.categoria() == null ? "" : filtro.categoria(),
+                  "subcategorias", filtro.subcategorias()))
+              .conDatosDe("donaciones", List.<DonacionVista>of(),
+                  () -> clienteDonaciones.donaciones(autorizacionDe(ctx), filtro))
+              .conDatosDe("subcategorias", List.<SubcategoriaVista>of(),
+                  () -> clienteDonaciones.subcategorias(autorizacionDe(ctx)))
+              .con("categorias", categoriasDe(ctx))
+              .mapa());
   }
 
   private List<String> categoriasDe(Context ctx) {
@@ -120,10 +197,32 @@ public class DonacionesWebController {
             .mapa());
   }
 
+  /*
   private void panelBeneficiaria(Context ctx) {
     ctx.render("beneficiario-dashboard.html.hbs",
         Modelo.de("Panel de la entidad").seccion("Panel")
             .comoBeneficiaria().activa("panel").mapa());
+  }
+  */
+
+ private void panelBeneficiaria(Context ctx) {
+    ctx.render("beneficiario-dashboard.html.hbs",
+        Modelo.de("Panel de la entidad")
+            .seccion("Panel")
+            .conUsuario(usuario(ctx).perfil())
+            .comoBeneficiaria()
+            .activa("panel")
+            .mapa());
+}
+
+  private void panelAdmin(Context ctx) {
+    ctx.render("admin-dashboard.html.hbs",
+        Modelo.de("Panel de administración")
+            .seccion("Panel")
+            .conUsuario(usuario(ctx).perfil())
+            .comoAdmin()
+            .activa("panel")
+            .mapa());
   }
 
   private void necesidades(Context ctx) {
@@ -184,11 +283,14 @@ public class DonacionesWebController {
             .mapa());
   }
 
+  /*
   private void panelAdmin(Context ctx) {
     ctx.render("admin-dashboard.html.hbs",
         Modelo.de("Panel de administración").seccion("Panel")
             .comoAdmin().activa("panel").mapa());
   }
+  */
+
 
   private void donantes(Context ctx) {
     mostrarDonantes(ctx, null);
@@ -486,8 +588,97 @@ public class DonacionesWebController {
     return usuario(ctx).autorizacion();
   }
 
+  /*
   private UsuarioWeb usuario(Context ctx) {
     return identidad.actual(ctx).orElseThrow(() ->
         new InternalServerErrorResponse("No hay una sesion iniciada."));
   }
+  */
+
+  private UsuarioWeb usuario(Context ctx) {
+    return identidad.actual(ctx).orElseThrow(() ->
+        new InternalServerErrorResponse("No hay una sesion iniciada."));
+  }
+
+  // Metodos del formulario de donacion
+
+  private void nuevaDonacion(Context ctx) {
+      mostrarFormularioDonacion(ctx, null);
+  }
+
+/*
+  private void mostrarFormularioDonacion(Context ctx, String alertaError) {
+      ctx.render("nueva-donacion.html.hbs",
+          Modelo.de("Realizar una donación")
+              .seccion("Realizar una donación")
+              .conUsuario(usuario(ctx).perfil())
+              .comoDonante()
+              .activa("nuevaDonacion")
+              .conAlertaError(alertaError)
+              .conDatosDe("subcategorias", List.<SubcategoriaVista>of(),
+                  () -> clienteDonaciones.subcategorias(autorizacionDe(ctx)))
+              .mapa());
+  }
+*/
+
+  private void mostrarFormularioDonacion(Context ctx, String alertaError) {
+      ctx.render("nueva-donacion.html.hbs",
+          Modelo.de("Realizar una donación")
+              .seccion("Realizar una donación")
+              .conUsuario(usuario(ctx).perfil())
+              .comoDonante()
+              .activa("nuevaDonacion")
+              .conAlertaError(alertaError)
+              .conDatosDe("subcategorias", List.<SubcategoriaVista>of(),
+                  () -> clienteDonaciones.subcategorias(autorizacionDe(ctx)))
+              .con("categorias", categoriasDe(ctx))
+              .mapa());
+  }
+
+  private void crearDonacion(Context ctx) {
+      String descripcion = ctx.formParam("descripcion");
+      String bienDescripcion = ctx.formParam("bienDescripcion");
+      String subcategoria = ctx.formParam("subcategoria");
+      Double cantidad = parseDecimal(ctx.formParam("cantidad"));
+      String condicion = ctx.formParam("condicion");
+      String fechaVencimiento = ctx.formParam("fechaVencimiento");
+
+      if (descripcion == null || descripcion.isBlank()
+          || bienDescripcion == null || bienDescripcion.isBlank()
+          || subcategoria == null || subcategoria.isBlank()
+          || cantidad == null || cantidad <= 0
+          || condicion == null || condicion.isBlank()) {
+          mostrarFormularioDonacion(
+              ctx,
+              "Completá todos los campos obligatorios y verificá que la cantidad sea válida."
+          );
+          return;
+      }
+
+      NuevaDonacion.Bien bien = new NuevaDonacion.Bien(
+          bienDescripcion,
+          subcategoria,
+          cantidad,
+          condicion,
+          fechaVencimiento
+      );
+
+      NuevaDonacion datos = new NuevaDonacion(
+          null,
+          descripcion,
+          List.of(bien)
+      );
+
+      try {
+          clienteDonaciones.crearDonacion(autorizacionDe(ctx), datos);
+      } catch (IntegracionException e) {
+          mostrarFormularioDonacion(ctx, mensajeDe(e));
+          return;
+      }
+
+      ctx.redirect("/mis-donaciones?registrada=1");
+  }
+
 }
+
+

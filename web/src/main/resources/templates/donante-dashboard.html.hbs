@@ -1,104 +1,131 @@
+﻿
 {{> templates/partials/head}}
 <body data-page="donor-dashboard" data-role="donante">
     {{> templates/partials/sidebar}}
     {{> templates/partials/topbar}}
+
     <main class="app-main">
         <div class="page-heading">
             <div>
                 <span class="eyebrow">RESUMEN GENERAL</span>
-                <h1>Hola, Martina 👋</h1>
+                <h1>Hola, {{usuario.nombre}} &#128075;</h1>
                 <p>Este es el resumen de tus aportes y su recorrido.</p>
             </div>
-            <span class="date-chip">◷ Noviembre 2026</span>
+
+            <a class="btn btn-primary" href="/donaciones/nueva">
+                + Realizar una donaci&oacute;n
+            </a>
         </div>
+
         <div class="metric-grid">
             <article class="metric-card">
-                <span class="metric-icon green">▧</span>
-                <strong>12</strong>
+                <span class="metric-icon green">&#9670;</span>
+                <strong>{{#if datosDonacionesDisponibles}}{{totalDonaciones}}{{else}}&#8212;{{/if}}</strong>
                 <span>Donaciones realizadas</span>
-                <small>Datos de demostración</small>
+                <small>Registros de tus donaciones</small>
             </article>
+
             <article class="metric-card">
-                <span class="metric-icon blue">▧</span>
-                <strong>8</strong>
+                <span class="metric-icon blue">&#9670;</span>
+                <strong>{{#if datosDonacionesDisponibles}}{{donacionesEntregadas}}{{else}}&#8212;{{/if}}</strong>
                 <span>Entregadas</span>
-                <small>Datos de demostración</small>
+                <small>Donaciones recibidas por entidades</small>
             </article>
+
             <article class="metric-card">
-                <span class="metric-icon amber">▧</span>
-                <strong>3</strong>
-                <span>En tránsito</span>
-                <small>Datos de demostración</small>
+                <span class="metric-icon amber">&#9670;</span>
+                <strong>{{#if datosDonacionesDisponibles}}{{donacionesEnTransito}}{{else}}&#8212;{{/if}}</strong>
+                <span>En tr&aacute;nsito</span>
+                <small>Donaciones en traslado</small>
             </article>
+
             <article class="metric-card">
-                <span class="metric-icon lavender">▧</span>
-                <strong>1</strong>
-                <span>Pendiente</span>
-                <small>Datos de demostración</small>
+                <span class="metric-icon lavender">&#9670;</span>
+                <strong>{{#if datosDonacionesDisponibles}}{{donacionesPendientes}}{{else}}&#8212;{{/if}}</strong>
+                <span>Pendientes</span>
+                <small>Donaciones a&uacute;n no entregadas</small>
             </article>
         </div>
+
         <div class="dashboard-grid">
             <section class="panel">
                 <div class="panel-head">
                     <div>
                         <h3>Actividad reciente</h3>
-                        <small>Últimos movimientos registrados</small>
+                        <small>Tus &uacute;ltimas donaciones seg&uacute;n n&uacute;mero de registro</small>
                     </div>
-                    <a href="/mis-donaciones">Ver todos →</a>
+                    <a href="/mis-donaciones">Ver todos &#8594;</a>
                 </div>
+
                 <div class="table-wrap">
                     <table>
                         <thead>
                             <tr>
-                                <th>Donación</th>
-                                <th>Fecha</th>
+                                <th>Donaci&oacute;n</th>
+                                <th>Fecha de entrega</th>
                                 <th>Estado</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>Alimentos no perecederos</td>
-                                <td>02/11/2026</td>
-                                <td>
-                                    <span class="status-pill success">Entregada</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Ropa de abrigo</td>
-                                <td>31/10/2026</td>
-                                <td>
-                                    <span class="status-pill info">En tránsito</span>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Útiles escolares</td>
-                                <td>28/10/2026</td>
-                                <td>
-                                    <span class="status-pill warning">Pendiente</span>
-                                </td>
-                            </tr>
+                            {{#if datosDonacionesDisponibles}}
+                                {{#each donacionesRecientes}}
+                                    <tr>
+                                        <td>{{descripcion}}</td>
+                                        <td>
+                                            {{#if fechaHoraEntregaTexto}}
+                                                {{fechaHoraEntregaTexto}}
+                                            {{else}}
+                                                &#8212;
+                                            {{/if}}
+                                        </td>
+                                        <td>
+                                            <span class="status-pill {{estadoClase}}">{{estadoTexto}}</span>
+                                        </td>
+                                    </tr>
+                                {{else}}
+                                    <tr>
+                                        <td colspan="3">Todav&iacute;a no realizaste ninguna donaci&oacute;n.</td>
+                                    </tr>
+                                {{/each}}
+                            {{else}}
+                                <tr>
+                                    <td colspan="3">No se pudieron cargar tus donaciones.</td>
+                                </tr>
+                            {{/if}}
                         </tbody>
                     </table>
                 </div>
             </section>
+
             <section class="panel quick-panel">
                 <div class="panel-head">
-                    <h3>Accesos rápidos</h3>
+                    <h3>Accesos r&aacute;pidos</h3>
                 </div>
+
+                <a class="quick-link" href="/donaciones/nueva">
+                    <span>Realizar una donaci&oacute;n</span>
+                    <b>&#8594;</b>
+                </a>
+
                 <a class="quick-link" href="/mis-donaciones">
                     <span>Ver mis donaciones</span>
-                    <b>→</b>
+                    <b>&#8594;</b>
                 </a>
+
                 <a class="quick-link" href="/entidades">
                     <span>Explorar entidades</span>
-                    <b>→</b>
+                    <b>&#8594;</b>
                 </a>
+
                 <a class="quick-link" href="/seguimiento-donante">
                     <span>Seguir una entrega</span>
-                    <b>→</b>
+                    <b>&#8594;</b>
                 </a>
             </section>
         </div>
     </main>
+
     {{> templates/partials/footer}}
     {{> templates/partials/scripts}}
+</body>
+

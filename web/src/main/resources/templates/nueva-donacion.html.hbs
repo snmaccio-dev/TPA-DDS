@@ -1,0 +1,220 @@
+{{> templates/partials/head}}
+<body data-page="new-donation" data-role="donante">
+    {{> templates/partials/sidebar}}
+    {{> templates/partials/topbar}}
+
+    <main class="app-main">
+        <div class="page-heading">
+            <div>
+                <span class="eyebrow">NUEVO APORTE</span>
+                <h1>Realizar una donación</h1>
+                <p>Completá los datos del bien que querés aportar a la comunidad.</p>
+            </div>
+            <a class="btn btn-secondary" href="/donante-dashboard">Volver al panel</a>
+        </div>
+
+        <section class="panel form-panel">
+            <div class="panel-head">
+                <div>
+                    <h3>Datos de la donación</h3>
+                    <small>Los campos marcados son obligatorios.</small>
+                </div>
+            </div>
+
+            <form action="/donaciones/nueva" method="post">
+                <label>Descripción general
+                    <input
+                        type="text"
+                        name="descripcion"
+                        required
+                        maxlength="250"
+                        placeholder="Ej. Donación de alimentos para una entidad">
+                </label>
+
+                <label>Descripción del bien
+                    <input
+                        type="text"
+                        name="bienDescripcion"
+                        required
+                        maxlength="250"
+                        placeholder="Ej. Leche larga vida">
+                </label>
+
+
+
+                <label>Categoría
+                    <input
+                        type="search"
+                        id="busquedaCategoria"
+                        placeholder="Escribí para buscar una categoría..."
+                        list="listaCategorias"
+                        autocomplete="off"
+                        required
+                    >
+
+                    <datalist id="listaCategorias">
+                        {{#each categorias}}
+                        <option value="{{this}}"></option>
+                        {{/each}}
+                    </datalist>
+
+                    <small class="muted">Escribí para ver las categorías disponibles.</small>
+                </label>
+
+                    <label>Subcategoría
+                        <input
+                            type="search"
+                            id="busquedaSubcategoria"
+                            name="subcategoria"
+                            placeholder="Primero seleccioná una categoría..."
+                            list="listaSubcategorias"
+                            autocomplete="off"
+                            disabled
+                            required
+                        >
+
+                        <!-- Lista auxiliar con todas las subcategorías -->
+                        <datalist id="datosSubcategorias">
+                            {{#each subcategorias}}
+                            <option
+                                value="{{nombre}}"
+                                data-categoria="{{categoria}}"
+                                label="{{etiqueta}}">
+                            </option>
+                            {{/each}}
+                        </datalist>
+
+                        <!-- Lista visible que JavaScript completa según la categoría -->
+                        <datalist id="listaSubcategorias"></datalist>
+
+                        <small class="muted" id="ayudaSubcategoria">
+                            Primero seleccioná una categoría.
+                        </small>
+                    </label>
+
+
+                <div class="form-row">
+                    <label>Cantidad
+                        <input
+                            type="number"
+                            name="cantidad"
+                            min="0.01"
+                            step="0.01"
+                            required
+                            placeholder="Ej. 10">
+                    </label>
+
+                    <label>Condición
+                        <select name="condicion" required>
+                            <option value="">Seleccioná una condición</option>
+                            <option value="NUEVO">Nuevo</option>
+                            <option value="USADO">Usado</option>
+                        </select>
+                    </label>
+                </div>
+
+                <label>Fecha de vencimiento
+                    <input type="date" name="fechaVencimiento">
+                    <small class="muted">Dejá este campo vacío si el bien no tiene vencimiento.</small>
+                </label>
+
+                <div class="form-actions">
+                    <a class="btn btn-secondary" href="/donante-dashboard">Cancelar</a>
+                    <button class="btn btn-primary" type="submit">
+                        Registrar donación
+                    </button>
+                </div>
+            </form>
+        </section>
+    </main>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const categoria = document.getElementById("busquedaCategoria");
+        const subcategoria = document.getElementById("busquedaSubcategoria");
+
+        const listaCategorias = document.getElementById("listaCategorias");
+        const listaSubcategorias = document.getElementById("listaSubcategorias");
+        const datosSubcategorias = document.getElementById("datosSubcategorias");
+
+        const ayuda = document.getElementById("ayudaSubcategoria");
+        const formulario = categoria.form;
+
+        const categoriasDisponibles = Array.from(listaCategorias.options)
+            .map(opcion => opcion.value.toLowerCase());
+
+        const subcategoriasDisponibles = Array.from(datosSubcategorias.options);
+
+        function actualizarSubcategorias() {
+            const categoriaElegida = categoria.value.trim().toLowerCase();
+
+            const categoriaValida = categoriasDisponibles.includes(categoriaElegida);
+
+            listaSubcategorias.replaceChildren();
+            subcategoria.value = "";
+
+            if (!categoriaValida) {
+                subcategoria.disabled = true;
+                subcategoria.placeholder = "Primero seleccioná una categoría...";
+                ayuda.textContent = "Seleccioná una categoría válida.";
+                return;
+            }
+
+            const disponibles = subcategoriasDisponibles.filter(opcion =>
+                (opcion.dataset.categoria || "").trim().toLowerCase() === categoriaElegida
+            );
+
+            disponibles.forEach(opcion => {
+                const nuevaOpcion = document.createElement("option");
+                nuevaOpcion.value = opcion.value;
+                nuevaOpcion.label = opcion.label;
+                listaSubcategorias.appendChild(nuevaOpcion);
+            });
+
+            subcategoria.disabled = disponibles.length === 0;
+            subcategoria.placeholder = disponibles.length > 0
+                ? "Escribí para buscar una subcategoría..."
+                : "No hay subcategorías disponibles";
+
+            ayuda.textContent = disponibles.length > 0
+                ? "Buscá una subcategoría perteneciente a la categoría seleccionada."
+                : "No hay subcategorías para esta categoría.";
+        }
+
+        categoria.addEventListener("input", actualizarSubcategorias);
+        categoria.addEventListener("change", actualizarSubcategorias);
+
+        subcategoria.addEventListener("input", () => {
+            subcategoria.setCustomValidity("");
+        });
+
+        categoria.addEventListener("input", () => {
+            categoria.setCustomValidity("");
+        });
+
+        formulario.addEventListener("submit", event => {
+            const categoriaElegida = categoria.value.trim().toLowerCase();
+
+            const categoriaValida = categoriasDisponibles.includes(categoriaElegida);
+
+            const subcategoriaValida = Array.from(listaSubcategorias.options).some(opcion =>
+                opcion.value.toLowerCase() === subcategoria.value.trim().toLowerCase()
+            );
+
+            if (!categoriaValida) {
+                event.preventDefault();
+                categoria.setCustomValidity("Seleccioná una categoría de la lista.");
+                categoria.reportValidity();
+                return;
+            }
+
+            if (!subcategoriaValida) {
+                event.preventDefault();
+                subcategoria.setCustomValidity("Seleccioná una subcategoría de la lista.");
+                subcategoria.reportValidity();
+            }
+        });
+    });
+    </script>
+    {{> templates/partials/footer}}
+    {{> templates/partials/scripts}}
+</body>
