@@ -144,17 +144,18 @@ public class DonacionesApp {
     // que declarar sus roles y el filtro las rechaza si no lo hacen.
     filtro.registrarEn(app);
 
-    new RegistroController(gestorRegistro).registrarRutas(app);
-    new UsuariosController().registrarRutas(app);
-    new AdministradoresController(proveedor).registrarRutas(app);
-    new DonacionesController(gestorDonaciones, repositorioPersonas, repositorioDonantes, repositorioSubcategorias).registrarRutas(app);
-    new AsignacionesController(gestorAsignaciones, RepositorioDonaciones.getInstance(),
-        repositorioEntidades).registrarRutas(app);
-    new EntidadesBeneficiariasController(gestorEntidades).registrarRutas(app);
-    new NecesidadesController(gestorNecesidades, repositorioSubcategorias, repositorioEntidades).registrarRutas(app);
-    new SubcategoriasController(repositorioSubcategorias).registrarRutas(app);
-    new DonantesController(gestorPersonas, gestorDonantes).registrarRutas(app);
-    new NotificacionesController(consultaNotificaciones).registrarRutas(app);
+    new Rutas(
+        new RegistroController(gestorRegistro),
+        new UsuariosController(),
+        new AdministradoresController(proveedor),
+        new DonacionesController(gestorDonaciones, repositorioPersonas, repositorioDonantes, repositorioSubcategorias),
+        new AsignacionesController(gestorAsignaciones, RepositorioDonaciones.getInstance(), repositorioEntidades),
+        new DonantesController(gestorPersonas, gestorDonantes),
+        new EntidadesBeneficiariasController(gestorEntidades),
+        new NecesidadesController(gestorNecesidades, repositorioSubcategorias, repositorioEntidades),
+        new SubcategoriasController(repositorioSubcategorias),
+        new NotificacionesController(consultaNotificaciones)
+    ).registrarEn(app);
 
     registrarManejoDeErrores(app);
 

@@ -156,12 +156,12 @@ class DonacionesControllerTest {
   private Javalin app(GestorDonaciones gestor, RepositorioUsuarios repoUsuarios) {
     Javalin app = Javalin.create();
     new FiltroDeAcceso(verificador, repoUsuarios).registrarEn(app);
-    new DonacionesController(
+    donatrack.donaciones.Rutas.donaciones(app, new DonacionesController(
         gestor,
         mock(RepositorioPersonas.class),
         mock(RepositorioDonantes.class),
         mock(RepositorioSubcategorias.class)
-    ).registrarRutas(app);
+    ));
 
     app.exception(DatosInvalidosException.class, (e, ctx) ->
         ctx.status(400).json(new ErrorDTO(e.getMessage())));

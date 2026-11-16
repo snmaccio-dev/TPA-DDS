@@ -163,7 +163,7 @@ class AdministradoresControllerTest {
   // que usa este endpoint (400 y 409).
   private Javalin app(ProveedorDeIdentidad proveedor) {
     Javalin app = Javalin.create();
-    new AdministradoresController(proveedor).registrarRutas(app);
+    donatrack.donaciones.Rutas.administradores(app, new AdministradoresController(proveedor));
     app.exception(DatosInvalidosException.class, (e, ctx) ->
         ctx.status(400).result(e.getMessage()));
     app.exception(ConflictoDeNegocioException.class, (e, ctx) ->
@@ -181,7 +181,7 @@ class AdministradoresControllerTest {
     FiltroDeAcceso filtro = new FiltroDeAcceso(verificador, repoUsuarios);
     Javalin app = Javalin.create();
     filtro.registrarEn(app);
-    new AdministradoresController(proveedor).registrarRutas(app);
+    donatrack.donaciones.Rutas.administradores(app, new AdministradoresController(proveedor));
     app.exception(DatosInvalidosException.class, (e, ctx) ->
         ctx.status(400).result(e.getMessage()));
     app.exception(ConflictoDeNegocioException.class, (e, ctx) ->

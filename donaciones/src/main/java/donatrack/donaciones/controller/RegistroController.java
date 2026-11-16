@@ -8,10 +8,8 @@ import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
-import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.service.DatosEntidad;
 import donatrack.donaciones.service.GestorRegistro;
-import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 import java.util.List;
@@ -24,12 +22,7 @@ public class RegistroController {
         this.gestor = gestor;
     }
 
-    public void registrarRutas(Javalin app) {
-        app.post("/registro/donantes", this::registrarDonante, RolDeAcceso.PUBLICO);
-        app.post("/registro/beneficiarias", this::registrarBeneficiaria, RolDeAcceso.PUBLICO);
-    }
-
-    private void registrarDonante(Context ctx) {
+    public void registrarDonante(Context ctx) {
         RegistroDonanteRequest request = ctx.bodyAsClass(RegistroDonanteRequest.class);
         Donante donante = gestor.registrarDonante(
             request.aPersona(),
@@ -42,7 +35,7 @@ public class RegistroController {
         ctx.status(201).json(new RegistroDonanteResponse(donante.getId()));
     }
 
-    private void registrarBeneficiaria(Context ctx) {
+    public void registrarBeneficiaria(Context ctx) {
         RegistroBeneficiariaRequest request = ctx.bodyAsClass(RegistroBeneficiariaRequest.class);
         PersonaJuridica juridica = new PersonaJuridica(
             request.cuit(),

@@ -5,7 +5,6 @@ import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.seguridad.PoliticaDeContrasenas;
 import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.RolDeAcceso;
-import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 // Alta de administradores: el admin que da de alta define la contrasena
@@ -21,11 +20,7 @@ public class AdministradoresController {
         this.proveedor = proveedor;
     }
 
-    public void registrarRutas(Javalin app) {
-        app.post("/administradores", this::crear, RolDeAcceso.ADMINISTRADOR);
-    }
-
-    private void crear(Context ctx) {
+    public void crear(Context ctx) {
         NuevoAdministradorRequest request = ctx.bodyAsClass(NuevoAdministradorRequest.class);
     if (request.email() == null || request.email().isBlank()) {
             throw new DatosInvalidosException("El email del administrador es obligatorio.");

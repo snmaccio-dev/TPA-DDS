@@ -4,11 +4,9 @@ import donatrack.donaciones.controller.dto.DonanteInactivoDTO;
 import donatrack.donaciones.controller.dto.NuevoDonanteRequest;
 import donatrack.donaciones.controller.dto.PersonaDTO;
 import donatrack.donaciones.domain.persona.Persona;
-import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.service.GestorDonantes;
 import donatrack.donaciones.service.GestorPersonas;
 import donatrack.donaciones.service.ResultadoCorrida;
-import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 import java.util.List;
@@ -23,35 +21,24 @@ public class DonantesController {
     this.gestorDonantes = gestorDonantes;
   }
 
-  public void registrarRutas(Javalin app) {
-    app.get("/donantes", this::todas, RolDeAcceso.ADMINISTRADOR);
-    app.post("/donantes", this::registrar, RolDeAcceso.ADMINISTRADOR);
-    // Rutas mas especificas antes que /donantes/{documento}, para que Javalin no se coma
-    // "inactivos" como si fuera un documento.
-    app.get("/donantes/inactivos", this::inactivos, RolDeAcceso.ADMINISTRADOR);
-    app.post("/donantes/avisar-inactivos", this::avisarInactivos, RolDeAcceso.ADMINISTRADOR);
-    app.get("/donantes/{documento}", this::buscar, RolDeAcceso.ADMINISTRADOR);
-    app.delete("/donantes/{documento}", this::eliminar, RolDeAcceso.ADMINISTRADOR);
-  }
-
-  private void todas(Context ctx) {
+  public void todas(Context ctx) {
     ctx.json(PersonaDTO.desde(gestor.todos()));
   }
 
-  private void buscar(Context ctx) {
+  public void buscar(Context ctx) {
     ctx.json(PersonaDTO.desde(gestor.buscarPorDocumento(ctx.pathParam("documento"))));
   }
 
-  private void inactivos(Context ctx) {
+  public void inactivos(Context ctx) {
     ctx.json(DonanteInactivoDTO.desde(gestorDonantes.inactivos()));
   }
 
-  private void avisarInactivos(Context ctx) {
+  public void avisarInactivos(Context ctx) {
     ResultadoCorrida resultado = gestorDonantes.avisarInactivos();
     ctx.json(new AvisarInactivosResponse(resultado.exitosas(), resultado.fallidas()));
   }
 
-  private void registrar(Context ctx) {
+  public void registrar(Context ctx) {
     NuevoDonanteRequest request = ctx.bodyAsClass(NuevoDonanteRequest.class);
     Persona persona = request.aPersona();
     if (request.direccion() != null && !request.direccion().isBlank()) {
@@ -61,7 +48,7 @@ public class DonantesController {
     ctx.status(201);
   }
 
-  private void eliminar(Context ctx) {
+  public void eliminar(Context ctx) {
     gestor.eliminar(ctx.pathParam("documento"));
     ctx.status(204);
   }

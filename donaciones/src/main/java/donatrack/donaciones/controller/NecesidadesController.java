@@ -13,11 +13,9 @@ import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.seguridad.Acceso;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
-import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.seguridad.UsuarioActual;
 import donatrack.donaciones.service.GestorNecesidades;
 import donatrack.donaciones.service.RecursoInexistenteException;
-import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 public class NecesidadesController {
@@ -34,15 +32,7 @@ public class NecesidadesController {
     this.repositorioEntidades = repositorioEntidades;
   }
 
-  public void registrarRutas(Javalin app) {
-    app.get("/necesidades", this::todas, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA);
-    app.post("/necesidades", this::crear, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA);
-    app.get("/necesidades/{id}", this::buscar, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA);
-    app.put("/necesidades/{id}", this::actualizar, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA);
-    app.delete("/necesidades/{id}", this::eliminar, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA);
-  }
-
-  private void todas(Context ctx) {
+  public void todas(Context ctx) {
     UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
     if (usuario.esAdministrador()) {
       ctx.json(NecesidadDTO.desde(gestor.todas()));
@@ -52,13 +42,13 @@ public class NecesidadesController {
     }
   }
 
-  private void buscar(Context ctx) {
+  public void buscar(Context ctx) {
     Necesidad necesidad = gestor.buscar(idDe(ctx));
     Acceso.exigirPuedeVerNecesidad(FiltroDeAcceso.usuarioDe(ctx), necesidad);
     ctx.json(NecesidadDTO.desde(necesidad));
   }
 
-  private void crear(Context ctx) {
+  public void crear(Context ctx) {
     NuevaNecesidadRequest request = ctx.bodyAsClass(NuevaNecesidadRequest.class);
     Subcategoria subcategoria = subcategoriaDe(request.subcategoria());
     Beneficiaria beneficiaria = beneficiariaPara(FiltroDeAcceso.usuarioDe(ctx), request.cuitBeneficiaria());
@@ -77,7 +67,7 @@ public class NecesidadesController {
     ctx.status(201).json(NecesidadDTO.desde(gestor.crear(necesidad)));
   }
 
-  private void actualizar(Context ctx) {
+  public void actualizar(Context ctx) {
     Necesidad necesidad = gestor.buscar(idDe(ctx));
     Acceso.exigirPuedeVerNecesidad(FiltroDeAcceso.usuarioDe(ctx), necesidad);
     ActualizarNecesidadRequest request = ctx.bodyAsClass(ActualizarNecesidadRequest.class);
@@ -90,7 +80,7 @@ public class NecesidadesController {
     ctx.status(204);
   }
 
-  private void eliminar(Context ctx) {
+  public void eliminar(Context ctx) {
     Necesidad necesidad = gestor.buscar(idDe(ctx));
     Acceso.exigirPuedeVerNecesidad(FiltroDeAcceso.usuarioDe(ctx), necesidad);
     gestor.eliminar(necesidad.getId());
