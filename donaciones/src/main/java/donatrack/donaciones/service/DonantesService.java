@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.notificacion.EstadoEnvio;
 import donatrack.donaciones.domain.notificacion.Notificacion;
@@ -10,15 +10,15 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GestorDonantes implements WithSimplePersistenceUnit {
+public class DonantesService implements WithSimplePersistenceUnit {
 
     public static final int DIAS_SIN_INTERACCION = 20;
 
     private final RepositorioDonantes repositorio;
-    private final GestorNotificaciones gestorNotificaciones;
+    private final NotificacionesService gestorNotificaciones;
 
-    public GestorDonantes(RepositorioDonantes repositorio,
-                          GestorNotificaciones gestorNotificaciones) {
+    public DonantesService(RepositorioDonantes repositorio,
+                          NotificacionesService gestorNotificaciones) {
         this.repositorio = repositorio;
         this.gestorNotificaciones = gestorNotificaciones;
     }
@@ -32,7 +32,7 @@ public class GestorDonantes implements WithSimplePersistenceUnit {
         int avisados = 0;
         List<String> fallidos = new ArrayList<>();
         for (Donante donante : inactivos()) {
-            // GestorNotificaciones ya no propaga fallas de envio: nos devuelve
+            // NotificacionesService ya no propaga fallas de envio: nos devuelve
             // una Notificacion ENVIADA o FALLIDA y nosotros decidimos.
             Notificacion notificacion =
                 gestorNotificaciones.notificarAusenciaPlataforma(donante);

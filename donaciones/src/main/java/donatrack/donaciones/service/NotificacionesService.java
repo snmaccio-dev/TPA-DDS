@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
@@ -23,12 +23,12 @@ import java.util.function.Supplier;
 // plataforma) para que el web muestre a cada usuario su lista y para auditoria.
 // Las fallas de envio no se propagan: no pueden deshacer el cambio de estado
 // que las dispara.
-public class GestorNotificaciones {
+public class NotificacionesService {
 
   private final Map<TipoContacto, Notificador> porTipo;
   private final RepositorioNotificaciones repositorio;
 
-  public GestorNotificaciones(List<Notificador> notificadores,
+  public NotificacionesService(List<Notificador> notificadores,
                               RepositorioNotificaciones repositorio) {
     Map<TipoContacto, Notificador> mapa = new EnumMap<>(TipoContacto.class);
     for (Notificador n : notificadores) {
@@ -224,7 +224,7 @@ public class GestorNotificaciones {
         donante,
         TipoNotificacion.CAMBIO_ESTADO,
         "Su donacion de [" + donacion.getSubcategoria().getNombre()
-            + "] cambio de estado: " + estadoAnterior + " → " + estadoNuevo,
+            + "] cambio de estado: " + estadoAnterior + " â†’ " + estadoNuevo,
         donacion
     );
   }

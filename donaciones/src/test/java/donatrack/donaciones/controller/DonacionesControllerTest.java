@@ -1,4 +1,4 @@
-package donatrack.donaciones.controller;
+﻿package donatrack.donaciones.controller;
 
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -33,7 +33,7 @@ import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.repository.RepositorioUsuarios;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
-import donatrack.donaciones.service.GestorDonaciones;
+import donatrack.donaciones.service.DonacionesService;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
 import io.javalin.testtools.JavalinTest;
@@ -74,7 +74,7 @@ class DonacionesControllerTest {
     Donante donanteAna = donanteConId(10L, ana);
     Donacion sillaDeAna = donacionDe(donanteAna, "Sillas", "Mobiliario", 100L);
 
-    GestorDonaciones gestor = mock(GestorDonaciones.class);
+    DonacionesService gestor = mock(DonacionesService.class);
     when(gestor.buscar(
         argThat(filtro -> filtro != null
             && filtro.estado() == null
@@ -110,7 +110,7 @@ class DonacionesControllerTest {
     Donante donanteLuis = donanteConId(30L, luis);
     Donacion asignada = donacionDe(donanteLuis, "Mesas", "Mobiliario", 200L);
 
-    GestorDonaciones gestor = mock(GestorDonaciones.class);
+    DonacionesService gestor = mock(DonacionesService.class);
     when(gestor.buscar(
         argThat(filtro -> filtro != null
             && filtro.estado() == EstadosPosiblesDonacion.ASIGNACION_REALIZADA
@@ -138,7 +138,7 @@ class DonacionesControllerTest {
 
   @Test
   void unEstadoInvalidoDevuelve400() throws Exception {
-    GestorDonaciones gestor = mock(GestorDonaciones.class);
+    DonacionesService gestor = mock(DonacionesService.class);
     RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
     when(repoUsuarios.buscarPorKeycloakId("kc-admin")).thenReturn(Optional.empty());
     Javalin app = app(gestor, repoUsuarios);
@@ -153,7 +153,7 @@ class DonacionesControllerTest {
 
   // === Helpers ===
 
-  private Javalin app(GestorDonaciones gestor, RepositorioUsuarios repoUsuarios) {
+  private Javalin app(DonacionesService gestor, RepositorioUsuarios repoUsuarios) {
     Javalin app = Javalin.create();
     new FiltroDeAcceso(verificador, repoUsuarios).registrarEn(app);
     donatrack.donaciones.Rutas.donaciones(app, new DonacionesController(

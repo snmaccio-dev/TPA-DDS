@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.persona.Beneficiaria;
@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GestorEntidadesBeneficiariasAltaTest implements SimplePersistenceTest {
+class EntidadesBeneficiariasServiceAltaTest implements SimplePersistenceTest {
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioEntidades repoEntidades = RepositorioEntidades.getInstance();
@@ -50,7 +50,7 @@ class GestorEntidadesBeneficiariasAltaTest implements SimplePersistenceTest {
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorEntidadesBeneficiarias gestor = new GestorEntidadesBeneficiarias(
+    EntidadesBeneficiariasService gestor = new EntidadesBeneficiariasService(
         repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
         repoDonaciones, repoDonantes, proveedor);
 
@@ -74,7 +74,7 @@ class GestorEntidadesBeneficiariasAltaTest implements SimplePersistenceTest {
   void registrarConPersonaNuevaCreaLaCuentaCuandoLaBeneficiariaEsNueva() {
     String kcId = DatosDeTest.keycloakIdUnico();
     ProveedorFalso proveedor = new ProveedorFalso(kcId);
-    GestorEntidadesBeneficiarias gestor = new GestorEntidadesBeneficiarias(
+    EntidadesBeneficiariasService gestor = new EntidadesBeneficiariasService(
         repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
         repoDonaciones, repoDonantes, proveedor);
 

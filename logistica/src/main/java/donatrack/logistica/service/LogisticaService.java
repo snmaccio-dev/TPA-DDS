@@ -1,4 +1,4 @@
-package donatrack.logistica.service;
+﻿package donatrack.logistica.service;
 
 import donatrack.logistica.contrato.DestinoPlanificado;
 import donatrack.logistica.contrato.DonacionParaPlanificar;
@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.IntStream;
 
-public class GestorLogistica implements WithSimplePersistenceUnit {
+public class LogisticaService implements WithSimplePersistenceUnit {
 
   private static final int TAMANIO_MAXIMO_DE_LOTE = 100;
   private static final int INTENTOS_ANTES_DE_ESCALAR = 3;
@@ -44,7 +44,7 @@ public class GestorLogistica implements WithSimplePersistenceUnit {
   private final RepositorioSolicitudes repositorioSolicitudes =
       RepositorioSolicitudes.getInstance();
 
-  public GestorLogistica(GeneradorRutas generadorRutas,
+  public LogisticaService(GeneradorRutas generadorRutas,
                          ClienteDonaciones clienteDonaciones,
                          String urlCallback) {
     Objects.requireNonNull(generadorRutas, "Debe indicarse el generador de rutas.");

@@ -1,4 +1,4 @@
-package donatrack.logistica.service;
+﻿package donatrack.logistica.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -9,9 +9,9 @@ import donatrack.logistica.domain.flota.Chofer;
 import io.github.flbulgarelli.jpa.extras.test.SimplePersistenceTest;
 import org.junit.jupiter.api.Test;
 
-class GestorChoferesTest implements SimplePersistenceTest {
+class ChoferesServiceTest implements SimplePersistenceTest {
 
-  private final GestorChoferes gestor = new GestorChoferes();
+  private final ChoferesService gestor = new ChoferesService();
 
   @Test
   void unChoferCreadoQuedaDisponibleParaBuscarPorId() {

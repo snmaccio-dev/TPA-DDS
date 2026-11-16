@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
@@ -23,7 +23,7 @@ import java.util.Optional;
 // Alta desde el deposito (la hace un administrador). La contrasena no se genera
 // aca: creamos la cuenta sin contrasena y Keycloak le manda al usuario el
 // correo UPDATE_PASSWORD para que la elija.
-public class GestorPersonas implements WithSimplePersistenceUnit {
+public class PersonasService implements WithSimplePersistenceUnit {
 
     private final RepositorioPersonas repositorio =
         RepositorioPersonas.getInstance();
@@ -35,7 +35,7 @@ public class GestorPersonas implements WithSimplePersistenceUnit {
     private final RepositorioEntidades repositorioEntidades;
     private final ProveedorDeIdentidad proveedor;
 
-    public GestorPersonas(RepositorioDonantes repositorioDonantes,
+    public PersonasService(RepositorioDonantes repositorioDonantes,
                           RepositorioUsuarios repositorioUsuarios,
                           RepositorioNotificaciones repositorioNotificaciones,
                           RepositorioDonaciones repositorioDonaciones,

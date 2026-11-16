@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
@@ -21,13 +21,13 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GestorNotificacionesTest {
+class NotificacionesServiceTest {
 
   @Test
   void unEnvioExitosoQuedaEnviadaConCanalYDestino() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
     NotificadorFalso email = new NotificadorFalso(TipoContacto.EMAIL, false);
-    GestorNotificaciones gestor = new GestorNotificaciones(List.of(email), repo);
+    NotificacionesService gestor = new NotificacionesService(List.of(email), repo);
 
     Donante donante = donanteAna();
     Notificacion n = gestor.notificar(
@@ -45,7 +45,7 @@ class GestorNotificacionesTest {
   void siElNotificadorFallaQuedaFallidaYNoPropaga() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
     NotificadorFalso email = new NotificadorFalso(TipoContacto.EMAIL, true);
-    GestorNotificaciones gestor = new GestorNotificaciones(List.of(email), repo);
+    NotificacionesService gestor = new NotificacionesService(List.of(email), repo);
 
     Notificacion n = gestor.notificar(
         donanteAna(), TipoNotificacion.CAMBIO_ESTADO, "hola", null);
@@ -58,7 +58,7 @@ class GestorNotificacionesTest {
   @Test
   void unDonanteSinContactoQuedaFallida() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
-    GestorNotificaciones gestor = new GestorNotificaciones(
+    NotificacionesService gestor = new NotificacionesService(
         List.of(new NotificadorFalso(TipoContacto.EMAIL, false)), repo);
 
     PersonaHumana sinContacto = new PersonaHumana("X", "Y", 30, "99999999", Genero.FEMENINO);
@@ -75,7 +75,7 @@ class GestorNotificacionesTest {
   @Test
   void notificarAdministradoresQuedaEnNoAplicaYSePersiste() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
-    GestorNotificaciones gestor = new GestorNotificaciones(List.of(), repo);
+    NotificacionesService gestor = new NotificacionesService(List.of(), repo);
 
     Notificacion n = gestor.notificarAdministradores(
         TipoNotificacion.ENTREGA_FALLIDA, "ups", null);
@@ -88,7 +88,7 @@ class GestorNotificacionesTest {
   @Test
   void siNoHayNotificadorParaElTipoQuedaFallida() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
-    GestorNotificaciones gestor = new GestorNotificaciones(List.of(), repo);
+    NotificacionesService gestor = new NotificacionesService(List.of(), repo);
 
     Notificacion n = gestor.notificar(
         donanteAna(), TipoNotificacion.CAMBIO_ESTADO, "hola", null);
@@ -99,8 +99,8 @@ class GestorNotificacionesTest {
 
   @Test
   void sinDestinatarioTiraDatosInvalidos() {
-    GestorNotificaciones gestor =
-        new GestorNotificaciones(List.of(), new RepositorioEnMemoria());
+    NotificacionesService gestor =
+        new NotificacionesService(List.of(), new RepositorioEnMemoria());
     assertThrows(DatosInvalidosException.class,
         () -> gestor.notificar((Donante) null, TipoNotificacion.CAMBIO_ESTADO, "hola", null));
   }

@@ -1,11 +1,11 @@
-package donatrack.donaciones.controller;
+﻿package donatrack.donaciones.controller;
 
 import donatrack.donaciones.controller.dto.DonanteInactivoDTO;
 import donatrack.donaciones.controller.dto.NuevoDonanteRequest;
 import donatrack.donaciones.controller.dto.PersonaDTO;
 import donatrack.donaciones.domain.persona.Persona;
-import donatrack.donaciones.service.GestorDonantes;
-import donatrack.donaciones.service.GestorPersonas;
+import donatrack.donaciones.service.DonantesService;
+import donatrack.donaciones.service.PersonasService;
 import donatrack.donaciones.service.ResultadoCorrida;
 import io.javalin.http.Context;
 
@@ -13,10 +13,10 @@ import java.util.List;
 
 public class DonantesController {
 
-  private final GestorPersonas gestor;
-  private final GestorDonantes gestorDonantes;
+  private final PersonasService gestor;
+  private final DonantesService gestorDonantes;
 
-  public DonantesController(GestorPersonas gestor, GestorDonantes gestorDonantes) {
+  public DonantesController(PersonasService gestor, DonantesService gestorDonantes) {
     this.gestor = gestor;
     this.gestorDonantes = gestorDonantes;
   }

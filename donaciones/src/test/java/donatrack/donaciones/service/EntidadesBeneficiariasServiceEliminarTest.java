@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest {
+class EntidadesBeneficiariasServiceEliminarTest implements SimplePersistenceTest {
 
   // Para la clave artificial donacion_id de la PropuestaAsignacion. No sale
   // de DatosDeTest porque conceptualmente es otro contador (ids de donaciones
@@ -61,7 +61,7 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
     donacionAsignadaA(beneficiaria);
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorEntidadesBeneficiarias gestor = new GestorEntidadesBeneficiarias(
+    EntidadesBeneficiariasService gestor = new EntidadesBeneficiariasService(
         repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
         repoDonaciones, repoDonantes, proveedor);
 
@@ -84,7 +84,7 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorEntidadesBeneficiarias gestor = new GestorEntidadesBeneficiarias(
+    EntidadesBeneficiariasService gestor = new EntidadesBeneficiariasService(
         repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
         repoDonaciones, repoDonantes, proveedor);
 
@@ -110,7 +110,7 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorEntidadesBeneficiarias gestor = new GestorEntidadesBeneficiarias(
+    EntidadesBeneficiariasService gestor = new EntidadesBeneficiariasService(
         repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
         repoDonaciones, repoDonantes, proveedor);
 

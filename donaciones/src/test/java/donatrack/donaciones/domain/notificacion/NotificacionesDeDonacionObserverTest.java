@@ -1,4 +1,4 @@
-package donatrack.donaciones.domain.notificacion;
+﻿package donatrack.donaciones.domain.notificacion;
 
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
@@ -14,7 +14,7 @@ import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
-import donatrack.donaciones.service.GestorNotificaciones;
+import donatrack.donaciones.service.NotificacionesService;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -33,7 +33,7 @@ public class NotificacionesDeDonacionObserverTest {
 
   @Test
   public void asignacionRealizadaNotificaADonanteYBeneficiaria() {
-    GestorNotificaciones gestor = mock(GestorNotificaciones.class);
+    NotificacionesService gestor = mock(NotificacionesService.class);
     Donante donante = donante();
     Beneficiaria beneficiaria = beneficiaria();
     Donacion donacion = donacionAsignadaA(donante, beneficiaria);
@@ -48,7 +48,7 @@ public class NotificacionesDeDonacionObserverTest {
 
   @Test
   public void enTrasladoAvisaAlDonanteYBeneficiariaConSusLinks() {
-    GestorNotificaciones gestor = mock(GestorNotificaciones.class);
+    NotificacionesService gestor = mock(NotificacionesService.class);
     Donante donante = donante();
     Beneficiaria beneficiaria = beneficiaria();
     Donacion donacion = donacionAsignadaA(donante, beneficiaria);
@@ -63,7 +63,7 @@ public class NotificacionesDeDonacionObserverTest {
 
   @Test
   public void entregadaDisparaEntregaExitosaConComprobante() throws Exception {
-    GestorNotificaciones gestor = mock(GestorNotificaciones.class);
+    NotificacionesService gestor = mock(NotificacionesService.class);
     Donante donante = donante();
     Beneficiaria beneficiaria = beneficiaria();
     Donacion donacion = donacionAsignadaA(donante, beneficiaria);
@@ -84,7 +84,7 @@ public class NotificacionesDeDonacionObserverTest {
 
   @Test
   public void entregaFallidaUsaLaJustificacionDelUltimoEstado() {
-    GestorNotificaciones gestor = mock(GestorNotificaciones.class);
+    NotificacionesService gestor = mock(NotificacionesService.class);
     Donante donante = donante();
     Beneficiaria beneficiaria = beneficiaria();
     Donacion donacion = donacionAsignadaA(donante, beneficiaria);
@@ -102,7 +102,7 @@ public class NotificacionesDeDonacionObserverTest {
 
   @Test
   public void otrosCambiosMandanCambioDeEstadoAlDonante() {
-    GestorNotificaciones gestor = mock(GestorNotificaciones.class);
+    NotificacionesService gestor = mock(NotificacionesService.class);
     Donante donante = donante();
     Donacion donacion = new Donacion(List.of(unaCampera()), donante, "demo");
     NotificacionesDeDonacionObserver observer =

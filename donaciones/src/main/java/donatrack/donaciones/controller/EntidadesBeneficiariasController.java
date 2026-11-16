@@ -1,4 +1,4 @@
-package donatrack.donaciones.controller;
+﻿package donatrack.donaciones.controller;
 
 import donatrack.donaciones.controller.dto.BeneficiariaDTO;
 import donatrack.donaciones.controller.dto.NuevaBeneficiariaExistenteRequest;
@@ -11,7 +11,7 @@ import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.service.DatosEntidad;
-import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
+import donatrack.donaciones.service.EntidadesBeneficiariasService;
 import io.javalin.http.Context;
 
 import java.util.List;
@@ -19,9 +19,9 @@ import java.util.Optional;
 
 public class EntidadesBeneficiariasController {
 
-  private final GestorEntidadesBeneficiarias gestor;
+  private final EntidadesBeneficiariasService gestor;
 
-  public EntidadesBeneficiariasController(GestorEntidadesBeneficiarias gestor) {
+  public EntidadesBeneficiariasController(EntidadesBeneficiariasService gestor) {
     this.gestor = gestor;
   }
 

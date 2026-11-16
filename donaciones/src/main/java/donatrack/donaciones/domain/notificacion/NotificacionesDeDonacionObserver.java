@@ -1,4 +1,4 @@
-package donatrack.donaciones.domain.notificacion;
+﻿package donatrack.donaciones.domain.notificacion;
 
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.estado.EstadoDonacion;
@@ -6,21 +6,21 @@ import donatrack.donaciones.domain.donacion.estado.EstadoEntregaFallida;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
-import donatrack.donaciones.service.GestorNotificaciones;
+import donatrack.donaciones.service.NotificacionesService;
 
 import java.util.List;
 
 // Observer unico: traduce cada cambio de estado de una Donacion al metodo
-// correspondiente de GestorNotificaciones. Los links de seguimiento que
+// correspondiente de NotificacionesService. Los links de seguimiento que
 // arma INICIO_RUTA los recibe por constructor para no leer variables de
 // entorno desde el dominio.
 public class NotificacionesDeDonacionObserver implements DonacionObserver {
 
-    private final GestorNotificaciones gestor;
+    private final NotificacionesService gestor;
     private final String linkSeguimientoDonante;
     private final String linkSeguimientoBeneficiario;
 
-    public NotificacionesDeDonacionObserver(GestorNotificaciones gestor,
+    public NotificacionesDeDonacionObserver(NotificacionesService gestor,
                                             String linkSeguimientoDonante,
                                             String linkSeguimientoBeneficiario) {
         this.gestor = gestor;

@@ -1,9 +1,9 @@
-package donatrack.logistica.controller;
+﻿package donatrack.logistica.controller;
 
 import donatrack.logistica.controller.dto.CorridaDTO;
 import donatrack.logistica.controller.dto.EntregaDTO;
 import donatrack.logistica.seguridad.RolDeAcceso;
-import donatrack.logistica.service.GestorLogistica;
+import donatrack.logistica.service.LogisticaService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
@@ -11,9 +11,9 @@ import java.util.List;
 
 public class PlanificacionController {
 
-  private final GestorLogistica gestor;
+  private final LogisticaService gestor;
 
-  public PlanificacionController(GestorLogistica gestor) {
+  public PlanificacionController(LogisticaService gestor) {
     this.gestor = gestor;
   }
 

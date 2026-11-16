@@ -1,4 +1,4 @@
-package donatrack.logistica.controller;
+﻿package donatrack.logistica.controller;
 
 import donatrack.logistica.controller.dto.MonitoreoRutaDTO;
 import donatrack.logistica.controller.dto.ReporteUbicacionRequest;
@@ -7,8 +7,8 @@ import donatrack.logistica.domain.ruta.RutaReparto;
 import donatrack.logistica.seguridad.AlcanceDeMonitoreo;
 import donatrack.logistica.seguridad.ControlDeAcceso;
 import donatrack.logistica.seguridad.RolDeAcceso;
-import donatrack.logistica.service.GestorMonitoreo;
-import donatrack.logistica.service.GestorRutas;
+import donatrack.logistica.service.MonitoreoService;
+import donatrack.logistica.service.RutasService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
@@ -17,12 +17,12 @@ import java.util.List;
 
 public class MonitoreoController {
 
-  private final GestorMonitoreo gestorMonitoreo;
-  private final GestorRutas gestorRutas;
+  private final MonitoreoService gestorMonitoreo;
+  private final RutasService gestorRutas;
   private final ControlDeAcceso control;
 
-  public MonitoreoController(GestorMonitoreo gestorMonitoreo,
-                             GestorRutas gestorRutas,
+  public MonitoreoController(MonitoreoService gestorMonitoreo,
+                             RutasService gestorRutas,
                              ControlDeAcceso control) {
     this.gestorMonitoreo = gestorMonitoreo;
     this.gestorRutas = gestorRutas;

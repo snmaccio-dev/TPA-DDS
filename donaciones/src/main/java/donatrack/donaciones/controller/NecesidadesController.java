@@ -1,4 +1,4 @@
-package donatrack.donaciones.controller;
+﻿package donatrack.donaciones.controller;
 
 import donatrack.donaciones.controller.dto.ActualizarNecesidadRequest;
 import donatrack.donaciones.controller.dto.NecesidadDTO;
@@ -14,17 +14,17 @@ import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.seguridad.Acceso;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.UsuarioActual;
-import donatrack.donaciones.service.GestorNecesidades;
+import donatrack.donaciones.service.NecesidadesService;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.http.Context;
 
 public class NecesidadesController {
 
-  private final GestorNecesidades gestor;
+  private final NecesidadesService gestor;
   private final RepositorioSubcategorias repositorioSubcategorias;
   private final RepositorioEntidades repositorioEntidades;
 
-  public NecesidadesController(GestorNecesidades gestor,
+  public NecesidadesController(NecesidadesService gestor,
                                RepositorioSubcategorias repositorioSubcategorias,
                                RepositorioEntidades repositorioEntidades) {
     this.gestor = gestor;
@@ -90,7 +90,7 @@ public class NecesidadesController {
   private Subcategoria subcategoriaDe(String nombre) {
     return repositorioSubcategorias.buscarPorNombre(nombre)
         .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la subcategoría '" + nombre + "'."
+            "No existe la subcategorÃ­a '" + nombre + "'."
         ));
   }
 

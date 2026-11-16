@@ -1,9 +1,9 @@
-package donatrack.logistica.controller;
+﻿package donatrack.logistica.controller;
 
 import donatrack.logistica.contrato.PlanificacionRecibida;
 import donatrack.logistica.controller.dto.RutaDTO;
 import donatrack.logistica.seguridad.RolDeAcceso;
-import donatrack.logistica.service.GestorLogistica;
+import donatrack.logistica.service.LogisticaService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.UnauthorizedResponse;
@@ -12,10 +12,10 @@ public class RutasCallbackController {
 
   private static final String HEADER_TOKEN = "X-Planificador-Token";
 
-  private final GestorLogistica gestorLogistica;
+  private final LogisticaService gestorLogistica;
   private final String tokenEsperado;
 
-  public RutasCallbackController(GestorLogistica gestorLogistica, String tokenEsperado) {
+  public RutasCallbackController(LogisticaService gestorLogistica, String tokenEsperado) {
     this.gestorLogistica = gestorLogistica;
     this.tokenEsperado = tokenEsperado;
   }

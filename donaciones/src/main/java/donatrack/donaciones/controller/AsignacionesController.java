@@ -1,4 +1,4 @@
-package donatrack.donaciones.controller;
+﻿package donatrack.donaciones.controller;
 
 import donatrack.donaciones.controller.dto.BeneficiariaDTO;
 import donatrack.donaciones.controller.dto.ConfirmarDestinatarioRequest;
@@ -8,7 +8,7 @@ import donatrack.donaciones.domain.donacion.asignacion.PropuestaAsignacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioEntidades;
-import donatrack.donaciones.service.GestorAsignaciones;
+import donatrack.donaciones.service.AsignacionesService;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import donatrack.donaciones.service.ResultadoCorrida;
 import io.javalin.http.Context;
@@ -17,11 +17,11 @@ import java.util.List;
 
 public class AsignacionesController {
 
-  private final GestorAsignaciones gestor;
+  private final AsignacionesService gestor;
   private final RepositorioDonaciones repositorioDonaciones;
   private final RepositorioEntidades repositorioEntidades;
 
-  public AsignacionesController(GestorAsignaciones gestor,
+  public AsignacionesController(AsignacionesService gestor,
                                 RepositorioDonaciones repositorioDonaciones,
                                 RepositorioEntidades repositorioEntidades) {
     this.gestor = gestor;
@@ -42,7 +42,7 @@ public class AsignacionesController {
     long donacionId = idDe(ctx);
     PropuestaAsignacion propuesta = gestor.buscarPropuesta(donacionId)
         .orElseThrow(() -> new RecursoInexistenteException(
-            "No hay propuesta generada para la donación " + donacionId
+            "No hay propuesta generada para la donaciÃ³n " + donacionId
         ));
     ctx.json(PropuestaDTO.desde(propuesta));
   }
@@ -66,7 +66,7 @@ public class AsignacionesController {
   private Donacion buscarDonacion(long donacionId) {
     return repositorioDonaciones.buscarPorId(donacionId)
         .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la donación con ID " + donacionId
+            "No existe la donaciÃ³n con ID " + donacionId
         ));
   }
 

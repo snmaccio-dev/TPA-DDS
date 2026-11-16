@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.DatosInvalidosException;
@@ -26,7 +26,7 @@ import java.util.Optional;
 // Alta desde un administrador. Si la beneficiaria todavia no tiene ningun
 // Usuario, se crea una cuenta en Keycloak (sin contrasena) para el email del
 // primer representante, con el rol BENEFICIARIA.
-public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
+public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit {
 
   private final RepositorioEntidades repositorioEntidades =
       RepositorioEntidades.getInstance();
@@ -42,7 +42,7 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
   private final RepositorioDonantes repositorioDonantes;
   private final ProveedorDeIdentidad proveedor;
 
-  public GestorEntidadesBeneficiarias(RepositorioUsuarios repositorioUsuarios,
+  public EntidadesBeneficiariasService(RepositorioUsuarios repositorioUsuarios,
                                       RepositorioNotificaciones repositorioNotificaciones,
                                       RepositorioNecesidades repositorioNecesidades,
                                       RepositorioPropuestas repositorioPropuestas,
@@ -128,7 +128,7 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
     return repositorioPersonas.buscarJuridicaPorCuit(cuit);
   }
 
-  // Ya no decide si se escriben datos: sirve al front para saber qué campos precargar.
+  // Ya no decide si se escriben datos: sirve al front para saber quÃ© campos precargar.
   public List<String> datosFaltantesParaBeneficiaria(PersonaJuridica juridica) {
     List<String> faltantes = new ArrayList<>();
     if (juridica.getDireccion() == null || juridica.getDireccion().isBlank()) {

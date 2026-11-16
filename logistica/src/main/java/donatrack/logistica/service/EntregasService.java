@@ -1,4 +1,4 @@
-package donatrack.logistica.service;
+﻿package donatrack.logistica.service;
 
 import donatrack.logistica.contrato.EventoEntrega;
 import donatrack.logistica.contrato.EventoInicioRuta;
@@ -19,7 +19,7 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import java.util.List;
 import java.util.Objects;
 
-public class GestorEntregas implements WithSimplePersistenceUnit {
+public class EntregasService implements WithSimplePersistenceUnit {
 
   private final ClienteDonaciones clienteDonaciones;
   private final String urlBaseMonitoreo;
@@ -32,7 +32,7 @@ public class GestorEntregas implements WithSimplePersistenceUnit {
   private final RepositorioChoferes repositorioChoferes =
       RepositorioChoferes.getInstance();
 
-  public GestorEntregas(ClienteDonaciones clienteDonaciones,
+  public EntregasService(ClienteDonaciones clienteDonaciones,
                         String urlBaseMonitoreo,
                         AlmacenDeFotos almacenDeFotos) {
     Objects.requireNonNull(
@@ -139,7 +139,7 @@ public class GestorEntregas implements WithSimplePersistenceUnit {
   }
 
   private void publicarResultado(Entrega entrega, ResultadoEntrega resultado) {
-    // La patente solo se manda si la entrega efectivamente se concretó. En NO_RECIBIDA la
+    // La patente solo se manda si la entrega efectivamente se concretÃ³. En NO_RECIBIDA la
     // entrega todavia tiene patente cargada (se limpia recien en retornarADeposito), asi
     // que hay que omitirla explicitamente.
     String patente = resultado == ResultadoEntrega.ENTREGADA

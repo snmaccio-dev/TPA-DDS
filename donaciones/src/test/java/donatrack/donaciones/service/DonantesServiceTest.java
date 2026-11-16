@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.contacto.MedioContacto;
@@ -21,7 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class GestorDonantesTest implements SimplePersistenceTest {
+class DonantesServiceTest implements SimplePersistenceTest {
 
   private final donatrack.donaciones.repository.RepositorioPersonas repoPersonas =
       donatrack.donaciones.repository.RepositorioPersonas.getInstance();
@@ -32,14 +32,14 @@ class GestorDonantesTest implements SimplePersistenceTest {
     Donante donante = donantePersistidoViejo(
         documento, "Ana", DatosDeTest.emailUnico("ana-" + documento));
 
-    GestorNotificaciones gestorNotificaciones = mock(GestorNotificaciones.class);
+    NotificacionesService gestorNotificaciones = mock(NotificacionesService.class);
     Notificacion fallida = Notificacion.paraDonante(
         donante, TipoNotificacion.AUSENCIA_PLATAFORMA, "x", null);
     fallida.marcarFallida("sin canal");
     when(gestorNotificaciones.notificarAusenciaPlataforma(any())).thenReturn(fallida);
 
     RepositorioDonantes repoDonantes = new RepositorioDonantes();
-    GestorDonantes gestor = new GestorDonantes(repoDonantes, gestorNotificaciones);
+    DonantesService gestor = new DonantesService(repoDonantes, gestorNotificaciones);
 
     ResultadoCorrida resultado = gestor.avisarInactivos();
 
@@ -62,14 +62,14 @@ class GestorDonantesTest implements SimplePersistenceTest {
     Donante donante = donantePersistidoViejo(
         documento, "Luis", DatosDeTest.emailUnico("luis-" + documento));
 
-    GestorNotificaciones gestorNotificaciones = mock(GestorNotificaciones.class);
+    NotificacionesService gestorNotificaciones = mock(NotificacionesService.class);
     Notificacion enviada = Notificacion.paraDonante(
         donante, TipoNotificacion.AUSENCIA_PLATAFORMA, "x", null);
     enviada.marcarEnviada(TipoContacto.EMAIL, "luis@mail");
     when(gestorNotificaciones.notificarAusenciaPlataforma(any())).thenReturn(enviada);
 
     RepositorioDonantes repoDonantes = new RepositorioDonantes();
-    GestorDonantes gestor = new GestorDonantes(repoDonantes, gestorNotificaciones);
+    DonantesService gestor = new DonantesService(repoDonantes, gestorNotificaciones);
 
     ResultadoCorrida resultado = gestor.avisarInactivos();
 

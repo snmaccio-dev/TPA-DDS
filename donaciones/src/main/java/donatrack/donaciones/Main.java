@@ -1,4 +1,4 @@
-package donatrack.donaciones;
+﻿package donatrack.donaciones;
 
 import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.catalogo.Categoria;
@@ -30,9 +30,9 @@ import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioPropuestas;
-import donatrack.donaciones.service.GestorAsignaciones;
-import donatrack.donaciones.service.GestorDonaciones;
-import donatrack.donaciones.service.GestorNotificaciones;
+import donatrack.donaciones.service.AsignacionesService;
+import donatrack.donaciones.service.DonacionesService;
+import donatrack.donaciones.service.NotificacionesService;
 import donatrack.donaciones.service.SegmentadorDonaciones;
 
 
@@ -41,24 +41,24 @@ import java.util.List;
 public class Main {
 
     public static void main(String[] args) {
-        System.out.println("=== DonaTrack — Entrega 1 ===\n");
+        System.out.println("=== DonaTrack â€” Entrega 1 ===\n");
 
         RepositorioPropuestas repositorioPropuestas = new RepositorioPropuestas();
         RepositorioNotificaciones repositorioNotificaciones = new RepositorioNotificaciones();
-        GestorNotificaciones gestorNotificaciones = new GestorNotificaciones(List.of(
+        NotificacionesService gestorNotificaciones = new NotificacionesService(List.of(
             new NotificadorEmail(),
             new NotificadorSMS(),
             new NotificadorWhatsApp()
         ), repositorioNotificaciones);
-        GestorDonaciones gestorDonaciones = new GestorDonaciones(
+        DonacionesService gestorDonaciones = new DonacionesService(
             gestorNotificaciones,
             repositorioPropuestas,
             repositorioNotificaciones,
             "http://localhost:8082/seguimiento-donante",
             "http://localhost:8082/seguimiento-beneficiario"
         );
-        GestorAsignaciones gestorAsignaciones =
-            new GestorAsignaciones(repositorioPropuestas, gestorDonaciones);
+        AsignacionesService gestorAsignaciones =
+            new AsignacionesService(repositorioPropuestas, gestorDonaciones);
         PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(gestorAsignaciones);
         planificador.iniciar();
 
@@ -122,7 +122,7 @@ public class Main {
         System.out.println("Bienes ingresados: " + bienes.size());
         System.out.println("Donaciones generadas: " + donaciones.size());
         donaciones.forEach(d ->
-                System.out.println("  → " + d.getSubcategoria().getNombre()
+                System.out.println("  â†’ " + d.getSubcategoria().getNombre()
                         + " [" + d.getBienes().size() + " bien(es)] estado: " + d.getEstado().getNombre())
         );
         System.out.println();
@@ -132,7 +132,7 @@ public class Main {
         System.out.println("--- [3] Ciclo de estados de una donacion ---");
 
         // Sin observer: en el demo no hay BD para persistir notificaciones.
-        // En el microservicio real, GestorDonaciones.conObservers se encarga.
+        // En el microservicio real, DonacionesService.conObservers se encarga.
         PersonaHumana luis = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
         luis.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
         Donante donante = new Donante(luis);
@@ -174,7 +174,7 @@ public class Main {
         try {
             donacion.marcarEntregada(java.time.LocalDateTime.now(), "AAA111");
         } catch (TransicionNoPermitidaException e) {
-            System.out.println("excepcion capturada correctamente → " + e.getMessage());
+            System.out.println("excepcion capturada correctamente â†’ " + e.getMessage());
         }
         System.out.println();
     }
@@ -189,7 +189,7 @@ public class Main {
         try {
             importador.importarConResumen(ruta);
         } catch (RuntimeException e) {
-            System.out.println("[CSV] Archivo no encontrado en: " + ruta + " — " + e.getMessage());
+            System.out.println("[CSV] Archivo no encontrado en: " + ruta + " â€” " + e.getMessage());
         }
         System.out.println();
     }

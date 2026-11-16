@@ -1,4 +1,4 @@
-package donatrack.logistica;
+﻿package donatrack.logistica;
 
 import donatrack.logistica.controller.CamionesController;
 import donatrack.logistica.controller.ChoferesController;
@@ -32,12 +32,12 @@ import donatrack.logistica.seguridad.ControlDeAccesoAbierto;
 import donatrack.logistica.seguridad.ControlDeAccesoPorToken;
 import donatrack.logistica.seguridad.FiltroDeAcceso;
 import donatrack.logistica.seguridad.VerificadorDeTokens;
-import donatrack.logistica.service.GestorCamiones;
-import donatrack.logistica.service.GestorChoferes;
-import donatrack.logistica.service.GestorEntregas;
-import donatrack.logistica.service.GestorLogistica;
-import donatrack.logistica.service.GestorMonitoreo;
-import donatrack.logistica.service.GestorRutas;
+import donatrack.logistica.service.CamionesService;
+import donatrack.logistica.service.ChoferesService;
+import donatrack.logistica.service.EntregasService;
+import donatrack.logistica.service.LogisticaService;
+import donatrack.logistica.service.MonitoreoService;
+import donatrack.logistica.service.RutasService;
 import donatrack.logistica.service.RecursoInexistenteException;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import io.javalin.Javalin;
@@ -99,13 +99,13 @@ public class LogisticaApp {
         ? new GeneradorRutasSimulado()
         : new GeneradorRutasExterno(urlPlanificador, json);
 
-    GestorCamiones gestorCamiones = new GestorCamiones();
-    GestorChoferes gestorChoferes = new GestorChoferes();
-    GestorRutas gestorRutas = new GestorRutas();
-    GestorEntregas gestorEntregas =
-        new GestorEntregas(clienteDonaciones, urlBase, almacenDeFotos);
-    GestorMonitoreo gestorMonitoreo = new GestorMonitoreo();
-    GestorLogistica gestorLogistica = new GestorLogistica(
+    CamionesService gestorCamiones = new CamionesService();
+    ChoferesService gestorChoferes = new ChoferesService();
+    RutasService gestorRutas = new RutasService();
+    EntregasService gestorEntregas =
+        new EntregasService(clienteDonaciones, urlBase, almacenDeFotos);
+    MonitoreoService gestorMonitoreo = new MonitoreoService();
+    LogisticaService gestorLogistica = new LogisticaService(
         generadorRutas,
         clienteDonaciones,
         urlBase + "/planificacion/callback"

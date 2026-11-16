@@ -1,6 +1,6 @@
-package donatrack.donaciones.jobs;
+﻿package donatrack.donaciones.jobs;
 
-import donatrack.donaciones.service.GestorAsignaciones;
+import donatrack.donaciones.service.AsignacionesService;
 import donatrack.donaciones.service.ResultadoCorrida;
 
 import java.time.Duration;
@@ -16,11 +16,11 @@ public class PlanificadorAsignaciones {
     public static final LocalTime HORA_POR_DEFECTO = LocalTime.of(3, 0);
     private static final long PERIODO_HORAS = 24;
 
-    private final GestorAsignaciones gestor;
+    private final AsignacionesService gestor;
     private final LocalTime hora;
     private final ScheduledExecutorService executor;
 
-    public PlanificadorAsignaciones(GestorAsignaciones gestor, LocalTime hora) {
+    public PlanificadorAsignaciones(AsignacionesService gestor, LocalTime hora) {
         this.gestor = gestor;
         this.hora = hora;
         this.executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
@@ -30,7 +30,7 @@ public class PlanificadorAsignaciones {
         });
     }
 
-    public PlanificadorAsignaciones(GestorAsignaciones gestor) {
+    public PlanificadorAsignaciones(AsignacionesService gestor) {
         this(gestor, HORA_POR_DEFECTO);
     }
 
@@ -50,10 +50,10 @@ public class PlanificadorAsignaciones {
 
     private void ejecutar() {
         // scheduleAtFixedRate cancela silenciosamente todas las corridas futuras si la
-        // tarea lanza una excepción — atrapar RuntimeException para que el job siga vivo.
+        // tarea lanza una excepciÃ³n â€” atrapar RuntimeException para que el job siga vivo.
         try {
             ResultadoCorrida resultado = gestor.ejecutarMatchmakingProgramado();
-            System.out.println("[MATCHMAKING] Corrida programada — donaciones procesadas: "
+            System.out.println("[MATCHMAKING] Corrida programada â€” donaciones procesadas: "
                 + resultado.exitosas() + ", fallidas: " + resultado.cantidadDeFallas());
             resultado.fallidas().forEach(falla ->
                 System.err.println("[MATCHMAKING] " + falla));

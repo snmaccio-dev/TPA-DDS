@@ -1,4 +1,4 @@
-package donatrack.logistica.service;
+﻿package donatrack.logistica.service;
 
 import donatrack.logistica.domain.ConflictoDeNegocioException;
 import donatrack.logistica.domain.DatosInvalidosException;
@@ -14,7 +14,7 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import java.util.List;
 import java.util.Optional;
 
-public class GestorMonitoreo implements WithSimplePersistenceUnit {
+public class MonitoreoService implements WithSimplePersistenceUnit {
 
   private final RepositorioPosiciones repositorioPosiciones =
       RepositorioPosiciones.getInstance();

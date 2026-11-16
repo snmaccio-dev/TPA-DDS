@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.contacto.MedioContacto;
@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GestorPersonasAltaTest implements SimplePersistenceTest {
+class PersonasServiceAltaTest implements SimplePersistenceTest {
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioDonantes repoDonantes = new RepositorioDonantes();
@@ -49,7 +49,7 @@ class GestorPersonasAltaTest implements SimplePersistenceTest {
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService gestor = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
     PersonaHumana mismaPersonaMismoDocumento =
@@ -83,7 +83,7 @@ class GestorPersonasAltaTest implements SimplePersistenceTest {
 
     String kcId = DatosDeTest.keycloakIdUnico();
     ProveedorFalso proveedor = new ProveedorFalso(kcId);
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService gestor = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
     PersonaHumana reintento =

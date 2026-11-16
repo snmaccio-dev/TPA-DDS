@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.catalogo.Categoria;
@@ -34,7 +34,7 @@ import static org.mockito.Mockito.mock;
 // con SimplePersistenceTest porque necesitamos que la transaccion del gestor
 // se abra, commitee y haga rollback de verdad. Manejamos nosotros la tx para
 // armar los datos previos.
-class GestorDonacionesLoteAtomicoTest implements WithSimplePersistenceUnit {
+class DonacionesServiceLoteAtomicoTest implements WithSimplePersistenceUnit {
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioDonantes repoDonantes = new RepositorioDonantes();
@@ -43,8 +43,8 @@ class GestorDonacionesLoteAtomicoTest implements WithSimplePersistenceUnit {
 
   @Test
   void siLaSegundaTransicionFallaElLoteSeRevierteYLaPrimeraNoCambia() {
-    GestorDonaciones gestor = new GestorDonaciones(
-        mock(GestorNotificaciones.class),
+    DonacionesService gestor = new DonacionesService(
+        mock(NotificacionesService.class),
         new RepositorioPropuestas(),
         mock(RepositorioNotificaciones.class),
         "http://web/donante",

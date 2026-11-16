@@ -1,4 +1,4 @@
-package donatrack.logistica.service;
+﻿package donatrack.logistica.service;
 
 import donatrack.logistica.domain.TransicionNoPermitidaException;
 import donatrack.logistica.domain.ruta.EstadoRuta;
@@ -9,7 +9,7 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GestorRutas implements WithSimplePersistenceUnit {
+public class RutasService implements WithSimplePersistenceUnit {
 
   private final RepositorioRutas repositorio =
       RepositorioRutas.getInstance();

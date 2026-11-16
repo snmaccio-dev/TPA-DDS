@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GestorPersonasEliminarTest implements SimplePersistenceTest {
+class PersonasServiceEliminarTest implements SimplePersistenceTest {
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioDonantes repoDonantes = new RepositorioDonantes();
@@ -65,7 +65,7 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService gestor = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
     gestor.eliminar(documento);
@@ -90,7 +90,7 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     donacionDe(donante);
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService gestor = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
     assertThrows(ConflictoDeNegocioException.class, () -> gestor.eliminar(documento));
@@ -114,7 +114,7 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     entityManager().flush();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService gestor = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
     gestor.eliminar(cuit);
@@ -128,7 +128,7 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
 
   @Test
   void eliminarInexistenteDa404() {
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService gestor = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades,
         new ProveedorFalso());
     assertThrows(RecursoInexistenteException.class, () -> gestor.eliminar("no-existe"));
@@ -148,7 +148,7 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso(true);
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService gestor = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
     gestor.eliminar(documento);

@@ -1,16 +1,16 @@
-package donatrack.logistica.controller;
+﻿package donatrack.logistica.controller;
 
 import donatrack.logistica.controller.dto.CrearChoferRequest;
 import donatrack.logistica.seguridad.RolDeAcceso;
-import donatrack.logistica.service.GestorChoferes;
+import donatrack.logistica.service.ChoferesService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 public class ChoferesController {
 
-  private final GestorChoferes gestor;
+  private final ChoferesService gestor;
 
-  public ChoferesController(GestorChoferes gestor) {
+  public ChoferesController(ChoferesService gestor) {
     this.gestor = gestor;
   }
 

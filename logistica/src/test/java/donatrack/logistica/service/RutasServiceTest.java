@@ -1,4 +1,4 @@
-package donatrack.logistica.service;
+﻿package donatrack.logistica.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -17,9 +17,9 @@ import io.github.flbulgarelli.jpa.extras.test.SimplePersistenceTest;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
-class GestorRutasTest implements SimplePersistenceTest {
+class RutasServiceTest implements SimplePersistenceTest {
 
-  private final GestorRutas gestor = new GestorRutas();
+  private final RutasService gestor = new RutasService();
   private final RepositorioRutas repositorio = RepositorioRutas.getInstance();
 
   private RutaReparto rutaPlanificada(String patente, long donacionId) {

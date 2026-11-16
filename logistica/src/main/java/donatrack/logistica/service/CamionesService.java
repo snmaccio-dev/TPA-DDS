@@ -1,4 +1,4 @@
-package donatrack.logistica.service;
+﻿package donatrack.logistica.service;
 
 import donatrack.logistica.domain.ConflictoDeNegocioException;
 import donatrack.logistica.domain.flota.Camion;
@@ -9,7 +9,7 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import java.util.List;
 import java.util.Set;
 
-public class GestorCamiones implements WithSimplePersistenceUnit {
+public class CamionesService implements WithSimplePersistenceUnit {
 
   private final RepositorioCamiones repositorio =
       RepositorioCamiones.getInstance();
@@ -24,7 +24,7 @@ public class GestorCamiones implements WithSimplePersistenceUnit {
     return repositorio.buscar(patente)
         .orElseThrow(() ->
             new RecursoInexistenteException(
-                "No existe el camión con patente " + patente
+                "No existe el camiÃ³n con patente " + patente
             ));
   }
 
@@ -46,7 +46,7 @@ public class GestorCamiones implements WithSimplePersistenceUnit {
 
       if (repositorioRutas.patentesConRutaEnCurso().contains(patente)) {
         throw new ConflictoDeNegocioException(
-            "El camión " + patente + " está en una ruta en curso y no puede modificarse."
+            "El camiÃ³n " + patente + " estÃ¡ en una ruta en curso y no puede modificarse."
         );
       }
 
@@ -62,7 +62,7 @@ public class GestorCamiones implements WithSimplePersistenceUnit {
 
       if (repositorioRutas.tieneRutasDeCamion(patente)) {
         throw new ConflictoDeNegocioException(
-            "El camión " + patente + " tiene rutas asociadas y no puede eliminarse."
+            "El camiÃ³n " + patente + " tiene rutas asociadas y no puede eliminarse."
         );
       }
 

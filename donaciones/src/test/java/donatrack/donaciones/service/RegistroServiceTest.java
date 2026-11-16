@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
@@ -30,12 +30,12 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-// NOTA: no implementa SimplePersistenceTest a proposito. GestorRegistro usa
+// NOTA: no implementa SimplePersistenceTest a proposito. RegistroService usa
 // withTransaction de jpa-extras y queremos que esas transacciones se abran
 // y commiteen de verdad (y hagan rollback real cuando corresponde) para
 // poder verificar el efecto. Los datos unicos vienen de DatosDeTest, con
 // un unico AtomicLong compartido entre todas las clases del run.
-public class GestorRegistroTest implements WithSimplePersistenceUnit {
+public class RegistroServiceTest implements WithSimplePersistenceUnit {
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioDonantes repoDonantes = new RepositorioDonantes();
@@ -46,7 +46,7 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
   void registrarDonanteExitosoPersisteTodoYDevuelveElVinculo() {
     String kcId = DatosDeTest.keycloakIdUnico();
     ProveedorDeIdentidadFalso proveedor = new ProveedorDeIdentidadFalso(kcId);
-    GestorRegistro gestor = nuevoGestor(proveedor);
+    RegistroService gestor = nuevoGestor(proveedor);
 
     String documento = DatosDeTest.documentoUnico();
     Persona persona = new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
@@ -68,7 +68,7 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
   void documentoYaExistenteDevuelve409YNoTocaKeycloak() {
     ProveedorDeIdentidadFalso proveedor =
         new ProveedorDeIdentidadFalso(DatosDeTest.keycloakIdUnico());
-    GestorRegistro gestor = nuevoGestor(proveedor);
+    RegistroService gestor = nuevoGestor(proveedor);
 
     String documento = DatosDeTest.documentoUnico();
     // Precondicion: ya hay una persona con ese documento.
@@ -89,7 +89,7 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
   void siKeycloakResponde409NoSePersisteNada() {
     ProveedorDeIdentidadFalso proveedor = new ProveedorDeIdentidadFalso(
         () -> { throw new ConflictoDeNegocioException("Ya existe una cuenta con ese correo."); });
-    GestorRegistro gestor = nuevoGestor(proveedor);
+    RegistroService gestor = nuevoGestor(proveedor);
 
     String documento = DatosDeTest.documentoUnico();
     Persona persona = new PersonaHumana("X", "Y", 30, documento, Genero.FEMENINO);
@@ -110,7 +110,7 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
         throw new RuntimeException("DB caida simulada.");
       }
     };
-    GestorRegistro gestor = new GestorRegistro(
+    RegistroService gestor = new RegistroService(
         proveedor, repoPersonas, repoDonantes, repoEntidades, repoRoto);
 
     String documento = DatosDeTest.documentoUnico();
@@ -126,7 +126,7 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
   void registrarBeneficiariaExitosoPersisteTodo() {
     String kcId = DatosDeTest.keycloakIdUnico();
     ProveedorDeIdentidadFalso proveedor = new ProveedorDeIdentidadFalso(kcId);
-    GestorRegistro gestor = nuevoGestor(proveedor);
+    RegistroService gestor = nuevoGestor(proveedor);
 
     String cuit = DatosDeTest.cuitUnico();
     PersonaJuridica juridica = new PersonaJuridica(cuit, DatosDeTest.textoUnico("Comedor"), TipoOrganizacion.ONG, "Comedor");
@@ -150,7 +150,7 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
   void contrasenaCortaDevuelve400YNoLlamaAKeycloak() {
     ProveedorDeIdentidadFalso proveedor =
         new ProveedorDeIdentidadFalso(DatosDeTest.keycloakIdUnico());
-    GestorRegistro gestor = nuevoGestor(proveedor);
+    RegistroService gestor = nuevoGestor(proveedor);
 
     String documento = DatosDeTest.documentoUnico();
     Persona persona = new PersonaHumana("Q", "R", 30, documento, Genero.FEMENINO);
@@ -160,8 +160,8 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
     assertTrue(proveedor.creados.isEmpty());
   }
 
-  private GestorRegistro nuevoGestor(ProveedorDeIdentidad proveedor) {
-    return new GestorRegistro(proveedor, repoPersonas, repoDonantes, repoEntidades, repoUsuarios);
+  private RegistroService nuevoGestor(ProveedorDeIdentidad proveedor) {
+    return new RegistroService(proveedor, repoPersonas, repoDonantes, repoEntidades, repoUsuarios);
   }
 
   // === ProveedorDeIdentidad falso que registra las llamadas ===

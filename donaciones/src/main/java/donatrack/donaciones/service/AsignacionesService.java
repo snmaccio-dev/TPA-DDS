@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.donacion.asignacion.Algoritmo;
@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class GestorAsignaciones implements WithSimplePersistenceUnit {
+public class AsignacionesService implements WithSimplePersistenceUnit {
 
   private final Algoritmo compatibilidad;
   private final Algoritmo prioridadSubAtendidos;
@@ -29,10 +29,10 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
   private final RepositorioPropuestas repositorioPropuestas;
   // Se usa en confirmarDestino para que la donacion traiga enganchado el
   // observer y las notificaciones de ASIGNACION_REALIZADA salgan.
-  private final GestorDonaciones gestorDonaciones;
+  private final DonacionesService gestorDonaciones;
 
-  public GestorAsignaciones(RepositorioPropuestas repositorioPropuestas,
-                            GestorDonaciones gestorDonaciones) {
+  public AsignacionesService(RepositorioPropuestas repositorioPropuestas,
+                            DonacionesService gestorDonaciones) {
     this.compatibilidad = new CompatibilidadSemantica();
     this.prioridadSubAtendidos = new PrioridadSubatendidos();
     this.repositorioDonaciones = RepositorioDonaciones.getInstance();
@@ -41,7 +41,7 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
     this.gestorDonaciones = gestorDonaciones;
   }
 
-  // EJECUCIÓN A DEMANDA
+  // EJECUCIÃ“N A DEMANDA
   public List<Beneficiaria> ejecutarAsignacion(Donacion donacion) {
     return obtenerPropuesta(donacion);
   }
@@ -51,7 +51,7 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
     return calcularPropuesta(donacion).candidatas();
   }
 
-  // EJECUCIÓN PROGRAMADA
+  // EJECUCIÃ“N PROGRAMADA
   public ResultadoCorrida ejecutarMatchmakingProgramado() {
     List<Donacion> pendientes = repositorioDonaciones.enEstado(EstadosPosiblesDonacion.EN_DEPOSITO);
 
@@ -71,7 +71,7 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
         });
         procesadas++;
       } catch (RuntimeException e) {
-        fallidas.add("donación " + donacion.getId() + ": " + e.getMessage());
+        fallidas.add("donaciÃ³n " + donacion.getId() + ": " + e.getMessage());
       }
     }
     return new ResultadoCorrida(procesadas, fallidas);
@@ -85,8 +85,8 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
     return repositorioPropuestas.todas();
   }
 
-  // Confirma el destino final de la donación. El filtro de acceso ya garantiza
-  // que quien llega aca tiene rol ADMINISTRADOR. Usamos GestorDonaciones.buscar
+  // Confirma el destino final de la donaciÃ³n. El filtro de acceso ya garantiza
+  // que quien llega aca tiene rol ADMINISTRADOR. Usamos DonacionesService.buscar
   // para que la Donacion traiga el observer de notificaciones ya enganchado y
   // la transicion dispare DONACION_ASIGNADA al donante y a la beneficiaria.
   public void confirmarDestino(long donacionId, Beneficiaria destinatario) {
@@ -102,7 +102,7 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
   private ResultadoMatchmaking calcularPropuesta(Donacion donacion) {
     if (donacion.getEstado().getEstado() != EstadosPosiblesDonacion.EN_DEPOSITO) {
       throw new TransicionNoPermitidaException(
-          "Solo pueden asignarse donaciones en estado En Depósito."
+          "Solo pueden asignarse donaciones en estado En DepÃ³sito."
       );
     }
 

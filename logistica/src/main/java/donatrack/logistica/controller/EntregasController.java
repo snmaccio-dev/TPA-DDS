@@ -1,4 +1,4 @@
-package donatrack.logistica.controller;
+﻿package donatrack.logistica.controller;
 
 import donatrack.logistica.controller.dto.ConfirmarRecepcionRequest;
 import donatrack.logistica.controller.dto.EntregaDTO;
@@ -11,7 +11,7 @@ import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.integracion.IntegracionExternaException;
 import donatrack.logistica.seguridad.ControlDeAcceso;
 import donatrack.logistica.seguridad.RolDeAcceso;
-import donatrack.logistica.service.GestorEntregas;
+import donatrack.logistica.service.EntregasService;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
@@ -22,10 +22,10 @@ import java.util.List;
 
 public class EntregasController {
 
-  private final GestorEntregas gestor;
+  private final EntregasService gestor;
   private final ControlDeAcceso control;
 
-  public EntregasController(GestorEntregas gestor, ControlDeAcceso control) {
+  public EntregasController(EntregasService gestor, ControlDeAcceso control) {
     this.gestor = gestor;
     this.control = control;
   }

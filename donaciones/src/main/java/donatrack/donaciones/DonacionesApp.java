@@ -1,4 +1,4 @@
-package donatrack.donaciones;
+﻿package donatrack.donaciones;
 
 import donatrack.donaciones.controller.AdministradoresController;
 import donatrack.donaciones.controller.AsignacionesController;
@@ -37,14 +37,14 @@ import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
 import donatrack.donaciones.service.ConsultaDeNotificaciones;
 import donatrack.donaciones.service.EventoYaAplicadoException;
-import donatrack.donaciones.service.GestorAsignaciones;
-import donatrack.donaciones.service.GestorDonaciones;
-import donatrack.donaciones.service.GestorDonantes;
-import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
-import donatrack.donaciones.service.GestorNecesidades;
-import donatrack.donaciones.service.GestorNotificaciones;
-import donatrack.donaciones.service.GestorPersonas;
-import donatrack.donaciones.service.GestorRegistro;
+import donatrack.donaciones.service.AsignacionesService;
+import donatrack.donaciones.service.DonacionesService;
+import donatrack.donaciones.service.DonantesService;
+import donatrack.donaciones.service.EntidadesBeneficiariasService;
+import donatrack.donaciones.service.NecesidadesService;
+import donatrack.donaciones.service.NotificacionesService;
+import donatrack.donaciones.service.PersonasService;
+import donatrack.donaciones.service.RegistroService;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
@@ -100,24 +100,24 @@ public class DonacionesApp {
         new VerificadorDeTokens(keycloakUrl, keycloakRealm, keycloakIssuer);
     FiltroDeAcceso filtro = new FiltroDeAcceso(verificador, repositorioUsuarios);
 
-    GestorNotificaciones gestorNotificaciones = new GestorNotificaciones(List.of(
+    NotificacionesService gestorNotificaciones = new NotificacionesService(List.of(
         new NotificadorEmail(),
         new NotificadorSMS(),
         new NotificadorWhatsApp()
     ), repositorioNotificaciones);
     ConsultaDeNotificaciones consultaNotificaciones =
         new ConsultaDeNotificaciones(repositorioNotificaciones);
-    GestorDonaciones gestorDonaciones = new GestorDonaciones(
+    DonacionesService gestorDonaciones = new DonacionesService(
         gestorNotificaciones,
         repositorioPropuestas,
         repositorioNotificaciones,
         urlWeb + "/seguimiento-donante",
         urlWeb + "/seguimiento-beneficiario"
     );
-    GestorAsignaciones gestorAsignaciones =
-        new GestorAsignaciones(repositorioPropuestas, gestorDonaciones);
-    GestorEntidadesBeneficiarias gestorEntidades =
-        new GestorEntidadesBeneficiarias(
+    AsignacionesService gestorAsignaciones =
+        new AsignacionesService(repositorioPropuestas, gestorDonaciones);
+    EntidadesBeneficiariasService gestorEntidades =
+        new EntidadesBeneficiariasService(
             repositorioUsuarios,
             repositorioNotificaciones,
             donatrack.donaciones.repository.RepositorioNecesidades.getInstance(),
@@ -125,17 +125,17 @@ public class DonacionesApp {
             RepositorioDonaciones.getInstance(),
             repositorioDonantes,
             proveedor);
-    GestorNecesidades gestorNecesidades = new GestorNecesidades();
-    GestorPersonas gestorPersonas =
-        new GestorPersonas(
+    NecesidadesService gestorNecesidades = new NecesidadesService();
+    PersonasService gestorPersonas =
+        new PersonasService(
             repositorioDonantes,
             repositorioUsuarios,
             repositorioNotificaciones,
             RepositorioDonaciones.getInstance(),
             repositorioEntidades,
             proveedor);
-    GestorDonantes gestorDonantes = new GestorDonantes(repositorioDonantes, gestorNotificaciones);
-    GestorRegistro gestorRegistro = new GestorRegistro(
+    DonantesService gestorDonantes = new DonantesService(repositorioDonantes, gestorNotificaciones);
+    RegistroService gestorRegistro = new RegistroService(
         proveedor, repositorioPersonas, repositorioDonantes, repositorioEntidades, repositorioUsuarios);
 
     Javalin app = Javalin.create().start(PUERTO);

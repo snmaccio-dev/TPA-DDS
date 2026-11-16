@@ -1,6 +1,6 @@
-package donatrack.donaciones.jobs;
+﻿package donatrack.donaciones.jobs;
 
-import donatrack.donaciones.service.GestorDonantes;
+import donatrack.donaciones.service.DonantesService;
 import donatrack.donaciones.service.ResultadoCorrida;
 
 import java.time.Duration;
@@ -18,11 +18,11 @@ public class PlanificadorAvisosInactividad {
     public static final LocalTime HORA_POR_DEFECTO = LocalTime.of(9, 0);
     private static final long PERIODO_HORAS = 24;
 
-    private final GestorDonantes gestor;
+    private final DonantesService gestor;
     private final LocalTime hora;
     private final ScheduledExecutorService executor;
 
-    public PlanificadorAvisosInactividad(GestorDonantes gestor, LocalTime hora) {
+    public PlanificadorAvisosInactividad(DonantesService gestor, LocalTime hora) {
         this.gestor = gestor;
         this.hora = hora;
         this.executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
@@ -32,7 +32,7 @@ public class PlanificadorAvisosInactividad {
         });
     }
 
-    public PlanificadorAvisosInactividad(GestorDonantes gestor) {
+    public PlanificadorAvisosInactividad(DonantesService gestor) {
         this(gestor, HORA_POR_DEFECTO);
     }
 
@@ -52,10 +52,10 @@ public class PlanificadorAvisosInactividad {
 
     private void ejecutar() {
         // scheduleAtFixedRate cancela silenciosamente todas las corridas futuras si la
-        // tarea lanza una excepción — atrapar RuntimeException para que el job siga vivo.
+        // tarea lanza una excepciÃ³n â€” atrapar RuntimeException para que el job siga vivo.
         try {
             ResultadoCorrida resultado = gestor.avisarInactivos();
-            System.out.println("[AVISO-INACTIVIDAD] Corrida programada — donantes avisados: "
+            System.out.println("[AVISO-INACTIVIDAD] Corrida programada â€” donantes avisados: "
                 + resultado.exitosas() + ", fallidos: " + resultado.cantidadDeFallas());
             resultado.fallidas().forEach(falla ->
                 System.err.println("[AVISO-INACTIVIDAD] " + falla));

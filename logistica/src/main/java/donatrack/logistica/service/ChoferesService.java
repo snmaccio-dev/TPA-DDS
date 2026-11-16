@@ -1,4 +1,4 @@
-package donatrack.logistica.service;
+﻿package donatrack.logistica.service;
 
 import donatrack.logistica.domain.ConflictoDeNegocioException;
 import donatrack.logistica.domain.flota.Chofer;
@@ -7,7 +7,7 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.List;
 
-public class GestorChoferes implements WithSimplePersistenceUnit {
+public class ChoferesService implements WithSimplePersistenceUnit {
 
   private final RepositorioChoferes repositorio =
       RepositorioChoferes.getInstance();

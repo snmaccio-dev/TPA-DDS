@@ -1,4 +1,4 @@
-package donatrack.donaciones;
+﻿package donatrack.donaciones;
 
 import com.nimbusds.jose.JOSEObjectType;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -31,13 +31,13 @@ import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
 import donatrack.donaciones.service.ConsultaDeNotificaciones;
-import donatrack.donaciones.service.GestorAsignaciones;
-import donatrack.donaciones.service.GestorDonaciones;
-import donatrack.donaciones.service.GestorDonantes;
-import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
-import donatrack.donaciones.service.GestorNecesidades;
-import donatrack.donaciones.service.GestorPersonas;
-import donatrack.donaciones.service.GestorRegistro;
+import donatrack.donaciones.service.AsignacionesService;
+import donatrack.donaciones.service.DonacionesService;
+import donatrack.donaciones.service.DonantesService;
+import donatrack.donaciones.service.EntidadesBeneficiariasService;
+import donatrack.donaciones.service.NecesidadesService;
+import donatrack.donaciones.service.PersonasService;
+import donatrack.donaciones.service.RegistroService;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
 import org.junit.jupiter.api.BeforeAll;
@@ -190,13 +190,13 @@ class RutasTest {
     final RepositorioSubcategorias repoSubcategorias = mock(RepositorioSubcategorias.class);
     final RepositorioEntidades repoEntidades = mock(RepositorioEntidades.class);
     final RepositorioDonaciones repoDonaciones = mock(RepositorioDonaciones.class);
-    final GestorRegistro gestorRegistro = mock(GestorRegistro.class);
-    final GestorDonaciones gestorDonaciones = mock(GestorDonaciones.class);
-    final GestorAsignaciones gestorAsignaciones = mock(GestorAsignaciones.class);
-    final GestorEntidadesBeneficiarias gestorEntidades = mock(GestorEntidadesBeneficiarias.class);
-    final GestorNecesidades gestorNecesidades = mock(GestorNecesidades.class);
-    final GestorPersonas gestorPersonas = mock(GestorPersonas.class);
-    final GestorDonantes gestorDonantes = mock(GestorDonantes.class);
+    final RegistroService gestorRegistro = mock(RegistroService.class);
+    final DonacionesService gestorDonaciones = mock(DonacionesService.class);
+    final AsignacionesService gestorAsignaciones = mock(AsignacionesService.class);
+    final EntidadesBeneficiariasService gestorEntidades = mock(EntidadesBeneficiariasService.class);
+    final NecesidadesService gestorNecesidades = mock(NecesidadesService.class);
+    final PersonasService gestorPersonas = mock(PersonasService.class);
+    final DonantesService gestorDonantes = mock(DonantesService.class);
     final ConsultaDeNotificaciones consultaNotificaciones = mock(ConsultaDeNotificaciones.class);
 
     Dependencias() {

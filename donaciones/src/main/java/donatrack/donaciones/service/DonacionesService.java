@@ -1,4 +1,4 @@
-package donatrack.donaciones.service;
+﻿package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.donacion.Bien;
@@ -17,12 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class GestorDonaciones implements WithSimplePersistenceUnit {
+public class DonacionesService implements WithSimplePersistenceUnit {
 
     private final SegmentadorDonaciones segmentacion = new SegmentadorDonaciones();
     private final RepositorioDonaciones repositorio =
         RepositorioDonaciones.getInstance();
-    private final GestorNotificaciones gestorNotificaciones;
+    private final NotificacionesService gestorNotificaciones;
     private final RepositorioPropuestas repositorioPropuestas;
     private final RepositorioNotificaciones repositorioNotificaciones;
     // Links a la vista de seguimiento del web; se usan al armar la notificacion
@@ -31,7 +31,7 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
     private final String linkSeguimientoDonante;
     private final String linkSeguimientoBeneficiario;
 
-    public GestorDonaciones(GestorNotificaciones gestorNotificaciones,
+    public DonacionesService(NotificacionesService gestorNotificaciones,
                             RepositorioPropuestas repositorioPropuestas,
                             RepositorioNotificaciones repositorioNotificaciones,
                             String linkSeguimientoDonante,
@@ -78,7 +78,7 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
         Donacion donacion = repositorio.buscarPorId(id)
             .orElseThrow(() ->
                 new RecursoInexistenteException(
-                    "No existe la donación con ID " + id
+                    "No existe la donaciÃ³n con ID " + id
                 ));
         return conObservers(donacion);
     }

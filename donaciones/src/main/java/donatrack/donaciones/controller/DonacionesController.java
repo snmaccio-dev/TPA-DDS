@@ -1,4 +1,4 @@
-package donatrack.donaciones.controller;
+﻿package donatrack.donaciones.controller;
 
 import donatrack.donaciones.controller.dto.ComprobanteDTO;
 import donatrack.donaciones.controller.dto.DonacionDTO;
@@ -24,7 +24,7 @@ import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.UsuarioActual;
 import donatrack.donaciones.service.EventoYaAplicadoException;
 import donatrack.donaciones.service.FiltroDonaciones;
-import donatrack.donaciones.service.GestorDonaciones;
+import donatrack.donaciones.service.DonacionesService;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.http.Context;
 
@@ -33,12 +33,12 @@ import java.util.List;
 
 public class DonacionesController {
 
-  private final GestorDonaciones gestor;
+  private final DonacionesService gestor;
   private final RepositorioPersonas repositorioPersonas;
   private final RepositorioDonantes repositorioDonantes;
   private final RepositorioSubcategorias repositorioSubcategorias;
 
-  public DonacionesController(GestorDonaciones gestor,
+  public DonacionesController(DonacionesService gestor,
                               RepositorioPersonas repositorioPersonas,
                               RepositorioDonantes repositorioDonantes,
                               RepositorioSubcategorias repositorioSubcategorias) {
@@ -182,14 +182,14 @@ public class DonacionesController {
     if ("ENTREGADA".equals(evento.resultado())) {
       if (actual == EstadosPosiblesDonacion.ENTREGADA) {
         throw new EventoYaAplicadoException(
-            "La donación " + donacion.getId() + " ya estaba entregada."
+            "La donaciÃ³n " + donacion.getId() + " ya estaba entregada."
         );
       }
       gestor.marcarEntregada(donacion.getId(), evento.fechaHoraMedida(), evento.patenteCamion());
     } else if ("NO_RECIBIDA".equals(evento.resultado())) {
       if (actual == EstadosPosiblesDonacion.ENTREGA_FALLIDA) {
         throw new EventoYaAplicadoException(
-            "La donación " + donacion.getId() + " ya estaba marcada como no recibida."
+            "La donaciÃ³n " + donacion.getId() + " ya estaba marcada como no recibida."
         );
       }
       gestor.marcarEntregaFallida(donacion.getId(), evento.motivo());
@@ -208,7 +208,7 @@ public class DonacionesController {
     EstadosPosiblesDonacion actual = donacion.getEstado().getEstado();
     if (actual == EstadosPosiblesDonacion.EN_DEPOSITO) {
       throw new EventoYaAplicadoException(
-          "La donación " + donacion.getId() + " ya estaba en depósito."
+          "La donaciÃ³n " + donacion.getId() + " ya estaba en depÃ³sito."
       );
     }
     gestor.marcarEnDeposito(donacion.getId());
@@ -233,7 +233,7 @@ public class DonacionesController {
   private Bien bienDe(NuevaDonacionRequest.BienRequest req) {
     Subcategoria subcategoria = repositorioSubcategorias.buscarPorNombre(req.subcategoria())
         .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la subcategoría '" + req.subcategoria() + "'."
+            "No existe la subcategorÃ­a '" + req.subcategoria() + "'."
         ));
     CondicionBien condicion = req.condicion() == null ? null : CondicionBien.valueOf(req.condicion());
     Bien bien = new Bien(req.descripcion(), subcategoria, req.cantidad(), condicion);

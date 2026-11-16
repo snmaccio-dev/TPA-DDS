@@ -1,6 +1,6 @@
-package donatrack.logistica.jobs;
+﻿package donatrack.logistica.jobs;
 
-import donatrack.logistica.service.GestorLogistica;
+import donatrack.logistica.service.LogisticaService;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.time.Duration;
@@ -16,7 +16,7 @@ public class JobPlanificacionRutas {
 
   private static final long UN_DIA_EN_SEGUNDOS = TimeUnit.DAYS.toSeconds(1);
 
-  private final GestorLogistica gestorLogistica;
+  private final LogisticaService gestorLogistica;
   private final LocalTime horario;
 
   private final ScheduledExecutorService planificador =
@@ -26,7 +26,7 @@ public class JobPlanificacionRutas {
         return hilo;
       });
 
-  public JobPlanificacionRutas(GestorLogistica gestorLogistica, LocalTime horario) {
+  public JobPlanificacionRutas(LogisticaService gestorLogistica, LocalTime horario) {
     if (gestorLogistica == null) {
       throw new IllegalArgumentException("Debe indicarse el gestor de logistica.");
     }

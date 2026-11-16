@@ -1,9 +1,9 @@
-package donatrack.logistica.graphql;
+﻿package donatrack.logistica.graphql;
 
 import donatrack.logistica.controller.dto.EntregaDTO;
 import donatrack.logistica.controller.dto.RutaDTO;
-import donatrack.logistica.service.GestorLogistica;
-import donatrack.logistica.service.GestorRutas;
+import donatrack.logistica.service.LogisticaService;
+import donatrack.logistica.service.RutasService;
 import graphql.GraphQL;
 import graphql.schema.idl.RuntimeWiring;
 import graphql.schema.idl.SchemaGenerator;
@@ -21,7 +21,7 @@ public final class EsquemaGraphQl {
   private EsquemaGraphQl() {
   }
 
-  public static GraphQL construir(GestorRutas gestorRutas, GestorLogistica gestorLogistica) {
+  public static GraphQL construir(RutasService gestorRutas, LogisticaService gestorLogistica) {
     TypeDefinitionRegistry registro = new SchemaParser().parse(leerEsquema());
 
     // Cada campo de Planificacion resuelve por separado: si la consulta pide solo las

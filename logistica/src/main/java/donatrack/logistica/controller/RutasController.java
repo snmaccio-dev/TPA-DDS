@@ -1,4 +1,4 @@
-package donatrack.logistica.controller;
+﻿package donatrack.logistica.controller;
 
 import donatrack.logistica.controller.dto.EntregaDTO;
 import donatrack.logistica.controller.dto.IniciarRutaRequest;
@@ -6,23 +6,23 @@ import donatrack.logistica.controller.dto.RutaDTO;
 import donatrack.logistica.domain.flota.Chofer;
 import donatrack.logistica.seguridad.ControlDeAcceso;
 import donatrack.logistica.seguridad.RolDeAcceso;
-import donatrack.logistica.service.GestorChoferes;
-import donatrack.logistica.service.GestorEntregas;
-import donatrack.logistica.service.GestorRutas;
+import donatrack.logistica.service.ChoferesService;
+import donatrack.logistica.service.EntregasService;
+import donatrack.logistica.service.RutasService;
 import donatrack.logistica.service.RecursoInexistenteException;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 public class RutasController {
 
-  private final GestorRutas gestorRutas;
-  private final GestorEntregas gestorEntregas;
-  private final GestorChoferes gestorChoferes;
+  private final RutasService gestorRutas;
+  private final EntregasService gestorEntregas;
+  private final ChoferesService gestorChoferes;
   private final ControlDeAcceso control;
 
-  public RutasController(GestorRutas gestorRutas,
-                         GestorEntregas gestorEntregas,
-                         GestorChoferes gestorChoferes,
+  public RutasController(RutasService gestorRutas,
+                         EntregasService gestorEntregas,
+                         ChoferesService gestorChoferes,
                          ControlDeAcceso control) {
     this.gestorRutas = gestorRutas;
     this.gestorEntregas = gestorEntregas;
