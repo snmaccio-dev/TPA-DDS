@@ -1,0 +1,39 @@
+
+.objectives-section {
+    padding-top: 40px;
+}
+
+.objectives-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 36px;
+}
+
+.objective-card {
+    padding: 28px;
+    border: 1px solid var(--superficie-hover);
+    border-radius: 18px;
+    background: var(--superficie);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.objective-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--cian);
+}
+
+.objective-card h3 {
+    margin: 18px 0 10px;
+}
+
+.objective-card p {
+    color: var(--texto-secundario);
+    line-height: 1.7;
+}
+
+@media (max-width: 768px) {
+    .objectives-grid {
+        grid-template-columns: 1fr;
+    }
+}

@@ -43,3 +43,5 @@ build/
 
 ### Fotos de entregas subidas en local (AlmacenEnDisco) ###
 fotos/
+# Secretos del entorno local
+.env

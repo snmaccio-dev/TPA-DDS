@@ -93,13 +93,33 @@ public class DonacionesController {
     ctx.json(DonacionDTO.desde(donacion));
   }
 
-  public void crear(Context ctx) {
+/*
+  private void crear(Context ctx) {
     NuevaDonacionRequest request = ctx.bodyAsClass(NuevaDonacionRequest.class);
     Donante donante = donanteDe(request.donanteDocumento());
     List<Bien> bienes = request.bienes().stream()
         .map(this::bienDe)
         .toList();
     ctx.status(201).json(DonacionDTO.desde(gestor.crear(bienes, donante, request.descripcion())));
+  }
+*/
+
+  public void crear(Context ctx) {
+      NuevaDonacionRequest request = ctx.bodyAsClass(NuevaDonacionRequest.class);
+
+      UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
+
+      Donante donante = usuario.esAdministrador()
+          ? donanteDe(request.donanteDocumento())
+          : Acceso.perfilDonanteObligatorio(usuario);
+
+      List<Bien> bienes = request.bienes().stream()
+          .map(this::bienDe)
+          .toList();
+
+      ctx.status(201).json(
+          DonacionDTO.desde(gestor.crear(bienes, donante, request.descripcion()))
+      );
   }
 
   public void eliminar(Context ctx) {
