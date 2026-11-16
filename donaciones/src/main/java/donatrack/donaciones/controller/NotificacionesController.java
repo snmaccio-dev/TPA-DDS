@@ -7,10 +7,8 @@ import donatrack.donaciones.domain.notificacion.Notificacion;
 import donatrack.donaciones.domain.notificacion.TipoNotificacion;
 import donatrack.donaciones.seguridad.Acceso;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
-import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.seguridad.UsuarioActual;
 import donatrack.donaciones.service.ConsultaDeNotificaciones;
-import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 public class NotificacionesController {
@@ -24,19 +22,7 @@ public class NotificacionesController {
         this.consulta = consulta;
     }
 
-    public void registrarRutas(Javalin app) {
-        app.get("/notificaciones/mias", this::mias,
-            RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA, RolDeAcceso.ADMINISTRADOR);
-        app.get("/notificaciones/mias/no-leidas/cantidad", this::cantidadNoLeidas,
-            RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA, RolDeAcceso.ADMINISTRADOR);
-        app.patch("/notificaciones/{id}/leida", this::marcarLeida,
-            RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA, RolDeAcceso.ADMINISTRADOR);
-        app.post("/notificaciones/mias/leidas", this::marcarTodasLeidas,
-            RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA, RolDeAcceso.ADMINISTRADOR);
-        app.get("/notificaciones", this::todas, RolDeAcceso.ADMINISTRADOR);
-    }
-
-    private void mias(Context ctx) {
+    public void mias(Context ctx) {
         UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
         boolean soloNoLeidas = booleanParam(ctx, "soloNoLeidas", false);
         int pagina = intParam(ctx, "pagina", 0);
@@ -44,12 +30,12 @@ public class NotificacionesController {
         ctx.json(NotificacionDTO.desde(consulta.propiasDe(usuario, soloNoLeidas, pagina, tamanio)));
     }
 
-    private void cantidadNoLeidas(Context ctx) {
+    public void cantidadNoLeidas(Context ctx) {
         UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
         ctx.json(new CantidadResponse(consulta.cantidadNoLeidasDe(usuario)));
     }
 
-    private void marcarLeida(Context ctx) {
+    public void marcarLeida(Context ctx) {
         long id = ctx.pathParamAsClass("id", Long.class).get();
         Notificacion notificacion = consulta.buscarPorId(id);
         Acceso.exigirPuedeVerNotificacion(FiltroDeAcceso.usuarioDe(ctx), notificacion);
@@ -57,13 +43,13 @@ public class NotificacionesController {
         ctx.status(204);
     }
 
-    private void marcarTodasLeidas(Context ctx) {
+    public void marcarTodasLeidas(Context ctx) {
         UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
         consulta.marcarTodasLeidasDe(usuario);
         ctx.status(204);
     }
 
-    private void todas(Context ctx) {
+    public void todas(Context ctx) {
         EstadoEnvio estadoEnvio = enumParam(ctx, "estadoEnvio", EstadoEnvio.class);
         TipoNotificacion tipo = enumParam(ctx, "tipo", TipoNotificacion.class);
         int pagina = intParam(ctx, "pagina", 0);

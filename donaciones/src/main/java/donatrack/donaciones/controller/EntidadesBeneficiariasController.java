@@ -10,10 +10,8 @@ import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
-import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.service.DatosEntidad;
 import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
-import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 import java.util.List;
@@ -32,24 +30,15 @@ public class EntidadesBeneficiariasController {
                              String direccionActual,
                              String telefonoActual) {}
 
-  public void registrarRutas(Javalin app) {
-    app.get("/entidades", this::todas, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE);
-    app.get("/entidades/consulta", this::consultarPorCuit, RolDeAcceso.ADMINISTRADOR);
-    app.get("/entidades/{id}", this::buscar, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE);
-    app.post("/entidades/existente", this::altaDePersonaExistente, RolDeAcceso.ADMINISTRADOR);
-    app.post("/entidades/nueva", this::altaConPersonaNueva, RolDeAcceso.ADMINISTRADOR);
-    app.delete("/entidades/{id}", this::eliminar, RolDeAcceso.ADMINISTRADOR);
-  }
-
-  private void todas(Context ctx) {
+  public void todas(Context ctx) {
     ctx.json(BeneficiariaDTO.desde(gestor.todas()));
   }
 
-  private void buscar(Context ctx) {
+  public void buscar(Context ctx) {
     ctx.json(BeneficiariaDTO.desde(gestor.buscar(idDe(ctx))));
   }
 
-  private void consultarPorCuit(Context ctx) {
+  public void consultarPorCuit(Context ctx) {
     String cuit = ctx.queryParam("cuit");
     if (cuit == null || cuit.isBlank()) {
       throw new DatosInvalidosException("Debe indicarse el CUIT en el query param.");
@@ -68,7 +57,7 @@ public class EntidadesBeneficiariasController {
     ));
   }
 
-  private void altaDePersonaExistente(Context ctx) {
+  public void altaDePersonaExistente(Context ctx) {
     NuevaBeneficiariaExistenteRequest request =
         ctx.bodyAsClass(NuevaBeneficiariaExistenteRequest.class);
     DatosEntidad datos = new DatosEntidad(
@@ -81,7 +70,7 @@ public class EntidadesBeneficiariasController {
     ));
   }
 
-  private void altaConPersonaNueva(Context ctx) {
+  public void altaConPersonaNueva(Context ctx) {
     NuevaBeneficiariaNuevaRequest request =
         ctx.bodyAsClass(NuevaBeneficiariaNuevaRequest.class);
     PersonaJuridica juridica = new PersonaJuridica(
@@ -107,7 +96,7 @@ public class EntidadesBeneficiariasController {
     return representantes.stream().map(RepresentanteRequest::aRepresentante).toList();
   }
 
-  private void eliminar(Context ctx) {
+  public void eliminar(Context ctx) {
     gestor.eliminar(idDe(ctx));
     ctx.status(204);
   }

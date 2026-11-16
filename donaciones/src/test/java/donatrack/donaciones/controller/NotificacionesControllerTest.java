@@ -204,7 +204,7 @@ class NotificacionesControllerTest {
   private Javalin app(ConsultaDeNotificaciones consulta, RepositorioUsuarios repoUsuarios) {
     Javalin app = Javalin.create();
     new FiltroDeAcceso(verificador, repoUsuarios).registrarEn(app);
-    new NotificacionesController(consulta).registrarRutas(app);
+    donatrack.donaciones.Rutas.notificaciones(app, new NotificacionesController(consulta));
 
     app.exception(RecursoInexistenteException.class, (e, ctx) ->
         ctx.status(404).json(new ErrorDTO(e.getMessage())));

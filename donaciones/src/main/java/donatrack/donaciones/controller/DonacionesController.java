@@ -21,13 +21,11 @@ import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.seguridad.Acceso;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
-import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.seguridad.UsuarioActual;
 import donatrack.donaciones.service.EventoYaAplicadoException;
 import donatrack.donaciones.service.FiltroDonaciones;
 import donatrack.donaciones.service.GestorDonaciones;
 import donatrack.donaciones.service.RecursoInexistenteException;
-import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 import java.time.LocalDate;
@@ -50,26 +48,7 @@ public class DonacionesController {
     this.repositorioSubcategorias = repositorioSubcategorias;
   }
 
-  public void registrarRutas(Javalin app) {
-    app.get("/donaciones", this::listar,
-        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA, RolDeAcceso.SERVICIO_LOGISTICA);
-    app.post("/donaciones", this::crear, RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE);
-    app.get("/donaciones/{id}", this::buscar,
-        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA);
-    app.delete("/donaciones/{id}", this::eliminar, RolDeAcceso.ADMINISTRADOR);
-    app.get("/donaciones/{id}/comprobante", this::comprobante,
-        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA);
-    app.get("/donaciones/{id}/historial", this::historial,
-        RolDeAcceso.ADMINISTRADOR, RolDeAcceso.DONANTE, RolDeAcceso.BENEFICIARIA);
-    app.post("/donaciones/{id}/vencer", this::vencer, RolDeAcceso.ADMINISTRADOR);
-
-    app.post("/donaciones/eventos/rutas-planificadas", this::eventoRutasPlanificadas, RolDeAcceso.SERVICIO_LOGISTICA);
-    app.post("/donaciones/eventos/inicio-ruta", this::eventoInicioRuta, RolDeAcceso.SERVICIO_LOGISTICA);
-    app.post("/donaciones/eventos/entrega", this::eventoEntrega, RolDeAcceso.SERVICIO_LOGISTICA);
-    app.post("/donaciones/eventos/retorno-deposito", this::eventoRetornoDeposito, RolDeAcceso.SERVICIO_LOGISTICA);
-  }
-
-  private void listar(Context ctx) {
+  public void listar(Context ctx) {
     UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
     FiltroDonaciones filtro = filtroDesde(ctx);
 
@@ -108,7 +87,7 @@ public class DonacionesController {
     return new FiltroDonaciones(estado, categoria, subcategorias);
   }
 
-  private void buscar(Context ctx) {
+  public void buscar(Context ctx) {
     Donacion donacion = gestor.buscar(idDe(ctx));
     Acceso.exigirPuedeVerDonacion(FiltroDeAcceso.usuarioDe(ctx), donacion);
     ctx.json(DonacionDTO.desde(donacion));
@@ -125,7 +104,7 @@ public class DonacionesController {
   }
 */
 
-  private void crear(Context ctx) {
+  public void crear(Context ctx) {
       NuevaDonacionRequest request = ctx.bodyAsClass(NuevaDonacionRequest.class);
 
       UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
@@ -143,31 +122,31 @@ public class DonacionesController {
       );
   }
 
-  private void eliminar(Context ctx) {
+  public void eliminar(Context ctx) {
     gestor.eliminar(idDe(ctx));
     ctx.status(204);
   }
 
-  private void comprobante(Context ctx) {
+  public void comprobante(Context ctx) {
     Donacion donacion = gestor.buscar(idDe(ctx));
     Acceso.exigirPuedeVerDonacion(FiltroDeAcceso.usuarioDe(ctx), donacion);
     ctx.json(ComprobanteDTO.desde(donacion.generarComprobante()));
   }
 
-  private void historial(Context ctx) {
+  public void historial(Context ctx) {
     Donacion donacion = gestor.buscar(idDe(ctx));
     Acceso.exigirPuedeVerDonacion(FiltroDeAcceso.usuarioDe(ctx), donacion);
     ctx.json(EstadoHistorialDTO.desde(gestor.historial(donacion.getId())));
   }
 
-  private void vencer(Context ctx) {
+  public void vencer(Context ctx) {
     gestor.marcarVencida(idDe(ctx));
     ctx.status(204);
   }
 
   // === Eventos ===
 
-  private void eventoRutasPlanificadas(Context ctx) {
+  public void eventoRutasPlanificadas(Context ctx) {
     EventoRutasPlanificadasRequest evento =
         ctx.bodyAsClass(EventoRutasPlanificadasRequest.class);
     // Pasamos el metodo del dominio directo: la donacion ya la cargo
@@ -184,7 +163,7 @@ public class DonacionesController {
     ctx.status(200);
   }
 
-  private void eventoInicioRuta(Context ctx) {
+  public void eventoInicioRuta(Context ctx) {
     EventoInicioRutaRequest evento = ctx.bodyAsClass(EventoInicioRutaRequest.class);
     gestor.aplicarEventoEnLote(
         evento.donacionIds(),
@@ -195,7 +174,7 @@ public class DonacionesController {
     ctx.status(200);
   }
 
-  private void eventoEntrega(Context ctx) {
+  public void eventoEntrega(Context ctx) {
     EventoEntregaRequest evento = ctx.bodyAsClass(EventoEntregaRequest.class);
     Donacion donacion = gestor.buscar(evento.donacionId());
     EstadosPosiblesDonacion actual = donacion.getEstado().getEstado();
@@ -223,7 +202,7 @@ public class DonacionesController {
     ctx.status(200);
   }
 
-  private void eventoRetornoDeposito(Context ctx) {
+  public void eventoRetornoDeposito(Context ctx) {
     EventoRetornoDepositoRequest evento = ctx.bodyAsClass(EventoRetornoDepositoRequest.class);
     Donacion donacion = gestor.buscar(evento.donacionId());
     EstadosPosiblesDonacion actual = donacion.getEstado().getEstado();

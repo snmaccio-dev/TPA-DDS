@@ -8,11 +8,9 @@ import donatrack.donaciones.domain.donacion.asignacion.PropuestaAsignacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioEntidades;
-import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.service.GestorAsignaciones;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import donatrack.donaciones.service.ResultadoCorrida;
-import io.javalin.Javalin;
 import io.javalin.http.Context;
 
 import java.util.List;
@@ -31,24 +29,16 @@ public class AsignacionesController {
     this.repositorioEntidades = repositorioEntidades;
   }
 
-  public void registrarRutas(Javalin app) {
-    app.get("/asignaciones/propuestas", this::propuestas, RolDeAcceso.ADMINISTRADOR);
-    app.post("/asignaciones/ejecutar", this::ejecutarMatchmaking, RolDeAcceso.ADMINISTRADOR);
-    app.get("/donaciones/{id}/propuesta", this::propuestaDeDonacion, RolDeAcceso.ADMINISTRADOR);
-    app.post("/donaciones/{id}/asignacion", this::ejecutarAsignacion, RolDeAcceso.ADMINISTRADOR);
-    app.post("/donaciones/{id}/destinatario", this::confirmarDestinatario, RolDeAcceso.ADMINISTRADOR);
-  }
-
-  private void propuestas(Context ctx) {
+  public void propuestas(Context ctx) {
     ctx.json(PropuestaDTO.desde(gestor.propuestas()));
   }
 
-  private void ejecutarMatchmaking(Context ctx) {
+  public void ejecutarMatchmaking(Context ctx) {
     ResultadoCorrida resultado = gestor.ejecutarMatchmakingProgramado();
     ctx.json(new EjecutarMatchmakingResponse(resultado.exitosas(), resultado.fallidas()));
   }
 
-  private void propuestaDeDonacion(Context ctx) {
+  public void propuestaDeDonacion(Context ctx) {
     long donacionId = idDe(ctx);
     PropuestaAsignacion propuesta = gestor.buscarPropuesta(donacionId)
         .orElseThrow(() -> new RecursoInexistenteException(
@@ -57,13 +47,13 @@ public class AsignacionesController {
     ctx.json(PropuestaDTO.desde(propuesta));
   }
 
-  private void ejecutarAsignacion(Context ctx) {
+  public void ejecutarAsignacion(Context ctx) {
     Donacion donacion = buscarDonacion(idDe(ctx));
     var candidatas = gestor.ejecutarAsignacion(donacion);
     ctx.json(BeneficiariaDTO.desde(candidatas));
   }
 
-  private void confirmarDestinatario(Context ctx) {
+  public void confirmarDestinatario(Context ctx) {
     ConfirmarDestinatarioRequest request = ctx.bodyAsClass(ConfirmarDestinatarioRequest.class);
     Beneficiaria destinatario = repositorioEntidades.buscarPorId(request.beneficiariaId())
         .orElseThrow(() -> new RecursoInexistenteException(
