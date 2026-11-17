@@ -273,7 +273,7 @@ public class ImportacionDonantesService implements WithSimplePersistenceUnit {
       juridica.actualizarRazonSocial(fila.nombre());
     }
     if (fila.tieneTelefono()) {
-      persona.reemplazarTelefono(fila.telefono());
+      persona.reemplazarContacto(TipoContacto.TELEFONO, fila.telefono());
     }
     if (!persona.tieneContacto(TipoContacto.EMAIL, fila.email())) {
       persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, fila.email()));

@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 public record BienDTO(
+    Long id,
     String descripcion,
     String subcategoria,
     double cantidad,
@@ -16,6 +17,7 @@ public record BienDTO(
 
   public static BienDTO desde(Bien bien) {
     return new BienDTO(
+        bien.getId(),
         bien.getDescripcion(),
         bien.getSubcategoria().getNombre(),
         bien.getCantidad(),

@@ -36,8 +36,12 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -46,7 +50,12 @@ import static org.mockito.Mockito.when;
 class EntidadesBeneficiariasControllerTest {
 
   private static final String ISSUER = "https://kc.test/realms/donatrack";
-  private static final String BODY = "{\"direccion\":\"Nueva 123\"}";
+  private static final String BODY =
+      "{\"razonSocial\":\"Escuela Nueva\",\"tipoOrganizacion\":\"INSTITUCION\","
+          + "\"rubro\":\"Educacion\",\"direccion\":\"Nueva 123\","
+          + "\"telefono\":\"+54 11 5555-5555\",\"cuit\":\"30-99999999-9\","
+          + "\"representantes\":[{\"nombre\":\"Rep\",\"apellido\":\"Uno\","
+          + "\"email\":\"rep@escuela.com\"}]}";
   private static RSAKey clave;
   private static VerificadorDeTokens verificador;
 
@@ -58,65 +67,102 @@ class EntidadesBeneficiariasControllerTest {
   }
 
   @Test
-  void unAdministradorPuedeActualizarLaDireccionDeCualquierEntidad() throws Exception {
-    EntidadesBeneficiariasService service = mock(EntidadesBeneficiariasService.class);
+  void unAdministradorPuedeModificarCualquierEntidad() throws Exception {
+    EntidadesBeneficiariasService service = serviceQueDevuelve(5L);
     RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
     when(repoUsuarios.buscarPorKeycloakId(anyString())).thenReturn(Optional.empty());
 
     String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
     JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
-      var resp = client.patch("/entidades/5/direccion", BODY,
+      var resp = client.put("/entidades/5", BODY,
           req -> req.header("Authorization", "Bearer " + token));
-      assertEquals(204, resp.code());
+      assertEquals(200, resp.code());
+      assertTrue(resp.body().string().contains("\"id\":5"));
     });
 
-    verify(service).actualizarDireccion(5L, "Nueva 123");
+    verify(service).modificar(eq(5L), eq("Escuela Nueva"), eq("INSTITUCION"), eq("Educacion"),
+        argThat(datos -> datos.direccion().equals("Nueva 123")
+            && datos.telefono().equals("+54 11 5555-5555")
+            && datos.representantes().size() == 1
+            && datos.representantes().get(0).getEmail().equals("rep@escuela.com")));
   }
 
   @Test
-  void unaBeneficiariaPuedeActualizarLaDireccionDeSuPropiaEntidad() throws Exception {
+  void unaBeneficiariaPuedeModificarSuPropiaEntidad() throws Exception {
+    EntidadesBeneficiariasService service = serviceQueDevuelve(20L);
+    RepositorioUsuarios repoUsuarios = repoConBeneficiaria("kc-escuela", 20L);
+
+    String token = firmar("kc-escuela", "escuela@mail.com", "BENEFICIARIA");
+    JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
+      var resp = client.put("/entidades/20", BODY,
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(200, resp.code());
+    });
+
+    verify(service).modificar(eq(20L), anyString(), anyString(), anyString(), any());
+  }
+
+  @Test
+  void unaBeneficiariaNoPuedeModificarOtraEntidad() throws Exception {
     EntidadesBeneficiariasService service = mock(EntidadesBeneficiariasService.class);
     RepositorioUsuarios repoUsuarios = repoConBeneficiaria("kc-escuela", 20L);
 
     String token = firmar("kc-escuela", "escuela@mail.com", "BENEFICIARIA");
     JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
-      var resp = client.patch("/entidades/20/direccion", BODY,
-          req -> req.header("Authorization", "Bearer " + token));
-      assertEquals(204, resp.code());
-    });
-
-    verify(service).actualizarDireccion(20L, "Nueva 123");
-  }
-
-  @Test
-  void unaBeneficiariaNoPuedeActualizarLaDireccionDeOtraEntidad() throws Exception {
-    EntidadesBeneficiariasService service = mock(EntidadesBeneficiariasService.class);
-    RepositorioUsuarios repoUsuarios = repoConBeneficiaria("kc-escuela", 20L);
-
-    String token = firmar("kc-escuela", "escuela@mail.com", "BENEFICIARIA");
-    JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
-      var resp = client.patch("/entidades/21/direccion", BODY,
+      var resp = client.put("/entidades/21", BODY,
           req -> req.header("Authorization", "Bearer " + token));
       assertEquals(403, resp.code());
     });
 
-    verify(service, never()).actualizarDireccion(anyLong(), anyString());
+    verify(service, never()).modificar(anyLong(), any(), any(), any(), any());
   }
 
   @Test
-  void unDonanteNoPuedeActualizarLaDireccionDeUnaEntidad() throws Exception {
+  void unDonanteNoPuedeModificarUnaEntidad() throws Exception {
     EntidadesBeneficiariasService service = mock(EntidadesBeneficiariasService.class);
     RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
     when(repoUsuarios.buscarPorKeycloakId(anyString())).thenReturn(Optional.empty());
 
     String token = firmar("kc-ana", "ana@mail.com", "DONANTE");
     JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
-      var resp = client.patch("/entidades/20/direccion", BODY,
+      var resp = client.put("/entidades/20", BODY,
           req -> req.header("Authorization", "Bearer " + token));
       assertEquals(403, resp.code());
     });
 
-    verify(service, never()).actualizarDireccion(anyLong(), anyString());
+    verify(service, never()).modificar(anyLong(), any(), any(), any(), any());
+  }
+
+  @Test
+  void sinRepresentantesDevuelve400() throws Exception {
+    EntidadesBeneficiariasService service = mock(EntidadesBeneficiariasService.class);
+    RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
+    when(repoUsuarios.buscarPorKeycloakId(anyString())).thenReturn(Optional.empty());
+
+    String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
+    JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
+      var resp = client.put("/entidades/5",
+          "{\"razonSocial\":\"Escuela\",\"direccion\":\"Nueva 123\","
+              + "\"telefono\":\"123\",\"representantes\":[]}",
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(400, resp.code());
+    });
+
+    verify(service, never()).modificar(anyLong(), any(), any(), any(), any());
+  }
+
+  @Test
+  void laRutaViejaDeDireccionYaNoExiste() throws Exception {
+    EntidadesBeneficiariasService service = mock(EntidadesBeneficiariasService.class);
+    RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
+    when(repoUsuarios.buscarPorKeycloakId(anyString())).thenReturn(Optional.empty());
+
+    String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
+    JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
+      var resp = client.patch("/entidades/5/direccion", "{\"direccion\":\"Nueva 123\"}",
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(404, resp.code());
+    });
   }
 
   // === Helpers ===
@@ -133,8 +179,14 @@ class EntidadesBeneficiariasControllerTest {
     return app;
   }
 
-  private RepositorioUsuarios repoConBeneficiaria(String keycloakId, long beneficiariaId)
-      throws Exception {
+  private EntidadesBeneficiariasService serviceQueDevuelve(long beneficiariaId) throws Exception {
+    EntidadesBeneficiariasService service = mock(EntidadesBeneficiariasService.class);
+    Beneficiaria beneficiaria = beneficiariaConId(beneficiariaId);
+    when(service.modificar(anyLong(), any(), any(), any(), any())).thenReturn(beneficiaria);
+    return service;
+  }
+
+  private Beneficiaria beneficiariaConId(long beneficiariaId) throws Exception {
     PersonaJuridica juridica = new PersonaJuridica(
         "30-" + beneficiariaId + "-7", "Escuela " + beneficiariaId,
         TipoOrganizacion.INSTITUCION, "Educacion");
@@ -142,6 +194,12 @@ class EntidadesBeneficiariasControllerTest {
     Field campo = Beneficiaria.class.getDeclaredField("id");
     campo.setAccessible(true);
     campo.set(beneficiaria, beneficiariaId);
+    return beneficiaria;
+  }
+
+  private RepositorioUsuarios repoConBeneficiaria(String keycloakId, long beneficiariaId)
+      throws Exception {
+    Beneficiaria beneficiaria = beneficiariaConId(beneficiariaId);
 
     RepositorioUsuarios repo = mock(RepositorioUsuarios.class);
     when(repo.buscarPorKeycloakId(keycloakId))

@@ -7,6 +7,7 @@ import donatrack.donaciones.controller.dto.EventoEntregaRequest;
 import donatrack.donaciones.controller.dto.EventoInicioRutaRequest;
 import donatrack.donaciones.controller.dto.EventoRetornoDepositoRequest;
 import donatrack.donaciones.controller.dto.EventoRutasPlanificadasRequest;
+import donatrack.donaciones.controller.dto.ModificarDonacionRequest;
 import donatrack.donaciones.controller.dto.NuevaDonacionRequest;
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.donacion.Donacion;
@@ -95,6 +96,14 @@ public class DonacionesController {
     ctx.status(201).json(
         DonacionDTO.desde(service.crear(donante, bienes, request.descripcion(), null))
     );
+  }
+
+  public void modificar(Context ctx) {
+    long id = idDe(ctx);
+    Acceso.exigirPuedeModificarDonacion(FiltroDeAcceso.usuarioDe(ctx), service.buscar(id));
+    ModificarDonacionRequest request = ctx.bodyAsClass(ModificarDonacionRequest.class);
+    ctx.json(DonacionDTO.desde(
+        service.modificar(id, request.descripcion(), request.fotoUrl(), request.datosBienes())));
   }
 
   public void eliminar(Context ctx) {

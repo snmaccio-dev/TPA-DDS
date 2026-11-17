@@ -34,4 +34,10 @@ public record DatosEntidad(String direccion, String telefono, List<Representante
             juridica.agregarRepresentante(r);
         }
     }
+
+    public void reemplazarEn(PersonaJuridica juridica) {
+        juridica.setDireccion(direccion);
+        juridica.reemplazarContacto(TipoContacto.TELEFONO, telefono);
+        juridica.reemplazarRepresentantes(representantes);
+    }
 }

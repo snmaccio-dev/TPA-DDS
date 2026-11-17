@@ -5,6 +5,7 @@ import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.CondicionBien;
+import donatrack.donaciones.domain.donacion.DatosModificacionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.SegmentadorDonaciones;
 import donatrack.donaciones.domain.donacion.estado.EstadoDonacion;
@@ -142,6 +143,24 @@ public class DonacionesService implements WithSimplePersistenceUnit {
         conObservers(donacion);
         donacion.getDonante().registrarDonacion(donacion);
         repositorio.guardar(donacion);
+    }
+
+    public Donacion modificar(long id,
+                              String descripcion,
+                              String fotoUrl,
+                              List<DatosModificacionBien> bienes) {
+        Donacion[] modificada = new Donacion[1];
+        try {
+            withTransaction(() -> {
+                modificada[0] = buscar(id);
+                modificada[0].modificar(descripcion, fotoUrl, bienes);
+                repositorioPropuestas.eliminar(id);
+            });
+        } catch (RuntimeException e) {
+            entityManager().clear();
+            throw e;
+        }
+        return modificada[0];
     }
 
     public void eliminar(long id) {

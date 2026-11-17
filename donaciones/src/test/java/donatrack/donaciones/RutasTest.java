@@ -107,10 +107,27 @@ class RutasTest {
           "POST /donantes/existente protegido: sin token debe dar 401.");
       assertEquals(401, client.get("/donantes/importaciones").code(),
           "GET /donantes/importaciones protegido: sin token debe dar 401.");
+      assertEquals(401, client.put("/donaciones/1", "{}").code(),
+          "PUT /donaciones/{id} protegido: sin token debe dar 401.");
+      assertEquals(401, client.put("/donantes/12345678", "{}").code(),
+          "PUT /donantes/{documento} protegido: sin token debe dar 401.");
+      assertEquals(401, client.put("/entidades/1", "{}").code(),
+          "PUT /entidades/{id} protegido: sin token debe dar 401.");
       assertEquals(401, client.get("/notificaciones/mias").code(),
           "GET /notificaciones/mias protegido: sin token debe dar 401.");
       assertEquals(401, client.post("/donaciones/eventos/entrega", "{}").code(),
           "POST /donaciones/eventos/entrega protegido: sin token debe dar 401.");
+    });
+  }
+
+  @Test
+  void laRutaPatchDeDireccionDeEntidadesYaNoExiste() {
+    Dependencias deps = new Dependencias();
+    Javalin app = app(deps);
+
+    JavalinTest.test(app, (server, client) -> {
+      assertEquals(404, client.patch("/entidades/1/direccion", "{}").code(),
+          "La modificacion de entidades se hace con PUT /entidades/{id}.");
     });
   }
 

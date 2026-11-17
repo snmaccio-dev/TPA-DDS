@@ -14,7 +14,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.Table;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "Persona_Juridica", indexes = @Index(name = "idx_persona_juridica_cuit", columnList = "CUIT"))
@@ -69,6 +71,42 @@ public class PersonaJuridica extends Persona {
             throw new DatosInvalidosException("La razon social es obligatoria.");
         }
         this.razonSocial = razonSocial.trim();
+    }
+
+    public void actualizarDatos(String razonSocial, TipoOrganizacion tipo, String rubro) {
+        actualizarRazonSocial(razonSocial);
+        this.tipo = tipo;
+        this.rubro = rubro == null ? null : rubro.trim();
+    }
+
+    // Cambiar los representantes no cambia la cuenta de Keycloak de la entidad: el usuario
+    // sigue siendo el mismo aunque su email ya no sea el de ningun representante.
+    public void reemplazarRepresentantes(List<Representante> nuevos) {
+        if (nuevos == null || nuevos.isEmpty()) {
+            throw new DatosInvalidosException(
+                "La beneficiaria debe indicar al menos un representante con su correo.");
+        }
+        if (nuevos.contains(null)) {
+            throw new DatosInvalidosException("El representante es obligatorio.");
+        }
+        Set<String> emailsQueSalen = emailsDeRepresentantes();
+        representantes.clear();
+        nuevos.forEach(this::agregarRepresentante);
+        emailsQueSalen.removeAll(emailsDeRepresentantes());
+
+        contactos.stream()
+            .filter(c -> c.getTipo() == TipoContacto.EMAIL)
+            .filter(c -> c != contactoPredeterminado)
+            .filter(c -> c.getValor() != null
+                && emailsQueSalen.contains(c.getValor().trim().toLowerCase()))
+            .toList()
+            .forEach(this::quitarContacto);
+    }
+
+    private Set<String> emailsDeRepresentantes() {
+        Set<String> emails = new HashSet<>();
+        representantes.forEach(r -> emails.add(r.getEmail()));
+        return emails;
     }
 
     public void agregarRepresentante(Representante representante) {

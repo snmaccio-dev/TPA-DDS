@@ -44,19 +44,42 @@ public class Bien {
                 Subcategoria subcategoria,
                 double cantidad,
                 CondicionBien condicion) {
-        if (descripcion == null || descripcion.isBlank()) {
-            throw new DatosInvalidosException("El bien debe tener descripcion.");
-        }
+        validarDescripcion(descripcion);
         if (subcategoria == null) {
             throw new DatosInvalidosException("El bien debe pertenecer a una subcategoria.");
         }
-        if (cantidad <= 0) {
-            throw new DatosInvalidosException("La cantidad del bien debe ser mayor a cero.");
-        }
+        validarCantidad(cantidad);
         this.descripcion = descripcion;
         this.subcategoria = subcategoria;
         this.cantidad = cantidad;
         this.condicion = condicion;
+    }
+
+    static void validarModificacion(String descripcion, Double cantidad) {
+        validarDescripcion(descripcion);
+        validarCantidad(cantidad == null ? 0 : cantidad);
+    }
+
+    void modificar(String descripcion, double cantidad) {
+        validarModificacion(descripcion, cantidad);
+        this.descripcion = descripcion.trim();
+        this.cantidad = cantidad;
+    }
+
+    private static void validarDescripcion(String descripcion) {
+        if (descripcion == null || descripcion.isBlank()) {
+            throw new DatosInvalidosException("El bien debe tener descripcion.");
+        }
+    }
+
+    private static void validarCantidad(double cantidad) {
+        if (cantidad <= 0) {
+            throw new DatosInvalidosException("La cantidad del bien debe ser mayor a cero.");
+        }
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getDescripcion() {

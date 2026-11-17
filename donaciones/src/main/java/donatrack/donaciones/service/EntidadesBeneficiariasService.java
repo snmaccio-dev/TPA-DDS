@@ -2,11 +2,13 @@ package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.DatosInvalidosException;
+import donatrack.donaciones.domain.Enumerados;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
+import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioEntidades;
@@ -95,14 +97,27 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
     }
   }
 
-  public void actualizarDireccion(long id, String nuevaDireccion) {
-    if (nuevaDireccion == null || nuevaDireccion.isBlank()) {
-      throw new DatosInvalidosException("La direccion de la beneficiaria no puede quedar vacia.");
+  public Beneficiaria modificar(long id,
+                                String razonSocial,
+                                String tipoOrganizacion,
+                                String rubro,
+                                DatosEntidad datos) {
+    exigirDatos(datos);
+    TipoOrganizacion tipo =
+        Enumerados.desde(TipoOrganizacion.class, tipoOrganizacion, "tipoOrganizacion");
+    Beneficiaria[] modificada = new Beneficiaria[1];
+    try {
+      withTransaction(() -> {
+        modificada[0] = buscar(id);
+        PersonaJuridica juridica = modificada[0].getPersona();
+        juridica.actualizarDatos(razonSocial, tipo, rubro);
+        datos.reemplazarEn(juridica);
+      });
+    } catch (RuntimeException e) {
+      entityManager().clear();
+      throw e;
     }
-    withTransaction(() -> {
-      Beneficiaria beneficiaria = buscar(id);
-      beneficiaria.getPersona().setDireccion(nuevaDireccion.trim());
-    });
+    return modificada[0];
   }
 
   public Beneficiaria registrarConPersonaExistente(String cuit, DatosEntidad datos) {

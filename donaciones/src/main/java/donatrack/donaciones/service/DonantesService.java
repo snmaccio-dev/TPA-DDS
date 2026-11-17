@@ -2,13 +2,17 @@ package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.DatosInvalidosException;
+import donatrack.donaciones.domain.Enumerados;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.notificacion.EstadoEnvio;
 import donatrack.donaciones.domain.notificacion.Notificacion;
 import donatrack.donaciones.domain.persona.Donante;
+import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.Persona;
+import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
+import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioEntidades;
@@ -144,6 +148,42 @@ public class DonantesService implements WithSimplePersistenceUnit {
         if (keycloakIdAEliminar[0] != null) {
             usuariosService.eliminarEnProveedor(keycloakIdAEliminar[0]);
         }
+    }
+
+    public Persona modificar(String documento, DatosDonante datos) {
+        if (datos == null) {
+            throw new DatosInvalidosException("Los datos del donante son obligatorios.");
+        }
+        Persona[] modificada = new Persona[1];
+        try {
+            withTransaction(() -> {
+                modificada[0] = buscarPorDocumento(documento);
+                aplicar(modificada[0], datos);
+            });
+        } catch (RuntimeException e) {
+            entityManager().clear();
+            throw e;
+        }
+        return modificada[0];
+    }
+
+    private static void aplicar(Persona persona, DatosDonante datos) {
+        TipoContacto predeterminado = Enumerados.desde(
+            TipoContacto.class, datos.contactoPredeterminado(), "contactoPredeterminado");
+        if (persona instanceof PersonaHumana humana) {
+            humana.actualizarDatos(datos.nombre(), datos.apellido(), datos.edad(),
+                Enumerados.desde(Genero.class, datos.genero(), "genero"));
+        } else if (persona instanceof PersonaJuridica juridica) {
+            juridica.actualizarDatos(datos.razonSocial(),
+                Enumerados.desde(TipoOrganizacion.class, datos.tipoOrganizacion(), "tipoOrganizacion"),
+                datos.rubro());
+        }
+        persona.setDireccion(datos.direccion() == null || datos.direccion().isBlank()
+            ? null
+            : datos.direccion().trim());
+        persona.reemplazarContacto(TipoContacto.TELEFONO, datos.telefono());
+        persona.reemplazarContacto(TipoContacto.WHATSAPP, datos.whatsapp());
+        persona.elegirContactoPredeterminado(predeterminado);
     }
 
     public List<Persona> todos() {

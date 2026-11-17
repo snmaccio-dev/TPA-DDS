@@ -2,6 +2,7 @@ package donatrack.donaciones.controller;
 
 import donatrack.donaciones.controller.dto.DonanteExistenteRequest;
 import donatrack.donaciones.controller.dto.DonanteInactivoDTO;
+import donatrack.donaciones.controller.dto.ModificarDonanteRequest;
 import donatrack.donaciones.controller.dto.NuevoDonanteRequest;
 import donatrack.donaciones.controller.dto.PersonaDTO;
 import donatrack.donaciones.domain.persona.Persona;
@@ -50,6 +51,11 @@ public class DonantesController {
     DonanteExistenteRequest request = ctx.bodyAsClass(DonanteExistenteRequest.class);
     service.registrarConPersonaExistente(request.documento(), request.email());
     ctx.status(201);
+  }
+
+  public void modificar(Context ctx) {
+    ModificarDonanteRequest request = ctx.bodyAsClass(ModificarDonanteRequest.class);
+    ctx.json(PersonaDTO.desde(service.modificar(ctx.pathParam("documento"), request.aDatos())));
   }
 
   public void eliminar(Context ctx) {

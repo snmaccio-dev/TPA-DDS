@@ -1,7 +1,7 @@
 package donatrack.donaciones.controller;
 
-import donatrack.donaciones.controller.dto.ActualizarDireccionRequest;
 import donatrack.donaciones.controller.dto.BeneficiariaDTO;
+import donatrack.donaciones.controller.dto.ModificarEntidadRequest;
 import donatrack.donaciones.controller.dto.NuevaBeneficiariaExistenteRequest;
 import donatrack.donaciones.controller.dto.NuevaBeneficiariaNuevaRequest;
 import donatrack.donaciones.controller.dto.RepresentanteRequest;
@@ -96,12 +96,17 @@ public class EntidadesBeneficiariasController {
     ));
   }
 
-  public void actualizarDireccion(Context ctx) {
+  public void modificar(Context ctx) {
     long id = idDe(ctx);
     Acceso.exigirPuedeModificarEntidad(FiltroDeAcceso.usuarioDe(ctx), id);
-    ActualizarDireccionRequest request = ctx.bodyAsClass(ActualizarDireccionRequest.class);
-    service.actualizarDireccion(id, request.direccion());
-    ctx.status(204);
+    ModificarEntidadRequest request = ctx.bodyAsClass(ModificarEntidadRequest.class);
+    DatosEntidad datos = new DatosEntidad(
+        request.direccion(),
+        request.telefono(),
+        mapRepresentantes(request.representantes())
+    );
+    ctx.json(BeneficiariaDTO.desde(service.modificar(
+        id, request.razonSocial(), request.tipoOrganizacion(), request.rubro(), datos)));
   }
 
   private List<Representante> mapRepresentantes(List<RepresentanteRequest> representantes) {

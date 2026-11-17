@@ -102,6 +102,7 @@ public class Rutas {
     app.get(   "/donaciones",                    c::listar,      ADMINISTRADOR, DONANTE, BENEFICIARIA, SERVICIO_LOGISTICA);
     app.post(  "/donaciones",                    c::crear,       ADMINISTRADOR);
     app.get(   "/donaciones/{id}",               c::buscar,      ADMINISTRADOR, DONANTE, BENEFICIARIA);
+    app.put(   "/donaciones/{id}",               c::modificar,   ADMINISTRADOR, DONANTE);
     app.delete("/donaciones/{id}",               c::eliminar,    ADMINISTRADOR);
     app.get(   "/donaciones/{id}/comprobante",   c::comprobante, ADMINISTRADOR, DONANTE, BENEFICIARIA);
     app.get(   "/donaciones/{id}/historial",     c::historial,   ADMINISTRADOR, DONANTE, BENEFICIARIA);
@@ -141,6 +142,7 @@ public class Rutas {
     app.get(   "/donantes/inactivos",         c::inactivos,        ADMINISTRADOR);
     app.post(  "/donantes/avisar-inactivos",  c::avisarInactivos,  ADMINISTRADOR);
     app.get(   "/donantes/{documento}",       c::buscar,           ADMINISTRADOR);
+    app.put(   "/donantes/{documento}",       c::modificar,        ADMINISTRADOR);
     app.delete("/donantes/{documento}",       c::eliminar,         ADMINISTRADOR);
   }
 
@@ -153,7 +155,7 @@ public class Rutas {
     app.get(   "/entidades/{id}",       c::buscar,                  ADMINISTRADOR, DONANTE);
     app.post(  "/entidades/existente",  c::altaDePersonaExistente,  ADMINISTRADOR);
     app.post(  "/entidades/nueva",      c::altaConPersonaNueva,     ADMINISTRADOR);
-    app.patch( "/entidades/{id}/direccion", c::actualizarDireccion, ADMINISTRADOR, BENEFICIARIA);
+    app.put(   "/entidades/{id}",       c::modificar,               ADMINISTRADOR, BENEFICIARIA);
     app.delete("/entidades/{id}",       c::eliminar,                ADMINISTRADOR);
   }
 

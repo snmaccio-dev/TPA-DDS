@@ -13,6 +13,7 @@ import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.controller.dto.ErrorDTO;
+import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
@@ -120,6 +121,44 @@ class DonantesControllerTest implements WithSimplePersistenceUnit {
     });
   }
 
+  @Test
+  void putDonanteDeAlguienQueNoEsDonanteDa404() throws Exception {
+    String cuitBeneficiaria = DatosDeTest.cuitUnico();
+    withTransaction(() -> beneficiariaPersistida(cuitBeneficiaria));
+
+    String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
+    JavalinTest.test(app(), (server, client) -> {
+      var resp = client.put("/donantes/" + cuitBeneficiaria,
+          "{\"razonSocial\":\"Otra\",\"contactoPredeterminado\":\"EMAIL\"}",
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(404, resp.code());
+    });
+
+    entityManager().clear();
+    assertFalse(repoPersonas.buscarJuridicaPorCuit(cuitBeneficiaria).orElseThrow()
+        .getRazonSocial().equals("Otra"));
+  }
+
+  @Test
+  void putDonanteDeUnDonanteDevuelveSuPersonaActualizada() throws Exception {
+    String documentoDonante = DatosDeTest.documentoUnico();
+    withTransaction(() -> donantePersistido(documentoDonante));
+
+    String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
+    JavalinTest.test(app(), (server, client) -> {
+      var resp = client.put("/donantes/" + documentoDonante,
+          "{\"nombre\":\"Ana\",\"apellido\":\"Renovada\",\"edad\":31,\"genero\":\"FEMENINO\","
+              + "\"telefono\":\"+54 11 1111-1111\",\"contactoPredeterminado\":\"TELEFONO\","
+              + "\"documento\":\"00000000\",\"email\":\"otro@mail.com\"}",
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(200, resp.code());
+      String body = resp.body().string();
+      assertTrue(body.contains("\"" + documentoDonante + "\""), body);
+      assertTrue(body.contains("Ana Renovada"), body);
+      assertTrue(body.contains("+54 11 1111-1111"), body);
+    });
+  }
+
   // === Helpers ===
 
   private Javalin app() {
@@ -140,6 +179,8 @@ class DonantesControllerTest implements WithSimplePersistenceUnit {
         new ImportacionesController(mock(ImportacionDonantesService.class)));
     app.exception(RecursoInexistenteException.class, (e, ctx) ->
         ctx.status(404).json(new ErrorDTO(e.getMessage())));
+    app.exception(DatosInvalidosException.class, (e, ctx) ->
+        ctx.status(400).json(new ErrorDTO(e.getMessage())));
     app.exception(HttpResponseException.class, (e, ctx) ->
         ctx.status(e.getStatus()).json(new ErrorDTO(e.getMessage())));
     return app;
