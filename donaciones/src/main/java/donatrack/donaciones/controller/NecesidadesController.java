@@ -3,33 +3,24 @@ package donatrack.donaciones.controller;
 import donatrack.donaciones.controller.dto.ActualizarNecesidadRequest;
 import donatrack.donaciones.controller.dto.NecesidadDTO;
 import donatrack.donaciones.controller.dto.NuevaNecesidadRequest;
-import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.necesidad.Necesidad;
-import donatrack.donaciones.domain.necesidad.NecesidadExtraordinaria;
-import donatrack.donaciones.domain.necesidad.NecesidadRecurrente;
-import donatrack.donaciones.domain.necesidad.Periodo;
 import donatrack.donaciones.domain.persona.Beneficiaria;
-import donatrack.donaciones.repository.RepositorioEntidades;
-import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.seguridad.Acceso;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.UsuarioActual;
+import donatrack.donaciones.service.EntidadesBeneficiariasService;
 import donatrack.donaciones.service.NecesidadesService;
-import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.http.Context;
 
 public class NecesidadesController {
 
   private final NecesidadesService service;
-  private final RepositorioSubcategorias repositorioSubcategorias;
-  private final RepositorioEntidades repositorioEntidades;
+  private final EntidadesBeneficiariasService entidadesService;
 
   public NecesidadesController(NecesidadesService service,
-                               RepositorioSubcategorias repositorioSubcategorias,
-                               RepositorioEntidades repositorioEntidades) {
+                               EntidadesBeneficiariasService entidadesService) {
     this.service = service;
-    this.repositorioSubcategorias = repositorioSubcategorias;
-    this.repositorioEntidades = repositorioEntidades;
+    this.entidadesService = entidadesService;
   }
 
   public void todas(Context ctx) {
@@ -50,21 +41,16 @@ public class NecesidadesController {
 
   public void crear(Context ctx) {
     NuevaNecesidadRequest request = ctx.bodyAsClass(NuevaNecesidadRequest.class);
-    Subcategoria subcategoria = subcategoriaDe(request.subcategoria());
     Beneficiaria beneficiaria = beneficiariaPara(FiltroDeAcceso.usuarioDe(ctx), request.cuitBeneficiaria());
-    Necesidad necesidad = "RECURRENTE".equalsIgnoreCase(request.tipo())
-        ? new NecesidadRecurrente(
-            request.descripcion(),
-            request.cantidad(),
-            subcategoria,
-            beneficiaria,
-            request.periodo() == null ? null : Periodo.valueOf(request.periodo()))
-        : new NecesidadExtraordinaria(
-            request.descripcion(),
-            request.cantidad(),
-            subcategoria,
-            beneficiaria);
-    ctx.status(201).json(NecesidadDTO.desde(service.crear(necesidad)));
+    Necesidad necesidad = service.crear(
+        beneficiaria,
+        request.tipo(),
+        request.descripcion(),
+        request.cantidad(),
+        request.subcategoria(),
+        request.periodo()
+    );
+    ctx.status(201).json(NecesidadDTO.desde(necesidad));
   }
 
   public void actualizar(Context ctx) {
@@ -75,7 +61,7 @@ public class NecesidadesController {
         necesidad.getId(),
         request.descripcion(),
         request.cantidad(),
-        subcategoriaDe(request.subcategoria())
+        request.subcategoria()
     );
     ctx.status(204);
   }
@@ -87,23 +73,13 @@ public class NecesidadesController {
     ctx.status(204);
   }
 
-  private Subcategoria subcategoriaDe(String nombre) {
-    return repositorioSubcategorias.buscarPorNombre(nombre)
-        .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la subcategoría '" + nombre + "'."
-        ));
-  }
-
   // Para BENEFICIARIA ignora el cuit del body y usa siempre la propia; para
   // ADMINISTRADOR se respeta el cuit indicado.
   private Beneficiaria beneficiariaPara(UsuarioActual usuario, String cuitDelBody) {
     if (usuario.esBeneficiaria()) {
       return Acceso.perfilBeneficiariaObligatorio(usuario);
     }
-    return repositorioEntidades.buscarPorCuit(cuitDelBody)
-        .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la entidad beneficiaria con CUIT " + cuitDelBody
-        ));
+    return entidadesService.buscarPorCuit(cuitDelBody);
   }
 
   private long idDe(Context ctx) {

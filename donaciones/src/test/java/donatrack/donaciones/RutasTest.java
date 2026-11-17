@@ -16,28 +16,24 @@ import donatrack.donaciones.controller.AsignacionesController;
 import donatrack.donaciones.controller.DonacionesController;
 import donatrack.donaciones.controller.DonantesController;
 import donatrack.donaciones.controller.EntidadesBeneficiariasController;
+import donatrack.donaciones.controller.ImportacionesController;
 import donatrack.donaciones.controller.NecesidadesController;
 import donatrack.donaciones.controller.NotificacionesController;
 import donatrack.donaciones.controller.RegistroController;
 import donatrack.donaciones.controller.SubcategoriasController;
 import donatrack.donaciones.controller.UsuariosController;
-import donatrack.donaciones.repository.RepositorioDonaciones;
-import donatrack.donaciones.repository.RepositorioDonantes;
-import donatrack.donaciones.repository.RepositorioEntidades;
-import donatrack.donaciones.repository.RepositorioPersonas;
-import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.repository.RepositorioUsuarios;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
-import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
-import donatrack.donaciones.service.ConsultaDeNotificaciones;
+import donatrack.donaciones.service.BandejaDeNotificacionesService;
 import donatrack.donaciones.service.AsignacionesService;
 import donatrack.donaciones.service.DonacionesService;
 import donatrack.donaciones.service.DonantesService;
 import donatrack.donaciones.service.EntidadesBeneficiariasService;
+import donatrack.donaciones.service.ImportacionDonantesService;
 import donatrack.donaciones.service.NecesidadesService;
 import donatrack.donaciones.service.PersonasService;
-import donatrack.donaciones.service.RegistroService;
+import donatrack.donaciones.service.UsuariosService;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
 import org.junit.jupiter.api.BeforeAll;
@@ -107,6 +103,10 @@ class RutasTest {
           "GET /donaciones protegido: sin token debe dar 401.");
       assertEquals(401, client.get("/donantes").code(),
           "GET /donantes protegido: sin token debe dar 401.");
+      assertEquals(401, client.post("/donantes/existente", "{}").code(),
+          "POST /donantes/existente protegido: sin token debe dar 401.");
+      assertEquals(401, client.get("/donantes/importaciones").code(),
+          "GET /donantes/importaciones protegido: sin token debe dar 401.");
       assertEquals(401, client.get("/notificaciones/mias").code(),
           "GET /notificaciones/mias protegido: sin token debe dar 401.");
       assertEquals(401, client.post("/donaciones/eventos/entrega", "{}").code(),
@@ -133,7 +133,7 @@ class RutasTest {
     });
 
     org.mockito.Mockito.verify(deps.donantesService).inactivos();
-    org.mockito.Mockito.verify(deps.personasService, org.mockito.Mockito.never())
+    org.mockito.Mockito.verify(deps.donantesService, org.mockito.Mockito.never())
         .buscarPorDocumento("inactivos");
   }
 
@@ -146,16 +146,17 @@ class RutasTest {
     new FiltroDeAcceso(verificador, deps.repoUsuarios).registrarEn(app);
 
     new Rutas(
-        new RegistroController(deps.registroService),
+        new RegistroController(deps.donantesService, deps.entidadesService),
         new UsuariosController(),
-        new AdministradoresController(deps.proveedor),
-        new DonacionesController(deps.donacionesService, deps.repoPersonas, deps.repoDonantes, deps.repoSubcategorias),
-        new AsignacionesController(deps.asignacionesService, deps.repoDonaciones, deps.repoEntidades),
-        new DonantesController(deps.personasService, deps.donantesService),
-        new EntidadesBeneficiariasController(deps.entidadesService),
-        new NecesidadesController(deps.necesidadesService, deps.repoSubcategorias, deps.repoEntidades),
-        new SubcategoriasController(deps.repoSubcategorias),
-        new NotificacionesController(deps.consultaNotificaciones)
+        new AdministradoresController(deps.usuariosService),
+        new DonacionesController(deps.donacionesService, deps.donantesService),
+        new AsignacionesController(deps.asignacionesService),
+        new DonantesController(deps.donantesService),
+        new ImportacionesController(deps.importacionService),
+        new EntidadesBeneficiariasController(deps.entidadesService, deps.personasService),
+        new NecesidadesController(deps.necesidadesService, deps.entidadesService),
+        new SubcategoriasController(deps.donacionesService),
+        new NotificacionesController(deps.bandejaDeNotificaciones)
     ).registrarEn(app);
 
     return app;
@@ -183,21 +184,17 @@ class RutasTest {
 
   // Contenedor para no repetir los mocks en cada test.
   private static class Dependencias {
-    final ProveedorDeIdentidad proveedor = mock(ProveedorDeIdentidad.class);
     final RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
-    final RepositorioPersonas repoPersonas = mock(RepositorioPersonas.class);
-    final RepositorioDonantes repoDonantes = mock(RepositorioDonantes.class);
-    final RepositorioSubcategorias repoSubcategorias = mock(RepositorioSubcategorias.class);
-    final RepositorioEntidades repoEntidades = mock(RepositorioEntidades.class);
-    final RepositorioDonaciones repoDonaciones = mock(RepositorioDonaciones.class);
-    final RegistroService registroService = mock(RegistroService.class);
+    final UsuariosService usuariosService = mock(UsuariosService.class);
     final DonacionesService donacionesService = mock(DonacionesService.class);
     final AsignacionesService asignacionesService = mock(AsignacionesService.class);
     final EntidadesBeneficiariasService entidadesService = mock(EntidadesBeneficiariasService.class);
     final NecesidadesService necesidadesService = mock(NecesidadesService.class);
     final PersonasService personasService = mock(PersonasService.class);
     final DonantesService donantesService = mock(DonantesService.class);
-    final ConsultaDeNotificaciones consultaNotificaciones = mock(ConsultaDeNotificaciones.class);
+    final ImportacionDonantesService importacionService = mock(ImportacionDonantesService.class);
+    final BandejaDeNotificacionesService bandejaDeNotificaciones =
+        mock(BandejaDeNotificacionesService.class);
 
     Dependencias() {
       when(repoUsuarios.buscarPorKeycloakId(org.mockito.ArgumentMatchers.anyString()))

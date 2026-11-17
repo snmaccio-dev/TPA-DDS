@@ -61,9 +61,7 @@ class EntidadesBeneficiariasServiceEliminarTest implements SimplePersistenceTest
     donacionAsignadaA(beneficiaria);
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    EntidadesBeneficiariasService service = new EntidadesBeneficiariasService(
-        repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
-        repoDonaciones, repoDonantes, proveedor);
+    EntidadesBeneficiariasService service = nuevoService(proveedor);
 
     assertThrows(ConflictoDeNegocioException.class, () -> service.eliminar(beneficiaria.getId()));
   }
@@ -84,13 +82,11 @@ class EntidadesBeneficiariasServiceEliminarTest implements SimplePersistenceTest
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    EntidadesBeneficiariasService service = new EntidadesBeneficiariasService(
-        repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
-        repoDonaciones, repoDonantes, proveedor);
+    EntidadesBeneficiariasService service = nuevoService(proveedor);
 
     service.eliminar(beneficiaria.getId());
 
-    // Despues del gestor la transaccion esta cerrada: solo clear() para releer.
+    // Despues del service la transaccion esta cerrada: solo clear() para releer.
     entityManager().clear();
     assertFalse(repoEntidades.buscarPorId(beneficiaria.getId()).isPresent());
     Beneficiaria refrescada = entityManager().find(Beneficiaria.class, beneficiaria.getId());
@@ -110,9 +106,7 @@ class EntidadesBeneficiariasServiceEliminarTest implements SimplePersistenceTest
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    EntidadesBeneficiariasService service = new EntidadesBeneficiariasService(
-        repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
-        repoDonaciones, repoDonantes, proveedor);
+    EntidadesBeneficiariasService service = nuevoService(proveedor);
 
     service.eliminar(aBorrar.getId());
 
@@ -161,6 +155,12 @@ class EntidadesBeneficiariasServiceEliminarTest implements SimplePersistenceTest
     entityManager().flush();
   }
 
+  private EntidadesBeneficiariasService nuevoService(ProveedorDeIdentidad proveedor) {
+    return new EntidadesBeneficiariasService(
+        repoEntidades, repoPersonas, repoNotificaciones, repoNecesidades, repoPropuestas,
+        repoDonaciones, repoDonantes, new UsuariosService(proveedor, repoUsuarios));
+  }
+
   private static class ProveedorFalso implements ProveedorDeIdentidad {
     final List<String> eliminados = new ArrayList<>();
 
@@ -170,6 +170,10 @@ class EntidadesBeneficiariasServiceEliminarTest implements SimplePersistenceTest
 
     @Override public String crearUsuarioSinContrasena(String email, RolDeAcceso rol) {
       throw new UnsupportedOperationException();
+    }
+
+    @Override public java.util.Optional<String> buscarIdPorEmail(String email) {
+      return java.util.Optional.empty();
     }
 
     @Override public void eliminarUsuario(String idExterno) {

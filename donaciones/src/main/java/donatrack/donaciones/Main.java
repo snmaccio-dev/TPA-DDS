@@ -10,6 +10,9 @@ import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.CondicionBien;
 import donatrack.donaciones.domain.donacion.DatosEntrega;
 import donatrack.donaciones.domain.donacion.Donacion;
+import donatrack.donaciones.domain.donacion.SegmentadorDonaciones;
+import donatrack.donaciones.domain.donacion.asignacion.CompatibilidadSemantica;
+import donatrack.donaciones.domain.donacion.asignacion.PrioridadSubatendidos;
 import donatrack.donaciones.domain.donacion.estado.EstadoEntregaFallida;
 import donatrack.donaciones.domain.necesidad.NecesidadRecurrente;
 import donatrack.donaciones.domain.necesidad.Periodo;
@@ -21,19 +24,18 @@ import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
-import donatrack.donaciones.infrastructure.importacion.ImportadorCSVPersonas;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorEmail;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorSMS;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorWhatsApp;
 import donatrack.donaciones.jobs.PlanificadorAsignaciones;
-import donatrack.donaciones.repository.RepositorioDonantes;
+import donatrack.donaciones.repository.RepositorioDonaciones;
+import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.repository.RepositorioNotificaciones;
-import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioPropuestas;
+import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.service.AsignacionesService;
 import donatrack.donaciones.service.DonacionesService;
 import donatrack.donaciones.service.NotificacionesService;
-import donatrack.donaciones.service.SegmentadorDonaciones;
 
 
 import java.util.List;
@@ -51,14 +53,23 @@ public class Main {
             new NotificadorWhatsApp()
         ), repositorioNotificaciones);
         DonacionesService donacionesService = new DonacionesService(
-            notificacionesService,
+            RepositorioDonaciones.getInstance(),
+            new RepositorioSubcategorias(),
             repositorioPropuestas,
             repositorioNotificaciones,
+            new SegmentadorDonaciones(),
+            notificacionesService,
             "http://localhost:8082/seguimiento-donante",
             "http://localhost:8082/seguimiento-beneficiario"
         );
-        AsignacionesService asignacionesService =
-            new AsignacionesService(repositorioPropuestas, donacionesService);
+        AsignacionesService asignacionesService = new AsignacionesService(
+            new CompatibilidadSemantica(),
+            new PrioridadSubatendidos(),
+            RepositorioDonaciones.getInstance(),
+            RepositorioEntidades.getInstance(),
+            repositorioPropuestas,
+            donacionesService
+        );
         PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(asignacionesService);
         planificador.iniciar();
 
@@ -66,7 +77,6 @@ public class Main {
             demo1_crearPersonas();
             demo2_segmentacionDonaciones();
             demo3_estadosDonacion();
-            demo4_importacionCSV();
             demo5_notificaciones();
             demo6_entidadBeneficiaria();
         } finally {
@@ -175,21 +185,6 @@ public class Main {
             donacion.marcarEntregada(java.time.LocalDateTime.now(), "AAA111");
         } catch (TransicionNoPermitidaException e) {
             System.out.println("excepcion capturada correctamente → " + e.getMessage());
-        }
-        System.out.println();
-    }
-
-    static void demo4_importacionCSV() {
-        System.out.println("--- [4] Importacion masiva CSV ---");
-        String ruta = "src/main/resources/donantes_prueba.csv"; //Se puede cambiar por "donantes_prueba_2.csv" para validar el funcionamiento a mayor escala.
-        ImportadorCSVPersonas importador = new ImportadorCSVPersonas(
-            RepositorioPersonas.getInstance(),
-            new RepositorioDonantes()
-        );
-        try {
-            importador.importarConResumen(ruta);
-        } catch (RuntimeException e) {
-            System.out.println("[CSV] Archivo no encontrado en: " + ruta + " — " + e.getMessage());
         }
         System.out.println();
     }

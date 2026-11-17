@@ -81,6 +81,19 @@ public final class Acceso {
         throw new ForbiddenResponse("No podes acceder a esta necesidad.");
     }
 
+    public static void exigirPuedeModificarEntidad(UsuarioActual usuario, long beneficiariaId) {
+        if (usuario.esAdministrador()) {
+            return;
+        }
+        if (usuario.esBeneficiaria()) {
+            Beneficiaria propia = perfilBeneficiariaObligatorio(usuario);
+            if (Objects.equals(idDe(propia), beneficiariaId)) {
+                return;
+            }
+        }
+        throw new ForbiddenResponse("No podes modificar esta entidad.");
+    }
+
     public static Donante perfilDonanteObligatorio(UsuarioActual usuario) {
         return usuario.donante().orElseThrow(() ->
             new ForbiddenResponse("La cuenta no tiene un perfil asociado."));

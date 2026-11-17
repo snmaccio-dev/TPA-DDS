@@ -3,7 +3,7 @@ package donatrack.donaciones.domain.persona;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "Persona_Humana")
+@Table(name = "Persona_Humana", indexes = @Index(name = "idx_persona_humana_documento", columnList = "Documento"))
 public class PersonaHumana extends Persona {
 
     @Column(name="Nombre")
@@ -34,6 +34,11 @@ public class PersonaHumana extends Persona {
         this.edad = edad;
         this.documento = documento;
         this.genero = genero;
+    }
+
+    public void actualizarNombre(String nombre, String apellido) {
+        this.nombre = nombre;
+        this.apellido = apellido;
     }
 
     @Override

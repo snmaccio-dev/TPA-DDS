@@ -8,7 +8,7 @@ import donatrack.donaciones.domain.notificacion.TipoNotificacion;
 import donatrack.donaciones.seguridad.Acceso;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.UsuarioActual;
-import donatrack.donaciones.service.ConsultaDeNotificaciones;
+import donatrack.donaciones.service.BandejaDeNotificacionesService;
 import io.javalin.http.Context;
 
 public class NotificacionesController {
@@ -16,10 +16,10 @@ public class NotificacionesController {
     private static final int TAMANIO_POR_DEFECTO = 20;
     private static final int TAMANIO_MAXIMO = 100;
 
-    private final ConsultaDeNotificaciones consulta;
+    private final BandejaDeNotificacionesService bandeja;
 
-    public NotificacionesController(ConsultaDeNotificaciones consulta) {
-        this.consulta = consulta;
+    public NotificacionesController(BandejaDeNotificacionesService bandeja) {
+        this.bandeja = bandeja;
     }
 
     public void mias(Context ctx) {
@@ -27,25 +27,25 @@ public class NotificacionesController {
         boolean soloNoLeidas = booleanParam(ctx, "soloNoLeidas", false);
         int pagina = intParam(ctx, "pagina", 0);
         int tamanio = tamanioEfectivo(intParam(ctx, "tamanio", TAMANIO_POR_DEFECTO));
-        ctx.json(NotificacionDTO.desde(consulta.propiasDe(usuario, soloNoLeidas, pagina, tamanio)));
+        ctx.json(NotificacionDTO.desde(bandeja.propiasDe(usuario, soloNoLeidas, pagina, tamanio)));
     }
 
     public void cantidadNoLeidas(Context ctx) {
         UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
-        ctx.json(new CantidadResponse(consulta.cantidadNoLeidasDe(usuario)));
+        ctx.json(new CantidadResponse(bandeja.cantidadNoLeidasDe(usuario)));
     }
 
     public void marcarLeida(Context ctx) {
         long id = ctx.pathParamAsClass("id", Long.class).get();
-        Notificacion notificacion = consulta.buscarPorId(id);
+        Notificacion notificacion = bandeja.buscarPorId(id);
         Acceso.exigirPuedeVerNotificacion(FiltroDeAcceso.usuarioDe(ctx), notificacion);
-        consulta.marcarLeida(notificacion);
+        bandeja.marcarLeida(notificacion);
         ctx.status(204);
     }
 
     public void marcarTodasLeidas(Context ctx) {
         UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
-        consulta.marcarTodasLeidasDe(usuario);
+        bandeja.marcarTodasLeidasDe(usuario);
         ctx.status(204);
     }
 
@@ -54,7 +54,7 @@ public class NotificacionesController {
         TipoNotificacion tipo = enumParam(ctx, "tipo", TipoNotificacion.class);
         int pagina = intParam(ctx, "pagina", 0);
         int tamanio = tamanioEfectivo(intParam(ctx, "tamanio", TAMANIO_POR_DEFECTO));
-        ctx.json(NotificacionDTO.desde(consulta.todas(estadoEnvio, tipo, pagina, tamanio)));
+        ctx.json(NotificacionDTO.desde(bandeja.todas(estadoEnvio, tipo, pagina, tamanio)));
     }
 
     // === Helpers ===

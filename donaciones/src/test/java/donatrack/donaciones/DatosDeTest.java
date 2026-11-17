@@ -14,15 +14,15 @@ public final class DatosDeTest {
     private DatosDeTest() {}
 
     public static String documentoUnico() {
-        // 8 digitos, para que entre en el formato de DNI.
+        // 8 digitos empezando en 9, fuera del rango de DNI de los CSV de ejemplo.
         long n = CONTADOR.incrementAndGet();
-        return String.format("%08d", Math.floorMod(n, 100_000_000L));
+        return "9" + String.format("%07d", Math.floorMod(n, 10_000_000L));
     }
 
     public static String cuitUnico() {
-        // 11 digitos, empezando en 30 para que parezca CUIT de persona juridica.
+        // 11 digitos empezando en 33, fuera del prefijo 30 de los CSV de ejemplo.
         long n = CONTADOR.incrementAndGet();
-        return "30" + String.format("%09d", Math.floorMod(n, 1_000_000_000L));
+        return "33" + String.format("%09d", Math.floorMod(n, 1_000_000_000L));
     }
 
     public static String emailUnico(String prefijo) {

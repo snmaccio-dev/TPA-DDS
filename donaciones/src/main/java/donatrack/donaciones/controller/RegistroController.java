@@ -5,33 +5,39 @@ import donatrack.donaciones.controller.dto.RegistroDonanteRequest;
 import donatrack.donaciones.controller.dto.RepresentanteRequest;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
+import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.service.DatosEntidad;
-import donatrack.donaciones.service.RegistroService;
+import donatrack.donaciones.service.DonantesService;
+import donatrack.donaciones.service.EntidadesBeneficiariasService;
 import io.javalin.http.Context;
 
 import java.util.List;
 
 public class RegistroController {
 
-    private final RegistroService service;
+    private final DonantesService donantesService;
+    private final EntidadesBeneficiariasService entidadesService;
 
-    public RegistroController(RegistroService service) {
-        this.service = service;
+    public RegistroController(DonantesService donantesService,
+                              EntidadesBeneficiariasService entidadesService) {
+        this.donantesService = donantesService;
+        this.entidadesService = entidadesService;
     }
 
     public void registrarDonante(Context ctx) {
         RegistroDonanteRequest request = ctx.bodyAsClass(RegistroDonanteRequest.class);
-        Donante donante = service.registrarDonante(
-            request.aPersona(),
+        Persona persona = request.aPersona();
+        if (request.direccion() != null && !request.direccion().isBlank()) {
+            persona.setDireccion(request.direccion());
+        }
+        Donante donante = donantesService.registrarPublico(
+            persona,
             request.email(),
             request.contrasena()
         );
-        if (request.direccion() != null && !request.direccion().isBlank()) {
-            donante.getPersona().setDireccion(request.direccion());
-        }
         ctx.status(201).json(new RegistroDonanteResponse(donante.getId()));
     }
 
@@ -48,7 +54,7 @@ public class RegistroController {
             request.telefono(),
             mapRepresentantes(request.representantes())
         );
-        Beneficiaria beneficiaria = service.registrarBeneficiaria(
+        Beneficiaria beneficiaria = entidadesService.registrarPublica(
             juridica,
             datos,
             request.email(),

@@ -1,11 +1,11 @@
 package donatrack.donaciones.controller;
 
+import donatrack.donaciones.controller.dto.DonanteExistenteRequest;
 import donatrack.donaciones.controller.dto.DonanteInactivoDTO;
 import donatrack.donaciones.controller.dto.NuevoDonanteRequest;
 import donatrack.donaciones.controller.dto.PersonaDTO;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.service.DonantesService;
-import donatrack.donaciones.service.PersonasService;
 import donatrack.donaciones.service.ResultadoCorrida;
 import io.javalin.http.Context;
 
@@ -13,12 +13,10 @@ import java.util.List;
 
 public class DonantesController {
 
-  private final PersonasService service;
-  private final DonantesService donantesService;
+  private final DonantesService service;
 
-  public DonantesController(PersonasService service, DonantesService donantesService) {
+  public DonantesController(DonantesService service) {
     this.service = service;
-    this.donantesService = donantesService;
   }
 
   public void todas(Context ctx) {
@@ -30,11 +28,11 @@ public class DonantesController {
   }
 
   public void inactivos(Context ctx) {
-    ctx.json(DonanteInactivoDTO.desde(donantesService.inactivos()));
+    ctx.json(DonanteInactivoDTO.desde(service.inactivos()));
   }
 
   public void avisarInactivos(Context ctx) {
-    ResultadoCorrida resultado = donantesService.avisarInactivos();
+    ResultadoCorrida resultado = service.avisarInactivos();
     ctx.json(new AvisarInactivosResponse(resultado.exitosas(), resultado.fallidas()));
   }
 
@@ -44,7 +42,13 @@ public class DonantesController {
     if (request.direccion() != null && !request.direccion().isBlank()) {
       persona.setDireccion(request.direccion());
     }
-    service.registrar(persona, request.email());
+    service.registrarConPersonaNueva(persona, request.email());
+    ctx.status(201);
+  }
+
+  public void registrarExistente(Context ctx) {
+    DonanteExistenteRequest request = ctx.bodyAsClass(DonanteExistenteRequest.class);
+    service.registrarConPersonaExistente(request.documento(), request.email());
     ctx.status(201);
   }
 

@@ -52,6 +52,15 @@ public abstract class Persona {
         }
     }
 
+    public void reemplazarTelefono(String telefono) {
+        contactos.stream()
+            .filter(c -> c.getTipo() == TipoContacto.TELEFONO)
+            .findFirst()
+            .ifPresentOrElse(
+                c -> c.setValor(telefono),
+                () -> agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, telefono)));
+    }
+
     public String getDireccion() {
         return direccion;
     }

@@ -19,10 +19,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-// Todas las notificaciones se persisten (incluso las fallidas y las de solo
-// plataforma) para que el web muestre a cada usuario su lista y para auditoria.
-// Las fallas de envio no se propagan: no pueden deshacer el cambio de estado
-// que las dispara.
 public class NotificacionesService {
 
   private final Map<TipoContacto, Notificador> porTipo;
@@ -43,9 +39,6 @@ public class NotificacionesService {
     this.repositorio = repositorio;
   }
 
-  // Entry point principal para un donante. Nunca propaga fallas del canal
-  // externo: siempre guarda una Notificacion en estado ENVIADA o FALLIDA y
-  // la devuelve. Solo valida datos obligatorios con DatosInvalidosException.
   public Notificacion notificar(Donante donante,
                                 TipoNotificacion tipo,
                                 String mensaje,
@@ -70,11 +63,6 @@ public class NotificacionesService {
         () -> Notificacion.paraBeneficiaria(beneficiaria, tipo, mensaje, donacion));
   }
 
-  // Notificacion solo de plataforma: queda guardada con estadoEnvio NO_APLICA,
-  // sin intento de envio externo. Los admins la ven cuando entran.
-  // TODO: envio externo a admins. Para mandar mail a todos los admins habria
-  // que listarlos contra Keycloak (GET /admin/realms/{realm}/users con el
-  // rol ADMINISTRADOR) y despacharlos uno por uno. Fuera de alcance por ahora.
   public Notificacion notificarAdministradores(TipoNotificacion tipo,
                                                String mensaje,
                                                Donacion donacion) {
@@ -111,8 +99,6 @@ public class NotificacionesService {
           "El notificador " + medio.getTipo() + " fallo: " + e.getMessage());
     }
   }
-
-  // === Metodos especificos armados sobre notificar/notificarAdministradores ===
 
   public Notificacion notificarAusenciaPlataforma(Donante donante) {
     return notificar(
@@ -214,8 +200,6 @@ public class NotificacionesService {
     );
   }
 
-  // Mensaje generico de cambio de estado para los estados que no tienen uno
-  // propio (LISTA_PARA_ENTREGAR, EN_DEPOSITO, VENCIDA).
   public Notificacion notificarCambioDeEstado(Donante donante,
                                               Donacion donacion,
                                               String estadoAnterior,

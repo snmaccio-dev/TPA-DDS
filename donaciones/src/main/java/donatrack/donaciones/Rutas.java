@@ -5,6 +5,7 @@ import donatrack.donaciones.controller.AsignacionesController;
 import donatrack.donaciones.controller.DonacionesController;
 import donatrack.donaciones.controller.DonantesController;
 import donatrack.donaciones.controller.EntidadesBeneficiariasController;
+import donatrack.donaciones.controller.ImportacionesController;
 import donatrack.donaciones.controller.NecesidadesController;
 import donatrack.donaciones.controller.NotificacionesController;
 import donatrack.donaciones.controller.RegistroController;
@@ -37,6 +38,7 @@ public class Rutas {
   private final DonacionesController donaciones;
   private final AsignacionesController asignaciones;
   private final DonantesController donantes;
+  private final ImportacionesController importaciones;
   private final EntidadesBeneficiariasController entidades;
   private final NecesidadesController necesidades;
   private final SubcategoriasController subcategorias;
@@ -48,6 +50,7 @@ public class Rutas {
                DonacionesController donaciones,
                AsignacionesController asignaciones,
                DonantesController donantes,
+               ImportacionesController importaciones,
                EntidadesBeneficiariasController entidades,
                NecesidadesController necesidades,
                SubcategoriasController subcategorias,
@@ -58,6 +61,7 @@ public class Rutas {
     this.donaciones = donaciones;
     this.asignaciones = asignaciones;
     this.donantes = donantes;
+    this.importaciones = importaciones;
     this.entidades = entidades;
     this.necesidades = necesidades;
     this.subcategorias = subcategorias;
@@ -70,7 +74,7 @@ public class Rutas {
     administradores(app, administradores);
     donaciones(app, donaciones);
     asignaciones(app, asignaciones);
-    donantes(app, donantes);
+    donantes(app, donantes, importaciones);
     entidades(app, entidades);
     necesidades(app, necesidades);
     subcategorias(app, subcategorias);
@@ -121,11 +125,19 @@ public class Rutas {
   }
 
   // === Donantes (panel de administracion) ===
-  public static void donantes(Javalin app, DonantesController c) {
+  public static void donantes(Javalin app, DonantesController c, ImportacionesController i) {
     app.get(   "/donantes",                   c::todas,            ADMINISTRADOR);
+    // POST /donantes da de alta una persona que todavia no existe (falla con 409 si ya
+    // existe); POST /donantes/existente le agrega el rol Donante a una persona ya cargada
+    // (falla con 404 si no existe y con 409 si ya es donante). Las dos crean la cuenta.
     app.post(  "/donantes",                   c::registrar,        ADMINISTRADOR);
-    // /donantes/inactivos y /donantes/avisar-inactivos tienen que registrarse ANTES
-    // que /donantes/{documento} para que Javalin no tome el literal como documento.
+    app.post(  "/donantes/existente",         c::registrarExistente, ADMINISTRADOR);
+    // /donantes/inactivos, /donantes/avisar-inactivos y /donantes/importaciones tienen que
+    // registrarse ANTES que /donantes/{documento} para que Javalin no tome el literal como
+    // documento.
+    app.post(  "/donantes/importaciones",      i::iniciar,          ADMINISTRADOR);
+    app.get(   "/donantes/importaciones",      i::ultimas,          ADMINISTRADOR);
+    app.get(   "/donantes/importaciones/{id}", i::buscar,          ADMINISTRADOR);
     app.get(   "/donantes/inactivos",         c::inactivos,        ADMINISTRADOR);
     app.post(  "/donantes/avisar-inactivos",  c::avisarInactivos,  ADMINISTRADOR);
     app.get(   "/donantes/{documento}",       c::buscar,           ADMINISTRADOR);
@@ -141,6 +153,7 @@ public class Rutas {
     app.get(   "/entidades/{id}",       c::buscar,                  ADMINISTRADOR, DONANTE);
     app.post(  "/entidades/existente",  c::altaDePersonaExistente,  ADMINISTRADOR);
     app.post(  "/entidades/nueva",      c::altaConPersonaNueva,     ADMINISTRADOR);
+    app.patch( "/entidades/{id}/direccion", c::actualizarDireccion, ADMINISTRADOR, BENEFICIARIA);
     app.delete("/entidades/{id}",       c::eliminar,                ADMINISTRADOR);
   }
 

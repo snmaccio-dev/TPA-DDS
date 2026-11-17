@@ -1,57 +1,46 @@
 package donatrack.donaciones.infrastructure.importacion;
 
-import donatrack.donaciones.domain.DatosInvalidosException;
+import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
-public class PersonaFactoryTest {
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class PersonaFactoryTest {
 
   @Test
-  public void crearGeneraPersonaHumanaCorrectamente() {
-    Persona persona = PersonaFactory.crear(camposCSVHumana());
+  void creaUnaPersonaHumanaConEmailYTelefono() {
+    Persona persona = PersonaFactory.crear(new FilaDonanteCsv(2, FilaDonanteCsv.TipoPersona.HUMANA,
+        "DNI", "12345678", "Ana Perez Gomez", "ana@mail.com", "+54 11 5555-5555"));
 
-    assertTrue(persona instanceof PersonaHumana);
+    PersonaHumana humana = assertInstanceOf(PersonaHumana.class, persona);
+    assertEquals("Ana", humana.getNombre());
+    assertEquals("Perez Gomez", humana.getApellido());
     assertEquals("ana@mail.com", persona.getContactoPredeterminado().getValor());
+    assertTrue(persona.tieneContacto(TipoContacto.TELEFONO, "+54 11 5555-5555"));
   }
 
   @Test
-  public void crearGeneraPersonaJuridicaCorrectamente() {
-    Persona persona = PersonaFactory.crear(camposCSVJuridica());
+  void creaUnaPersonaJuridicaConElCuitNormalizado() {
+    Persona persona = PersonaFactory.crear(new FilaDonanteCsv(2, FilaDonanteCsv.TipoPersona.JURIDICA,
+        "CUIT", "30-12345678-9", "Arcos Plateados S.A.", "contacto@arcos.com", ""));
 
-    assertTrue(persona instanceof PersonaJuridica);
-    assertEquals("contacto@empresa.com", persona.getContactoPredeterminado().getValor());
+    PersonaJuridica juridica = assertInstanceOf(PersonaJuridica.class, persona);
+    assertEquals("30123456789", juridica.getCuit());
+    assertEquals("Arcos Plateados S.A.", juridica.getRazonSocial());
+    assertFalse(persona.tieneContactoDeTipo(TipoContacto.TELEFONO));
   }
 
   @Test
-  public void crearLanzaExcepcionConCamposInsuficientes() {
-    assertThrows(DatosInvalidosException.class, () -> {
-      PersonaFactory.crear(camposIncompletos());
-    });
-  }
+  void separarNombreSinApellidoDejaElApellidoVacio() {
+    PersonaFactory.NombreYApellido nombre = PersonaFactory.separarNombre("Cher");
 
-  @Test
-  public void crearLanzaExcepcionConTipoPersonaDesconocido() {
-    assertThrows(DatosInvalidosException.class, () -> {
-      PersonaFactory.crear(camposRaros());
-    });
-  }
-
-  private String[] camposCSVHumana() {
-    return new String[]{"HUMANA", "DNI", "12345678", "Ana Perez", "ana@mail.com", "+54 11 5555-5555"};
-  }
-
-  private String[] camposCSVJuridica() {
-    return new String[]{"JURIDICA", "CUIT", "30-12345678-9", "Arcos Plateados S.A.", "contacto@empresa.com", "+54 11 4444-4444"};
-  }
-
-  private String[] camposIncompletos() {
-    return new String[]{"HUMANA", "DNI", "12345678"};
-  }
-
-  private String[] camposRaros() {
-    return new String[]{"EXTRATERRESTRE", "DNI", "12345678", "ET", "et@espacio.com", "1111"};
+    assertEquals("Cher", nombre.nombre());
+    assertEquals("", nombre.apellido());
   }
 }

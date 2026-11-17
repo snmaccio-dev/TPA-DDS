@@ -8,12 +8,13 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "MedioContacto")
+@Table(name = "MedioContacto", indexes = @Index(name = "idx_medio_contacto_valor", columnList = "valor"))
 public class MedioContacto {
 
     @Id

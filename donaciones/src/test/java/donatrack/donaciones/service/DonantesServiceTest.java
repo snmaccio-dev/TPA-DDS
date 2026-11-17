@@ -9,7 +9,10 @@ import donatrack.donaciones.domain.notificacion.TipoNotificacion;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
+import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioDonantes;
+import donatrack.donaciones.repository.RepositorioEntidades;
+import donatrack.donaciones.repository.RepositorioNotificaciones;
 import io.github.flbulgarelli.jpa.extras.test.SimplePersistenceTest;
 import org.junit.jupiter.api.Test;
 
@@ -38,8 +41,7 @@ class DonantesServiceTest implements SimplePersistenceTest {
     fallida.marcarFallida("sin canal");
     when(notificacionesService.notificarAusenciaPlataforma(any())).thenReturn(fallida);
 
-    RepositorioDonantes repoDonantes = new RepositorioDonantes();
-    DonantesService service = new DonantesService(repoDonantes, notificacionesService);
+    DonantesService service = nuevoService(notificacionesService);
 
     ResultadoCorrida resultado = service.avisarInactivos();
 
@@ -47,7 +49,7 @@ class DonantesServiceTest implements SimplePersistenceTest {
         "Si la notificacion quedo FALLIDA no cuenta como avisado.");
     assertEquals(1, resultado.cantidadDeFallas());
 
-    // Despues del gestor la transaccion ya esta commiteada y cerrada; solo
+    // Despues del service la transaccion ya esta commiteada y cerrada; solo
     // podemos limpiar la cache del EM y releer desde la base. Un flush() aca
     // tiraria IllegalStateException por "Transaction not active".
     entityManager().clear();
@@ -68,8 +70,7 @@ class DonantesServiceTest implements SimplePersistenceTest {
     enviada.marcarEnviada(TipoContacto.EMAIL, "luis@mail");
     when(notificacionesService.notificarAusenciaPlataforma(any())).thenReturn(enviada);
 
-    RepositorioDonantes repoDonantes = new RepositorioDonantes();
-    DonantesService service = new DonantesService(repoDonantes, notificacionesService);
+    DonantesService service = nuevoService(notificacionesService);
 
     ResultadoCorrida resultado = service.avisarInactivos();
 
@@ -85,6 +86,17 @@ class DonantesServiceTest implements SimplePersistenceTest {
   }
 
   // === Helpers ===
+
+  private DonantesService nuevoService(NotificacionesService notificacionesService) {
+    return new DonantesService(
+        new RepositorioDonantes(),
+        repoPersonas,
+        new RepositorioNotificaciones(),
+        RepositorioDonaciones.getInstance(),
+        RepositorioEntidades.getInstance(),
+        notificacionesService,
+        mock(UsuariosService.class));
+  }
 
   // Persiste el donante y lo envejece dentro de la transaccion que abre
   // SimplePersistenceTest (antes de llamar al service). flush para que el

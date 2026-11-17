@@ -27,13 +27,11 @@ import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.domain.usuario.Usuario;
-import donatrack.donaciones.repository.RepositorioDonantes;
-import donatrack.donaciones.repository.RepositorioPersonas;
-import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.repository.RepositorioUsuarios;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
 import donatrack.donaciones.service.DonacionesService;
+import donatrack.donaciones.service.DonantesService;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
 import io.javalin.testtools.JavalinTest;
@@ -156,12 +154,7 @@ class DonacionesControllerTest {
   private Javalin app(DonacionesService service, RepositorioUsuarios repoUsuarios) {
     Javalin app = Javalin.create();
     new FiltroDeAcceso(verificador, repoUsuarios).registrarEn(app);
-    donatrack.donaciones.Rutas.donaciones(app, new DonacionesController(
-        service,
-        mock(RepositorioPersonas.class),
-        mock(RepositorioDonantes.class),
-        mock(RepositorioSubcategorias.class)
-    ));
+    donatrack.donaciones.Rutas.donaciones(app, new DonacionesController(service, mock(DonantesService.class)));
 
     app.exception(DatosInvalidosException.class, (e, ctx) ->
         ctx.status(400).json(new ErrorDTO(e.getMessage())));

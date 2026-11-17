@@ -9,6 +9,7 @@ import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.Table;
 
@@ -16,7 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Entity
-@Table(name = "Persona_Juridica")
+@Table(name = "Persona_Juridica", indexes = @Index(name = "idx_persona_juridica_cuit", columnList = "CUIT"))
 public class PersonaJuridica extends Persona {
 
     @Column(name="CUIT")
@@ -61,6 +62,13 @@ public class PersonaJuridica extends Persona {
             throw new DatosInvalidosException("El CUIT es obligatorio.");
         }
         return cuit.replaceAll("[^0-9]", "");
+    }
+
+    public void actualizarRazonSocial(String razonSocial) {
+        if (razonSocial == null || razonSocial.isBlank()) {
+            throw new DatosInvalidosException("La razon social es obligatoria.");
+        }
+        this.razonSocial = razonSocial.trim();
     }
 
     public void agregarRepresentante(Representante representante) {

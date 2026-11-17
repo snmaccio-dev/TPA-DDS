@@ -29,6 +29,8 @@
         <class>donatrack.donaciones.domain.necesidad.NecesidadRecurrente</class>
         <class>donatrack.donaciones.domain.necesidad.NecesidadExtraordinaria</class>
         <class>donatrack.donaciones.domain.notificacion.Notificacion</class>
+        <class>donatrack.donaciones.domain.importacion.ImportacionCsv</class>
+        <class>donatrack.donaciones.domain.importacion.ErrorDeImportacion</class>
 
         <properties>
             <!-- Conexión a PostgreSQL para despliegue local -->

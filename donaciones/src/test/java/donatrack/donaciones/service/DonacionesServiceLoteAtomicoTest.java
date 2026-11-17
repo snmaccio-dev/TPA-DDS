@@ -7,6 +7,7 @@ import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.CondicionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
+import donatrack.donaciones.domain.donacion.SegmentadorDonaciones;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
@@ -20,6 +21,7 @@ import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioPropuestas;
+import donatrack.donaciones.repository.RepositorioSubcategorias;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import org.junit.jupiter.api.Test;
 
@@ -31,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 
 // Test enfocado en que aplicarEventoEnLote sea "todo o nada": no lo hacemos
-// con SimplePersistenceTest porque necesitamos que la transaccion del gestor
+// con SimplePersistenceTest porque necesitamos que la transaccion del service
 // se abra, commitee y haga rollback de verdad. Manejamos nosotros la tx para
 // armar los datos previos.
 class DonacionesServiceLoteAtomicoTest implements WithSimplePersistenceUnit {
@@ -44,9 +46,12 @@ class DonacionesServiceLoteAtomicoTest implements WithSimplePersistenceUnit {
   @Test
   void siLaSegundaTransicionFallaElLoteSeRevierteYLaPrimeraNoCambia() {
     DonacionesService service = new DonacionesService(
-        mock(NotificacionesService.class),
+        repoDonaciones,
+        new RepositorioSubcategorias(),
         new RepositorioPropuestas(),
         mock(RepositorioNotificaciones.class),
+        new SegmentadorDonaciones(),
+        mock(NotificacionesService.class),
         "http://web/donante",
         "http://web/beneficiario"
     );

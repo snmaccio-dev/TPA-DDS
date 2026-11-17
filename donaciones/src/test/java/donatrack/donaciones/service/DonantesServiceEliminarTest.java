@@ -27,7 +27,6 @@ import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioUsuarios;
 import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.RolDeAcceso;
-import donatrack.donaciones.service.RecursoInexistenteException;
 import io.github.flbulgarelli.jpa.extras.test.SimplePersistenceTest;
 import org.junit.jupiter.api.Test;
 
@@ -38,8 +37,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
-class PersonasServiceEliminarTest implements SimplePersistenceTest {
+class DonantesServiceEliminarTest implements SimplePersistenceTest {
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioDonantes repoDonantes = new RepositorioDonantes();
@@ -65,12 +65,11 @@ class PersonasServiceEliminarTest implements SimplePersistenceTest {
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    PersonasService service = new PersonasService(
-        repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
+    DonantesService service = nuevoService(proveedor);
 
     service.eliminar(documento);
 
-    // Despues del gestor la transaccion esta commiteada y cerrada; nada de
+    // Despues del service la transaccion esta commiteada y cerrada; nada de
     // flush aca: solo clear() y releer desde la base.
     entityManager().clear();
     assertFalse(repoDonantes.buscarPorDocumento(documento).isPresent());
@@ -90,8 +89,7 @@ class PersonasServiceEliminarTest implements SimplePersistenceTest {
     donacionDe(donante);
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    PersonasService service = new PersonasService(
-        repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
+    DonantesService service = nuevoService(proveedor);
 
     assertThrows(ConflictoDeNegocioException.class, () -> service.eliminar(documento));
 
@@ -114,8 +112,7 @@ class PersonasServiceEliminarTest implements SimplePersistenceTest {
     entityManager().flush();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    PersonasService service = new PersonasService(
-        repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
+    DonantesService service = nuevoService(proveedor);
 
     service.eliminar(cuit);
 
@@ -128,9 +125,7 @@ class PersonasServiceEliminarTest implements SimplePersistenceTest {
 
   @Test
   void eliminarInexistenteDa404() {
-    PersonasService service = new PersonasService(
-        repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades,
-        new ProveedorFalso());
+    DonantesService service = nuevoService(new ProveedorFalso());
     assertThrows(RecursoInexistenteException.class, () -> service.eliminar("no-existe"));
   }
 
@@ -148,8 +143,7 @@ class PersonasServiceEliminarTest implements SimplePersistenceTest {
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso(true);
-    PersonasService service = new PersonasService(
-        repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
+    DonantesService service = nuevoService(proveedor);
 
     service.eliminar(documento);
 
@@ -159,6 +153,12 @@ class PersonasServiceEliminarTest implements SimplePersistenceTest {
   }
 
   // === Helpers ===
+
+  private DonantesService nuevoService(ProveedorDeIdentidad proveedor) {
+    return new DonantesService(
+        repoDonantes, repoPersonas, repoNotificaciones, repoDonaciones, repoEntidades,
+        mock(NotificacionesService.class), new UsuariosService(proveedor, repoUsuarios));
+  }
 
   // Persistimos todo dentro de la transaccion que abre SimplePersistenceTest.
   // flush fuerza visibilidad antes de los chequeos de "tiene donaciones".
@@ -187,6 +187,10 @@ class PersonasServiceEliminarTest implements SimplePersistenceTest {
 
     @Override public String crearUsuarioSinContrasena(String email, RolDeAcceso rol) {
       throw new UnsupportedOperationException();
+    }
+
+    @Override public java.util.Optional<String> buscarIdPorEmail(String email) {
+      return java.util.Optional.empty();
     }
 
     @Override public void eliminarUsuario(String idExterno) {

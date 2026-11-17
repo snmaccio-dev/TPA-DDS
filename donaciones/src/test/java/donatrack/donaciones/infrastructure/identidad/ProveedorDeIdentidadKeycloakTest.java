@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
+import donatrack.donaciones.seguridad.IntegracionConIdentidadException;
 import donatrack.donaciones.seguridad.RolDeAcceso;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -171,6 +173,67 @@ class ProveedorDeIdentidadKeycloakTest {
   }
 
   // === Helpers ===
+
+  @Test
+  void buscarIdPorEmailDevuelveElIdDeLaCuentaConEseEmail() {
+    registrarTokenEndpoint(3600);
+    registrarEndpoint("GET", "/admin/realms/donatrack/users", 200,
+        "[{\"id\":\"kc-77\",\"username\":\"x@mail.com\",\"email\":\"x@mail.com\"}]", null);
+
+    assertEquals(Optional.of("kc-77"), nuevoProveedor().buscarIdPorEmail("x@mail.com"));
+    assertTrue(rutasLlamadas.contains("GET /admin/realms/donatrack/users"));
+  }
+
+  @Test
+  void buscarIdPorEmailSinCoincidenciasDevuelveVacio() {
+    registrarTokenEndpoint(3600);
+    registrarEndpoint("GET", "/admin/realms/donatrack/users", 200, "[]", null);
+
+    assertEquals(Optional.empty(), nuevoProveedor().buscarIdPorEmail("nadie@mail.com"));
+  }
+
+  @Test
+  void crearSinContrasenaSinMailNoPideElCorreo() {
+    registrarTokenEndpoint(3600);
+    registrarEndpoint("POST", "/admin/realms/donatrack/users", 201, "", "/users/kc-sin-mail");
+    registrarEndpoint("GET", "/admin/realms/donatrack/roles/DONANTE", 200, "{\"name\":\"DONANTE\"}", null);
+    registrarEndpoint("POST", "/admin/realms/donatrack/users/kc-sin-mail/role-mappings/realm", 204, "", null);
+
+    String id = nuevoProveedor().crearUsuarioSinContrasena("y@mail.com", RolDeAcceso.DONANTE, false);
+
+    assertEquals("kc-sin-mail", id);
+    assertFalse(rutasLlamadas.stream().anyMatch(ruta -> ruta.contains("execute-actions-email")));
+  }
+
+  @Test
+  void elRolSePideUnaSolaVezAunqueSeCreenVariasCuentas() {
+    registrarTokenEndpoint(3600);
+    registrarEndpoint("POST", "/admin/realms/donatrack/users", 201, "", "/users/kc-r1");
+    registrarEndpoint("POST", "/admin/realms/donatrack/users", 201, "", "/users/kc-r2");
+    registrarEndpoint("GET", "/admin/realms/donatrack/roles/DONANTE", 200, "{\"name\":\"DONANTE\"}", null);
+    registrarEndpoint("POST", "/admin/realms/donatrack/users/kc-r1/role-mappings/realm", 204, "", null);
+    registrarEndpoint("POST", "/admin/realms/donatrack/users/kc-r2/role-mappings/realm", 204, "", null);
+    ProveedorDeIdentidadKeycloak proveedor = nuevoProveedor();
+
+    proveedor.crearUsuarioSinContrasena("r1@mail.com", RolDeAcceso.DONANTE, false);
+    proveedor.crearUsuarioSinContrasena("r2@mail.com", RolDeAcceso.DONANTE, false);
+
+    assertEquals(1, rutasLlamadas.stream()
+        .filter("GET /admin/realms/donatrack/roles/DONANTE"::equals)
+        .count());
+  }
+
+  @Test
+  void unRechazoDeKeycloakAlCrearIncluyeSuMensaje() {
+    registrarTokenEndpoint(3600);
+    registrarEndpoint("POST", "/admin/realms/donatrack/users", 400,
+        "{\"errorMessage\":\"invalid email\"}", null);
+
+    IntegracionConIdentidadException error = assertThrows(IntegracionConIdentidadException.class,
+        () -> nuevoProveedor().crearUsuarioSinContrasena("ñandú@mail.com", RolDeAcceso.DONANTE, false));
+
+    assertTrue(error.getMessage().contains("invalid email"));
+  }
 
   private ProveedorDeIdentidadKeycloak nuevoProveedor() {
     return new ProveedorDeIdentidadKeycloak(

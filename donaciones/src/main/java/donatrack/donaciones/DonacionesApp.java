@@ -5,6 +5,7 @@ import donatrack.donaciones.controller.AsignacionesController;
 import donatrack.donaciones.controller.DonacionesController;
 import donatrack.donaciones.controller.DonantesController;
 import donatrack.donaciones.controller.EntidadesBeneficiariasController;
+import donatrack.donaciones.controller.ImportacionesController;
 import donatrack.donaciones.controller.NecesidadesController;
 import donatrack.donaciones.controller.SubcategoriasController;
 import donatrack.donaciones.controller.NotificacionesController;
@@ -17,6 +18,9 @@ import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
+import donatrack.donaciones.domain.donacion.SegmentadorDonaciones;
+import donatrack.donaciones.domain.donacion.asignacion.CompatibilidadSemantica;
+import donatrack.donaciones.domain.donacion.asignacion.PrioridadSubatendidos;
 import donatrack.donaciones.infrastructure.identidad.ProveedorDeIdentidadKeycloak;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorEmail;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorSMS;
@@ -25,7 +29,10 @@ import donatrack.donaciones.jobs.PlanificadorAsignaciones;
 import donatrack.donaciones.jobs.PlanificadorAvisosInactividad;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioDonantes;
+import donatrack.donaciones.infrastructure.importacion.LectorCsvDonantes;
 import donatrack.donaciones.repository.RepositorioEntidades;
+import donatrack.donaciones.repository.RepositorioImportaciones;
+import donatrack.donaciones.repository.RepositorioNecesidades;
 import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioPropuestas;
@@ -35,8 +42,9 @@ import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.IntegracionConIdentidadException;
 import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
-import donatrack.donaciones.service.ConsultaDeNotificaciones;
+import donatrack.donaciones.service.BandejaDeNotificacionesService;
 import donatrack.donaciones.service.EventoYaAplicadoException;
+import donatrack.donaciones.service.ImportacionDonantesService;
 import donatrack.donaciones.service.AsignacionesService;
 import donatrack.donaciones.service.DonacionesService;
 import donatrack.donaciones.service.DonantesService;
@@ -44,17 +52,22 @@ import donatrack.donaciones.service.EntidadesBeneficiariasService;
 import donatrack.donaciones.service.NecesidadesService;
 import donatrack.donaciones.service.NotificacionesService;
 import donatrack.donaciones.service.PersonasService;
-import donatrack.donaciones.service.RegistroService;
 import donatrack.donaciones.service.RecursoInexistenteException;
+import donatrack.donaciones.service.UsuariosService;
 import io.javalin.Javalin;
+import io.javalin.config.JavalinConfig;
+import io.javalin.config.SizeUnit;
 import io.javalin.http.HttpResponseException;
 
 import java.time.LocalTime;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class DonacionesApp {
 
   private static final int PUERTO = 8080;
+  private static final int TAMANIO_MAXIMO_ARCHIVO_MB = 10;
   private static final LocalTime HORARIO_MATCHMAKING = LocalTime.of(3, 0);
   private static final LocalTime HORARIO_AVISOS_INACTIVIDAD = LocalTime.of(9, 0);
 
@@ -82,6 +95,8 @@ public class DonacionesApp {
     // URL base del modulo web, usada para armar los links de la notificacion
     // INICIO_RUTA. En Docker suele diferir del localhost del desarrollador.
     String urlWeb = variable("WEB_URL_BASE", "http://localhost:8082");
+    boolean importacionEnviaMails =
+        Boolean.parseBoolean(variable("IMPORTACION_ENVIAR_MAILS", "false"));
 
     RepositorioPropuestas repositorioPropuestas = new RepositorioPropuestas();
     RepositorioSubcategorias repositorioSubcategorias = new RepositorioSubcategorias();
@@ -89,6 +104,8 @@ public class DonacionesApp {
 
     RepositorioPersonas repositorioPersonas = RepositorioPersonas.getInstance();
     RepositorioEntidades repositorioEntidades = RepositorioEntidades.getInstance();
+    RepositorioDonaciones repositorioDonaciones = RepositorioDonaciones.getInstance();
+    RepositorioNecesidades repositorioNecesidades = RepositorioNecesidades.getInstance();
     RepositorioDonantes repositorioDonantes = new RepositorioDonantes();
     RepositorioUsuarios repositorioUsuarios = new RepositorioUsuarios();
     RepositorioNotificaciones repositorioNotificaciones = new RepositorioNotificaciones();
@@ -105,56 +122,79 @@ public class DonacionesApp {
         new NotificadorSMS(),
         new NotificadorWhatsApp()
     ), repositorioNotificaciones);
-    ConsultaDeNotificaciones consultaNotificaciones =
-        new ConsultaDeNotificaciones(repositorioNotificaciones);
+    BandejaDeNotificacionesService bandejaDeNotificaciones =
+        new BandejaDeNotificacionesService(repositorioNotificaciones);
+    UsuariosService usuariosService = new UsuariosService(proveedor, repositorioUsuarios);
     DonacionesService donacionesService = new DonacionesService(
-        notificacionesService,
+        repositorioDonaciones,
+        repositorioSubcategorias,
         repositorioPropuestas,
         repositorioNotificaciones,
+        new SegmentadorDonaciones(),
+        notificacionesService,
         urlWeb + "/seguimiento-donante",
         urlWeb + "/seguimiento-beneficiario"
     );
-    AsignacionesService asignacionesService =
-        new AsignacionesService(repositorioPropuestas, donacionesService);
-    EntidadesBeneficiariasService entidadesService =
-        new EntidadesBeneficiariasService(
-            repositorioUsuarios,
-            repositorioNotificaciones,
-            donatrack.donaciones.repository.RepositorioNecesidades.getInstance(),
-            repositorioPropuestas,
-            RepositorioDonaciones.getInstance(),
-            repositorioDonantes,
-            proveedor);
-    NecesidadesService necesidadesService = new NecesidadesService();
-    PersonasService personasService =
-        new PersonasService(
-            repositorioDonantes,
-            repositorioUsuarios,
-            repositorioNotificaciones,
-            RepositorioDonaciones.getInstance(),
-            repositorioEntidades,
-            proveedor);
-    DonantesService donantesService = new DonantesService(repositorioDonantes, notificacionesService);
-    RegistroService registroService = new RegistroService(
-        proveedor, repositorioPersonas, repositorioDonantes, repositorioEntidades, repositorioUsuarios);
+    AsignacionesService asignacionesService = new AsignacionesService(
+        new CompatibilidadSemantica(),
+        new PrioridadSubatendidos(),
+        repositorioDonaciones,
+        repositorioEntidades,
+        repositorioPropuestas,
+        donacionesService);
+    EntidadesBeneficiariasService entidadesService = new EntidadesBeneficiariasService(
+        repositorioEntidades,
+        repositorioPersonas,
+        repositorioNotificaciones,
+        repositorioNecesidades,
+        repositorioPropuestas,
+        repositorioDonaciones,
+        repositorioDonantes,
+        usuariosService);
+    NecesidadesService necesidadesService =
+        new NecesidadesService(repositorioNecesidades, donacionesService);
+    PersonasService personasService = new PersonasService(repositorioPersonas);
+    DonantesService donantesService = new DonantesService(
+        repositorioDonantes,
+        repositorioPersonas,
+        repositorioNotificaciones,
+        repositorioDonaciones,
+        repositorioEntidades,
+        notificacionesService,
+        usuariosService);
+    ExecutorService ejecutorImportaciones = Executors.newSingleThreadExecutor(tarea -> {
+      Thread hilo = new Thread(tarea, "importacion-donantes");
+      hilo.setDaemon(true);
+      return hilo;
+    });
+    ImportacionDonantesService importacionService = new ImportacionDonantesService(
+        new LectorCsvDonantes(),
+        new RepositorioImportaciones(),
+        repositorioPersonas,
+        repositorioDonantes,
+        repositorioUsuarios,
+        usuariosService,
+        ejecutorImportaciones,
+        importacionEnviaMails);
 
-    Javalin app = Javalin.create().start(PUERTO);
+    Javalin app = Javalin.create(DonacionesApp::configurar).start(PUERTO);
 
     // El filtro se registra antes que las rutas: todas las rutas tienen
     // que declarar sus roles y el filtro las rechaza si no lo hacen.
     filtro.registrarEn(app);
 
     new Rutas(
-        new RegistroController(registroService),
+        new RegistroController(donantesService, entidadesService),
         new UsuariosController(),
-        new AdministradoresController(proveedor),
-        new DonacionesController(donacionesService, repositorioPersonas, repositorioDonantes, repositorioSubcategorias),
-        new AsignacionesController(asignacionesService, RepositorioDonaciones.getInstance(), repositorioEntidades),
-        new DonantesController(personasService, donantesService),
-        new EntidadesBeneficiariasController(entidadesService),
-        new NecesidadesController(necesidadesService, repositorioSubcategorias, repositorioEntidades),
-        new SubcategoriasController(repositorioSubcategorias),
-        new NotificacionesController(consultaNotificaciones)
+        new AdministradoresController(usuariosService),
+        new DonacionesController(donacionesService, donantesService),
+        new AsignacionesController(asignacionesService),
+        new DonantesController(donantesService),
+        new ImportacionesController(importacionService),
+        new EntidadesBeneficiariasController(entidadesService, personasService),
+        new NecesidadesController(necesidadesService, entidadesService),
+        new SubcategoriasController(donacionesService),
+        new NotificacionesController(bandejaDeNotificaciones)
     ).registrarEn(app);
 
     registrarManejoDeErrores(app);
@@ -167,8 +207,14 @@ public class DonacionesApp {
         new PlanificadorAvisosInactividad(donantesService, HORARIO_AVISOS_INACTIVIDAD);
     planificadorAvisos.iniciar();
     Runtime.getRuntime().addShutdownHook(new Thread(planificadorAvisos::detener));
+    Runtime.getRuntime().addShutdownHook(new Thread(ejecutorImportaciones::shutdown));
 
     System.out.println("Microservicio Donaciones escuchando en " + urlBase);
+  }
+
+  static void configurar(JavalinConfig config) {
+    config.jetty.multipartConfig.maxFileSize(TAMANIO_MAXIMO_ARCHIVO_MB, SizeUnit.MB);
+    config.jetty.multipartConfig.maxTotalRequestSize(TAMANIO_MAXIMO_ARCHIVO_MB, SizeUnit.MB);
   }
 
   private static void registrarManejoDeErrores(Javalin app) {
