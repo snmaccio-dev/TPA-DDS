@@ -25,8 +25,16 @@ MateAzul2026!
 
 Administrador
 
-
+admin.donatrack
+admin.donatrack@gmail.com
+1234567
+ID: fc6ba8e2-9756-44b2-8432-8c0f4e7f6098
 
 Actualizar
 
 mvn clean package
+
+Iniciar sesion en keycloakc 
+
+admin
+BA4197F85C60E7821D2B8DDF042D7B07E76DD8516E47A18BA7C2FFE56D11EF3C

@@ -1829,3 +1829,195 @@ td:first-child {
     color: #66736c;
     font-size: 12px;
 }
+
+
+/* ACCESO DENEGADO */
+
+.access-denied {
+    min-height: calc(100vh - 180px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 65px 0;
+}
+
+.access-denied-card {
+    width: 100%;
+    max-width: 570px;
+    padding: 48px 45px;
+    background: #fff;
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.access-denied-icon {
+    width: 76px;
+    height: 76px;
+    margin: 0 auto 25px;
+    display: grid;
+    place-items: center;
+    border-radius: 22px;
+    background: #fff3df;
+    color: #b17c30;
+}
+
+.access-denied-icon span {
+    width: 35px;
+    height: 35px;
+    display: grid;
+    place-items: center;
+    border: 2px solid currentColor;
+    border-radius: 50%;
+    font: 800 22px Manrope;
+}
+
+.access-denied-card .eyebrow {
+    justify-content: center;
+    margin-bottom: 17px;
+}
+
+.access-denied-card h1 {
+    font-size: clamp(27px, 4vw, 36px);
+    margin-bottom: 15px;
+}
+
+.access-denied-card > p {
+    max-width: 420px;
+    margin: 0 auto;
+    font-size: 13px;
+}
+
+.access-denied-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 30px;
+}
+
+.access-denied-reference {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 9px;
+    margin-top: 35px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.access-denied-reference span:first-child {
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: .08em;
+}
+
+@media(max-width: 720px) {
+    .access-denied {
+        min-height: calc(100vh - 150px);
+        padding: 35px 0;
+    }
+
+    .access-denied-card {
+        padding: 35px 22px;
+    }
+
+    .access-denied-actions {
+        flex-direction: column;
+    }
+
+    .access-denied-actions .btn {
+        width: 100%;
+    }
+}
+
+
+/* CARGA DE FOTOGRAFÍA DE DONACIÓN */
+
+.photo-upload {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.photo-upload > label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #536158;
+}
+
+.photo-upload-area {
+    position: relative;
+    border: 1px dashed #b8cbbd;
+    background: #f9fcfa;
+    border-radius: 11px;
+    padding: 24px;
+    text-align: center;
+    transition: .2s;
+}
+
+.photo-upload-area:hover {
+    border-color: var(--green);
+    background: #f3faf5;
+}
+
+.photo-upload-area > input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.photo-upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    cursor: pointer;
+}
+
+.photo-upload-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 13px;
+    display: grid;
+    place-items: center;
+    background: var(--green-soft);
+    font-size: 23px;
+}
+
+.photo-upload-content strong {
+    font-size: 12px;
+    color: var(--green);
+}
+
+.photo-upload-content small {
+    font-size: 10px;
+    color: var(--muted);
+}
+
+.photo-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.photo-preview img {
+    max-width: 100%;
+    width: 260px;
+    max-height: 220px;
+    object-fit: contain;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: white;
+}
+
+.photo-preview[hidden] {
+    display: none;
+}
