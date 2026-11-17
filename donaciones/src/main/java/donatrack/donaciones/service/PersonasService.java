@@ -20,9 +20,6 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import java.util.List;
 import java.util.Optional;
 
-// Alta desde el deposito (la hace un administrador). La contrasena no se genera
-// aca: creamos la cuenta sin contrasena y Keycloak le manda al usuario el
-// correo UPDATE_PASSWORD para que la elija.
 public class PersonasService implements WithSimplePersistenceUnit {
 
     private final RepositorioPersonas repositorio =
