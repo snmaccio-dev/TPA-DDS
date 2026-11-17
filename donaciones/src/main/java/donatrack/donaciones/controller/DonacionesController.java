@@ -7,45 +7,32 @@ import donatrack.donaciones.controller.dto.EventoEntregaRequest;
 import donatrack.donaciones.controller.dto.EventoInicioRutaRequest;
 import donatrack.donaciones.controller.dto.EventoRetornoDepositoRequest;
 import donatrack.donaciones.controller.dto.EventoRutasPlanificadasRequest;
+import donatrack.donaciones.controller.dto.ModificarDonacionRequest;
 import donatrack.donaciones.controller.dto.NuevaDonacionRequest;
 import donatrack.donaciones.domain.DatosInvalidosException;
-import donatrack.donaciones.domain.catalogo.Subcategoria;
-import donatrack.donaciones.domain.donacion.Bien;
-import donatrack.donaciones.domain.donacion.CondicionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
-import donatrack.donaciones.repository.RepositorioDonantes;
-import donatrack.donaciones.repository.RepositorioPersonas;
-import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.seguridad.Acceso;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.UsuarioActual;
-import donatrack.donaciones.service.EventoYaAplicadoException;
-import donatrack.donaciones.service.FiltroDonaciones;
+import donatrack.donaciones.service.DatosBien;
 import donatrack.donaciones.service.DonacionesService;
-import donatrack.donaciones.service.RecursoInexistenteException;
+import donatrack.donaciones.service.DonantesService;
+import donatrack.donaciones.service.FiltroDonaciones;
 import io.javalin.http.Context;
 
-import java.time.LocalDate;
 import java.util.List;
 
 public class DonacionesController {
 
   private final DonacionesService service;
-  private final RepositorioPersonas repositorioPersonas;
-  private final RepositorioDonantes repositorioDonantes;
-  private final RepositorioSubcategorias repositorioSubcategorias;
+  private final DonantesService donantesService;
 
-  public DonacionesController(DonacionesService service,
-                              RepositorioPersonas repositorioPersonas,
-                              RepositorioDonantes repositorioDonantes,
-                              RepositorioSubcategorias repositorioSubcategorias) {
+  public DonacionesController(DonacionesService service, DonantesService donantesService) {
     this.service = service;
-    this.repositorioPersonas = repositorioPersonas;
-    this.repositorioDonantes = repositorioDonantes;
-    this.repositorioSubcategorias = repositorioSubcategorias;
+    this.donantesService = donantesService;
   }
 
   public void listar(Context ctx) {
@@ -93,33 +80,30 @@ public class DonacionesController {
     ctx.json(DonacionDTO.desde(donacion));
   }
 
-/*
-  private void crear(Context ctx) {
-    NuevaDonacionRequest request = ctx.bodyAsClass(NuevaDonacionRequest.class);
-    Donante donante = donanteDe(request.donanteDocumento());
-    List<Bien> bienes = request.bienes().stream()
-        .map(this::bienDe)
-        .toList();
-    ctx.status(201).json(DonacionDTO.desde(service.crear(bienes, donante, request.descripcion())));
-  }
-*/
-
   public void crear(Context ctx) {
-      NuevaDonacionRequest request = ctx.bodyAsClass(NuevaDonacionRequest.class);
+    NuevaDonacionRequest request = ctx.bodyAsClass(NuevaDonacionRequest.class);
+    UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
 
-      UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
+    Donante donante = usuario.esAdministrador()
+        ? donantesService.buscarDonantePorDocumento(request.donanteDocumento())
+        : Acceso.perfilDonanteObligatorio(usuario);
 
-      Donante donante = usuario.esAdministrador()
-          ? donanteDe(request.donanteDocumento())
-          : Acceso.perfilDonanteObligatorio(usuario);
+    List<DatosBien> bienes = request.bienes().stream()
+        .map(b -> new DatosBien(
+            b.descripcion(), b.subcategoria(), b.cantidad(), b.condicion(), b.fechaVencimiento()))
+        .toList();
 
-      List<Bien> bienes = request.bienes().stream()
-          .map(this::bienDe)
-          .toList();
+    ctx.status(201).json(
+        DonacionDTO.desde(service.crear(donante, bienes, request.descripcion(), null))
+    );
+  }
 
-      ctx.status(201).json(
-          DonacionDTO.desde(service.crear(bienes, donante, request.descripcion()))
-      );
+  public void modificar(Context ctx) {
+    long id = idDe(ctx);
+    Acceso.exigirPuedeModificarDonacion(FiltroDeAcceso.usuarioDe(ctx), service.buscar(id));
+    ModificarDonacionRequest request = ctx.bodyAsClass(ModificarDonacionRequest.class);
+    ctx.json(DonacionDTO.desde(
+        service.modificar(id, request.descripcion(), request.fotoUrl(), request.datosBienes())));
   }
 
   public void eliminar(Context ctx) {
@@ -149,98 +133,32 @@ public class DonacionesController {
   public void eventoRutasPlanificadas(Context ctx) {
     EventoRutasPlanificadasRequest evento =
         ctx.bodyAsClass(EventoRutasPlanificadasRequest.class);
-    // Pasamos el metodo del dominio directo: la donacion ya la cargo
-    // aplicarEventoEnLote y la transicion ocurre dentro de su propio
-    // withTransaction. Si usaramos service.marcarListaParaEntregar(id) la
-    // llamada abriria un withTransaction anidado y, al salir, haria commit
-    // de la transaccion de afuera: el lote dejaria de ser "todo o nada".
-    service.aplicarEventoEnLote(
-        evento.donacionIds(),
-        EstadosPosiblesDonacion.LISTA_PARA_ENTREGAR,
-        List.of(EstadosPosiblesDonacion.ASIGNACION_REALIZADA),
-        Donacion::marcarListaParaEntregar
-    );
+    service.planificarRutas(evento.donacionIds());
     ctx.status(200);
   }
 
   public void eventoInicioRuta(Context ctx) {
     EventoInicioRutaRequest evento = ctx.bodyAsClass(EventoInicioRutaRequest.class);
-    service.aplicarEventoEnLote(
-        evento.donacionIds(),
-        EstadosPosiblesDonacion.EN_TRASLADO,
-        List.of(EstadosPosiblesDonacion.LISTA_PARA_ENTREGAR),
-        Donacion::marcarEnTraslado
-    );
+    service.iniciarRuta(evento.donacionIds());
     ctx.status(200);
   }
 
   public void eventoEntrega(Context ctx) {
     EventoEntregaRequest evento = ctx.bodyAsClass(EventoEntregaRequest.class);
-    Donacion donacion = service.buscar(evento.donacionId());
-    EstadosPosiblesDonacion actual = donacion.getEstado().getEstado();
-
-    if ("ENTREGADA".equals(evento.resultado())) {
-      if (actual == EstadosPosiblesDonacion.ENTREGADA) {
-        throw new EventoYaAplicadoException(
-            "La donación " + donacion.getId() + " ya estaba entregada."
-        );
-      }
-      service.marcarEntregada(donacion.getId(), evento.fechaHoraMedida(), evento.patenteCamion());
-    } else if ("NO_RECIBIDA".equals(evento.resultado())) {
-      if (actual == EstadosPosiblesDonacion.ENTREGA_FALLIDA) {
-        throw new EventoYaAplicadoException(
-            "La donación " + donacion.getId() + " ya estaba marcada como no recibida."
-        );
-      }
-      service.marcarEntregaFallida(donacion.getId(), evento.motivo());
-    } else {
-      throw new DatosInvalidosException(
-          "El resultado del evento debe ser ENTREGADA o NO_RECIBIDA (recibido: "
-              + evento.resultado() + ")."
-      );
-    }
+    service.registrarEntrega(
+        evento.donacionId(),
+        evento.resultado(),
+        evento.fechaHora(),
+        evento.patenteCamion(),
+        evento.motivo()
+    );
     ctx.status(200);
   }
 
   public void eventoRetornoDeposito(Context ctx) {
     EventoRetornoDepositoRequest evento = ctx.bodyAsClass(EventoRetornoDepositoRequest.class);
-    Donacion donacion = service.buscar(evento.donacionId());
-    EstadosPosiblesDonacion actual = donacion.getEstado().getEstado();
-    if (actual == EstadosPosiblesDonacion.EN_DEPOSITO) {
-      throw new EventoYaAplicadoException(
-          "La donación " + donacion.getId() + " ya estaba en depósito."
-      );
-    }
-    service.marcarEnDeposito(donacion.getId());
+    service.registrarRetornoADeposito(evento.donacionId());
     ctx.status(200);
-  }
-
-  // === Helpers ===
-
-  private Donante donanteDe(String documento) {
-    return repositorioDonantes.buscarPorDocumento(documento)
-        .orElseGet(() -> {
-          repositorioPersonas.buscarPorDocumento(documento)
-              .orElseThrow(() -> new RecursoInexistenteException(
-                  "No existe la persona con documento " + documento
-              ));
-          throw new DatosInvalidosException(
-              "La persona con documento " + documento + " no tiene el rol Donante."
-          );
-        });
-  }
-
-  private Bien bienDe(NuevaDonacionRequest.BienRequest req) {
-    Subcategoria subcategoria = repositorioSubcategorias.buscarPorNombre(req.subcategoria())
-        .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la subcategoría '" + req.subcategoria() + "'."
-        ));
-    CondicionBien condicion = req.condicion() == null ? null : CondicionBien.valueOf(req.condicion());
-    Bien bien = new Bien(req.descripcion(), subcategoria, req.cantidad(), condicion);
-    if (req.fechaVencimiento() != null && !req.fechaVencimiento().isBlank()) {
-      bien.setFechaVencimiento(LocalDate.parse(req.fechaVencimiento()));
-    }
-    return bien;
   }
 
   private long idDe(Context ctx) {

@@ -1,5 +1,6 @@
 package donatrack.donaciones.domain.donacion;
 
+import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
@@ -14,7 +15,9 @@ import javax.persistence.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 @Entity
 @Table(name = "Donacion")
@@ -165,6 +168,55 @@ public class Donacion {
             donante.getPersona().getNombreDisplay(),
             descripcion
         );
+    }
+
+    // === Modificacion ===
+
+    // Solo se editan la descripcion, la foto y la descripcion y cantidad de cada bien.
+    // La subcategoria, la condicion y la fecha de vencimiento no se pueden cambiar porque
+    // definen la segmentacion de la donacion: si hay que cambiarlas, se borra la donacion
+    // y se vuelve a cargar. Tampoco se agregan ni se quitan bienes.
+    public void modificar(String descripcion, String fotoUrl, List<DatosModificacionBien> bienes) {
+        if (estado.getEstado() != EstadosPosiblesDonacion.EN_DEPOSITO) {
+            throw new ConflictoDeNegocioException("Solo se puede modificar una donacion en deposito.");
+        }
+        if (descripcion == null || descripcion.isBlank()) {
+            throw new DatosInvalidosException("La donacion debe tener una descripcion.");
+        }
+        Map<Bien, DatosModificacionBien> cambios = emparejarBienes(bienes);
+        cambios.values().forEach(d -> Bien.validarModificacion(d.descripcion(), d.cantidad()));
+
+        this.descripcion = descripcion.trim();
+        this.fotoUrl = fotoUrl == null || fotoUrl.isBlank() ? null : fotoUrl.trim();
+        cambios.forEach((bien, datos) -> bien.modificar(datos.descripcion(), datos.cantidad()));
+    }
+
+    private Map<Bien, DatosModificacionBien> emparejarBienes(List<DatosModificacionBien> datos) {
+        Map<Long, Bien> actuales = new LinkedHashMap<>();
+        this.bienes.forEach(b -> actuales.put(b.getId(), b));
+
+        Map<Bien, DatosModificacionBien> emparejados = new LinkedHashMap<>();
+        for (DatosModificacionBien d : datos == null ? List.<DatosModificacionBien>of() : datos) {
+            if (d == null || d.id() == null) {
+                throw new DatosInvalidosException("Cada bien tiene que indicar su id.");
+            }
+            Bien bien = actuales.get(d.id());
+            if (bien == null) {
+                throw new DatosInvalidosException(
+                    "El bien con id " + d.id() + " no pertenece a la donacion.");
+            }
+            if (emparejados.put(bien, d) != null) {
+                throw new DatosInvalidosException("El bien con id " + d.id() + " esta repetido.");
+            }
+        }
+        for (Map.Entry<Long, Bien> actual : actuales.entrySet()) {
+            if (!emparejados.containsKey(actual.getValue())) {
+                throw new DatosInvalidosException(
+                    "Falta el bien con id " + actual.getKey()
+                        + ". Hay que enviar todos los bienes de la donacion.");
+            }
+        }
+        return emparejados;
     }
 
     // === Factory ===

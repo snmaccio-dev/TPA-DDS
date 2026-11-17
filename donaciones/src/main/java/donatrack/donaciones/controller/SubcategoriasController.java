@@ -1,18 +1,18 @@
 package donatrack.donaciones.controller;
 
 import donatrack.donaciones.controller.dto.SubcategoriaDTO;
-import donatrack.donaciones.repository.RepositorioSubcategorias;
+import donatrack.donaciones.service.DonacionesService;
 import io.javalin.http.Context;
 
 public class SubcategoriasController {
 
-  private final RepositorioSubcategorias repositorio;
+  private final DonacionesService service;
 
-  public SubcategoriasController(RepositorioSubcategorias repositorio) {
-    this.repositorio = repositorio;
+  public SubcategoriasController(DonacionesService service) {
+    this.service = service;
   }
 
   public void todas(Context ctx) {
-    ctx.json(SubcategoriaDTO.desde(repositorio.todas()));
+    ctx.json(SubcategoriaDTO.desde(service.subcategorias()));
   }
 }

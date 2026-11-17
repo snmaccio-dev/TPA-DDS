@@ -17,7 +17,9 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 // Adaptador contra la Admin REST API de Keycloak. Usa java.net.http.HttpClient
 // y Jackson para no agregar keycloak-admin-client. Las contrasenas nunca se
@@ -37,6 +39,7 @@ public class ProveedorDeIdentidadKeycloak implements ProveedorDeIdentidad {
 
     private volatile String tokenEnCache;
     private volatile Instant vencimientoToken = Instant.EPOCH;
+    private final Map<RolDeAcceso, JsonNode> rolesEnCache = new ConcurrentHashMap<>();
 
     public ProveedorDeIdentidadKeycloak(String urlBase, String realm,
                                         String clientId, String clientSecret) {
@@ -80,10 +83,45 @@ public class ProveedorDeIdentidadKeycloak implements ProveedorDeIdentidad {
 
     @Override
     public String crearUsuarioSinContrasena(String email, RolDeAcceso rol) {
+        return crearUsuarioSinContrasena(email, rol, true);
+    }
+
+    @Override
+    public String crearUsuarioSinContrasena(String email, RolDeAcceso rol, boolean enviarMail) {
         validarEmail(email);
         String id = altaInterna(email, null, rol, true);
-        enviarMailDeContrasena(id);
+        if (enviarMail) {
+            enviarMailDeContrasena(id);
+        }
         return id;
+    }
+
+    @Override
+    public Optional<String> buscarIdPorEmail(String email) {
+        validarEmail(email);
+        HttpResponse<String> respuesta = enviar(
+            HttpRequest.newBuilder()
+                .uri(URI.create(urlBase + "/admin/realms/" + realm + "/users?email="
+                    + URLEncoder.encode(email, StandardCharsets.UTF_8) + "&exact=true"))
+                .header("Authorization", "Bearer " + obtenerToken())
+                .header("Accept", "application/json")
+                .timeout(ESPERA)
+                .GET()
+                .build(),
+            "GET /users?email"
+        );
+        if (!fueExitosa(respuesta.statusCode())) {
+            throw new IntegracionConIdentidadException(
+                "Keycloak respondio " + respuesta.statusCode() + " al buscar el usuario por email."
+            );
+        }
+        for (JsonNode usuario : parsear(respuesta.body())) {
+            String id = usuario.path("id").asText(null);
+            if (id != null && email.equalsIgnoreCase(usuario.path("email").asText(""))) {
+                return Optional.of(id);
+            }
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -141,7 +179,7 @@ public class ProveedorDeIdentidadKeycloak implements ProveedorDeIdentidad {
         }
         if (!fueExitosa(codigo)) {
             throw new IntegracionConIdentidadException(
-                "Keycloak respondio " + codigo + " al crear el usuario."
+                "Keycloak respondio " + codigo + " al crear el usuario" + detalleDeError(respuesta) + "."
             );
         }
 
@@ -164,9 +202,12 @@ public class ProveedorDeIdentidadKeycloak implements ProveedorDeIdentidad {
         return idExterno;
     }
 
-    private void asignarRol(String idExterno, RolDeAcceso rol) {
+    private JsonNode representacionDeRol(RolDeAcceso rol) {
+        JsonNode cacheado = rolesEnCache.get(rol);
+        if (cacheado != null) {
+            return cacheado;
+        }
         String nombreRol = rol.name();
-
         HttpResponse<String> respuestaRol = enviar(
             HttpRequest.newBuilder()
                 .uri(URI.create(urlBase + "/admin/realms/" + realm + "/roles/" + nombreRol))
@@ -186,6 +227,13 @@ public class ProveedorDeIdentidadKeycloak implements ProveedorDeIdentidad {
         }
 
         JsonNode rolNode = parsear(respuestaRol.body());
+        rolesEnCache.put(rol, rolNode);
+        return rolNode;
+    }
+
+    private void asignarRol(String idExterno, RolDeAcceso rol) {
+        String nombreRol = rol.name();
+        JsonNode rolNode = representacionDeRol(rol);
         ArrayNode cuerpo = json.createArrayNode();
         cuerpo.add(rolNode);
 
@@ -327,6 +375,20 @@ public class ProveedorDeIdentidadKeycloak implements ProveedorDeIdentidad {
             return json.readTree(cuerpo);
         } catch (Exception e) {
             throw new IntegracionConIdentidadException("Error al parsear la respuesta de Keycloak.", e);
+        }
+    }
+
+    private String detalleDeError(HttpResponse<String> respuesta) {
+        String cuerpo = respuesta.body();
+        if (cuerpo == null || cuerpo.isBlank()) {
+            return "";
+        }
+        try {
+            JsonNode nodo = json.readTree(cuerpo);
+            String mensaje = nodo.path("errorMessage").asText(nodo.path("error").asText(""));
+            return mensaje.isBlank() ? "" : ": " + mensaje;
+        } catch (Exception e) {
+            return "";
         }
     }
 

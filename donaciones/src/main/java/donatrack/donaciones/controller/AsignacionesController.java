@@ -3,13 +3,7 @@ package donatrack.donaciones.controller;
 import donatrack.donaciones.controller.dto.BeneficiariaDTO;
 import donatrack.donaciones.controller.dto.ConfirmarDestinatarioRequest;
 import donatrack.donaciones.controller.dto.PropuestaDTO;
-import donatrack.donaciones.domain.donacion.Donacion;
-import donatrack.donaciones.domain.donacion.asignacion.PropuestaAsignacion;
-import donatrack.donaciones.domain.persona.Beneficiaria;
-import donatrack.donaciones.repository.RepositorioDonaciones;
-import donatrack.donaciones.repository.RepositorioEntidades;
 import donatrack.donaciones.service.AsignacionesService;
-import donatrack.donaciones.service.RecursoInexistenteException;
 import donatrack.donaciones.service.ResultadoCorrida;
 import io.javalin.http.Context;
 
@@ -18,15 +12,9 @@ import java.util.List;
 public class AsignacionesController {
 
   private final AsignacionesService service;
-  private final RepositorioDonaciones repositorioDonaciones;
-  private final RepositorioEntidades repositorioEntidades;
 
-  public AsignacionesController(AsignacionesService service,
-                                RepositorioDonaciones repositorioDonaciones,
-                                RepositorioEntidades repositorioEntidades) {
+  public AsignacionesController(AsignacionesService service) {
     this.service = service;
-    this.repositorioDonaciones = repositorioDonaciones;
-    this.repositorioEntidades = repositorioEntidades;
   }
 
   public void propuestas(Context ctx) {
@@ -39,35 +27,17 @@ public class AsignacionesController {
   }
 
   public void propuestaDeDonacion(Context ctx) {
-    long donacionId = idDe(ctx);
-    PropuestaAsignacion propuesta = service.buscarPropuesta(donacionId)
-        .orElseThrow(() -> new RecursoInexistenteException(
-            "No hay propuesta generada para la donación " + donacionId
-        ));
-    ctx.json(PropuestaDTO.desde(propuesta));
+    ctx.json(PropuestaDTO.desde(service.propuestaDe(idDe(ctx))));
   }
 
   public void ejecutarAsignacion(Context ctx) {
-    Donacion donacion = buscarDonacion(idDe(ctx));
-    var candidatas = service.ejecutarAsignacion(donacion);
-    ctx.json(BeneficiariaDTO.desde(candidatas));
+    ctx.json(BeneficiariaDTO.desde(service.ejecutarAsignacion(idDe(ctx))));
   }
 
   public void confirmarDestinatario(Context ctx) {
     ConfirmarDestinatarioRequest request = ctx.bodyAsClass(ConfirmarDestinatarioRequest.class);
-    Beneficiaria destinatario = repositorioEntidades.buscarPorId(request.beneficiariaId())
-        .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la beneficiaria con id " + request.beneficiariaId()
-        ));
-    service.confirmarDestino(idDe(ctx), destinatario);
+    service.confirmarDestino(idDe(ctx), request.beneficiariaId());
     ctx.status(204);
-  }
-
-  private Donacion buscarDonacion(long donacionId) {
-    return repositorioDonaciones.buscarPorId(donacionId)
-        .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la donación con ID " + donacionId
-        ));
   }
 
   private long idDe(Context ctx) {

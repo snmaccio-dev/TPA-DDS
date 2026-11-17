@@ -1,9 +1,6 @@
-package donatrack.donaciones.service;
+package donatrack.donaciones.domain.donacion;
 
 import donatrack.donaciones.domain.catalogo.Subcategoria;
-import donatrack.donaciones.domain.donacion.Bien;
-import donatrack.donaciones.domain.donacion.CondicionBien;
-import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.persona.Donante;
 
 import java.time.LocalDate;

@@ -1,5 +1,6 @@
 package donatrack.donaciones.domain.persona;
 
+import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import javax.persistence.*;
@@ -20,7 +21,7 @@ public abstract class Persona {
     @Column(name="Direccion")
     protected String direccion;
 
-    @OneToMany(mappedBy = "persona", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "persona", cascade = CascadeType.ALL, orphanRemoval = true)
     protected List<MedioContacto> contactos = new ArrayList<>();
 
     @OneToOne(cascade = CascadeType.ALL)
@@ -49,6 +50,56 @@ public abstract class Persona {
         contactos.add(medio);
         if (contactos.size() == 1) {
             contactoPredeterminado = medio;
+        }
+    }
+
+    public void reemplazarContacto(TipoContacto tipo, String valor) {
+        if (tipo == null) {
+            throw new DatosInvalidosException("El tipo de contacto es obligatorio.");
+        }
+        List<MedioContacto> delTipo = contactos.stream()
+            .filter(c -> c.getTipo() == tipo)
+            .toList();
+        if (valor == null || valor.isBlank()) {
+            delTipo.forEach(this::quitarContacto);
+            return;
+        }
+        if (delTipo.isEmpty()) {
+            agregarMedioContacto(new MedioContacto(tipo, valor.trim()));
+            return;
+        }
+        MedioContacto conservado = delTipo.contains(contactoPredeterminado)
+            ? contactoPredeterminado
+            : delTipo.get(0);
+        conservado.setValor(valor.trim());
+        delTipo.stream().filter(c -> c != conservado).forEach(this::quitarContacto);
+    }
+
+    public void elegirContactoPredeterminado(TipoContacto tipo) {
+        if (tipo == null) {
+            if (contactoPredeterminado == null || !contactos.contains(contactoPredeterminado)) {
+                throw new DatosInvalidosException(
+                    "Hay que elegir el contacto predeterminado entre los contactos de la persona.");
+            }
+            return;
+        }
+        if (contactoPredeterminado != null
+            && contactoPredeterminado.getTipo() == tipo
+            && contactos.contains(contactoPredeterminado)) {
+            return;
+        }
+        contactoPredeterminado = contactos.stream()
+            .filter(c -> c.getTipo() == tipo)
+            .findFirst()
+            .orElseThrow(() -> new DatosInvalidosException(
+                "El contacto predeterminado " + tipo
+                    + " no corresponde a ningun contacto de la persona."));
+    }
+
+    void quitarContacto(MedioContacto medio) {
+        contactos.remove(medio);
+        if (medio == contactoPredeterminado) {
+            contactoPredeterminado = null;
         }
     }
 

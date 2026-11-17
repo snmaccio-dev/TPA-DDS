@@ -20,6 +20,7 @@ import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.RolDeAcceso;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
+import donatrack.donaciones.service.UsuariosService;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
 import io.javalin.testtools.JavalinTest;
@@ -163,7 +164,7 @@ class AdministradoresControllerTest {
   // que usa este endpoint (400 y 409).
   private Javalin app(ProveedorDeIdentidad proveedor) {
     Javalin app = Javalin.create();
-    donatrack.donaciones.Rutas.administradores(app, new AdministradoresController(proveedor));
+    donatrack.donaciones.Rutas.administradores(app, new AdministradoresController(new UsuariosService(proveedor, mock(RepositorioUsuarios.class))));
     app.exception(DatosInvalidosException.class, (e, ctx) ->
         ctx.status(400).result(e.getMessage()));
     app.exception(ConflictoDeNegocioException.class, (e, ctx) ->
@@ -181,7 +182,7 @@ class AdministradoresControllerTest {
     FiltroDeAcceso filtro = new FiltroDeAcceso(verificador, repoUsuarios);
     Javalin app = Javalin.create();
     filtro.registrarEn(app);
-    donatrack.donaciones.Rutas.administradores(app, new AdministradoresController(proveedor));
+    donatrack.donaciones.Rutas.administradores(app, new AdministradoresController(new UsuariosService(proveedor, mock(RepositorioUsuarios.class))));
     app.exception(DatosInvalidosException.class, (e, ctx) ->
         ctx.status(400).result(e.getMessage()));
     app.exception(ConflictoDeNegocioException.class, (e, ctx) ->
@@ -246,6 +247,11 @@ class AdministradoresControllerTest {
     public String crearUsuarioSinContrasena(String email, RolDeAcceso rol) {
       llamadasSinContrasena.add(email);
       return idFijo;
+    }
+
+    @Override
+    public java.util.Optional<String> buscarIdPorEmail(String email) {
+      return java.util.Optional.empty();
     }
 
     @Override

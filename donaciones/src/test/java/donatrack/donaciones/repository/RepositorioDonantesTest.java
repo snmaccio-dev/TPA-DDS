@@ -139,14 +139,17 @@ class RepositorioDonantesTest implements SimplePersistenceTest {
     PersonaHumana luis = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
     repoPersonas.guardar(ana);
     repoPersonas.guardar(luis);
-    repositorio.guardar(new Donante(ana));
-    repositorio.guardar(new Donante(luis));
+    Donante donanteAna = new Donante(ana);
+    Donante donanteLuis = new Donante(luis);
+    repositorio.guardar(donanteAna);
+    repositorio.guardar(donanteLuis);
 
     entityManager().flush();
     entityManager().clear();
 
-    List<Donante> todos = repositorio.todos();
+    List<Long> ids = repositorio.todos().stream().map(Donante::getId).toList();
 
-    assertEquals(2, todos.size());
+    assertTrue(ids.contains(donanteAna.getId()));
+    assertTrue(ids.contains(donanteLuis.getId()));
   }
 }

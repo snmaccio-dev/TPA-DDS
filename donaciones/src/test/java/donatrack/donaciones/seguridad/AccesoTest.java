@@ -74,6 +74,34 @@ class AccesoTest {
   }
 
   @Test
+  void unDonanteModificaSuDonacionYNoLaAjena() throws Exception {
+    Donante donanteAna = donanteConId("Ana", "11111111", 10L);
+    Donante donanteLuis = donanteConId("Luis", "22222222", 20L);
+    UsuarioActual usuario = usuarioDonante("kc-ana", "ana@mail.com", donanteAna);
+
+    assertDoesNotThrow(() -> Acceso.exigirPuedeModificarDonacion(usuario, donacionDe(donanteAna)));
+    assertThrows(ForbiddenResponse.class, () ->
+        Acceso.exigirPuedeModificarDonacion(usuario, donacionDe(donanteLuis)));
+  }
+
+  @Test
+  void elAdminModificaCualquierDonacionYLaBeneficiariaNinguna() throws Exception {
+    Donante donante = donanteConId("Ana", "11111111", 10L);
+    Beneficiaria escuela = beneficiariaConId("30-11111111-1", 100L);
+    Donacion asignadaAEscuela = donacionDe(donante);
+    asignadaAEscuela.confirmarDestino(escuela);
+    UsuarioActual admin = new UsuarioActual(
+        "kc-admin", "admin@mail.com",
+        Set.of(RolDeAcceso.ADMINISTRADOR),
+        Optional.empty(), Optional.empty());
+    UsuarioActual beneficiaria = usuarioBeneficiaria("kc-escuela", "escuela@mail.com", escuela);
+
+    assertDoesNotThrow(() -> Acceso.exigirPuedeModificarDonacion(admin, donacionDe(donante)));
+    assertThrows(ForbiddenResponse.class, () ->
+        Acceso.exigirPuedeModificarDonacion(beneficiaria, asignadaAEscuela));
+  }
+
+  @Test
   void unUsuarioDonanteSinPerfilRecibe403() {
     UsuarioActual sinPerfil = new UsuarioActual(
         "kc-xx", "xx@mail.com",

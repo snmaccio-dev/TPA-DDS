@@ -1,9 +1,10 @@
 package donatrack.donaciones.domain.persona;
 
+import donatrack.donaciones.domain.DatosInvalidosException;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "Persona_Humana")
+@Table(name = "Persona_Humana", indexes = @Index(name = "idx_persona_humana_documento", columnList = "Documento"))
 public class PersonaHumana extends Persona {
 
     @Column(name="Nombre")
@@ -34,6 +35,26 @@ public class PersonaHumana extends Persona {
         this.edad = edad;
         this.documento = documento;
         this.genero = genero;
+    }
+
+    public void actualizarDatos(String nombre, String apellido, Integer edad, Genero genero) {
+        if (apellido == null || apellido.isBlank()) {
+            throw new DatosInvalidosException("El apellido es obligatorio.");
+        }
+        if (edad == null || edad < 0) {
+            throw new DatosInvalidosException("La edad tiene que ser mayor o igual a 0.");
+        }
+        actualizarNombre(nombre, apellido);
+        this.edad = edad;
+        this.genero = genero;
+    }
+
+    public void actualizarNombre(String nombre, String apellido) {
+        if (nombre == null || nombre.isBlank()) {
+            throw new DatosInvalidosException("El nombre es obligatorio.");
+        }
+        this.nombre = nombre.trim();
+        this.apellido = apellido == null ? "" : apellido.trim();
     }
 
     @Override

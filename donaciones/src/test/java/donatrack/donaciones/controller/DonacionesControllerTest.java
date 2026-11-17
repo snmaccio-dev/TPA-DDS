@@ -12,12 +12,14 @@ import com.nimbusds.jose.proc.SecurityContext;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import donatrack.donaciones.controller.dto.ErrorDTO;
+import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.catalogo.Categoria;
 import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.donacion.Bien;
 import donatrack.donaciones.domain.donacion.CondicionBien;
+import donatrack.donaciones.domain.donacion.DatosModificacionBien;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
@@ -27,13 +29,11 @@ import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.domain.usuario.Usuario;
-import donatrack.donaciones.repository.RepositorioDonantes;
-import donatrack.donaciones.repository.RepositorioPersonas;
-import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.repository.RepositorioUsuarios;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
 import donatrack.donaciones.service.DonacionesService;
+import donatrack.donaciones.service.DonantesService;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
 import io.javalin.testtools.JavalinTest;
@@ -50,9 +50,13 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class DonacionesControllerTest {
@@ -151,20 +155,99 @@ class DonacionesControllerTest {
     });
   }
 
+  @Test
+  void unDonanteModificaSuDonacionEnDeposito() throws Exception {
+    Donante donanteAna = donanteConId(10L, personaConId(1L, "Ana"));
+    Donacion donacion = donacionDe(donanteAna, "Sillas", "Mobiliario", 100L);
+    setPrivateField(Bien.class, donacion.getBienes().get(0), "id", 1L);
+    DonacionesService service = serviceQueModificaConElDominio(donacion);
+
+    RepositorioUsuarios repoUsuarios = repoConUsuario("kc-ana",
+        Usuario.deDonante("kc-ana", donanteAna));
+    String token = firmar("kc-ana", "ana@mail.com", "DONANTE");
+    JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
+      var respuesta = client.put("/donaciones/100", MODIFICACION,
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(200, respuesta.code());
+      String body = respuesta.body().string();
+      assertTrue(body.contains("\"descripcion\":\"Sillas nuevas\""), body);
+      assertTrue(body.contains("\"descripcion\":\"Silla nueva\""), body);
+      assertTrue(body.contains("\"id\":1"), body);
+    });
+
+    assertEquals("Sillas nuevas", donacion.getDescripcion());
+    assertEquals(3.0, donacion.getBienes().get(0).getCantidad());
+  }
+
+  @Test
+  void unDonanteNoPuedeModificarLaDonacionDeOtro() throws Exception {
+    Donante donanteAna = donanteConId(10L, personaConId(1L, "Ana"));
+    Donante donanteLuis = donanteConId(30L, personaConId(3L, "Luis"));
+    Donacion deLuis = donacionDe(donanteLuis, "Sillas", "Mobiliario", 100L);
+    DonacionesService service = mock(DonacionesService.class);
+    when(service.buscar(100L)).thenReturn(deLuis);
+
+    RepositorioUsuarios repoUsuarios = repoConUsuario("kc-ana",
+        Usuario.deDonante("kc-ana", donanteAna));
+    String token = firmar("kc-ana", "ana@mail.com", "DONANTE");
+    JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
+      var respuesta = client.put("/donaciones/100", MODIFICACION,
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(403, respuesta.code());
+    });
+
+    verify(service, never()).modificar(anyLong(), any(), any(), any());
+  }
+
+  @Test
+  void unaDonacionAsignadaNoSePuedeModificar() throws Exception {
+    Donante donanteAna = donanteConId(10L, personaConId(1L, "Ana"));
+    Donacion donacion = donacionDe(donanteAna, "Sillas", "Mobiliario", 100L);
+    setPrivateField(Bien.class, donacion.getBienes().get(0), "id", 1L);
+    donacion.confirmarDestino(beneficiariaConId(20L, personaJuridicaConId(2L)));
+    DonacionesService service = serviceQueModificaConElDominio(donacion);
+
+    RepositorioUsuarios repoUsuarios = repoConUsuario("kc-ana",
+        Usuario.deDonante("kc-ana", donanteAna));
+    String token = firmar("kc-ana", "ana@mail.com", "DONANTE");
+    JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
+      var respuesta = client.put("/donaciones/100", MODIFICACION,
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(409, respuesta.code());
+      assertTrue(respuesta.body().string()
+          .contains("Solo se puede modificar una donacion en deposito."));
+    });
+
+    assertEquals("desc", donacion.getDescripcion());
+  }
+
   // === Helpers ===
+
+  private static final String MODIFICACION =
+      "{\"descripcion\":\"Sillas nuevas\",\"fotoUrl\":null,"
+          + "\"bienes\":[{\"id\":1,\"descripcion\":\"Silla nueva\",\"cantidad\":3}]}";
+
+  @SuppressWarnings("unchecked")
+  private DonacionesService serviceQueModificaConElDominio(Donacion donacion) {
+    DonacionesService service = mock(DonacionesService.class);
+    when(service.buscar(donacion.getId())).thenReturn(donacion);
+    when(service.modificar(anyLong(), any(), any(), any())).thenAnswer(inv -> {
+      donacion.modificar(inv.getArgument(1), inv.getArgument(2),
+          (List<DatosModificacionBien>) inv.getArgument(3));
+      return donacion;
+    });
+    return service;
+  }
 
   private Javalin app(DonacionesService service, RepositorioUsuarios repoUsuarios) {
     Javalin app = Javalin.create();
     new FiltroDeAcceso(verificador, repoUsuarios).registrarEn(app);
-    donatrack.donaciones.Rutas.donaciones(app, new DonacionesController(
-        service,
-        mock(RepositorioPersonas.class),
-        mock(RepositorioDonantes.class),
-        mock(RepositorioSubcategorias.class)
-    ));
+    donatrack.donaciones.Rutas.donaciones(app, new DonacionesController(service, mock(DonantesService.class)));
 
     app.exception(DatosInvalidosException.class, (e, ctx) ->
         ctx.status(400).json(new ErrorDTO(e.getMessage())));
+    app.exception(ConflictoDeNegocioException.class, (e, ctx) ->
+        ctx.status(409).json(new ErrorDTO(e.getMessage())));
     app.exception(HttpResponseException.class, (e, ctx) ->
         ctx.status(e.getStatus()).json(new ErrorDTO(e.getMessage())));
     return app;

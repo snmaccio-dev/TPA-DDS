@@ -2,8 +2,6 @@ package donatrack.donaciones.service;
 
 import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.donacion.asignacion.Algoritmo;
-import donatrack.donaciones.domain.donacion.asignacion.CompatibilidadSemantica;
-import donatrack.donaciones.domain.donacion.asignacion.PrioridadSubatendidos;
 import donatrack.donaciones.domain.donacion.asignacion.PropuestaAsignacion;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
 import donatrack.donaciones.domain.donacion.Donacion;
@@ -16,8 +14,6 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AsignacionesService implements WithSimplePersistenceUnit {
@@ -27,31 +23,27 @@ public class AsignacionesService implements WithSimplePersistenceUnit {
   private final RepositorioDonaciones repositorioDonaciones;
   private final RepositorioEntidades repositorioEntidades;
   private final RepositorioPropuestas repositorioPropuestas;
-  // Se usa en confirmarDestino para que la donacion traiga enganchado el
-  // observer y las notificaciones de ASIGNACION_REALIZADA salgan.
   private final DonacionesService donacionesService;
 
-  public AsignacionesService(RepositorioPropuestas repositorioPropuestas,
-                            DonacionesService donacionesService) {
-    this.compatibilidad = new CompatibilidadSemantica();
-    this.prioridadSubAtendidos = new PrioridadSubatendidos();
-    this.repositorioDonaciones = RepositorioDonaciones.getInstance();
-    this.repositorioEntidades = RepositorioEntidades.getInstance();
+  public AsignacionesService(Algoritmo compatibilidad,
+                             Algoritmo prioridadSubAtendidos,
+                             RepositorioDonaciones repositorioDonaciones,
+                             RepositorioEntidades repositorioEntidades,
+                             RepositorioPropuestas repositorioPropuestas,
+                             DonacionesService donacionesService) {
+    this.compatibilidad = compatibilidad;
+    this.prioridadSubAtendidos = prioridadSubAtendidos;
+    this.repositorioDonaciones = repositorioDonaciones;
+    this.repositorioEntidades = repositorioEntidades;
     this.repositorioPropuestas = repositorioPropuestas;
     this.donacionesService = donacionesService;
   }
 
-  // EJECUCIÓN A DEMANDA
-  public List<Beneficiaria> ejecutarAsignacion(Donacion donacion) {
-    return obtenerPropuesta(donacion);
-  }
-
-  // Obtiene la propuesta/ranking a partir de todas las beneficiarias registradas
-  public List<Beneficiaria> obtenerPropuesta(Donacion donacion) {
+  public List<Beneficiaria> ejecutarAsignacion(long donacionId) {
+    Donacion donacion = donacionesService.buscar(donacionId);
     return calcularPropuesta(donacion).candidatas();
   }
 
-  // EJECUCIÓN PROGRAMADA
   public ResultadoCorrida ejecutarMatchmakingProgramado() {
     List<Donacion> pendientes = repositorioDonaciones.enEstado(EstadosPosiblesDonacion.EN_DEPOSITO);
 
@@ -77,21 +69,22 @@ public class AsignacionesService implements WithSimplePersistenceUnit {
     return new ResultadoCorrida(procesadas, fallidas);
   }
 
-  public Optional<PropuestaAsignacion> buscarPropuesta(long donacionId) {
-    return repositorioPropuestas.buscarPorDonacion(donacionId);
+  public PropuestaAsignacion propuestaDe(long donacionId) {
+    return repositorioPropuestas.buscarPorDonacion(donacionId)
+        .orElseThrow(() -> new RecursoInexistenteException(
+            "No hay propuesta generada para la donación " + donacionId
+        ));
   }
 
   public List<PropuestaAsignacion> propuestas() {
     return repositorioPropuestas.todas();
   }
 
-  // Confirma el destino final de la donación. El filtro de acceso ya garantiza
-  // que quien llega aca tiene rol ADMINISTRADOR. Usamos DonacionesService.buscar
-  // para que la Donacion traiga el observer de notificaciones ya enganchado y
-  // la transicion dispare DONACION_ASIGNADA al donante y a la beneficiaria.
-  public void confirmarDestino(long donacionId, Beneficiaria destinatario) {
-    Objects.requireNonNull(
-        destinatario, "Debe indicarse la beneficiaria a confirmar como destinataria.");
+  public void confirmarDestino(long donacionId, long beneficiariaId) {
+    Beneficiaria destinatario = repositorioEntidades.buscarPorId(beneficiariaId)
+        .orElseThrow(() -> new RecursoInexistenteException(
+            "No existe la beneficiaria con id " + beneficiariaId
+        ));
     Donacion donacion = donacionesService.buscar(donacionId);
     withTransaction(() -> {
       donacion.confirmarDestino(destinatario);
@@ -106,7 +99,7 @@ public class AsignacionesService implements WithSimplePersistenceUnit {
       );
     }
 
-    List<Beneficiaria> beneficiarias = obtenerBeneficiariasRegistradas();
+    List<Beneficiaria> beneficiarias = repositorioEntidades.todas();
 
     List<Beneficiaria> rankingCompatibilidad =
         compatibilidad.matchmaking(donacion, beneficiarias);
@@ -115,10 +108,6 @@ public class AsignacionesService implements WithSimplePersistenceUnit {
         prioridadSubAtendidos.matchmaking(donacion, beneficiarias);
 
     return filtrarCoincidencias(rankingCompatibilidad, rankingPrioridad);
-  }
-
-  private List<Beneficiaria> obtenerBeneficiariasRegistradas() {
-    return repositorioEntidades.todas();
   }
 
   private ResultadoMatchmaking filtrarCoincidencias(

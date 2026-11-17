@@ -11,14 +11,11 @@ import io.javalin.http.ForbiddenResponse;
 import java.time.LocalDateTime;
 import java.util.List;
 
-// Lecturas sobre el repositorio de notificaciones. Cada cuenta tiene un
-// unico perfil, asi que cada metodo se resuelve con una sola llamada al
-// repo y la paginacion es la del repositorio: no juntamos listas.
-public class ConsultaDeNotificaciones implements WithSimplePersistenceUnit {
+public class BandejaDeNotificacionesService implements WithSimplePersistenceUnit {
 
     private final RepositorioNotificaciones repositorio;
 
-    public ConsultaDeNotificaciones(RepositorioNotificaciones repositorio) {
+    public BandejaDeNotificacionesService(RepositorioNotificaciones repositorio) {
         this.repositorio = repositorio;
     }
 
@@ -68,10 +65,6 @@ public class ConsultaDeNotificaciones implements WithSimplePersistenceUnit {
         withTransaction(notificacion::marcarLeida);
     }
 
-    // Marca todas las propias del usuario como leidas, en un unico update JPQL.
-    // No usamos el tope de 100 del listado, porque aca el bulk es sobre todo
-    // lo no leido. Para las de administradores esto afecta a todos los admins:
-    // si uno las marca leidas, quedan leidas para todos.
     public void marcarTodasLeidasDe(UsuarioActual usuario) {
         LocalDateTime ahora = LocalDateTime.now();
         withTransaction(() -> {

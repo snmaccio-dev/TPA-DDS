@@ -26,7 +26,7 @@ import donatrack.donaciones.domain.usuario.Usuario;
 import donatrack.donaciones.repository.RepositorioUsuarios;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
-import donatrack.donaciones.service.ConsultaDeNotificaciones;
+import donatrack.donaciones.service.BandejaDeNotificacionesService;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
@@ -70,7 +70,7 @@ class NotificacionesControllerTest {
     Donante donanteAna = donanteConId(10L, ana);
     Notificacion suya = Notificacion.paraDonante(donanteAna, TipoNotificacion.CAMBIO_ESTADO, "mi msj", null);
 
-    ConsultaDeNotificaciones consulta = mock(ConsultaDeNotificaciones.class);
+    BandejaDeNotificacionesService consulta = mock(BandejaDeNotificacionesService.class);
     when(consulta.propiasDe(
         argThat(u -> "kc-ana".equals(u.keycloakId())),
         anyBoolean(), anyInt(), anyInt())).thenReturn(List.of(suya));
@@ -93,7 +93,7 @@ class NotificacionesControllerTest {
     Notificacion paraAdmins = Notificacion.paraAdministradores(
         TipoNotificacion.ENTREGA_FALLIDA, "falla", null);
 
-    ConsultaDeNotificaciones consulta = mock(ConsultaDeNotificaciones.class);
+    BandejaDeNotificacionesService consulta = mock(BandejaDeNotificacionesService.class);
     when(consulta.propiasDe(
         argThat(u -> u.esAdministrador()),
         anyBoolean(), anyInt(), anyInt())).thenReturn(List.of(paraAdmins));
@@ -121,7 +121,7 @@ class NotificacionesControllerTest {
     Notificacion ajena = Notificacion.paraDonante(
         donanteLuis, TipoNotificacion.CAMBIO_ESTADO, "msj luis", null);
 
-    ConsultaDeNotificaciones consulta = mock(ConsultaDeNotificaciones.class);
+    BandejaDeNotificacionesService consulta = mock(BandejaDeNotificacionesService.class);
     when(consulta.buscarPorId(99L)).thenReturn(ajena);
 
     RepositorioUsuarios repoUsuarios = repoConUsuario("kc-ana", Usuario.deDonante("kc-ana", donanteAna));
@@ -140,7 +140,7 @@ class NotificacionesControllerTest {
     PersonaHumana ana = personaConId(1L, "Ana");
     Donante donanteAna = donanteConId(10L, ana);
 
-    ConsultaDeNotificaciones consulta = mock(ConsultaDeNotificaciones.class);
+    BandejaDeNotificacionesService consulta = mock(BandejaDeNotificacionesService.class);
     when(consulta.buscarPorId(anyLong())).thenThrow(
         new RecursoInexistenteException("no existe"));
 
@@ -159,7 +159,7 @@ class NotificacionesControllerTest {
   void getTodasSinRolAdminDevuelve403() throws Exception {
     PersonaHumana ana = personaConId(1L, "Ana");
     Donante donanteAna = donanteConId(10L, ana);
-    ConsultaDeNotificaciones consulta = mock(ConsultaDeNotificaciones.class);
+    BandejaDeNotificacionesService consulta = mock(BandejaDeNotificacionesService.class);
     RepositorioUsuarios repoUsuarios = repoConUsuario("kc-ana", Usuario.deDonante("kc-ana", donanteAna));
     Javalin app = app(consulta, repoUsuarios);
 
@@ -177,7 +177,7 @@ class NotificacionesControllerTest {
     Donante donanteAna = donanteConId(10L, ana);
 
     int[] tamanioObservado = new int[1];
-    ConsultaDeNotificaciones consulta = mock(ConsultaDeNotificaciones.class);
+    BandejaDeNotificacionesService consulta = mock(BandejaDeNotificacionesService.class);
     when(consulta.propiasDe(
         argThat(u -> u != null),
         anyBoolean(), anyInt(), anyInt())).thenAnswer(inv -> {
@@ -201,7 +201,7 @@ class NotificacionesControllerTest {
 
   // === Helpers ===
 
-  private Javalin app(ConsultaDeNotificaciones consulta, RepositorioUsuarios repoUsuarios) {
+  private Javalin app(BandejaDeNotificacionesService consulta, RepositorioUsuarios repoUsuarios) {
     Javalin app = Javalin.create();
     new FiltroDeAcceso(verificador, repoUsuarios).registrarEn(app);
     donatrack.donaciones.Rutas.notificaciones(app, new NotificacionesController(consulta));

@@ -39,6 +39,19 @@ public final class Acceso {
         throw new ForbiddenResponse("No podes acceder a esta donacion.");
     }
 
+    public static void exigirPuedeModificarDonacion(UsuarioActual usuario, Donacion donacion) {
+        if (usuario.esAdministrador()) {
+            return;
+        }
+        if (usuario.esDonante()) {
+            Donante propio = perfilDonanteObligatorio(usuario);
+            if (Objects.equals(idDe(donacion.getDonante()), idDe(propio))) {
+                return;
+            }
+        }
+        throw new ForbiddenResponse("No podes modificar esta donacion.");
+    }
+
     public static void exigirPuedeVerNotificacion(UsuarioActual usuario, Notificacion notificacion) {
         // Las notificaciones para administradores son compartidas: cualquier
         // admin puede verlas y, si marca una como leida, queda leida para
@@ -79,6 +92,19 @@ public final class Acceso {
             }
         }
         throw new ForbiddenResponse("No podes acceder a esta necesidad.");
+    }
+
+    public static void exigirPuedeModificarEntidad(UsuarioActual usuario, long beneficiariaId) {
+        if (usuario.esAdministrador()) {
+            return;
+        }
+        if (usuario.esBeneficiaria()) {
+            Beneficiaria propia = perfilBeneficiariaObligatorio(usuario);
+            if (Objects.equals(idDe(propia), beneficiariaId)) {
+                return;
+            }
+        }
+        throw new ForbiddenResponse("No podes modificar esta entidad.");
     }
 
     public static Donante perfilDonanteObligatorio(UsuarioActual usuario) {

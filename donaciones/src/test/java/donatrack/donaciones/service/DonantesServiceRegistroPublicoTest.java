@@ -3,16 +3,15 @@ package donatrack.donaciones.service;
 import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.DatosInvalidosException;
-import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.domain.persona.PersonaHumana;
-import donatrack.donaciones.domain.persona.PersonaJuridica;
-import donatrack.donaciones.domain.persona.Representante;
-import donatrack.donaciones.domain.persona.TipoOrganizacion;
+import donatrack.donaciones.domain.usuario.Usuario;
+import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioEntidades;
+import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioUsuarios;
 import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
@@ -22,39 +21,37 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 
-// NOTA: no implementa SimplePersistenceTest a proposito. RegistroService usa
+// NOTA: no implementa SimplePersistenceTest a proposito. El registro usa
 // withTransaction de jpa-extras y queremos que esas transacciones se abran
 // y commiteen de verdad (y hagan rollback real cuando corresponde) para
-// poder verificar el efecto. Los datos unicos vienen de DatosDeTest, con
-// un unico AtomicLong compartido entre todas las clases del run.
-public class RegistroServiceTest implements WithSimplePersistenceUnit {
+// poder verificar el efecto.
+class DonantesServiceRegistroPublicoTest implements WithSimplePersistenceUnit {
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioDonantes repoDonantes = new RepositorioDonantes();
-  private final RepositorioEntidades repoEntidades = RepositorioEntidades.getInstance();
   private final RepositorioUsuarios repoUsuarios = new RepositorioUsuarios();
 
   @Test
   void registrarDonanteExitosoPersisteTodoYDevuelveElVinculo() {
     String kcId = DatosDeTest.keycloakIdUnico();
     ProveedorDeIdentidadFalso proveedor = new ProveedorDeIdentidadFalso(kcId);
-    RegistroService service = nuevoService(proveedor);
+    DonantesService service = nuevoService(proveedor, repoUsuarios);
 
     String documento = DatosDeTest.documentoUnico();
     Persona persona = new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
 
-    Donante donante = service.registrarDonante(persona, DatosDeTest.emailUnico("ana"), "unaSegura123");
+    Donante donante = service.registrarPublico(persona, DatosDeTest.emailUnico("ana"), "unaSegura123");
 
     assertEquals(1, proveedor.creados.size());
     assertEquals(RolDeAcceso.DONANTE, proveedor.creados.get(0).rol);
+    assertTrue(proveedor.creados.get(0).conContrasena);
     assertTrue(proveedor.eliminados.isEmpty());
 
     assertTrue(repoPersonas.buscarPorDocumento(documento).isPresent());
@@ -68,10 +65,9 @@ public class RegistroServiceTest implements WithSimplePersistenceUnit {
   void documentoYaExistenteDevuelve409YNoTocaKeycloak() {
     ProveedorDeIdentidadFalso proveedor =
         new ProveedorDeIdentidadFalso(DatosDeTest.keycloakIdUnico());
-    RegistroService service = nuevoService(proveedor);
+    DonantesService service = nuevoService(proveedor, repoUsuarios);
 
     String documento = DatosDeTest.documentoUnico();
-    // Precondicion: ya hay una persona con ese documento.
     withTransaction(() -> {
       PersonaHumana existente = new PersonaHumana("Pre", "Existente", 40, documento, Genero.MASCULINO);
       repoPersonas.guardar(existente);
@@ -79,7 +75,7 @@ public class RegistroServiceTest implements WithSimplePersistenceUnit {
 
     Persona nueva = new PersonaHumana("Nuevo", "Intento", 30, documento, Genero.FEMENINO);
     assertThrows(ConflictoDeNegocioException.class, () ->
-        service.registrarDonante(nueva, DatosDeTest.emailUnico("nuevo"), "unaSegura123"));
+        service.registrarPublico(nueva, DatosDeTest.emailUnico("nuevo"), "unaSegura123"));
 
     assertTrue(proveedor.creados.isEmpty(),
         "No se tiene que haber llamado a Keycloak si el documento ya existia.");
@@ -89,12 +85,12 @@ public class RegistroServiceTest implements WithSimplePersistenceUnit {
   void siKeycloakResponde409NoSePersisteNada() {
     ProveedorDeIdentidadFalso proveedor = new ProveedorDeIdentidadFalso(
         () -> { throw new ConflictoDeNegocioException("Ya existe una cuenta con ese correo."); });
-    RegistroService service = nuevoService(proveedor);
+    DonantesService service = nuevoService(proveedor, repoUsuarios);
 
     String documento = DatosDeTest.documentoUnico();
     Persona persona = new PersonaHumana("X", "Y", 30, documento, Genero.FEMENINO);
     assertThrows(ConflictoDeNegocioException.class, () ->
-        service.registrarDonante(persona, DatosDeTest.emailUnico("x"), "unaSegura123"));
+        service.registrarPublico(persona, DatosDeTest.emailUnico("x"), "unaSegura123"));
 
     assertFalse(repoPersonas.buscarPorDocumento(documento).isPresent());
   }
@@ -103,65 +99,46 @@ public class RegistroServiceTest implements WithSimplePersistenceUnit {
   void siLaPersistenciaFallaDespuesDeCrearLaCuentaSeLlamaAEliminarUsuario() {
     String kcId = DatosDeTest.keycloakIdUnico();
     ProveedorDeIdentidadFalso proveedor = new ProveedorDeIdentidadFalso(kcId);
-    // Rompemos la persistencia haciendo que el repositorio de usuarios falle.
     RepositorioUsuarios repoRoto = new RepositorioUsuarios() {
       @Override
-      public void guardar(donatrack.donaciones.domain.usuario.Usuario usuario) {
+      public void guardar(Usuario usuario) {
         throw new RuntimeException("DB caida simulada.");
       }
     };
-    RegistroService service = new RegistroService(
-        proveedor, repoPersonas, repoDonantes, repoEntidades, repoRoto);
+    DonantesService service = nuevoService(proveedor, repoRoto);
 
     String documento = DatosDeTest.documentoUnico();
     Persona persona = new PersonaHumana("Z", "W", 30, documento, Genero.FEMENINO);
     assertThrows(RuntimeException.class, () ->
-        service.registrarDonante(persona, DatosDeTest.emailUnico("z"), "unaSegura123"));
+        service.registrarPublico(persona, DatosDeTest.emailUnico("z"), "unaSegura123"));
 
     assertEquals(List.of(kcId), proveedor.eliminados,
         "Si la persistencia fallo despues de crear la cuenta, hay que borrarla en Keycloak.");
   }
 
   @Test
-  void registrarBeneficiariaExitosoPersisteTodo() {
-    String kcId = DatosDeTest.keycloakIdUnico();
-    ProveedorDeIdentidadFalso proveedor = new ProveedorDeIdentidadFalso(kcId);
-    RegistroService service = nuevoService(proveedor);
-
-    String cuit = DatosDeTest.cuitUnico();
-    PersonaJuridica juridica = new PersonaJuridica(cuit, DatosDeTest.textoUnico("Comedor"), TipoOrganizacion.ONG, "Comedor");
-    DatosEntidad datos = new DatosEntidad(
-        "Calle Falsa 123",
-        "+54 11 0000-0000",
-        List.of(new Representante("Rep", "Uno", DatosDeTest.emailUnico("rep1")))
-    );
-
-    Beneficiaria beneficiaria =
-        service.registrarBeneficiaria(juridica, datos, DatosDeTest.emailUnico("benef"), "unaSegura123");
-
-    assertSame(RolDeAcceso.BENEFICIARIA, proveedor.creados.get(0).rol);
-    assertTrue(repoEntidades.buscarPorCuit(juridica.getCuit()).isPresent());
-    assertTrue(repoUsuarios.buscarPorKeycloakId(kcId).isPresent());
-    assertEquals(beneficiaria.getId(),
-        repoUsuarios.buscarPorKeycloakId(kcId).get().getBeneficiaria().getId());
-  }
-
-  @Test
   void contrasenaCortaDevuelve400YNoLlamaAKeycloak() {
     ProveedorDeIdentidadFalso proveedor =
         new ProveedorDeIdentidadFalso(DatosDeTest.keycloakIdUnico());
-    RegistroService service = nuevoService(proveedor);
+    DonantesService service = nuevoService(proveedor, repoUsuarios);
 
     String documento = DatosDeTest.documentoUnico();
     Persona persona = new PersonaHumana("Q", "R", 30, documento, Genero.FEMENINO);
     assertThrows(DatosInvalidosException.class, () ->
-        service.registrarDonante(persona, DatosDeTest.emailUnico("q"), "1234"));
+        service.registrarPublico(persona, DatosDeTest.emailUnico("q"), "1234"));
 
     assertTrue(proveedor.creados.isEmpty());
   }
 
-  private RegistroService nuevoService(ProveedorDeIdentidad proveedor) {
-    return new RegistroService(proveedor, repoPersonas, repoDonantes, repoEntidades, repoUsuarios);
+  private DonantesService nuevoService(ProveedorDeIdentidad proveedor, RepositorioUsuarios usuarios) {
+    return new DonantesService(
+        repoDonantes,
+        repoPersonas,
+        new RepositorioNotificaciones(),
+        RepositorioDonaciones.getInstance(),
+        RepositorioEntidades.getInstance(),
+        mock(NotificacionesService.class),
+        new UsuariosService(proveedor, usuarios));
   }
 
   // === ProveedorDeIdentidad falso que registra las llamadas ===
@@ -187,7 +164,7 @@ public class RegistroServiceTest implements WithSimplePersistenceUnit {
       if (creadorFallando != null) {
         creadorFallando.ejecutar();
       }
-      creados.add(new LlamadaCreacion(email, rol, Optional.ofNullable(contrasena).isPresent()));
+      creados.add(new LlamadaCreacion(email, rol, contrasena != null));
       return idFijo;
     }
 
@@ -198,6 +175,11 @@ public class RegistroServiceTest implements WithSimplePersistenceUnit {
       }
       creados.add(new LlamadaCreacion(email, rol, false));
       return idFijo;
+    }
+
+    @Override
+    public java.util.Optional<String> buscarIdPorEmail(String email) {
+      return java.util.Optional.empty();
     }
 
     @Override
