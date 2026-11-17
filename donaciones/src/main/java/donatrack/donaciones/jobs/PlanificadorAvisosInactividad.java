@@ -1,6 +1,6 @@
 package donatrack.donaciones.jobs;
 
-import donatrack.donaciones.service.GestorDonantes;
+import donatrack.donaciones.service.DonantesService;
 import donatrack.donaciones.service.ResultadoCorrida;
 
 import java.time.Duration;
@@ -18,12 +18,12 @@ public class PlanificadorAvisosInactividad {
     public static final LocalTime HORA_POR_DEFECTO = LocalTime.of(9, 0);
     private static final long PERIODO_HORAS = 24;
 
-    private final GestorDonantes gestor;
+    private final DonantesService service;
     private final LocalTime hora;
     private final ScheduledExecutorService executor;
 
-    public PlanificadorAvisosInactividad(GestorDonantes gestor, LocalTime hora) {
-        this.gestor = gestor;
+    public PlanificadorAvisosInactividad(DonantesService service, LocalTime hora) {
+        this.service = service;
         this.hora = hora;
         this.executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
             Thread hilo = new Thread(runnable, "planificador-avisos-inactividad");
@@ -32,8 +32,8 @@ public class PlanificadorAvisosInactividad {
         });
     }
 
-    public PlanificadorAvisosInactividad(GestorDonantes gestor) {
-        this(gestor, HORA_POR_DEFECTO);
+    public PlanificadorAvisosInactividad(DonantesService service) {
+        this(service, HORA_POR_DEFECTO);
     }
 
     public void iniciar() {
@@ -54,7 +54,7 @@ public class PlanificadorAvisosInactividad {
         // scheduleAtFixedRate cancela silenciosamente todas las corridas futuras si la
         // tarea lanza una excepción — atrapar RuntimeException para que el job siga vivo.
         try {
-            ResultadoCorrida resultado = gestor.avisarInactivos();
+            ResultadoCorrida resultado = service.avisarInactivos();
             System.out.println("[AVISO-INACTIVIDAD] Corrida programada — donantes avisados: "
                 + resultado.exitosas() + ", fallidos: " + resultado.cantidadDeFallas());
             resultado.fallidas().forEach(falla ->

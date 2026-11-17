@@ -14,20 +14,20 @@ import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.seguridad.Acceso;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.UsuarioActual;
-import donatrack.donaciones.service.GestorNecesidades;
+import donatrack.donaciones.service.NecesidadesService;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.http.Context;
 
 public class NecesidadesController {
 
-  private final GestorNecesidades gestor;
+  private final NecesidadesService service;
   private final RepositorioSubcategorias repositorioSubcategorias;
   private final RepositorioEntidades repositorioEntidades;
 
-  public NecesidadesController(GestorNecesidades gestor,
+  public NecesidadesController(NecesidadesService service,
                                RepositorioSubcategorias repositorioSubcategorias,
                                RepositorioEntidades repositorioEntidades) {
-    this.gestor = gestor;
+    this.service = service;
     this.repositorioSubcategorias = repositorioSubcategorias;
     this.repositorioEntidades = repositorioEntidades;
   }
@@ -35,15 +35,15 @@ public class NecesidadesController {
   public void todas(Context ctx) {
     UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
     if (usuario.esAdministrador()) {
-      ctx.json(NecesidadDTO.desde(gestor.todas()));
+      ctx.json(NecesidadDTO.desde(service.todas()));
     } else {
       Beneficiaria propia = Acceso.perfilBeneficiariaObligatorio(usuario);
-      ctx.json(NecesidadDTO.desde(gestor.deBeneficiaria(propia)));
+      ctx.json(NecesidadDTO.desde(service.deBeneficiaria(propia)));
     }
   }
 
   public void buscar(Context ctx) {
-    Necesidad necesidad = gestor.buscar(idDe(ctx));
+    Necesidad necesidad = service.buscar(idDe(ctx));
     Acceso.exigirPuedeVerNecesidad(FiltroDeAcceso.usuarioDe(ctx), necesidad);
     ctx.json(NecesidadDTO.desde(necesidad));
   }
@@ -64,14 +64,14 @@ public class NecesidadesController {
             request.cantidad(),
             subcategoria,
             beneficiaria);
-    ctx.status(201).json(NecesidadDTO.desde(gestor.crear(necesidad)));
+    ctx.status(201).json(NecesidadDTO.desde(service.crear(necesidad)));
   }
 
   public void actualizar(Context ctx) {
-    Necesidad necesidad = gestor.buscar(idDe(ctx));
+    Necesidad necesidad = service.buscar(idDe(ctx));
     Acceso.exigirPuedeVerNecesidad(FiltroDeAcceso.usuarioDe(ctx), necesidad);
     ActualizarNecesidadRequest request = ctx.bodyAsClass(ActualizarNecesidadRequest.class);
-    gestor.actualizar(
+    service.actualizar(
         necesidad.getId(),
         request.descripcion(),
         request.cantidad(),
@@ -81,9 +81,9 @@ public class NecesidadesController {
   }
 
   public void eliminar(Context ctx) {
-    Necesidad necesidad = gestor.buscar(idDe(ctx));
+    Necesidad necesidad = service.buscar(idDe(ctx));
     Acceso.exigirPuedeVerNecesidad(FiltroDeAcceso.usuarioDe(ctx), necesidad);
-    gestor.eliminar(necesidad.getId());
+    service.eliminar(necesidad.getId());
     ctx.status(204);
   }
 

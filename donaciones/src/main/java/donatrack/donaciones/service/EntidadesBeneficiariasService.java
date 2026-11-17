@@ -26,7 +26,7 @@ import java.util.Optional;
 // Alta desde un administrador. Si la beneficiaria todavia no tiene ningun
 // Usuario, se crea una cuenta en Keycloak (sin contrasena) para el email del
 // primer representante, con el rol BENEFICIARIA.
-public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
+public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit {
 
   private final RepositorioEntidades repositorioEntidades =
       RepositorioEntidades.getInstance();
@@ -42,7 +42,7 @@ public class GestorEntidadesBeneficiarias implements WithSimplePersistenceUnit {
   private final RepositorioDonantes repositorioDonantes;
   private final ProveedorDeIdentidad proveedor;
 
-  public GestorEntidadesBeneficiarias(RepositorioUsuarios repositorioUsuarios,
+  public EntidadesBeneficiariasService(RepositorioUsuarios repositorioUsuarios,
                                       RepositorioNotificaciones repositorioNotificaciones,
                                       RepositorioNecesidades repositorioNecesidades,
                                       RepositorioPropuestas repositorioPropuestas,

@@ -30,9 +30,9 @@ import donatrack.donaciones.repository.RepositorioDonantes;
 import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPersonas;
 import donatrack.donaciones.repository.RepositorioPropuestas;
-import donatrack.donaciones.service.GestorAsignaciones;
-import donatrack.donaciones.service.GestorDonaciones;
-import donatrack.donaciones.service.GestorNotificaciones;
+import donatrack.donaciones.service.AsignacionesService;
+import donatrack.donaciones.service.DonacionesService;
+import donatrack.donaciones.service.NotificacionesService;
 import donatrack.donaciones.service.SegmentadorDonaciones;
 
 
@@ -45,21 +45,21 @@ public class Main {
 
         RepositorioPropuestas repositorioPropuestas = new RepositorioPropuestas();
         RepositorioNotificaciones repositorioNotificaciones = new RepositorioNotificaciones();
-        GestorNotificaciones gestorNotificaciones = new GestorNotificaciones(List.of(
+        NotificacionesService notificacionesService = new NotificacionesService(List.of(
             new NotificadorEmail(),
             new NotificadorSMS(),
             new NotificadorWhatsApp()
         ), repositorioNotificaciones);
-        GestorDonaciones gestorDonaciones = new GestorDonaciones(
-            gestorNotificaciones,
+        DonacionesService donacionesService = new DonacionesService(
+            notificacionesService,
             repositorioPropuestas,
             repositorioNotificaciones,
             "http://localhost:8082/seguimiento-donante",
             "http://localhost:8082/seguimiento-beneficiario"
         );
-        GestorAsignaciones gestorAsignaciones =
-            new GestorAsignaciones(repositorioPropuestas, gestorDonaciones);
-        PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(gestorAsignaciones);
+        AsignacionesService asignacionesService =
+            new AsignacionesService(repositorioPropuestas, donacionesService);
+        PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(asignacionesService);
         planificador.iniciar();
 
         try {
@@ -132,7 +132,7 @@ public class Main {
         System.out.println("--- [3] Ciclo de estados de una donacion ---");
 
         // Sin observer: en el demo no hay BD para persistir notificaciones.
-        // En el microservicio real, GestorDonaciones.conObservers se encarga.
+        // En el microservicio real, DonacionesService.conObservers se encarga.
         PersonaHumana luis = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
         luis.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, "luis@mail.com"));
         Donante donante = new Donante(luis);

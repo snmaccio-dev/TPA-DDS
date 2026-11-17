@@ -8,7 +8,7 @@ import donatrack.donaciones.domain.donacion.asignacion.PropuestaAsignacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioEntidades;
-import donatrack.donaciones.service.GestorAsignaciones;
+import donatrack.donaciones.service.AsignacionesService;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import donatrack.donaciones.service.ResultadoCorrida;
 import io.javalin.http.Context;
@@ -17,30 +17,30 @@ import java.util.List;
 
 public class AsignacionesController {
 
-  private final GestorAsignaciones gestor;
+  private final AsignacionesService service;
   private final RepositorioDonaciones repositorioDonaciones;
   private final RepositorioEntidades repositorioEntidades;
 
-  public AsignacionesController(GestorAsignaciones gestor,
+  public AsignacionesController(AsignacionesService service,
                                 RepositorioDonaciones repositorioDonaciones,
                                 RepositorioEntidades repositorioEntidades) {
-    this.gestor = gestor;
+    this.service = service;
     this.repositorioDonaciones = repositorioDonaciones;
     this.repositorioEntidades = repositorioEntidades;
   }
 
   public void propuestas(Context ctx) {
-    ctx.json(PropuestaDTO.desde(gestor.propuestas()));
+    ctx.json(PropuestaDTO.desde(service.propuestas()));
   }
 
   public void ejecutarMatchmaking(Context ctx) {
-    ResultadoCorrida resultado = gestor.ejecutarMatchmakingProgramado();
+    ResultadoCorrida resultado = service.ejecutarMatchmakingProgramado();
     ctx.json(new EjecutarMatchmakingResponse(resultado.exitosas(), resultado.fallidas()));
   }
 
   public void propuestaDeDonacion(Context ctx) {
     long donacionId = idDe(ctx);
-    PropuestaAsignacion propuesta = gestor.buscarPropuesta(donacionId)
+    PropuestaAsignacion propuesta = service.buscarPropuesta(donacionId)
         .orElseThrow(() -> new RecursoInexistenteException(
             "No hay propuesta generada para la donación " + donacionId
         ));
@@ -49,7 +49,7 @@ public class AsignacionesController {
 
   public void ejecutarAsignacion(Context ctx) {
     Donacion donacion = buscarDonacion(idDe(ctx));
-    var candidatas = gestor.ejecutarAsignacion(donacion);
+    var candidatas = service.ejecutarAsignacion(donacion);
     ctx.json(BeneficiariaDTO.desde(candidatas));
   }
 
@@ -59,7 +59,7 @@ public class AsignacionesController {
         .orElseThrow(() -> new RecursoInexistenteException(
             "No existe la beneficiaria con id " + request.beneficiariaId()
         ));
-    gestor.confirmarDestino(idDe(ctx), destinatario);
+    service.confirmarDestino(idDe(ctx), destinatario);
     ctx.status(204);
   }
 

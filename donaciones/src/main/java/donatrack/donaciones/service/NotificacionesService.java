@@ -23,12 +23,12 @@ import java.util.function.Supplier;
 // plataforma) para que el web muestre a cada usuario su lista y para auditoria.
 // Las fallas de envio no se propagan: no pueden deshacer el cambio de estado
 // que las dispara.
-public class GestorNotificaciones {
+public class NotificacionesService {
 
   private final Map<TipoContacto, Notificador> porTipo;
   private final RepositorioNotificaciones repositorio;
 
-  public GestorNotificaciones(List<Notificador> notificadores,
+  public NotificacionesService(List<Notificador> notificadores,
                               RepositorioNotificaciones repositorio) {
     Map<TipoContacto, Notificador> mapa = new EnumMap<>(TipoContacto.class);
     for (Notificador n : notificadores) {

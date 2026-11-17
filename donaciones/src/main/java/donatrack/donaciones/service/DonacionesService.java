@@ -17,12 +17,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class GestorDonaciones implements WithSimplePersistenceUnit {
+public class DonacionesService implements WithSimplePersistenceUnit {
 
     private final SegmentadorDonaciones segmentacion = new SegmentadorDonaciones();
     private final RepositorioDonaciones repositorio =
         RepositorioDonaciones.getInstance();
-    private final GestorNotificaciones gestorNotificaciones;
+    private final NotificacionesService notificacionesService;
     private final RepositorioPropuestas repositorioPropuestas;
     private final RepositorioNotificaciones repositorioNotificaciones;
     // Links a la vista de seguimiento del web; se usan al armar la notificacion
@@ -31,12 +31,12 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
     private final String linkSeguimientoDonante;
     private final String linkSeguimientoBeneficiario;
 
-    public GestorDonaciones(GestorNotificaciones gestorNotificaciones,
+    public DonacionesService(NotificacionesService notificacionesService,
                             RepositorioPropuestas repositorioPropuestas,
                             RepositorioNotificaciones repositorioNotificaciones,
                             String linkSeguimientoDonante,
                             String linkSeguimientoBeneficiario) {
-        this.gestorNotificaciones = gestorNotificaciones;
+        this.notificacionesService = notificacionesService;
         this.repositorioPropuestas = repositorioPropuestas;
         this.repositorioNotificaciones = repositorioNotificaciones;
         this.linkSeguimientoDonante = linkSeguimientoDonante;
@@ -50,7 +50,7 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
             return null;
         }
         donacion.agregarObserver(new NotificacionesDeDonacionObserver(
-            gestorNotificaciones, linkSeguimientoDonante, linkSeguimientoBeneficiario));
+            notificacionesService, linkSeguimientoDonante, linkSeguimientoBeneficiario));
         return donacion;
     }
 

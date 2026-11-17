@@ -4,8 +4,8 @@ import donatrack.donaciones.controller.dto.DonanteInactivoDTO;
 import donatrack.donaciones.controller.dto.NuevoDonanteRequest;
 import donatrack.donaciones.controller.dto.PersonaDTO;
 import donatrack.donaciones.domain.persona.Persona;
-import donatrack.donaciones.service.GestorDonantes;
-import donatrack.donaciones.service.GestorPersonas;
+import donatrack.donaciones.service.DonantesService;
+import donatrack.donaciones.service.PersonasService;
 import donatrack.donaciones.service.ResultadoCorrida;
 import io.javalin.http.Context;
 
@@ -13,28 +13,28 @@ import java.util.List;
 
 public class DonantesController {
 
-  private final GestorPersonas gestor;
-  private final GestorDonantes gestorDonantes;
+  private final PersonasService service;
+  private final DonantesService donantesService;
 
-  public DonantesController(GestorPersonas gestor, GestorDonantes gestorDonantes) {
-    this.gestor = gestor;
-    this.gestorDonantes = gestorDonantes;
+  public DonantesController(PersonasService service, DonantesService donantesService) {
+    this.service = service;
+    this.donantesService = donantesService;
   }
 
   public void todas(Context ctx) {
-    ctx.json(PersonaDTO.desde(gestor.todos()));
+    ctx.json(PersonaDTO.desde(service.todos()));
   }
 
   public void buscar(Context ctx) {
-    ctx.json(PersonaDTO.desde(gestor.buscarPorDocumento(ctx.pathParam("documento"))));
+    ctx.json(PersonaDTO.desde(service.buscarPorDocumento(ctx.pathParam("documento"))));
   }
 
   public void inactivos(Context ctx) {
-    ctx.json(DonanteInactivoDTO.desde(gestorDonantes.inactivos()));
+    ctx.json(DonanteInactivoDTO.desde(donantesService.inactivos()));
   }
 
   public void avisarInactivos(Context ctx) {
-    ResultadoCorrida resultado = gestorDonantes.avisarInactivos();
+    ResultadoCorrida resultado = donantesService.avisarInactivos();
     ctx.json(new AvisarInactivosResponse(resultado.exitosas(), resultado.fallidas()));
   }
 
@@ -44,12 +44,12 @@ public class DonantesController {
     if (request.direccion() != null && !request.direccion().isBlank()) {
       persona.setDireccion(request.direccion());
     }
-    gestor.registrar(persona, request.email());
+    service.registrar(persona, request.email());
     ctx.status(201);
   }
 
   public void eliminar(Context ctx) {
-    gestor.eliminar(ctx.pathParam("documento"));
+    service.eliminar(ctx.pathParam("documento"));
     ctx.status(204);
   }
 

@@ -21,16 +21,16 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GestorNotificacionesTest {
+class NotificacionesServiceTest {
 
   @Test
   void unEnvioExitosoQuedaEnviadaConCanalYDestino() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
     NotificadorFalso email = new NotificadorFalso(TipoContacto.EMAIL, false);
-    GestorNotificaciones gestor = new GestorNotificaciones(List.of(email), repo);
+    NotificacionesService service = new NotificacionesService(List.of(email), repo);
 
     Donante donante = donanteAna();
-    Notificacion n = gestor.notificar(
+    Notificacion n = service.notificar(
         donante, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
     assertEquals(EstadoEnvio.ENVIADA, n.getEstadoEnvio());
@@ -45,9 +45,9 @@ class GestorNotificacionesTest {
   void siElNotificadorFallaQuedaFallidaYNoPropaga() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
     NotificadorFalso email = new NotificadorFalso(TipoContacto.EMAIL, true);
-    GestorNotificaciones gestor = new GestorNotificaciones(List.of(email), repo);
+    NotificacionesService service = new NotificacionesService(List.of(email), repo);
 
-    Notificacion n = gestor.notificar(
+    Notificacion n = service.notificar(
         donanteAna(), TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
     assertEquals(EstadoEnvio.FALLIDA, n.getEstadoEnvio());
@@ -58,13 +58,13 @@ class GestorNotificacionesTest {
   @Test
   void unDonanteSinContactoQuedaFallida() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
-    GestorNotificaciones gestor = new GestorNotificaciones(
+    NotificacionesService service = new NotificacionesService(
         List.of(new NotificadorFalso(TipoContacto.EMAIL, false)), repo);
 
     PersonaHumana sinContacto = new PersonaHumana("X", "Y", 30, "99999999", Genero.FEMENINO);
     Donante donante = new Donante(sinContacto);
 
-    Notificacion n = gestor.notificar(
+    Notificacion n = service.notificar(
         donante, TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
     assertEquals(EstadoEnvio.FALLIDA, n.getEstadoEnvio());
@@ -75,9 +75,9 @@ class GestorNotificacionesTest {
   @Test
   void notificarAdministradoresQuedaEnNoAplicaYSePersiste() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
-    GestorNotificaciones gestor = new GestorNotificaciones(List.of(), repo);
+    NotificacionesService service = new NotificacionesService(List.of(), repo);
 
-    Notificacion n = gestor.notificarAdministradores(
+    Notificacion n = service.notificarAdministradores(
         TipoNotificacion.ENTREGA_FALLIDA, "ups", null);
 
     assertEquals(EstadoEnvio.NO_APLICA, n.getEstadoEnvio());
@@ -88,9 +88,9 @@ class GestorNotificacionesTest {
   @Test
   void siNoHayNotificadorParaElTipoQuedaFallida() {
     RepositorioEnMemoria repo = new RepositorioEnMemoria();
-    GestorNotificaciones gestor = new GestorNotificaciones(List.of(), repo);
+    NotificacionesService service = new NotificacionesService(List.of(), repo);
 
-    Notificacion n = gestor.notificar(
+    Notificacion n = service.notificar(
         donanteAna(), TipoNotificacion.CAMBIO_ESTADO, "hola", null);
 
     assertEquals(EstadoEnvio.FALLIDA, n.getEstadoEnvio());
@@ -99,10 +99,10 @@ class GestorNotificacionesTest {
 
   @Test
   void sinDestinatarioTiraDatosInvalidos() {
-    GestorNotificaciones gestor =
-        new GestorNotificaciones(List.of(), new RepositorioEnMemoria());
+    NotificacionesService service =
+        new NotificacionesService(List.of(), new RepositorioEnMemoria());
     assertThrows(DatosInvalidosException.class,
-        () -> gestor.notificar((Donante) null, TipoNotificacion.CAMBIO_ESTADO, "hola", null));
+        () -> service.notificar((Donante) null, TipoNotificacion.CAMBIO_ESTADO, "hola", null));
   }
 
   // === Helpers ===

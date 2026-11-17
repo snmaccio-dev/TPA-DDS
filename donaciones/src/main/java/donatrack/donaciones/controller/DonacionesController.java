@@ -24,7 +24,7 @@ import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.UsuarioActual;
 import donatrack.donaciones.service.EventoYaAplicadoException;
 import donatrack.donaciones.service.FiltroDonaciones;
-import donatrack.donaciones.service.GestorDonaciones;
+import donatrack.donaciones.service.DonacionesService;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.http.Context;
 
@@ -33,16 +33,16 @@ import java.util.List;
 
 public class DonacionesController {
 
-  private final GestorDonaciones gestor;
+  private final DonacionesService service;
   private final RepositorioPersonas repositorioPersonas;
   private final RepositorioDonantes repositorioDonantes;
   private final RepositorioSubcategorias repositorioSubcategorias;
 
-  public DonacionesController(GestorDonaciones gestor,
+  public DonacionesController(DonacionesService service,
                               RepositorioPersonas repositorioPersonas,
                               RepositorioDonantes repositorioDonantes,
                               RepositorioSubcategorias repositorioSubcategorias) {
-    this.gestor = gestor;
+    this.service = service;
     this.repositorioPersonas = repositorioPersonas;
     this.repositorioDonantes = repositorioDonantes;
     this.repositorioSubcategorias = repositorioSubcategorias;
@@ -64,7 +64,7 @@ public class DonacionesController {
       ctx.json(DonacionDTO.desde(List.<Donacion>of()));
       return;
     }
-    ctx.json(DonacionDTO.desde(gestor.buscar(filtro, donanteFiltro, beneficiariaFiltro)));
+    ctx.json(DonacionDTO.desde(service.buscar(filtro, donanteFiltro, beneficiariaFiltro)));
   }
 
   private FiltroDonaciones filtroDesde(Context ctx) {
@@ -88,7 +88,7 @@ public class DonacionesController {
   }
 
   public void buscar(Context ctx) {
-    Donacion donacion = gestor.buscar(idDe(ctx));
+    Donacion donacion = service.buscar(idDe(ctx));
     Acceso.exigirPuedeVerDonacion(FiltroDeAcceso.usuarioDe(ctx), donacion);
     ctx.json(DonacionDTO.desde(donacion));
   }
@@ -100,7 +100,7 @@ public class DonacionesController {
     List<Bien> bienes = request.bienes().stream()
         .map(this::bienDe)
         .toList();
-    ctx.status(201).json(DonacionDTO.desde(gestor.crear(bienes, donante, request.descripcion())));
+    ctx.status(201).json(DonacionDTO.desde(service.crear(bienes, donante, request.descripcion())));
   }
 */
 
@@ -118,29 +118,29 @@ public class DonacionesController {
           .toList();
 
       ctx.status(201).json(
-          DonacionDTO.desde(gestor.crear(bienes, donante, request.descripcion()))
+          DonacionDTO.desde(service.crear(bienes, donante, request.descripcion()))
       );
   }
 
   public void eliminar(Context ctx) {
-    gestor.eliminar(idDe(ctx));
+    service.eliminar(idDe(ctx));
     ctx.status(204);
   }
 
   public void comprobante(Context ctx) {
-    Donacion donacion = gestor.buscar(idDe(ctx));
+    Donacion donacion = service.buscar(idDe(ctx));
     Acceso.exigirPuedeVerDonacion(FiltroDeAcceso.usuarioDe(ctx), donacion);
     ctx.json(ComprobanteDTO.desde(donacion.generarComprobante()));
   }
 
   public void historial(Context ctx) {
-    Donacion donacion = gestor.buscar(idDe(ctx));
+    Donacion donacion = service.buscar(idDe(ctx));
     Acceso.exigirPuedeVerDonacion(FiltroDeAcceso.usuarioDe(ctx), donacion);
-    ctx.json(EstadoHistorialDTO.desde(gestor.historial(donacion.getId())));
+    ctx.json(EstadoHistorialDTO.desde(service.historial(donacion.getId())));
   }
 
   public void vencer(Context ctx) {
-    gestor.marcarVencida(idDe(ctx));
+    service.marcarVencida(idDe(ctx));
     ctx.status(204);
   }
 
@@ -151,10 +151,10 @@ public class DonacionesController {
         ctx.bodyAsClass(EventoRutasPlanificadasRequest.class);
     // Pasamos el metodo del dominio directo: la donacion ya la cargo
     // aplicarEventoEnLote y la transicion ocurre dentro de su propio
-    // withTransaction. Si usaramos gestor.marcarListaParaEntregar(id) la
+    // withTransaction. Si usaramos service.marcarListaParaEntregar(id) la
     // llamada abriria un withTransaction anidado y, al salir, haria commit
     // de la transaccion de afuera: el lote dejaria de ser "todo o nada".
-    gestor.aplicarEventoEnLote(
+    service.aplicarEventoEnLote(
         evento.donacionIds(),
         EstadosPosiblesDonacion.LISTA_PARA_ENTREGAR,
         List.of(EstadosPosiblesDonacion.ASIGNACION_REALIZADA),
@@ -165,7 +165,7 @@ public class DonacionesController {
 
   public void eventoInicioRuta(Context ctx) {
     EventoInicioRutaRequest evento = ctx.bodyAsClass(EventoInicioRutaRequest.class);
-    gestor.aplicarEventoEnLote(
+    service.aplicarEventoEnLote(
         evento.donacionIds(),
         EstadosPosiblesDonacion.EN_TRASLADO,
         List.of(EstadosPosiblesDonacion.LISTA_PARA_ENTREGAR),
@@ -176,7 +176,7 @@ public class DonacionesController {
 
   public void eventoEntrega(Context ctx) {
     EventoEntregaRequest evento = ctx.bodyAsClass(EventoEntregaRequest.class);
-    Donacion donacion = gestor.buscar(evento.donacionId());
+    Donacion donacion = service.buscar(evento.donacionId());
     EstadosPosiblesDonacion actual = donacion.getEstado().getEstado();
 
     if ("ENTREGADA".equals(evento.resultado())) {
@@ -185,14 +185,14 @@ public class DonacionesController {
             "La donación " + donacion.getId() + " ya estaba entregada."
         );
       }
-      gestor.marcarEntregada(donacion.getId(), evento.fechaHoraMedida(), evento.patenteCamion());
+      service.marcarEntregada(donacion.getId(), evento.fechaHoraMedida(), evento.patenteCamion());
     } else if ("NO_RECIBIDA".equals(evento.resultado())) {
       if (actual == EstadosPosiblesDonacion.ENTREGA_FALLIDA) {
         throw new EventoYaAplicadoException(
             "La donación " + donacion.getId() + " ya estaba marcada como no recibida."
         );
       }
-      gestor.marcarEntregaFallida(donacion.getId(), evento.motivo());
+      service.marcarEntregaFallida(donacion.getId(), evento.motivo());
     } else {
       throw new DatosInvalidosException(
           "El resultado del evento debe ser ENTREGADA o NO_RECIBIDA (recibido: "
@@ -204,14 +204,14 @@ public class DonacionesController {
 
   public void eventoRetornoDeposito(Context ctx) {
     EventoRetornoDepositoRequest evento = ctx.bodyAsClass(EventoRetornoDepositoRequest.class);
-    Donacion donacion = gestor.buscar(evento.donacionId());
+    Donacion donacion = service.buscar(evento.donacionId());
     EstadosPosiblesDonacion actual = donacion.getEstado().getEstado();
     if (actual == EstadosPosiblesDonacion.EN_DEPOSITO) {
       throw new EventoYaAplicadoException(
           "La donación " + donacion.getId() + " ya estaba en depósito."
       );
     }
-    gestor.marcarEnDeposito(donacion.getId());
+    service.marcarEnDeposito(donacion.getId());
     ctx.status(200);
   }
 

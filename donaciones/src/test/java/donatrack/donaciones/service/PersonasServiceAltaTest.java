@@ -25,7 +25,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GestorPersonasAltaTest implements SimplePersistenceTest {
+class PersonasServiceAltaTest implements SimplePersistenceTest {
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioDonantes repoDonantes = new RepositorioDonantes();
@@ -49,12 +49,12 @@ class GestorPersonasAltaTest implements SimplePersistenceTest {
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService service = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
     PersonaHumana mismaPersonaMismoDocumento =
         new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
-    assertDoesNotThrow(() -> gestor.registrar(mismaPersonaMismoDocumento, emailNueva));
+    assertDoesNotThrow(() -> service.registrar(mismaPersonaMismoDocumento, emailNueva));
 
     assertTrue(proveedor.emailsCreados.isEmpty(),
         "No se tiene que llamar a Keycloak si el perfil ya tenia cuenta.");
@@ -83,12 +83,12 @@ class GestorPersonasAltaTest implements SimplePersistenceTest {
 
     String kcId = DatosDeTest.keycloakIdUnico();
     ProveedorFalso proveedor = new ProveedorFalso(kcId);
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService service = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
     PersonaHumana reintento =
         new PersonaHumana("Luis", "Garcia", 40, documento, Genero.MASCULINO);
-    gestor.registrar(reintento, email);
+    service.registrar(reintento, email);
 
     assertEquals(1, proveedor.emailsCreados.size());
     assertEquals(email, proveedor.emailsCreados.get(0));

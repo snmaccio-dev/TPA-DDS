@@ -33,7 +33,7 @@ import donatrack.donaciones.repository.RepositorioSubcategorias;
 import donatrack.donaciones.repository.RepositorioUsuarios;
 import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
-import donatrack.donaciones.service.GestorDonaciones;
+import donatrack.donaciones.service.DonacionesService;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
 import io.javalin.testtools.JavalinTest;
@@ -74,8 +74,8 @@ class DonacionesControllerTest {
     Donante donanteAna = donanteConId(10L, ana);
     Donacion sillaDeAna = donacionDe(donanteAna, "Sillas", "Mobiliario", 100L);
 
-    GestorDonaciones gestor = mock(GestorDonaciones.class);
-    when(gestor.buscar(
+    DonacionesService service = mock(DonacionesService.class);
+    when(service.buscar(
         argThat(filtro -> filtro != null
             && filtro.estado() == null
             && filtro.categoria() == null
@@ -87,7 +87,7 @@ class DonacionesControllerTest {
 
     RepositorioUsuarios repoUsuarios = repoConUsuario("kc-ana",
         Usuario.deDonante("kc-ana", donanteAna));
-    Javalin app = app(gestor, repoUsuarios);
+    Javalin app = app(service, repoUsuarios);
 
     String token = firmar("kc-ana", "ana@mail.com", "DONANTE");
     JavalinTest.test(app, (server, client) -> {
@@ -110,8 +110,8 @@ class DonacionesControllerTest {
     Donante donanteLuis = donanteConId(30L, luis);
     Donacion asignada = donacionDe(donanteLuis, "Mesas", "Mobiliario", 200L);
 
-    GestorDonaciones gestor = mock(GestorDonaciones.class);
-    when(gestor.buscar(
+    DonacionesService service = mock(DonacionesService.class);
+    when(service.buscar(
         argThat(filtro -> filtro != null
             && filtro.estado() == EstadosPosiblesDonacion.ASIGNACION_REALIZADA
             && filtro.categoria() == null
@@ -123,7 +123,7 @@ class DonacionesControllerTest {
 
     RepositorioUsuarios repoUsuarios = repoConUsuario("kc-escuela",
         Usuario.deBeneficiaria("kc-escuela", escuela));
-    Javalin app = app(gestor, repoUsuarios);
+    Javalin app = app(service, repoUsuarios);
 
     String token = firmar("kc-escuela", "escuela@mail.com", "BENEFICIARIA");
     JavalinTest.test(app, (server, client) -> {
@@ -138,10 +138,10 @@ class DonacionesControllerTest {
 
   @Test
   void unEstadoInvalidoDevuelve400() throws Exception {
-    GestorDonaciones gestor = mock(GestorDonaciones.class);
+    DonacionesService service = mock(DonacionesService.class);
     RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
     when(repoUsuarios.buscarPorKeycloakId("kc-admin")).thenReturn(Optional.empty());
-    Javalin app = app(gestor, repoUsuarios);
+    Javalin app = app(service, repoUsuarios);
 
     String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
     JavalinTest.test(app, (server, client) -> {
@@ -153,11 +153,11 @@ class DonacionesControllerTest {
 
   // === Helpers ===
 
-  private Javalin app(GestorDonaciones gestor, RepositorioUsuarios repoUsuarios) {
+  private Javalin app(DonacionesService service, RepositorioUsuarios repoUsuarios) {
     Javalin app = Javalin.create();
     new FiltroDeAcceso(verificador, repoUsuarios).registrarEn(app);
     donatrack.donaciones.Rutas.donaciones(app, new DonacionesController(
-        gestor,
+        service,
         mock(RepositorioPersonas.class),
         mock(RepositorioDonantes.class),
         mock(RepositorioSubcategorias.class)

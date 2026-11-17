@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class GestorAsignaciones implements WithSimplePersistenceUnit {
+public class AsignacionesService implements WithSimplePersistenceUnit {
 
   private final Algoritmo compatibilidad;
   private final Algoritmo prioridadSubAtendidos;
@@ -29,16 +29,16 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
   private final RepositorioPropuestas repositorioPropuestas;
   // Se usa en confirmarDestino para que la donacion traiga enganchado el
   // observer y las notificaciones de ASIGNACION_REALIZADA salgan.
-  private final GestorDonaciones gestorDonaciones;
+  private final DonacionesService donacionesService;
 
-  public GestorAsignaciones(RepositorioPropuestas repositorioPropuestas,
-                            GestorDonaciones gestorDonaciones) {
+  public AsignacionesService(RepositorioPropuestas repositorioPropuestas,
+                            DonacionesService donacionesService) {
     this.compatibilidad = new CompatibilidadSemantica();
     this.prioridadSubAtendidos = new PrioridadSubatendidos();
     this.repositorioDonaciones = RepositorioDonaciones.getInstance();
     this.repositorioEntidades = RepositorioEntidades.getInstance();
     this.repositorioPropuestas = repositorioPropuestas;
-    this.gestorDonaciones = gestorDonaciones;
+    this.donacionesService = donacionesService;
   }
 
   // EJECUCIÓN A DEMANDA
@@ -86,13 +86,13 @@ public class GestorAsignaciones implements WithSimplePersistenceUnit {
   }
 
   // Confirma el destino final de la donación. El filtro de acceso ya garantiza
-  // que quien llega aca tiene rol ADMINISTRADOR. Usamos GestorDonaciones.buscar
+  // que quien llega aca tiene rol ADMINISTRADOR. Usamos DonacionesService.buscar
   // para que la Donacion traiga el observer de notificaciones ya enganchado y
   // la transicion dispare DONACION_ASIGNADA al donante y a la beneficiaria.
   public void confirmarDestino(long donacionId, Beneficiaria destinatario) {
     Objects.requireNonNull(
         destinatario, "Debe indicarse la beneficiaria a confirmar como destinataria.");
-    Donacion donacion = gestorDonaciones.buscar(donacionId);
+    Donacion donacion = donacionesService.buscar(donacionId);
     withTransaction(() -> {
       donacion.confirmarDestino(destinatario);
       repositorioPropuestas.eliminar(donacionId);

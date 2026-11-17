@@ -26,7 +26,7 @@ public record DatosEntidad(String direccion, String telefono, List<Representante
     }
 
     // Aplica los datos sobre la persona juridica. Centralizado aca para que
-    // GestorEntidadesBeneficiarias y GestorRegistro no dupliquen la logica.
+    // EntidadesBeneficiariasService y RegistroService no dupliquen la logica.
     public void aplicarA(PersonaJuridica juridica) {
         juridica.setDireccion(direccion);
         if (!juridica.tieneContacto(TipoContacto.TELEFONO, telefono)) {
