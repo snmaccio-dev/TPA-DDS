@@ -1,0 +1,42 @@
+{{> templates/partials/head}}
+<body data-page="acceso-denegado" data-role="publico">
+  {{> templates/partials/header-publico}}
+
+  <main class="public-main">
+    <section class="access-denied">
+      <div class="access-denied-card">
+
+        <div class="access-denied-icon">
+          <span>!</span>
+        </div>
+
+        <span class="eyebrow">ACCESO RESTRINGIDO</span>
+
+        <h1>No tenés permiso para entrar acá.</h1>
+
+        <p>
+          Tu cuenta no cuenta con los permisos necesarios para acceder
+          a esta sección. Si creés que se trata de un error, contactá
+          con el administrador.
+        </p>
+
+        <div class="access-denied-actions">
+          <a href="/" class="btn btn-primary btn-lg">
+            Volver al inicio
+          </a>
+
+        </div>
+
+        <div class="access-denied-reference">
+          <span>403</span>
+          <span>Acceso denegado</span>
+        </div>
+
+      </div>
+    </section>
+  </main>
+
+  {{> templates/partials/footer}}
+  {{> templates/partials/scripts}}
+</body>
+</html>

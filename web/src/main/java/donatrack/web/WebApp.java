@@ -35,6 +35,7 @@ public class WebApp {
       "/login",
       "/privacidad",
       "/sesion/ingresar",
+      "/sesion/ingresar-admin",
       "/callback",
       "/logout"
   );
@@ -67,6 +68,7 @@ public class WebApp {
       config.staticFiles.add("/public", Location.CLASSPATH);
     }).start(PUERTO);
 
+
     app.beforeMatched(ctx -> {
       if (esPublica(ctx.path())) {
         return;
@@ -90,7 +92,19 @@ public class WebApp {
           throw new SesionExpiradaException("La sesión expiró. Volvé a ingresar.");
         }
       }
+
+      String rolRequerido = rolRequerido(ctx.path());
+
+      if (rolRequerido != null && !tieneRol(usuario, rolRequerido)) {
+        ctx.status(403);
+        ctx.render(
+            "acceso-denegado.html.hbs",
+            Modelo.de("Acceso denegado").mapa()
+        );
+        ctx.skipRemainingHandlers();
+      }
     });
+
 
     app.exception(SesionExpiradaException.class, (e, ctx) -> {
       ctx.sessionAttribute(IdentidadPorSesion.CLAVE_USUARIO, null);
@@ -174,4 +188,71 @@ public class WebApp {
     String valor = System.getenv(nombre);
     return valor == null || valor.isBlank() ? valorPorDefecto : valor;
   }
+
+  // Nueva funcion static 
+
+  private static String rolRequerido(String ruta) {
+
+    // DONANTE
+    if (Set.of(
+        "/donante-dashboard",
+        "/mis-donaciones",
+        "/entidades",
+        "/donaciones/nueva",
+        "/seguimiento-donante"
+    ).contains(ruta)) {
+      return "DONANTE";
+    }
+
+    // BENEFICIARIA
+    if (Set.of(
+        "/beneficiario-dashboard",
+        "/necesidades",
+        "/donaciones-asignadas",
+        "/seguimiento-beneficiario",
+        "/confirmar-recepcion"
+    ).contains(ruta)) {
+      return "BENEFICIARIA";
+    }
+
+    // ADMINISTRADOR
+    if (Set.of(
+        "/admin-dashboard",
+        "/admin-donantes",
+        "/deposito",
+        "/asignaciones",
+        "/importar-csv",
+        "/camiones",
+        "/monitoreo-flota",
+        "/rutas-planificadas"
+    ).contains(ruta)
+        || ruta.startsWith("/deposito/")
+        || ruta.startsWith("/asignaciones/")
+        || ruta.startsWith("/camiones/")) {
+      return "ADMINISTRADOR";
+    }
+
+    // CHOFER
+    if (ruta.equals("/chofer-inicio-ruta")) {
+      return "CHOFER";
+    }
+
+    // Notificaciones: cualquier usuario autenticado.
+    return null;
+  }
+
+  private static boolean tieneRol(UsuarioWeb usuario, String rol) {
+    if (usuario.perfil() == null) {
+      return false;
+    }
+
+    return switch (rol) {
+      case "DONANTE" -> usuario.perfil().isDonante();
+      case "BENEFICIARIA" -> usuario.perfil().isBeneficiaria();
+      case "ADMINISTRADOR" -> usuario.perfil().isAdministrador();
+      case "CHOFER" -> usuario.perfil().isChofer();
+      default -> false;
+    };
+  }
+
 }

@@ -21,7 +21,7 @@
                 </div>
             </div>
 
-            <form action="/donaciones/nueva" method="post">
+            <form action="/donaciones/nueva" method="post" enctype="multipart/form-data">
                 <label>Descripción general
                     <input
                         type="text"
@@ -39,8 +39,37 @@
                         maxlength="250"
                         placeholder="Ej. Leche larga vida">
                 </label>
+                
+                <div class="photo-upload">
+                    <label for="fotoDonacion">Fotografía del bien</label>
 
+                    <div class="photo-upload-area">
+                        <input
+                            type="file"
+                            id="fotoDonacion"
+                            name="foto"
+                            accept="image/jpeg,image/png,image/webp"
+                        >
 
+                        <label for="fotoDonacion" class="photo-upload-content">
+                            <span class="photo-upload-icon">📷</span>
+                            <strong>Seleccioná una fotografía</strong>
+                            <small>JPG, PNG o WEBP. Tamaño máximo: 5 MB.</small>
+                        </label>
+
+                        <div id="vistaPreviaFoto" class="photo-preview" hidden>
+                            <img id="imagenPrevia" alt="Vista previa de la donación">
+                            <button type="button" id="quitarFoto" class="btn btn-ghost">
+                                Quitar fotografía
+                            </button>
+                        </div>
+                    </div>
+
+                    <small class="muted">
+                        La fotografía permite identificar visualmente el bien donado.
+                        Este campo es opcional.
+                    </small>
+                </div>
 
                 <label>Categoría
                     <input
@@ -128,6 +157,7 @@
         </section>
     </main>
     <script>
+
     document.addEventListener("DOMContentLoaded", () => {
         const categoria = document.getElementById("busquedaCategoria");
         const subcategoria = document.getElementById("busquedaSubcategoria");
@@ -191,6 +221,7 @@
             categoria.setCustomValidity("");
         });
 
+        // VALIDACIÓN DEL FORMULARIO
         formulario.addEventListener("submit", event => {
             const categoriaElegida = categoria.value.trim().toLowerCase();
 
@@ -213,7 +244,65 @@
                 subcategoria.reportValidity();
             }
         });
-    });
+
+        // VISTA PREVIA DE LA FOTOGRAFÍA
+        const foto = document.getElementById("fotoDonacion");
+        const vistaPrevia = document.getElementById("vistaPreviaFoto");
+        const imagenPrevia = document.getElementById("imagenPrevia");
+        const quitarFoto = document.getElementById("quitarFoto");
+
+        let urlPrevia = null;
+
+        foto.addEventListener("change", () => {
+            const archivo = foto.files[0];
+
+            if (!archivo) {
+                vistaPrevia.hidden = true;
+                return;
+            }
+
+            const formatosPermitidos = [
+                "image/jpeg",
+                "image/png",
+                "image/webp"
+            ];
+
+            if (!formatosPermitidos.includes(archivo.type)) {
+                alert("Seleccioná una imagen JPG, PNG o WEBP.");
+                foto.value = "";
+                vistaPrevia.hidden = true;
+                return;
+            }
+
+            if (archivo.size > 5 * 1024 * 1024) {
+                alert("La fotografía no puede superar los 5 MB.");
+                foto.value = "";
+                vistaPrevia.hidden = true;
+                return;
+            }
+
+            if (urlPrevia) {
+                URL.revokeObjectURL(urlPrevia);
+            }
+
+            urlPrevia = URL.createObjectURL(archivo);
+            imagenPrevia.src = urlPrevia;
+            vistaPrevia.hidden = false;
+        });
+
+        quitarFoto.addEventListener("click", () => {
+            foto.value = "";
+            imagenPrevia.removeAttribute("src");
+            vistaPrevia.hidden = true;
+
+            if (urlPrevia) {
+                URL.revokeObjectURL(urlPrevia);
+                urlPrevia = null;
+            }
+        });
+
+    }); // FIN DOMContentLoaded
+
     </script>
     {{> templates/partials/footer}}
     {{> templates/partials/scripts}}

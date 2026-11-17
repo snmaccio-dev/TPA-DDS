@@ -83,11 +83,33 @@ public class GestorDonaciones implements WithSimplePersistenceUnit {
         return conObservers(donacion);
     }
 
+    /*
     public List<Donacion> crear(List<Bien> bienes, Donante donante, String descripcion) {
         List<Donacion> segmentadas = segmentacion.segmentar(bienes, donante, descripcion);
         withTransaction(() -> segmentadas.forEach(this::registrarDonacion));
         return segmentadas;
     }
+    */
+
+
+    public List<Donacion> crear(List<Bien> bienes, Donante donante, String descripcion) {
+        return crear(bienes, donante, descripcion, null);
+    }
+
+    public List<Donacion> crear(List<Bien> bienes,
+                                Donante donante,
+                                String descripcion,
+                                String fotoUrl) {
+        List<Donacion> segmentadas = segmentacion.segmentar(bienes, donante, descripcion);
+
+        if (fotoUrl != null && !fotoUrl.isBlank()) {
+            segmentadas.forEach(donacion -> donacion.asignarFoto(fotoUrl));
+        }
+
+        withTransaction(() -> segmentadas.forEach(this::registrarDonacion));
+        return segmentadas;
+    }
+
 
     private void registrarDonacion(Donacion donacion) {
         conObservers(donacion);

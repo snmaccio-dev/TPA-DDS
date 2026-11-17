@@ -42,6 +42,11 @@ public class Donacion {
     @Column(name = "descripcion")
     private String descripcion;
 
+    // Nuevo para que se agregue la imagen 
+
+    @Column(name = "foto_url", length = 1000)
+    private String fotoUrl;
+
     @ManyToOne
     @JoinColumn(name = "donante_id")
     private Donante donante;
@@ -275,5 +280,20 @@ public class Donacion {
 
     public Long getId() {
         return id;
+    }
+
+    // Nuevos metodos 
+
+    public String getFotoUrl() {
+        return fotoUrl;
+    }
+
+    public void asignarFoto(String fotoUrl) {
+        if (fotoUrl == null || fotoUrl.isBlank()) {
+            throw new DatosInvalidosException(
+                "La URL de la fotografía no puede estar vacía."
+            );
+        }
+        this.fotoUrl = fotoUrl;
     }
 }

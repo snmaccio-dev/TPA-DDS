@@ -24,7 +24,8 @@ public record DonacionDTO(
     String subcategoria,
     String categoria,
     String fechaHoraEntrega,
-    List<BienDTO> bienes
+    List<BienDTO> bienes,
+    String fotoUrl
 ) {
 
   public static DonacionDTO desde(Donacion donacion) {
@@ -44,7 +45,8 @@ public record DonacionDTO(
             ? null
             : donacion.getSubcategoria().getCategoria().getNombre(),
         Fechas.aTexto(donacion.getFechaHoraEntrega()),
-        donacion.getBienes().stream().map(BienDTO::desde).toList()
+        donacion.getBienes().stream().map(BienDTO::desde).toList(),
+        donacion.getFotoUrl()
     );
   }
 
