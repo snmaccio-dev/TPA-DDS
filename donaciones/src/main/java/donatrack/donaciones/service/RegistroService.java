@@ -22,7 +22,7 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 // rollback en Keycloak si falla la persistencia. Las contrasenas viajan por
 // parametro y se reenvian al proveedor en una unica llamada: no se guardan
 // ni se loguean.
-public class GestorRegistro implements WithSimplePersistenceUnit {
+public class RegistroService implements WithSimplePersistenceUnit {
 
     private static final String MENSAJE_PERSONA_DUPLICADA =
         "Ya existe una persona registrada con ese documento. "
@@ -34,7 +34,7 @@ public class GestorRegistro implements WithSimplePersistenceUnit {
     private final RepositorioEntidades repositorioEntidades;
     private final RepositorioUsuarios repositorioUsuarios;
 
-    public GestorRegistro(ProveedorDeIdentidad proveedor,
+    public RegistroService(ProveedorDeIdentidad proveedor,
                           RepositorioPersonas repositorioPersonas,
                           RepositorioDonantes repositorioDonantes,
                           RepositorioEntidades repositorioEntidades,

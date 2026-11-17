@@ -21,7 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-class GestorDonantesTest implements SimplePersistenceTest {
+class DonantesServiceTest implements SimplePersistenceTest {
 
   private final donatrack.donaciones.repository.RepositorioPersonas repoPersonas =
       donatrack.donaciones.repository.RepositorioPersonas.getInstance();
@@ -32,16 +32,16 @@ class GestorDonantesTest implements SimplePersistenceTest {
     Donante donante = donantePersistidoViejo(
         documento, "Ana", DatosDeTest.emailUnico("ana-" + documento));
 
-    GestorNotificaciones gestorNotificaciones = mock(GestorNotificaciones.class);
+    NotificacionesService notificacionesService = mock(NotificacionesService.class);
     Notificacion fallida = Notificacion.paraDonante(
         donante, TipoNotificacion.AUSENCIA_PLATAFORMA, "x", null);
     fallida.marcarFallida("sin canal");
-    when(gestorNotificaciones.notificarAusenciaPlataforma(any())).thenReturn(fallida);
+    when(notificacionesService.notificarAusenciaPlataforma(any())).thenReturn(fallida);
 
     RepositorioDonantes repoDonantes = new RepositorioDonantes();
-    GestorDonantes gestor = new GestorDonantes(repoDonantes, gestorNotificaciones);
+    DonantesService service = new DonantesService(repoDonantes, notificacionesService);
 
-    ResultadoCorrida resultado = gestor.avisarInactivos();
+    ResultadoCorrida resultado = service.avisarInactivos();
 
     assertEquals(0, resultado.exitosas(),
         "Si la notificacion quedo FALLIDA no cuenta como avisado.");
@@ -62,32 +62,32 @@ class GestorDonantesTest implements SimplePersistenceTest {
     Donante donante = donantePersistidoViejo(
         documento, "Luis", DatosDeTest.emailUnico("luis-" + documento));
 
-    GestorNotificaciones gestorNotificaciones = mock(GestorNotificaciones.class);
+    NotificacionesService notificacionesService = mock(NotificacionesService.class);
     Notificacion enviada = Notificacion.paraDonante(
         donante, TipoNotificacion.AUSENCIA_PLATAFORMA, "x", null);
     enviada.marcarEnviada(TipoContacto.EMAIL, "luis@mail");
-    when(gestorNotificaciones.notificarAusenciaPlataforma(any())).thenReturn(enviada);
+    when(notificacionesService.notificarAusenciaPlataforma(any())).thenReturn(enviada);
 
     RepositorioDonantes repoDonantes = new RepositorioDonantes();
-    GestorDonantes gestor = new GestorDonantes(repoDonantes, gestorNotificaciones);
+    DonantesService service = new DonantesService(repoDonantes, notificacionesService);
 
-    ResultadoCorrida resultado = gestor.avisarInactivos();
+    ResultadoCorrida resultado = service.avisarInactivos();
 
     assertEquals(1, resultado.exitosas());
     assertEquals(0, resultado.cantidadDeFallas());
 
-    // Idem comentario arriba: sin flush() despues del gestor.
+    // Idem comentario arriba: sin flush() despues del service.
     entityManager().clear();
     Donante recargado = entityManager().find(Donante.class, donante.getId());
     assertEquals(EstadoEnvio.ENVIADA, enviada.getEstadoEnvio());
-    // La fecha se seteo durante el withTransaction del gestor.
+    // La fecha se seteo durante el withTransaction del service.
     assertEquals(LocalDate.now(), recargado.getFechaUltimoAvisoInactividad());
   }
 
   // === Helpers ===
 
   // Persiste el donante y lo envejece dentro de la transaccion que abre
-  // SimplePersistenceTest (antes de llamar al gestor). flush para que el
+  // SimplePersistenceTest (antes de llamar al service). flush para que el
   // update por JPQL vea la fila recien persistida.
   private Donante donantePersistidoViejo(String documento, String nombre, String email) {
     PersonaHumana persona = new PersonaHumana(nombre, "Test", 30, documento, Genero.FEMENINO);

@@ -21,12 +21,12 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 
-public class GestorDonacionesTest {
+public class DonacionesServiceTest {
 
   @Test
   public void conObserversEnganchaElObserverDeNotificaciones() {
-    GestorDonaciones gestor = new GestorDonaciones(
-        mock(GestorNotificaciones.class),
+    DonacionesService service = new DonacionesService(
+        mock(NotificacionesService.class),
         mock(RepositorioPropuestas.class),
         mock(RepositorioNotificaciones.class),
         "http://web/donante",
@@ -34,7 +34,7 @@ public class GestorDonacionesTest {
     );
     Donacion donacion = donacionDeSillas();
 
-    gestor.conObservers(donacion);
+    service.conObservers(donacion);
 
     List<DonacionObserver> observers = observersDe(donacion);
     assertEquals(1, observers.size());
@@ -43,8 +43,8 @@ public class GestorDonacionesTest {
 
   @Test
   public void conObserversEsIdempotentePorTipo() {
-    GestorDonaciones gestor = new GestorDonaciones(
-        mock(GestorNotificaciones.class),
+    DonacionesService service = new DonacionesService(
+        mock(NotificacionesService.class),
         mock(RepositorioPropuestas.class),
         mock(RepositorioNotificaciones.class),
         "http://web/donante",
@@ -52,9 +52,9 @@ public class GestorDonacionesTest {
     );
     Donacion donacion = donacionDeSillas();
 
-    gestor.conObservers(donacion);
-    gestor.conObservers(donacion);
-    gestor.conObservers(donacion);
+    service.conObservers(donacion);
+    service.conObservers(donacion);
+    service.conObservers(donacion);
 
     assertEquals(1, observersDe(donacion).size(),
         "Llamar varias veces conObservers sobre la misma donacion no debe duplicar el observer.");

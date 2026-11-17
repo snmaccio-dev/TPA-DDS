@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest {
+class EntidadesBeneficiariasServiceEliminarTest implements SimplePersistenceTest {
 
   // Para la clave artificial donacion_id de la PropuestaAsignacion. No sale
   // de DatosDeTest porque conceptualmente es otro contador (ids de donaciones
@@ -61,11 +61,11 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
     donacionAsignadaA(beneficiaria);
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorEntidadesBeneficiarias gestor = new GestorEntidadesBeneficiarias(
+    EntidadesBeneficiariasService service = new EntidadesBeneficiariasService(
         repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
         repoDonaciones, repoDonantes, proveedor);
 
-    assertThrows(ConflictoDeNegocioException.class, () -> gestor.eliminar(beneficiaria.getId()));
+    assertThrows(ConflictoDeNegocioException.class, () -> service.eliminar(beneficiaria.getId()));
   }
 
   @Test
@@ -84,11 +84,11 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorEntidadesBeneficiarias gestor = new GestorEntidadesBeneficiarias(
+    EntidadesBeneficiariasService service = new EntidadesBeneficiariasService(
         repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
         repoDonaciones, repoDonantes, proveedor);
 
-    gestor.eliminar(beneficiaria.getId());
+    service.eliminar(beneficiaria.getId());
 
     // Despues del gestor la transaccion esta cerrada: solo clear() para releer.
     entityManager().clear();
@@ -110,11 +110,11 @@ class GestorEntidadesBeneficiariasEliminarTest implements SimplePersistenceTest 
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorEntidadesBeneficiarias gestor = new GestorEntidadesBeneficiarias(
+    EntidadesBeneficiariasService service = new EntidadesBeneficiariasService(
         repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
         repoDonaciones, repoDonantes, proveedor);
 
-    gestor.eliminar(aBorrar.getId());
+    service.eliminar(aBorrar.getId());
 
     entityManager().clear();
     PropuestaAsignacion refrescada =

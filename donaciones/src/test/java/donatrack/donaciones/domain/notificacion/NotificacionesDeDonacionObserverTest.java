@@ -14,7 +14,7 @@ import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
-import donatrack.donaciones.service.GestorNotificaciones;
+import donatrack.donaciones.service.NotificacionesService;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -33,37 +33,37 @@ public class NotificacionesDeDonacionObserverTest {
 
   @Test
   public void asignacionRealizadaNotificaADonanteYBeneficiaria() {
-    GestorNotificaciones gestor = mock(GestorNotificaciones.class);
+    NotificacionesService service = mock(NotificacionesService.class);
     Donante donante = donante();
     Beneficiaria beneficiaria = beneficiaria();
     Donacion donacion = donacionAsignadaA(donante, beneficiaria);
     NotificacionesDeDonacionObserver observer =
-        new NotificacionesDeDonacionObserver(gestor, LINK_DONANTE, LINK_BENEF);
+        new NotificacionesDeDonacionObserver(service, LINK_DONANTE, LINK_BENEF);
 
     observer.onCambioEstado(donacion, "EN_DEPOSITO", "ASIGNACION_REALIZADA");
 
-    verify(gestor).notificarDonacionAsignadaDonante(eq(donante), eq(donacion));
-    verify(gestor).notificarDonacionAsignadaBeneficiario(eq(beneficiaria), eq(donacion));
+    verify(service).notificarDonacionAsignadaDonante(eq(donante), eq(donacion));
+    verify(service).notificarDonacionAsignadaBeneficiario(eq(beneficiaria), eq(donacion));
   }
 
   @Test
   public void enTrasladoAvisaAlDonanteYBeneficiariaConSusLinks() {
-    GestorNotificaciones gestor = mock(GestorNotificaciones.class);
+    NotificacionesService service = mock(NotificacionesService.class);
     Donante donante = donante();
     Beneficiaria beneficiaria = beneficiaria();
     Donacion donacion = donacionAsignadaA(donante, beneficiaria);
     NotificacionesDeDonacionObserver observer =
-        new NotificacionesDeDonacionObserver(gestor, LINK_DONANTE, LINK_BENEF);
+        new NotificacionesDeDonacionObserver(service, LINK_DONANTE, LINK_BENEF);
 
     observer.onCambioEstado(donacion, "LISTA_PARA_ENTREGAR", "EN_TRASLADO");
 
-    verify(gestor).notificarInicioRuta(eq(donante), eq(donacion), eq(LINK_DONANTE));
-    verify(gestor).notificarInicioRuta(eq(beneficiaria), eq(donacion), eq(LINK_BENEF));
+    verify(service).notificarInicioRuta(eq(donante), eq(donacion), eq(LINK_DONANTE));
+    verify(service).notificarInicioRuta(eq(beneficiaria), eq(donacion), eq(LINK_BENEF));
   }
 
   @Test
   public void entregadaDisparaEntregaExitosaConComprobante() throws Exception {
-    GestorNotificaciones gestor = mock(GestorNotificaciones.class);
+    NotificacionesService service = mock(NotificacionesService.class);
     Donante donante = donante();
     Beneficiaria beneficiaria = beneficiaria();
     Donacion donacion = donacionAsignadaA(donante, beneficiaria);
@@ -75,16 +75,16 @@ public class NotificacionesDeDonacionObserverTest {
     donacion.marcarEntregada(LocalDateTime.of(2026, 3, 1, 10, 0), "AAA111");
 
     NotificacionesDeDonacionObserver observer =
-        new NotificacionesDeDonacionObserver(gestor, LINK_DONANTE, LINK_BENEF);
+        new NotificacionesDeDonacionObserver(service, LINK_DONANTE, LINK_BENEF);
     observer.onCambioEstado(donacion, "EN_TRASLADO", "ENTREGADA");
 
-    verify(gestor).notificarEntregaExitosa(
+    verify(service).notificarEntregaExitosa(
         eq(donante), eq(beneficiaria), eq(donacion), any());
   }
 
   @Test
   public void entregaFallidaUsaLaJustificacionDelUltimoEstado() {
-    GestorNotificaciones gestor = mock(GestorNotificaciones.class);
+    NotificacionesService service = mock(NotificacionesService.class);
     Donante donante = donante();
     Beneficiaria beneficiaria = beneficiaria();
     Donacion donacion = donacionAsignadaA(donante, beneficiaria);
@@ -93,27 +93,27 @@ public class NotificacionesDeDonacionObserverTest {
     donacion.marcarEntregaFallida("no habia nadie");
 
     NotificacionesDeDonacionObserver observer =
-        new NotificacionesDeDonacionObserver(gestor, LINK_DONANTE, LINK_BENEF);
+        new NotificacionesDeDonacionObserver(service, LINK_DONANTE, LINK_BENEF);
     observer.onCambioEstado(donacion, "EN_TRASLADO", "ENTREGA_FALLIDA");
 
-    verify(gestor).notificarEntregaFallida(
+    verify(service).notificarEntregaFallida(
         eq(donante), eq(beneficiaria), eq(donacion), eq("no habia nadie"));
   }
 
   @Test
   public void otrosCambiosMandanCambioDeEstadoAlDonante() {
-    GestorNotificaciones gestor = mock(GestorNotificaciones.class);
+    NotificacionesService service = mock(NotificacionesService.class);
     Donante donante = donante();
     Donacion donacion = new Donacion(List.of(unaCampera()), donante, "demo");
     NotificacionesDeDonacionObserver observer =
-        new NotificacionesDeDonacionObserver(gestor, LINK_DONANTE, LINK_BENEF);
+        new NotificacionesDeDonacionObserver(service, LINK_DONANTE, LINK_BENEF);
 
     observer.onCambioEstado(donacion, "ASIGNACION_REALIZADA", "LISTA_PARA_ENTREGAR");
 
-    verify(gestor).notificarCambioDeEstado(
+    verify(service).notificarCambioDeEstado(
         eq(donante), eq(donacion),
         eq("ASIGNACION_REALIZADA"), eq("LISTA_PARA_ENTREGAR"));
-    verify(gestor, never()).notificarDonacionAsignadaDonante(any(), any());
+    verify(service, never()).notificarDonacionAsignadaDonante(any(), any());
   }
 
   // === Helpers ===

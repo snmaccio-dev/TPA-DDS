@@ -31,13 +31,13 @@ import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
 import donatrack.donaciones.service.ConsultaDeNotificaciones;
-import donatrack.donaciones.service.GestorAsignaciones;
-import donatrack.donaciones.service.GestorDonaciones;
-import donatrack.donaciones.service.GestorDonantes;
-import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
-import donatrack.donaciones.service.GestorNecesidades;
-import donatrack.donaciones.service.GestorPersonas;
-import donatrack.donaciones.service.GestorRegistro;
+import donatrack.donaciones.service.AsignacionesService;
+import donatrack.donaciones.service.DonacionesService;
+import donatrack.donaciones.service.DonantesService;
+import donatrack.donaciones.service.EntidadesBeneficiariasService;
+import donatrack.donaciones.service.NecesidadesService;
+import donatrack.donaciones.service.PersonasService;
+import donatrack.donaciones.service.RegistroService;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
 import org.junit.jupiter.api.BeforeAll;
@@ -119,7 +119,7 @@ class RutasTest {
     Dependencias deps = new Dependencias();
     // Si Javalin confundiera "inactivos" con un documento, llegaria a buscarPorDocumento;
     // mockeamos inactivos() con una lista vacia y confirmamos que el 200 llega por aca.
-    when(deps.gestorDonantes.inactivos()).thenReturn(List.of());
+    when(deps.donantesService.inactivos()).thenReturn(List.of());
     Javalin app = app(deps);
 
     String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
@@ -132,8 +132,8 @@ class RutasTest {
           "El handler de inactivos devuelve la lista vacia mockeada.");
     });
 
-    org.mockito.Mockito.verify(deps.gestorDonantes).inactivos();
-    org.mockito.Mockito.verify(deps.gestorPersonas, org.mockito.Mockito.never())
+    org.mockito.Mockito.verify(deps.donantesService).inactivos();
+    org.mockito.Mockito.verify(deps.personasService, org.mockito.Mockito.never())
         .buscarPorDocumento("inactivos");
   }
 
@@ -146,14 +146,14 @@ class RutasTest {
     new FiltroDeAcceso(verificador, deps.repoUsuarios).registrarEn(app);
 
     new Rutas(
-        new RegistroController(deps.gestorRegistro),
+        new RegistroController(deps.registroService),
         new UsuariosController(),
         new AdministradoresController(deps.proveedor),
-        new DonacionesController(deps.gestorDonaciones, deps.repoPersonas, deps.repoDonantes, deps.repoSubcategorias),
-        new AsignacionesController(deps.gestorAsignaciones, deps.repoDonaciones, deps.repoEntidades),
-        new DonantesController(deps.gestorPersonas, deps.gestorDonantes),
-        new EntidadesBeneficiariasController(deps.gestorEntidades),
-        new NecesidadesController(deps.gestorNecesidades, deps.repoSubcategorias, deps.repoEntidades),
+        new DonacionesController(deps.donacionesService, deps.repoPersonas, deps.repoDonantes, deps.repoSubcategorias),
+        new AsignacionesController(deps.asignacionesService, deps.repoDonaciones, deps.repoEntidades),
+        new DonantesController(deps.personasService, deps.donantesService),
+        new EntidadesBeneficiariasController(deps.entidadesService),
+        new NecesidadesController(deps.necesidadesService, deps.repoSubcategorias, deps.repoEntidades),
         new SubcategoriasController(deps.repoSubcategorias),
         new NotificacionesController(deps.consultaNotificaciones)
     ).registrarEn(app);
@@ -190,13 +190,13 @@ class RutasTest {
     final RepositorioSubcategorias repoSubcategorias = mock(RepositorioSubcategorias.class);
     final RepositorioEntidades repoEntidades = mock(RepositorioEntidades.class);
     final RepositorioDonaciones repoDonaciones = mock(RepositorioDonaciones.class);
-    final GestorRegistro gestorRegistro = mock(GestorRegistro.class);
-    final GestorDonaciones gestorDonaciones = mock(GestorDonaciones.class);
-    final GestorAsignaciones gestorAsignaciones = mock(GestorAsignaciones.class);
-    final GestorEntidadesBeneficiarias gestorEntidades = mock(GestorEntidadesBeneficiarias.class);
-    final GestorNecesidades gestorNecesidades = mock(GestorNecesidades.class);
-    final GestorPersonas gestorPersonas = mock(GestorPersonas.class);
-    final GestorDonantes gestorDonantes = mock(GestorDonantes.class);
+    final RegistroService registroService = mock(RegistroService.class);
+    final DonacionesService donacionesService = mock(DonacionesService.class);
+    final AsignacionesService asignacionesService = mock(AsignacionesService.class);
+    final EntidadesBeneficiariasService entidadesService = mock(EntidadesBeneficiariasService.class);
+    final NecesidadesService necesidadesService = mock(NecesidadesService.class);
+    final PersonasService personasService = mock(PersonasService.class);
+    final DonantesService donantesService = mock(DonantesService.class);
     final ConsultaDeNotificaciones consultaNotificaciones = mock(ConsultaDeNotificaciones.class);
 
     Dependencias() {

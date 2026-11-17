@@ -11,7 +11,7 @@ import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.service.DatosEntidad;
-import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
+import donatrack.donaciones.service.EntidadesBeneficiariasService;
 import io.javalin.http.Context;
 
 import java.util.List;
@@ -19,10 +19,10 @@ import java.util.Optional;
 
 public class EntidadesBeneficiariasController {
 
-  private final GestorEntidadesBeneficiarias gestor;
+  private final EntidadesBeneficiariasService service;
 
-  public EntidadesBeneficiariasController(GestorEntidadesBeneficiarias gestor) {
-    this.gestor = gestor;
+  public EntidadesBeneficiariasController(EntidadesBeneficiariasService service) {
+    this.service = service;
   }
 
   public record ConsultaCuit(boolean existePersona,
@@ -31,11 +31,11 @@ public class EntidadesBeneficiariasController {
                              String telefonoActual) {}
 
   public void todas(Context ctx) {
-    ctx.json(BeneficiariaDTO.desde(gestor.todas()));
+    ctx.json(BeneficiariaDTO.desde(service.todas()));
   }
 
   public void buscar(Context ctx) {
-    ctx.json(BeneficiariaDTO.desde(gestor.buscar(idDe(ctx))));
+    ctx.json(BeneficiariaDTO.desde(service.buscar(idDe(ctx))));
   }
 
   public void consultarPorCuit(Context ctx) {
@@ -43,7 +43,7 @@ public class EntidadesBeneficiariasController {
     if (cuit == null || cuit.isBlank()) {
       throw new DatosInvalidosException("Debe indicarse el CUIT en el query param.");
     }
-    Optional<PersonaJuridica> encontrada = gestor.buscarPorCuit(cuit);
+    Optional<PersonaJuridica> encontrada = service.buscarPorCuit(cuit);
     if (encontrada.isEmpty()) {
       ctx.json(new ConsultaCuit(false, null, null, null));
       return;
@@ -66,7 +66,7 @@ public class EntidadesBeneficiariasController {
         mapRepresentantes(request.representantes())
     );
     ctx.status(201).json(BeneficiariaDTO.desde(
-        gestor.registrarDePersonaExistente(request.cuit(), datos)
+        service.registrarDePersonaExistente(request.cuit(), datos)
     ));
   }
 
@@ -85,7 +85,7 @@ public class EntidadesBeneficiariasController {
         mapRepresentantes(request.representantes())
     );
     ctx.status(201).json(BeneficiariaDTO.desde(
-        gestor.registrarConPersonaNueva(juridica, datos)
+        service.registrarConPersonaNueva(juridica, datos)
     ));
   }
 
@@ -97,7 +97,7 @@ public class EntidadesBeneficiariasController {
   }
 
   public void eliminar(Context ctx) {
-    gestor.eliminar(idDe(ctx));
+    service.eliminar(idDe(ctx));
     ctx.status(204);
   }
 

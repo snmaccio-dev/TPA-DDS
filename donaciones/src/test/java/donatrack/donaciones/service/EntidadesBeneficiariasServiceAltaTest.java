@@ -26,7 +26,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GestorEntidadesBeneficiariasAltaTest implements SimplePersistenceTest {
+class EntidadesBeneficiariasServiceAltaTest implements SimplePersistenceTest {
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioEntidades repoEntidades = RepositorioEntidades.getInstance();
@@ -50,7 +50,7 @@ class GestorEntidadesBeneficiariasAltaTest implements SimplePersistenceTest {
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorEntidadesBeneficiarias gestor = new GestorEntidadesBeneficiarias(
+    EntidadesBeneficiariasService service = new EntidadesBeneficiariasService(
         repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
         repoDonaciones, repoDonantes, proveedor);
 
@@ -60,7 +60,7 @@ class GestorEntidadesBeneficiariasAltaTest implements SimplePersistenceTest {
         List.of(new Representante("Rep", "Uno", DatosDeTest.emailUnico("rep")))
     );
 
-    assertDoesNotThrow(() -> gestor.registrarDePersonaExistente(cuit, datos));
+    assertDoesNotThrow(() -> service.registrarDePersonaExistente(cuit, datos));
 
     assertTrue(proveedor.emailsCreados.isEmpty(),
         "No se tiene que llamar a Keycloak si la beneficiaria ya tenia cuenta.");
@@ -74,7 +74,7 @@ class GestorEntidadesBeneficiariasAltaTest implements SimplePersistenceTest {
   void registrarConPersonaNuevaCreaLaCuentaCuandoLaBeneficiariaEsNueva() {
     String kcId = DatosDeTest.keycloakIdUnico();
     ProveedorFalso proveedor = new ProveedorFalso(kcId);
-    GestorEntidadesBeneficiarias gestor = new GestorEntidadesBeneficiarias(
+    EntidadesBeneficiariasService service = new EntidadesBeneficiariasService(
         repoUsuarios, repoNotificaciones, repoNecesidades, repoPropuestas,
         repoDonaciones, repoDonantes, proveedor);
 
@@ -87,7 +87,7 @@ class GestorEntidadesBeneficiariasAltaTest implements SimplePersistenceTest {
         List.of(new Representante("Rep", "Nuevo", emailRep))
     );
 
-    Beneficiaria creada = gestor.registrarConPersonaNueva(juridica, datos);
+    Beneficiaria creada = service.registrarConPersonaNueva(juridica, datos);
 
     assertEquals(1, proveedor.emailsCreados.size());
     assertEquals(emailRep, proveedor.emailsCreados.get(0));

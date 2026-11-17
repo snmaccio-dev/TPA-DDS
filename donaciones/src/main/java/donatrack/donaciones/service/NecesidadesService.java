@@ -8,7 +8,7 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.List;
 
-public class GestorNecesidades implements WithSimplePersistenceUnit {
+public class NecesidadesService implements WithSimplePersistenceUnit {
 
   private final RepositorioNecesidades repositorio =
       RepositorioNecesidades.getInstance();

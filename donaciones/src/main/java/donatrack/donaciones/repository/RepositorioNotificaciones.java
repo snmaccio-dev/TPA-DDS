@@ -21,7 +21,7 @@ public class RepositorioNotificaciones implements WithSimplePersistenceUnit {
 
     // guardar funciona con o sin transaccion abierta: si hay una activa
     // (porque el gestor ya abrio una en withTransaction), solo persiste; si no,
-    // abre y commitea su propia. Importante porque GestorNotificaciones se
+    // abre y commitea su propia. Importante porque NotificacionesService se
     // invoca desde dentro de withTransaction del observer y tambien desde
     // flujos sin transaccion.
     public void guardar(Notificacion notificacion) {

@@ -37,14 +37,14 @@ import donatrack.donaciones.seguridad.ProveedorDeIdentidad;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
 import donatrack.donaciones.service.ConsultaDeNotificaciones;
 import donatrack.donaciones.service.EventoYaAplicadoException;
-import donatrack.donaciones.service.GestorAsignaciones;
-import donatrack.donaciones.service.GestorDonaciones;
-import donatrack.donaciones.service.GestorDonantes;
-import donatrack.donaciones.service.GestorEntidadesBeneficiarias;
-import donatrack.donaciones.service.GestorNecesidades;
-import donatrack.donaciones.service.GestorNotificaciones;
-import donatrack.donaciones.service.GestorPersonas;
-import donatrack.donaciones.service.GestorRegistro;
+import donatrack.donaciones.service.AsignacionesService;
+import donatrack.donaciones.service.DonacionesService;
+import donatrack.donaciones.service.DonantesService;
+import donatrack.donaciones.service.EntidadesBeneficiariasService;
+import donatrack.donaciones.service.NecesidadesService;
+import donatrack.donaciones.service.NotificacionesService;
+import donatrack.donaciones.service.PersonasService;
+import donatrack.donaciones.service.RegistroService;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
@@ -100,24 +100,24 @@ public class DonacionesApp {
         new VerificadorDeTokens(keycloakUrl, keycloakRealm, keycloakIssuer);
     FiltroDeAcceso filtro = new FiltroDeAcceso(verificador, repositorioUsuarios);
 
-    GestorNotificaciones gestorNotificaciones = new GestorNotificaciones(List.of(
+    NotificacionesService notificacionesService = new NotificacionesService(List.of(
         new NotificadorEmail(),
         new NotificadorSMS(),
         new NotificadorWhatsApp()
     ), repositorioNotificaciones);
     ConsultaDeNotificaciones consultaNotificaciones =
         new ConsultaDeNotificaciones(repositorioNotificaciones);
-    GestorDonaciones gestorDonaciones = new GestorDonaciones(
-        gestorNotificaciones,
+    DonacionesService donacionesService = new DonacionesService(
+        notificacionesService,
         repositorioPropuestas,
         repositorioNotificaciones,
         urlWeb + "/seguimiento-donante",
         urlWeb + "/seguimiento-beneficiario"
     );
-    GestorAsignaciones gestorAsignaciones =
-        new GestorAsignaciones(repositorioPropuestas, gestorDonaciones);
-    GestorEntidadesBeneficiarias gestorEntidades =
-        new GestorEntidadesBeneficiarias(
+    AsignacionesService asignacionesService =
+        new AsignacionesService(repositorioPropuestas, donacionesService);
+    EntidadesBeneficiariasService entidadesService =
+        new EntidadesBeneficiariasService(
             repositorioUsuarios,
             repositorioNotificaciones,
             donatrack.donaciones.repository.RepositorioNecesidades.getInstance(),
@@ -125,17 +125,17 @@ public class DonacionesApp {
             RepositorioDonaciones.getInstance(),
             repositorioDonantes,
             proveedor);
-    GestorNecesidades gestorNecesidades = new GestorNecesidades();
-    GestorPersonas gestorPersonas =
-        new GestorPersonas(
+    NecesidadesService necesidadesService = new NecesidadesService();
+    PersonasService personasService =
+        new PersonasService(
             repositorioDonantes,
             repositorioUsuarios,
             repositorioNotificaciones,
             RepositorioDonaciones.getInstance(),
             repositorioEntidades,
             proveedor);
-    GestorDonantes gestorDonantes = new GestorDonantes(repositorioDonantes, gestorNotificaciones);
-    GestorRegistro gestorRegistro = new GestorRegistro(
+    DonantesService donantesService = new DonantesService(repositorioDonantes, notificacionesService);
+    RegistroService registroService = new RegistroService(
         proveedor, repositorioPersonas, repositorioDonantes, repositorioEntidades, repositorioUsuarios);
 
     Javalin app = Javalin.create().start(PUERTO);
@@ -145,26 +145,26 @@ public class DonacionesApp {
     filtro.registrarEn(app);
 
     new Rutas(
-        new RegistroController(gestorRegistro),
+        new RegistroController(registroService),
         new UsuariosController(),
         new AdministradoresController(proveedor),
-        new DonacionesController(gestorDonaciones, repositorioPersonas, repositorioDonantes, repositorioSubcategorias),
-        new AsignacionesController(gestorAsignaciones, RepositorioDonaciones.getInstance(), repositorioEntidades),
-        new DonantesController(gestorPersonas, gestorDonantes),
-        new EntidadesBeneficiariasController(gestorEntidades),
-        new NecesidadesController(gestorNecesidades, repositorioSubcategorias, repositorioEntidades),
+        new DonacionesController(donacionesService, repositorioPersonas, repositorioDonantes, repositorioSubcategorias),
+        new AsignacionesController(asignacionesService, RepositorioDonaciones.getInstance(), repositorioEntidades),
+        new DonantesController(personasService, donantesService),
+        new EntidadesBeneficiariasController(entidadesService),
+        new NecesidadesController(necesidadesService, repositorioSubcategorias, repositorioEntidades),
         new SubcategoriasController(repositorioSubcategorias),
         new NotificacionesController(consultaNotificaciones)
     ).registrarEn(app);
 
     registrarManejoDeErrores(app);
 
-    PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(gestorAsignaciones, HORARIO_MATCHMAKING);
+    PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(asignacionesService, HORARIO_MATCHMAKING);
     planificador.iniciar();
     Runtime.getRuntime().addShutdownHook(new Thread(planificador::detener));
 
     PlanificadorAvisosInactividad planificadorAvisos =
-        new PlanificadorAvisosInactividad(gestorDonantes, HORARIO_AVISOS_INACTIVIDAD);
+        new PlanificadorAvisosInactividad(donantesService, HORARIO_AVISOS_INACTIVIDAD);
     planificadorAvisos.iniciar();
     Runtime.getRuntime().addShutdownHook(new Thread(planificadorAvisos::detener));
 
@@ -213,7 +213,7 @@ public class DonacionesApp {
     // Sin withTransaction el persist se queda en el contexto de persistencia y no se
     // commitea nunca: el catalogo quedaba vacio y cualquier alta de donacion fallaba
     // con "No existe la subcategoria". El resto de las escrituras del modulo ya pasan
-    // por el withTransaction de su gestor; esta sembrada corre suelta desde el main.
+    // por el withTransaction de su service; esta sembrada corre suelta desde el main.
     // La guarda es necesaria porque esto se ejecuta en cada arranque: sin ella, apenas
     // el commit empieza a funcionar, cada reinicio duplicaria las seis filas.
     if (!repo.todas().isEmpty()) {

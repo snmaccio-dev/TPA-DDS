@@ -10,17 +10,17 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GestorDonantes implements WithSimplePersistenceUnit {
+public class DonantesService implements WithSimplePersistenceUnit {
 
     public static final int DIAS_SIN_INTERACCION = 20;
 
     private final RepositorioDonantes repositorio;
-    private final GestorNotificaciones gestorNotificaciones;
+    private final NotificacionesService notificacionesService;
 
-    public GestorDonantes(RepositorioDonantes repositorio,
-                          GestorNotificaciones gestorNotificaciones) {
+    public DonantesService(RepositorioDonantes repositorio,
+                          NotificacionesService notificacionesService) {
         this.repositorio = repositorio;
-        this.gestorNotificaciones = gestorNotificaciones;
+        this.notificacionesService = notificacionesService;
     }
 
     public List<Donante> inactivos() {
@@ -32,10 +32,10 @@ public class GestorDonantes implements WithSimplePersistenceUnit {
         int avisados = 0;
         List<String> fallidos = new ArrayList<>();
         for (Donante donante : inactivos()) {
-            // GestorNotificaciones ya no propaga fallas de envio: nos devuelve
+            // NotificacionesService ya no propaga fallas de envio: nos devuelve
             // una Notificacion ENVIADA o FALLIDA y nosotros decidimos.
             Notificacion notificacion =
-                gestorNotificaciones.notificarAusenciaPlataforma(donante);
+                notificacionesService.notificarAusenciaPlataforma(donante);
             if (notificacion.getEstadoEnvio() == EstadoEnvio.ENVIADA) {
                 // Solo registramos el aviso cuando salio bien, para que un
                 // fallo del canal no lo consuma y el donante vuelva a intentarse.

@@ -39,7 +39,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class GestorPersonasEliminarTest implements SimplePersistenceTest {
+class PersonasServiceEliminarTest implements SimplePersistenceTest {
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioDonantes repoDonantes = new RepositorioDonantes();
@@ -65,10 +65,10 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService service = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
-    gestor.eliminar(documento);
+    service.eliminar(documento);
 
     // Despues del gestor la transaccion esta commiteada y cerrada; nada de
     // flush aca: solo clear() y releer desde la base.
@@ -90,10 +90,10 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     donacionDe(donante);
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService service = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
-    assertThrows(ConflictoDeNegocioException.class, () -> gestor.eliminar(documento));
+    assertThrows(ConflictoDeNegocioException.class, () -> service.eliminar(documento));
 
     entityManager().clear();
     assertTrue(repoDonantes.buscarPorDocumento(documento).isPresent());
@@ -114,10 +114,10 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     entityManager().flush();
 
     ProveedorFalso proveedor = new ProveedorFalso();
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService service = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
-    gestor.eliminar(cuit);
+    service.eliminar(cuit);
 
     entityManager().clear();
     assertFalse(repoDonantes.buscarPorDocumento(cuit).isPresent(),
@@ -128,10 +128,10 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
 
   @Test
   void eliminarInexistenteDa404() {
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService service = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades,
         new ProveedorFalso());
-    assertThrows(RecursoInexistenteException.class, () -> gestor.eliminar("no-existe"));
+    assertThrows(RecursoInexistenteException.class, () -> service.eliminar("no-existe"));
   }
 
   @Test
@@ -148,10 +148,10 @@ class GestorPersonasEliminarTest implements SimplePersistenceTest {
     entityManager().clear();
 
     ProveedorFalso proveedor = new ProveedorFalso(true);
-    GestorPersonas gestor = new GestorPersonas(
+    PersonasService service = new PersonasService(
         repoDonantes, repoUsuarios, repoNotificaciones, repoDonaciones, repoEntidades, proveedor);
 
-    gestor.eliminar(documento);
+    service.eliminar(documento);
 
     entityManager().clear();
     assertFalse(repoDonantes.buscarPorDocumento(documento).isPresent(),

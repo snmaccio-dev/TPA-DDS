@@ -30,12 +30,12 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-// NOTA: no implementa SimplePersistenceTest a proposito. GestorRegistro usa
+// NOTA: no implementa SimplePersistenceTest a proposito. RegistroService usa
 // withTransaction de jpa-extras y queremos que esas transacciones se abran
 // y commiteen de verdad (y hagan rollback real cuando corresponde) para
 // poder verificar el efecto. Los datos unicos vienen de DatosDeTest, con
 // un unico AtomicLong compartido entre todas las clases del run.
-public class GestorRegistroTest implements WithSimplePersistenceUnit {
+public class RegistroServiceTest implements WithSimplePersistenceUnit {
 
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioDonantes repoDonantes = new RepositorioDonantes();
@@ -46,12 +46,12 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
   void registrarDonanteExitosoPersisteTodoYDevuelveElVinculo() {
     String kcId = DatosDeTest.keycloakIdUnico();
     ProveedorDeIdentidadFalso proveedor = new ProveedorDeIdentidadFalso(kcId);
-    GestorRegistro gestor = nuevoGestor(proveedor);
+    RegistroService service = nuevoService(proveedor);
 
     String documento = DatosDeTest.documentoUnico();
     Persona persona = new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
 
-    Donante donante = gestor.registrarDonante(persona, DatosDeTest.emailUnico("ana"), "unaSegura123");
+    Donante donante = service.registrarDonante(persona, DatosDeTest.emailUnico("ana"), "unaSegura123");
 
     assertEquals(1, proveedor.creados.size());
     assertEquals(RolDeAcceso.DONANTE, proveedor.creados.get(0).rol);
@@ -68,7 +68,7 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
   void documentoYaExistenteDevuelve409YNoTocaKeycloak() {
     ProveedorDeIdentidadFalso proveedor =
         new ProveedorDeIdentidadFalso(DatosDeTest.keycloakIdUnico());
-    GestorRegistro gestor = nuevoGestor(proveedor);
+    RegistroService service = nuevoService(proveedor);
 
     String documento = DatosDeTest.documentoUnico();
     // Precondicion: ya hay una persona con ese documento.
@@ -79,7 +79,7 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
 
     Persona nueva = new PersonaHumana("Nuevo", "Intento", 30, documento, Genero.FEMENINO);
     assertThrows(ConflictoDeNegocioException.class, () ->
-        gestor.registrarDonante(nueva, DatosDeTest.emailUnico("nuevo"), "unaSegura123"));
+        service.registrarDonante(nueva, DatosDeTest.emailUnico("nuevo"), "unaSegura123"));
 
     assertTrue(proveedor.creados.isEmpty(),
         "No se tiene que haber llamado a Keycloak si el documento ya existia.");
@@ -89,12 +89,12 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
   void siKeycloakResponde409NoSePersisteNada() {
     ProveedorDeIdentidadFalso proveedor = new ProveedorDeIdentidadFalso(
         () -> { throw new ConflictoDeNegocioException("Ya existe una cuenta con ese correo."); });
-    GestorRegistro gestor = nuevoGestor(proveedor);
+    RegistroService service = nuevoService(proveedor);
 
     String documento = DatosDeTest.documentoUnico();
     Persona persona = new PersonaHumana("X", "Y", 30, documento, Genero.FEMENINO);
     assertThrows(ConflictoDeNegocioException.class, () ->
-        gestor.registrarDonante(persona, DatosDeTest.emailUnico("x"), "unaSegura123"));
+        service.registrarDonante(persona, DatosDeTest.emailUnico("x"), "unaSegura123"));
 
     assertFalse(repoPersonas.buscarPorDocumento(documento).isPresent());
   }
@@ -110,13 +110,13 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
         throw new RuntimeException("DB caida simulada.");
       }
     };
-    GestorRegistro gestor = new GestorRegistro(
+    RegistroService service = new RegistroService(
         proveedor, repoPersonas, repoDonantes, repoEntidades, repoRoto);
 
     String documento = DatosDeTest.documentoUnico();
     Persona persona = new PersonaHumana("Z", "W", 30, documento, Genero.FEMENINO);
     assertThrows(RuntimeException.class, () ->
-        gestor.registrarDonante(persona, DatosDeTest.emailUnico("z"), "unaSegura123"));
+        service.registrarDonante(persona, DatosDeTest.emailUnico("z"), "unaSegura123"));
 
     assertEquals(List.of(kcId), proveedor.eliminados,
         "Si la persistencia fallo despues de crear la cuenta, hay que borrarla en Keycloak.");
@@ -126,7 +126,7 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
   void registrarBeneficiariaExitosoPersisteTodo() {
     String kcId = DatosDeTest.keycloakIdUnico();
     ProveedorDeIdentidadFalso proveedor = new ProveedorDeIdentidadFalso(kcId);
-    GestorRegistro gestor = nuevoGestor(proveedor);
+    RegistroService service = nuevoService(proveedor);
 
     String cuit = DatosDeTest.cuitUnico();
     PersonaJuridica juridica = new PersonaJuridica(cuit, DatosDeTest.textoUnico("Comedor"), TipoOrganizacion.ONG, "Comedor");
@@ -137,7 +137,7 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
     );
 
     Beneficiaria beneficiaria =
-        gestor.registrarBeneficiaria(juridica, datos, DatosDeTest.emailUnico("benef"), "unaSegura123");
+        service.registrarBeneficiaria(juridica, datos, DatosDeTest.emailUnico("benef"), "unaSegura123");
 
     assertSame(RolDeAcceso.BENEFICIARIA, proveedor.creados.get(0).rol);
     assertTrue(repoEntidades.buscarPorCuit(juridica.getCuit()).isPresent());
@@ -150,18 +150,18 @@ public class GestorRegistroTest implements WithSimplePersistenceUnit {
   void contrasenaCortaDevuelve400YNoLlamaAKeycloak() {
     ProveedorDeIdentidadFalso proveedor =
         new ProveedorDeIdentidadFalso(DatosDeTest.keycloakIdUnico());
-    GestorRegistro gestor = nuevoGestor(proveedor);
+    RegistroService service = nuevoService(proveedor);
 
     String documento = DatosDeTest.documentoUnico();
     Persona persona = new PersonaHumana("Q", "R", 30, documento, Genero.FEMENINO);
     assertThrows(DatosInvalidosException.class, () ->
-        gestor.registrarDonante(persona, DatosDeTest.emailUnico("q"), "1234"));
+        service.registrarDonante(persona, DatosDeTest.emailUnico("q"), "1234"));
 
     assertTrue(proveedor.creados.isEmpty());
   }
 
-  private GestorRegistro nuevoGestor(ProveedorDeIdentidad proveedor) {
-    return new GestorRegistro(proveedor, repoPersonas, repoDonantes, repoEntidades, repoUsuarios);
+  private RegistroService nuevoService(ProveedorDeIdentidad proveedor) {
+    return new RegistroService(proveedor, repoPersonas, repoDonantes, repoEntidades, repoUsuarios);
   }
 
   // === ProveedorDeIdentidad falso que registra las llamadas ===

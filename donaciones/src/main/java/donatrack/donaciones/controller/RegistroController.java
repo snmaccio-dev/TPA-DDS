@@ -9,22 +9,22 @@ import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.service.DatosEntidad;
-import donatrack.donaciones.service.GestorRegistro;
+import donatrack.donaciones.service.RegistroService;
 import io.javalin.http.Context;
 
 import java.util.List;
 
 public class RegistroController {
 
-    private final GestorRegistro gestor;
+    private final RegistroService service;
 
-    public RegistroController(GestorRegistro gestor) {
-        this.gestor = gestor;
+    public RegistroController(RegistroService service) {
+        this.service = service;
     }
 
     public void registrarDonante(Context ctx) {
         RegistroDonanteRequest request = ctx.bodyAsClass(RegistroDonanteRequest.class);
-        Donante donante = gestor.registrarDonante(
+        Donante donante = service.registrarDonante(
             request.aPersona(),
             request.email(),
             request.contrasena()
@@ -48,7 +48,7 @@ public class RegistroController {
             request.telefono(),
             mapRepresentantes(request.representantes())
         );
-        Beneficiaria beneficiaria = gestor.registrarBeneficiaria(
+        Beneficiaria beneficiaria = service.registrarBeneficiaria(
             juridica,
             datos,
             request.email(),
