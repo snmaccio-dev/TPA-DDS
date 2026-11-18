@@ -12,7 +12,7 @@ import javax.persistence.Enumerated;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
 import javax.persistence.Table;
-
+import java.util.Objects;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -86,7 +86,7 @@ public class PersonaJuridica extends Persona {
             throw new DatosInvalidosException(
                 "La beneficiaria debe indicar al menos un representante con su correo.");
         }
-        if (nuevos.contains(null)) {
+        if (nuevos.stream().anyMatch(Objects::isNull)) {
             throw new DatosInvalidosException("El representante es obligatorio.");
         }
         Set<String> emailsQueSalen = emailsDeRepresentantes();

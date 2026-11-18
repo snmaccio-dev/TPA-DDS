@@ -1,3 +1,4 @@
+
 package donatrack.web.vista;
 
 import java.util.List;
@@ -15,7 +16,9 @@ public record DonacionVista(
     String subcategoria,
     String categoria,
     String fechaHoraEntrega,
-    List<Bien> bienes
+    List<Bien> bienes,
+    String donanteNombre,
+    String donanteDocumento
 ) {
 
   public record Bien(String descripcion, String subcategoria, double cantidad,
@@ -38,6 +41,7 @@ public record DonacionVista(
   public String getRazonSocialBeneficiaria() { return razonSocialBeneficiaria; }
   public String getDireccionDestino() { return direccionDestino; }
   public String getEstado() { return estado; }
+  public String getDonanteNombre() { return donanteNombre; }
   public List<Bien> getBienes() { return bienes; }
 
   public String getCantidadTexto() {
@@ -54,6 +58,7 @@ public record DonacionVista(
       case "EN_DEPOSITO" -> "En depósito";
       case "ASIGNACION_REALIZADA" -> "Asignada";
       case "LISTA_PARA_ENTREGAR" -> "Lista para entregar";
+      case "PENDIENTE_RECEPCION" -> "Pendiente de recepción";
       case "EN_TRASLADO" -> "En traslado";
       case "ENTREGADA" -> "Entregada";
       case "ENTREGA_FALLIDA" -> "Entrega fallida";
@@ -72,9 +77,31 @@ public record DonacionVista(
     };
   }
 
-  // Habilita el boton "Marcar vencida" en /deposito solo cuando la donacion sigue
-  // disponible en el deposito y no esta ya asignada ni entregada.
   public boolean isDisponible() {
     return "EN_DEPOSITO".equals(estado);
+  }
+
+  public boolean isPendienteRecepcion() {
+    return "PENDIENTE_RECEPCION".equals(estado);
+  }
+
+  public boolean isVencida() {
+    return "VENCIDA".equals(estado);
+  }
+
+  // Nuevo
+
+  public String getDonanteIdentificacion() {
+    if (donanteNombre != null && !donanteNombre.isBlank()) {
+      return donanteNombre;
+    }
+
+    if (donanteDocumento != null && !donanteDocumento.isBlank()) {
+      return "Documento: " + donanteDocumento;
+    }
+
+    return donanteId == null
+        ? "Donante no identificado"
+        : "Donante #" + donanteId;
   }
 }

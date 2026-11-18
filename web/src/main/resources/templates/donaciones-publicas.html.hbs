@@ -1,28 +1,98 @@
 {{> templates/partials/head}}
 <body data-page="public-donations" data-role="public">
 {{> templates/partials/header-publico}}
+
 <main class="public-main">
-<div class="page-heading"><div><span class="eyebrow">TRANSPARENCIA</span><h1>Donaciones entregadas</h1><p>Explorá las entregas confirmadas y conocé su impacto.</p></div><a class="btn btn-primary" href="/registro">Sumarme a DonaTrack →</a></div>
-<div class="public-map-layout">
-<div class="map-panel"><div class="panel-head"><div><h3>Mapa de entregas</h3><small>Zona de cobertura</small></div><span class="status-pill success">● Actualizado</span></div><div id="donations-map" class="map-canvas"></div></div>
-<aside class="panel donation-list">
-        <div class="panel-head"><h3>Entregas recientes</h3><span class="muted">{{entregas.size}} registros</span></div>
-{{#each entregas}}
-        <article class="donation-item">
-                <div class="item-icon">▧</div>
-                <div>
-                        <b>{{descripcion}}</b>
-                        <small>{{cantidadTexto}}{{#if fechaHoraEntrega}} · {{fechaHoraEntrega}}{{/if}}</small>
-                        <span class="status-pill success">Entregada</span>
+    <div class="page-heading">
+        <div>
+            <span class="eyebrow">TRANSPARENCIA</span>
+            <h1>Donaciones entregadas</h1>
+            <p>Explorá las entregas confirmadas y conocé su impacto.</p>
+        </div>
+        <a class="btn btn-primary" href="/registro">Sumarme →</a>
+    </div>
+
+    <section class="panel public-deliveries">
+        <div class="panel-head">
+            <div>
+                <h3>Historias de nuestras entregas</h3>
+                <small>Fotografías de donaciones realizadas</small>
+            </div>
+            <span class="muted">{{entregas.size}} registros</span>
+        </div>
+
+        {{#if entregas}}
+            <div class="delivery-carousel">
+                <div class="carousel-container">
+                    {{#each entregas}}
+                        {{#if tieneFoto}}
+                            <article class="delivery-slide">
+                                <img src="{{primeraFoto}}" alt="Fotografía de {{descripcion}}">
+                                <div class="delivery-slide-content">
+                                    <h3>{{descripcion}}</h3>
+                                    <p>{{cantidadTexto}}</p>
+                                    {{#if fechaHoraEntrega}}
+                                        <small>Entregada el {{fechaHoraEntrega}}</small>
+                                    {{/if}}
+                                </div>
+                            </article>
+                        {{/if}}
+                    {{/each}}
                 </div>
-        </article>
-{{/each}}
-{{#unless entregas}}
-        <p class="muted">Todavía no hay entregas confirmadas para mostrar.</p>
-{{/unless}}
-</aside>
-</div>
-<p class="notice">Las entregas del listado son reales y las publica el microservicio de Logística. Los marcadores del mapa son ilustrativos: las entregas se registran por dirección y todavía no se geocodifican a coordenadas.</p>
+
+                <div class="delivery-carousel-controls">
+                    <button type="button" id="prevDelivery" aria-label="Entrega anterior">‹</button>
+                    <span id="carouselCounter" class="carousel-counter"></span>
+                    <button type="button" id="nextDelivery" aria-label="Entrega siguiente">›</button>
+                </div>
+            </div>
+        {{else}}
+            <p class="muted">Todavía no hay entregas confirmadas para mostrar.</p>
+        {{/if}}
+    </section>
+
+    <div class="public-map-layout">
+        <section class="map-panel panel">
+            <div class="panel-head">
+                <div>
+                    <h3>Mapa de entregas</h3>
+                    <small>Ubicaciones de las entregas confirmadas</small>
+                </div>
+            </div>
+            <div id="donations-map" class="map-canvas"></div>
+            <p class="muted map-empty-message">
+                Las ubicaciones geográficas estarán disponibles cuando se incorporen
+                las coordenadas de las entregas.
+            </p>
+        </section>
+
+        <aside class="panel donation-list">
+            <div class="panel-head">
+                <h3>Entregas recientes</h3>
+                <span class="muted">{{entregas.size}} registros</span>
+            </div>
+
+            {{#each entregas}}
+                <article class="donation-item">
+                    <div class="item-icon">▧</div>
+                    <div>
+                        <b>{{descripcion}}</b>
+                        <small>
+                            {{cantidadTexto}}
+                            {{#if fechaHoraEntrega}} · {{fechaHoraEntrega}}{{/if}}
+                        </small>
+                        <span class="status-pill success">Entregada</span>
+                    </div>
+                </article>
+            {{/each}}
+
+            {{#unless entregas}}
+                <p class="muted">Todavía no hay entregas confirmadas para mostrar.</p>
+            {{/unless}}
+        </aside>
+    </div>
 </main>
+
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}
+</body>

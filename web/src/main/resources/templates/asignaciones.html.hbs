@@ -1,7 +1,9 @@
+
 {{> templates/partials/head}}
 <body data-page="assignments" data-role="admin">
 {{> templates/partials/sidebar}}
 {{> templates/partials/topbar}}
+
 <main class="app-main">
     <div class="page-heading">
         <div>
@@ -9,39 +11,125 @@
             <h1>Asignación de donaciones</h1>
             <p>Revisá las propuestas y confirmá la entidad beneficiaria final.</p>
         </div>
-        <form method="post" action="/asignaciones/ejecutar">
-            <button class="btn btn-primary" type="submit">Ejecutar algoritmo</button>
-        </form>
     </div>
+
     <section class="panel">
         <div class="panel-head">
             <h3>Propuestas de asignación</h3>
             <span class="muted">{{propuestas.size}} propuestas</span>
         </div>
+
         {{#each propuestas}}
         <div class="select-donation">
-            <b>{{descripcionDonacion}}</b>
-            <small>Generada {{fechaGeneracionTexto}}</small>
+            <div>
+                <b>Donación #{{donacionId}} · {{descripcionDonacion}}</b>
+                <small>Donante: {{donanteNombre}}</small>
+                <small>Generada {{fechaGeneracionTexto}}</small>
+            </div>
+
             {{#if tieneCandidatas}}
-            <form method="post" action="/asignaciones/{{donacionId}}">
-                <label>Entidad beneficiaria
-                    <select name="beneficiariaId" required>
-                        {{#each candidatas}}
-                        <option value="{{id}}">{{razonSocial}}</option>
-                        {{/each}}
-                    </select>
+            <form class="asignacion-form"
+                  method="post"
+                  action="/asignaciones/{{donacionId}}">
+
+                <label for="beneficiaria-busqueda-{{donacionId}}">
+                    Buscar entidad beneficiaria
                 </label>
-                <button class="btn btn-primary" type="submit">Confirmar asignación</button>
+
+                <input
+                    type="text"
+                    id="beneficiaria-busqueda-{{donacionId}}"
+                    class="beneficiaria-busqueda"
+                    list="beneficiarias-{{donacionId}}"
+                    placeholder="Escribí la razón social..."
+                    autocomplete="off"
+                    required
+                >
+
+                <datalist id="beneficiarias-{{donacionId}}">
+                    {{#each candidatas}}
+                    <option
+                        value="{{razonSocial}} — CUIT {{cuit}}"
+                        data-id="{{id}}">
+                    </option>
+                    {{/each}}
+                </datalist>
+
+                <input
+                    type="hidden"
+                    name="beneficiariaId"
+                    class="beneficiaria-id"
+                >
+
+                <button class="btn btn-primary confirmar-asignacion"
+                        type="submit"
+                        disabled>
+                    Confirmar asignación
+                </button>
             </form>
             {{else}}
-            <span class="muted">El algoritmo no encontró entidades candidatas.</span>
+            <span class="muted">
+                No se encontraron beneficiarias con necesidades compatibles
+                para esta donación.
+            </span>
             {{/if}}
         </div>
         {{/each}}
+
         {{#unless propuestas}}
-        <p class="muted">No hay propuestas pendientes. Ejecutá el algoritmo para generarlas.</p>
+        <p class="muted">
+            No hay propuestas pendientes de asignación.
+        </p>
         {{/unless}}
     </section>
 </main>
+
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}
+
+<script>
+document.querySelectorAll(".asignacion-form").forEach(form => {
+    const busqueda = form.querySelector(".beneficiaria-busqueda");
+    const beneficiariaId = form.querySelector(".beneficiaria-id");
+    const boton = form.querySelector(".confirmar-asignacion");
+
+    const datalist = document.getElementById(
+        busqueda.getAttribute("list")
+    );
+
+    function validarSeleccion() {
+        const opcion = Array.from(datalist.options).find(
+            option => option.value === busqueda.value
+        );
+
+        if (opcion) {
+            beneficiariaId.value = opcion.dataset.id;
+            boton.disabled = false;
+        } else {
+            beneficiariaId.value = "";
+            boton.disabled = true;
+        }
+    }
+
+    busqueda.addEventListener("input", validarSeleccion);
+    busqueda.addEventListener("change", validarSeleccion);
+
+    form.addEventListener("submit", event => {
+        validarSeleccion();
+
+        if (!beneficiariaId.value) {
+            event.preventDefault();
+            busqueda.setCustomValidity(
+                "Seleccioná una beneficiaria de la lista."
+            );
+            busqueda.reportValidity();
+        }
+    });
+
+    busqueda.addEventListener("input", () => {
+        busqueda.setCustomValidity("");
+    });
+});
+</script>
+</body>
+</html>

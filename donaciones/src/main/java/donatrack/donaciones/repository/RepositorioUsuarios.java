@@ -5,6 +5,8 @@ import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.usuario.Usuario;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 public class RepositorioUsuarios implements WithSimplePersistenceUnit {
@@ -35,6 +37,20 @@ public class RepositorioUsuarios implements WithSimplePersistenceUnit {
             .getResultList()
             .stream()
             .findFirst();
+    }
+
+    ////////////////////////////////////////////////////////////////
+
+    public List<Usuario> deDonantes(Collection<Donante> donantes) {
+        if (donantes == null || donantes.isEmpty()) {
+            return List.of();
+        }
+
+        return createQuery(
+            "select u from Usuario u where u.donante in :donantes",
+            Usuario.class)
+            .setParameter("donantes", donantes)
+            .getResultList();
     }
 
     public Optional<Usuario> deBeneficiaria(Beneficiaria beneficiaria) {

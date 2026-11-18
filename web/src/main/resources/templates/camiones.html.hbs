@@ -48,7 +48,15 @@
           <td>{{alturaTexto}}</td>
           <td>{{cargaTexto}}</td>
           <td><span class="status-pill {{situacionEstilo}}">{{situacionTexto}}</span></td>
-          <td><a class="table-action" href="/camiones/{{patente}}/editar">Editar</a></td>
+          <td>
+            <a class="table-action" href="/camiones/{{patente}}/editar">Editar</a>
+
+            <form method="post"
+                  action="/camiones/{{patente}}/eliminar"
+                  style="display: inline">
+              <button type="submit" class="table-action">Eliminar</button>
+            </form>
+          </td>
         </tr>
         {{/each}}
         </tbody>

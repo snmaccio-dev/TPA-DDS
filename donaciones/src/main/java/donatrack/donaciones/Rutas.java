@@ -100,13 +100,15 @@ public class Rutas {
   // === Donaciones: listado, CRUD y eventos del servicio de Logistica ===
   public static void donaciones(Javalin app, DonacionesController c) {
     app.get(   "/donaciones",                    c::listar,      ADMINISTRADOR, DONANTE, BENEFICIARIA, SERVICIO_LOGISTICA);
-    app.post(  "/donaciones",                    c::crear,       ADMINISTRADOR);
+    app.post(  "/donaciones",                    c::crear,       DONANTE, ADMINISTRADOR);
     app.get(   "/donaciones/{id}",               c::buscar,      ADMINISTRADOR, DONANTE, BENEFICIARIA);
     app.put(   "/donaciones/{id}",               c::modificar,   ADMINISTRADOR, DONANTE);
     app.delete("/donaciones/{id}",               c::eliminar,    ADMINISTRADOR);
     app.get(   "/donaciones/{id}/comprobante",   c::comprobante, ADMINISTRADOR, DONANTE, BENEFICIARIA);
     app.get(   "/donaciones/{id}/historial",     c::historial,   ADMINISTRADOR, DONANTE, BENEFICIARIA);
     app.post(  "/donaciones/{id}/vencer",        c::vencer,      ADMINISTRADOR);
+    app.post("/donaciones/{id}/deshacer-vencimiento", c::deshacerVencimiento, ADMINISTRADOR);
+    app.post("/donaciones/{id}/confirmar-recepcion", c::confirmarRecepcion, ADMINISTRADOR);
 
     // Eventos emitidos por el servicio de Logistica. Van en este grupo porque todos
     // cuelgan del recurso /donaciones y los maneja DonacionesController.

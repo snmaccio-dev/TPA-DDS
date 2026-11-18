@@ -9,6 +9,7 @@ import donatrack.donaciones.controller.dto.EventoRetornoDepositoRequest;
 import donatrack.donaciones.controller.dto.EventoRutasPlanificadasRequest;
 import donatrack.donaciones.controller.dto.ModificarDonacionRequest;
 import donatrack.donaciones.controller.dto.NuevaDonacionRequest;
+import donatrack.donaciones.controller.dto.ConfirmarRecepcionRequest;
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.estado.EstadosPosiblesDonacion;
@@ -81,21 +82,25 @@ public class DonacionesController {
   }
 
   public void crear(Context ctx) {
-    NuevaDonacionRequest request = ctx.bodyAsClass(NuevaDonacionRequest.class);
-    UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
+      NuevaDonacionRequest request = ctx.bodyAsClass(NuevaDonacionRequest.class);
+      UsuarioActual usuario = FiltroDeAcceso.usuarioDe(ctx);
 
-    Donante donante = usuario.esAdministrador()
-        ? donantesService.buscarDonantePorDocumento(request.donanteDocumento())
-        : Acceso.perfilDonanteObligatorio(usuario);
+      Donante donante = usuario.esAdministrador()
+          ? donantesService.buscarDonantePorDocumento(request.donanteDocumento())
+          : Acceso.perfilDonanteObligatorio(usuario);
 
-    List<DatosBien> bienes = request.bienes().stream()
-        .map(b -> new DatosBien(
-            b.descripcion(), b.subcategoria(), b.cantidad(), b.condicion(), b.fechaVencimiento()))
-        .toList();
+      List<DatosBien> bienes = request.bienes().stream()
+          .map(b -> new DatosBien(
+              b.descripcion(), b.subcategoria(), b.cantidad(), b.condicion(), b.fechaVencimiento()))
+          .toList();
 
-    ctx.status(201).json(
-        DonacionDTO.desde(service.crear(donante, bienes, request.descripcion(), null))
-    );
+      EstadosPosiblesDonacion estadoInicial =
+          EstadosPosiblesDonacion.PENDIENTE_RECEPCION;
+
+      ctx.status(201).json(
+          DonacionDTO.desde(service.crear(
+              donante, bienes, request.descripcion(), null, estadoInicial))
+      );
   }
 
   public void modificar(Context ctx) {
@@ -126,6 +131,23 @@ public class DonacionesController {
   public void vencer(Context ctx) {
     service.marcarVencida(idDe(ctx));
     ctx.status(204);
+  }
+
+  public void deshacerVencimiento(Context ctx) {
+      service.deshacerVencimiento(idDe(ctx));
+      ctx.status(204);
+  }
+
+  public void confirmarRecepcion(Context ctx) {
+      ConfirmarRecepcionRequest request =
+          ctx.bodyAsClass(ConfirmarRecepcionRequest.class);
+
+      service.confirmarRecepcion(
+          idDe(ctx),
+          request.donanteDocumento()
+      );
+
+      ctx.status(204);
   }
 
   // === Eventos ===

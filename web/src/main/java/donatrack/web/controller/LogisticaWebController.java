@@ -54,6 +54,8 @@ public class LogisticaWebController {
 
     app.get("/confirmar-recepcion", this::confirmarRecepcion);
     app.post("/confirmar-recepcion/{id}", this::registrarRecepcion);
+
+    app.post("/camiones/{patente}/eliminar", this::eliminarCamion);
   }
 
   private void camiones(Context ctx) {
@@ -109,6 +111,20 @@ public class LogisticaWebController {
       clienteLogistica.actualizarCamion(autorizacion, patente, capacidades);
     } catch (IntegracionException e) {
       mostrarEdicion(ctx, patente, mensajeDe(e));
+      return;
+    }
+
+    ctx.redirect("/camiones");
+  }
+
+  private void eliminarCamion(Context ctx) {
+    String autorizacion = autorizacionDe(ctx);
+    String patente = ctx.pathParam("patente");
+
+    try {
+      clienteLogistica.eliminarCamion(autorizacion, patente);
+    } catch (IntegracionException e) {
+      mostrarCamiones(ctx, mensajeDe(e));
       return;
     }
 

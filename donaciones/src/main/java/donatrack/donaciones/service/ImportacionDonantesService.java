@@ -40,6 +40,9 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.stream.Stream;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public class ImportacionDonantesService implements WithSimplePersistenceUnit {
 
   public static final int TAMANIO_TANDA = 200;
@@ -162,6 +165,7 @@ public class ImportacionDonantesService implements WithSimplePersistenceUnit {
     }
   }
 
+  /*
   private Avance intentarTanda(List<FilaDonanteCsv> filas) {
     Avance avance = new Avance();
     Tanda tanda = new Tanda();
@@ -183,6 +187,73 @@ public class ImportacionDonantesService implements WithSimplePersistenceUnit {
     return avance;
   }
 
+  */
+
+    private Avance intentarTanda(List<FilaDonanteCsv> filas) {
+      Avance avance = new Avance();
+      Tanda tanda = new Tanda();
+
+      IndiceExistentes indice = buscarExistentes(filas);
+
+      for (FilaDonanteCsv fila : filas) {
+          try {
+              prepararFila(fila, tanda, avance, indice);
+          } catch (RuntimeException e) {
+              avance.error(fila.numero(), mensajeDe(e));
+          }
+      }
+
+      try {
+          withTransaction(() -> tanda.destinos.forEach(this::persistir));
+      } catch (RuntimeException e) {
+          tanda.destinos.stream()
+              .filter(destino -> destino.cuentaCreada)
+              .forEach(destino -> usuariosService.compensar(destino.keycloakId));
+          throw e;
+      }
+
+      return avance;
+  }
+
+  // Nuevo metodo 
+
+  private IndiceExistentes buscarExistentes(List<FilaDonanteCsv> filas) {
+    Set<String> emails = new HashSet<>();
+    Set<String> documentos = new HashSet<>();
+    Set<String> cuis = new HashSet<>();
+
+    for (FilaDonanteCsv fila : filas) {
+        emails.add(fila.email());
+        documentos.add(fila.documento());
+        cuis.add(PersonaJuridica.normalizarCuit(fila.documento()));
+    }
+
+    Map<String, Persona> porEmail = new HashMap<>();
+    Map<String, PersonaHumana> porDocumento = new HashMap<>();
+    Map<String, PersonaJuridica> porCuit = new HashMap<>();
+
+    for (Persona persona : repositorioPersonas.buscarPorEmails(emails)) {
+        for (String email : emails) {
+            if (persona.tieneContacto(TipoContacto.EMAIL, email)) {
+                porEmail.putIfAbsent(email, persona);
+            }
+        }
+    }
+
+    for (PersonaHumana persona :
+            repositorioPersonas.buscarHumanasPorDocumentos(documentos)) {
+        porDocumento.putIfAbsent(persona.getDocumento(), persona);
+    }
+
+    for (PersonaJuridica persona :
+            repositorioPersonas.buscarJuridicasPorCuits(cuis)) {
+        porCuit.putIfAbsent(persona.getCuit(), persona);
+    }
+
+    return new IndiceExistentes(porEmail, porDocumento, porCuit);
+}
+
+  /*
   private void prepararFila(FilaDonanteCsv fila, Tanda tanda, Avance avance) {
     Coincidencia coincidencia = buscarCoincidencia(fila, tanda);
 
@@ -215,7 +286,46 @@ public class ImportacionDonantesService implements WithSimplePersistenceUnit {
     avance.actualizados++;
     avance.contarCuenta(destino);
   }
+  */
 
+    private void prepararFila(FilaDonanteCsv fila, 
+                              Tanda tanda, 
+                              Avance avance, 
+                              IndiceExistentes indice
+                              ) {
+    Coincidencia coincidencia = buscarCoincidencia(fila, tanda, indice);
+
+    if (coincidencia == null) {
+      Destino destino = new Destino(PersonaFactory.crear(fila), true, null);
+      obtenerCuenta(destino, fila.email());
+      tanda.agregar(destino, fila);
+      avance.creados++;
+      avance.contarCuenta(destino);
+      return;
+    }
+
+    validar(coincidencia, fila);
+
+    if (coincidencia.destino() != null) {
+      aplicar(coincidencia.destino().persona, fila);
+      tanda.indexar(coincidencia.destino(), fila);
+      avance.actualizados++;
+      return;
+    }
+
+    Persona existente = coincidencia.persona();
+    Donante donante = repositorioDonantes.buscarPorPersona(existente).orElse(null);
+    Destino destino = new Destino(existente, false, donante);
+    if (donante == null || !repositorioUsuarios.existeParaDonante(donante)) {
+      obtenerCuenta(destino, fila.email());
+    }
+    aplicar(existente, fila);
+    tanda.agregar(destino, fila);
+    avance.actualizados++;
+    avance.contarCuenta(destino);
+  }
+
+/*
   private Coincidencia buscarCoincidencia(FilaDonanteCsv fila, Tanda tanda) {
     Destino enTanda = tanda.porEmail.get(fila.email());
     if (enTanda != null) {
@@ -232,6 +342,59 @@ public class ImportacionDonantesService implements WithSimplePersistenceUnit {
     return repositorioPersonas.buscarPorDocumento(fila.documento())
         .map(persona -> new Coincidencia(persona, tanda.porPersona.get(persona), false))
         .orElse(null);
+  }
+*/
+
+  private Coincidencia buscarCoincidencia(
+          FilaDonanteCsv fila,
+          Tanda tanda,
+          IndiceExistentes indice) {
+
+      Destino enTanda = tanda.porEmail.get(fila.email());
+
+      if (enTanda != null) {
+          return new Coincidencia(enTanda.persona, enTanda, true);
+      }
+
+      Persona porEmail = indice.porEmail().get(fila.email());
+
+      if (porEmail != null) {
+          return new Coincidencia(
+              porEmail,
+              tanda.porPersona.get(porEmail),
+              true
+          );
+      }
+
+      enTanda = tanda.porDocumento.get(fila.documentoNormalizado());
+
+      if (enTanda != null) {
+          return new Coincidencia(enTanda.persona, enTanda, false);
+      }
+
+      Persona porDocumento = indice.porDocumento().get(fila.documento());
+
+      if (porDocumento != null) {
+          return new Coincidencia(
+              porDocumento,
+              tanda.porPersona.get(porDocumento),
+              false
+          );
+      }
+
+      PersonaJuridica porCuit = indice.porCuit().get(
+          PersonaJuridica.normalizarCuit(fila.documento())
+      );
+
+      if (porCuit != null) {
+          return new Coincidencia(
+              porCuit,
+              tanda.porPersona.get(porCuit),
+              false
+          );
+      }
+
+      return null;
   }
 
   private void validar(Coincidencia coincidencia, FilaDonanteCsv fila) {
@@ -351,6 +514,13 @@ public class ImportacionDonantesService implements WithSimplePersistenceUnit {
   }
 
   private record Coincidencia(Persona persona, Destino destino, boolean porEmail) {
+  }
+
+  private record IndiceExistentes(
+    Map<String, Persona> porEmail,
+    Map<String, PersonaHumana> porDocumento,
+    Map<String, PersonaJuridica> porCuit
+  ) {
   }
 
   private static final class Destino {

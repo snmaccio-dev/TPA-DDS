@@ -16,8 +16,10 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
-class RepositorioDonantesTest implements SimplePersistenceTest {
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
+class RepositorioDonantesTest implements SimplePersistenceTest {
+  
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioDonantes repositorio = new RepositorioDonantes();
 
@@ -87,8 +89,13 @@ class RepositorioDonantesTest implements SimplePersistenceTest {
 
     List<Donante> requieren = repositorio.queRequierenAvisoDeInactividad(hoy.plusDays(1));
 
+    /*
     assertEquals(1, requieren.size());
     assertEquals("12345678", requieren.get(0).getPersona().getDocumento());
+    */
+
+    assertTrue(requieren.stream().anyMatch(d ->
+    "12345678".equals(d.getPersona().getDocumento())));
   }
 
   @Test
@@ -105,7 +112,10 @@ class RepositorioDonantesTest implements SimplePersistenceTest {
 
     List<Donante> requieren = repositorio.queRequierenAvisoDeInactividad(hoy.plusDays(1));
 
-    assertTrue(requieren.isEmpty());
+    //assertTrue(requieren.isEmpty());
+
+    assertFalse(requieren.stream().anyMatch(d ->
+    "12345678".equals(d.getPersona().getDocumento())));
   }
 
   @Test

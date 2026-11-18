@@ -36,4 +36,6 @@ public interface ClienteLogistica {
   List<String> subirFotos(String autorizacion, long entregaId, List<ArchivoSubido> fotos);
 
   void confirmarRecepcion(String autorizacion, long entregaId, List<String> fotos);
+
+  void eliminarCamion(String autorizacion, String patente);
 }

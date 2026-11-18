@@ -2021,3 +2021,63 @@ td:first-child {
 .photo-preview[hidden] {
     display: none;
 }
+
+
+/* CARRUSEL DE ENTREGAS PUBLICAS */
+
+.public-deliveries {
+    margin-bottom: 16px;
+    padding: 18px;
+}
+
+.public-deliveries .delivery-carousel {
+    width: 100%;
+    max-width: 620px;
+    margin: 0 auto;
+}
+
+.public-deliveries .delivery-slide img {
+    height: 300px;
+    border-radius: 10px;
+}
+
+.delivery-slide-content {
+    padding: 14px 4px;
+}
+
+.delivery-slide-content h3 {
+    margin: 0 0 8px;
+    font-size: 17px;
+}
+
+.delivery-slide-content p {
+    margin: 0 0 6px;
+    color: var(--muted);
+}
+
+.delivery-slide-content small {
+    color: var(--muted);
+}
+
+.delivery-carousel-controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    justify-content: center;
+    padding: 10px 0;
+}
+
+.delivery-carousel-controls button {
+    width: 34px;
+    height: 34px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    font-size: 22px;
+}
+
+.map-empty-message {
+    margin-top: 10px;
+    font-size: 12px;
+}

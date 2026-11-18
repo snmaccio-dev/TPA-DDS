@@ -7,6 +7,7 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.Collection;
 
 public class RepositorioDonantes implements WithSimplePersistenceUnit {
 
@@ -68,4 +69,18 @@ public class RepositorioDonantes implements WithSimplePersistenceUnit {
             .setParameter("limite", limite)
             .getResultList();
     }
+
+    ////////////////////////////////
+
+    public List<Donante> buscarPorPersonas(Collection<Persona> personas) {
+        if (personas == null || personas.isEmpty()) {
+            return List.of();
+        }
+
+        return createQuery(
+            "select d from Donante d where d.persona in :personas",
+            Donante.class)
+            .setParameter("personas", personas)
+            .getResultList();
+        }
 }

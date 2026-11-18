@@ -23,7 +23,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class RepositorioPersonasTest implements SimplePersistenceTest {
-
+  
   private final RepositorioPersonas repositorio = RepositorioPersonas.getInstance();
 
   @Test

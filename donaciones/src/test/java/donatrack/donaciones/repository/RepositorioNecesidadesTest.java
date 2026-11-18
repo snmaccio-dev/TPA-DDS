@@ -21,7 +21,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class RepositorioNecesidadesTest implements SimplePersistenceTest {
-
+   
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioEntidades repoEntidades = RepositorioEntidades.getInstance();
   private final RepositorioNecesidades repositorio = RepositorioNecesidades.getInstance();

@@ -19,4 +19,6 @@ public interface ClienteDonaciones {
   void publicarEntrega(EventoEntrega evento);
 
   void publicarRetornoADeposito(EventoRetornoDeposito evento);
+
+  
 }
