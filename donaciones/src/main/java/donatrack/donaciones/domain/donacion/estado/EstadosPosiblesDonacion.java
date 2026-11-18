@@ -1,6 +1,7 @@
 package donatrack.donaciones.domain.donacion.estado;
 
 public enum EstadosPosiblesDonacion {
+    PENDIENTE_RECEPCION,
     EN_DEPOSITO,
     ASIGNACION_REALIZADA,
     LISTA_PARA_ENTREGAR,

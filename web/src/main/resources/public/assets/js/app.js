@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", () => {
     const page = document.body.dataset.page;
 
@@ -55,6 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // MAPAS
 
+ 
     // MAPAS
     if (
         page === "public-donations" ||
@@ -71,62 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
 
-        if (page === "public-donations") {
-
-            const donations = [
-                {
-                    lat: -34.706,
-                    lng: -58.392,
-                    title: "Frutas y verduras",
-                    institution: "Comedor Los Pinos",
-                    location: "Lanús",
-                    image: "assets/img/entrega-01.jpg"
-                },
-                {
-                    lat: -34.662,
-                    lng: -58.365,
-                    title: "Ropa de lujosa",
-                    institution: "Casa de los estudiantes",
-                    location: "Avellaneda",
-                    image: "assets/img/entrega-02.jpg"
-                },
-                {
-                    lat: -34.760,
-                    lng: -58.405,
-                    title: "Productos de higiene",
-                    institution: "Centro La Esperanza",
-                    location: "Lomas de Zamora",
-                    image: "assets/img/entrega-03.jpg"
-                }
-            ];
-
-            donations.forEach(donation => {
-                const popupContent = `
-                    <div class="donation-popup">
-                        <img
-                            src="${donation.image}"
-                            alt="${donation.title}"
-                            class="donation-popup-image"
-                        >
-
-                        <div class="donation-popup-content">
-                            <span class="status-pill success">
-                                ✓ Entrega confirmada
-                            </span>
-
-                            <h3>${donation.title}</h3>
-                            <p>${donation.institution}</p>
-                            <small>${donation.location}</small>
-                        </div>
-                    </div>
-                `;
-
-                L.marker([donation.lat, donation.lng])
-                    .addTo(map)
-                    .bindPopup(popupContent);
-            });
-
-        } else {
+        if (page !== "public-donations") {
             const points = [
                 [
                     -34.70,
@@ -157,6 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
 
+
     // IMPORTACIÓN CSV
     const csv = document.getElementById("process-csv");
 
@@ -178,8 +124,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     // CARRUSEL DE DONACIONES
+
+    // CARRUSEL DE DONACIONES
     const slides = document.querySelectorAll(".delivery-slide");
-    const dots = document.querySelectorAll(".carousel-dot");
     const counter = document.getElementById("carouselCounter");
     const prev = document.getElementById("prevDelivery");
     const next = document.getElementById("nextDelivery");
@@ -194,21 +141,14 @@ document.addEventListener("DOMContentLoaded", () => {
                 slide.classList.toggle("active", i === currentSlide);
             });
 
-            dots.forEach((dot, i) => {
-                dot.classList.toggle("active", i === currentSlide);
-            });
-
             counter.textContent =
-                `0${currentSlide + 1} / 0${slides.length}`;
+                `${currentSlide + 1} / ${slides.length}`;
         }
 
         prev.addEventListener("click", () => showSlide(currentSlide - 1));
         next.addEventListener("click", () => showSlide(currentSlide + 1));
 
-        dots.forEach((dot, index) => {
-            dot.addEventListener("click", () => showSlide(index));
-        });
-
         showSlide(0);
     }
+
 });

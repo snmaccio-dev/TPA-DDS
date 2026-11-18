@@ -44,6 +44,8 @@ public class AsignacionesService implements WithSimplePersistenceUnit {
     return calcularPropuesta(donacion).candidatas();
   }
 
+/*
+
   public ResultadoCorrida ejecutarMatchmakingProgramado() {
     List<Donacion> pendientes = repositorioDonaciones.enEstado(EstadosPosiblesDonacion.EN_DEPOSITO);
 
@@ -69,6 +71,45 @@ public class AsignacionesService implements WithSimplePersistenceUnit {
     return new ResultadoCorrida(procesadas, fallidas);
   }
 
+*/
+
+
+public ResultadoCorrida ejecutarMatchmakingProgramado() {
+    List<Donacion> pendientes =
+        repositorioDonaciones.enEstado(EstadosPosiblesDonacion.EN_DEPOSITO);
+
+    int procesadas = 0;
+    List<String> fallidas = new ArrayList<>();
+
+    for (Donacion donacion : pendientes) {
+      try {
+        if (repositorioPropuestas.buscarPorDonacion(donacion.getId()).isPresent()) {
+          continue;
+        }
+
+        ResultadoMatchmaking resultado = calcularPropuesta(donacion);
+
+        withTransaction(() -> {
+          PropuestaAsignacion propuesta = new PropuestaAsignacion(
+              donacion.getId(),
+              resultado.candidatas(),
+              LocalDateTime.now(),
+              resultado.huboCoincidencias()
+          );
+
+          repositorioPropuestas.guardar(propuesta);
+        });
+
+        procesadas++;
+      } catch (RuntimeException e) {
+        fallidas.add("donación " + donacion.getId() + ": " + e.getMessage());
+      }
+    }
+
+    return new ResultadoCorrida(procesadas, fallidas);
+}
+
+
   public PropuestaAsignacion propuestaDe(long donacionId) {
     return repositorioPropuestas.buscarPorDonacion(donacionId)
         .orElseThrow(() -> new RecursoInexistenteException(
@@ -80,17 +121,33 @@ public class AsignacionesService implements WithSimplePersistenceUnit {
     return repositorioPropuestas.todas();
   }
 
+
   public void confirmarDestino(long donacionId, long beneficiariaId) {
-    Beneficiaria destinatario = repositorioEntidades.buscarPorId(beneficiariaId)
-        .orElseThrow(() -> new RecursoInexistenteException(
-            "No existe la beneficiaria con id " + beneficiariaId
-        ));
-    Donacion donacion = donacionesService.buscar(donacionId);
-    withTransaction(() -> {
-      donacion.confirmarDestino(destinatario);
-      repositorioPropuestas.eliminar(donacionId);
-    });
+      Beneficiaria destinatario = repositorioEntidades.buscarPorId(beneficiariaId)
+          .orElseThrow(() -> new RecursoInexistenteException(
+              "No existe la beneficiaria con id " + beneficiariaId
+          ));
+
+      Donacion donacion = donacionesService.buscar(donacionId);
+
+      boolean tieneNecesidadCompatible = destinatario.getNecesidades().stream()
+          .anyMatch(necesidad ->
+              necesidad.getSubcategoria().equals(donacion.getSubcategoria())
+          );
+
+      if (!tieneNecesidadCompatible) {
+        throw new donatrack.donaciones.domain.DatosInvalidosException(
+            "No se puede asignar la donación: la beneficiaria seleccionada "
+                + "no tiene una necesidad compatible con su subcategoría."
+        );
+      }
+
+      withTransaction(() -> {
+        donacion.confirmarDestino(destinatario);
+        repositorioPropuestas.eliminar(donacionId);
+      });
   }
+
 
   private ResultadoMatchmaking calcularPropuesta(Donacion donacion) {
     if (donacion.getEstado().getEstado() != EstadosPosiblesDonacion.EN_DEPOSITO) {

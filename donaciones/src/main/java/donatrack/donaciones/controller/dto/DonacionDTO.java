@@ -6,11 +6,8 @@ import donatrack.donaciones.domain.persona.Beneficiaria;
 
 import java.util.List;
 
-// Los 8 primeros campos (donacionId..donanteId) tienen el mismo nombre y tipo que
-// el record `DonacionParaPlanificar` de logistica, para que el mismo endpoint sirva a
-// Logistica y al front. El SerializadorJackson del otro lado ignora los campos extra.
-// donanteId lo usa Logistica para autorizar: lo guarda en la entrega y con eso valida
-// que una persona donante solo vea el seguimiento de sus propias donaciones.
+// Los primeros campos mantienen el contrato utilizado por Logística.
+// Los campos adicionales son consumidos por la aplicación web.
 public record DonacionDTO(
     long donacionId,
     String descripcion,
@@ -25,11 +22,13 @@ public record DonacionDTO(
     String categoria,
     String fechaHoraEntrega,
     List<BienDTO> bienes,
-    String fotoUrl
+    String fotoUrl,
+    String donanteNombre
 ) {
 
   public static DonacionDTO desde(Donacion donacion) {
     Beneficiaria destinatario = donacion.getDestinatarioAsignado();
+
     return new DonacionDTO(
         donacion.getId(),
         donacion.getDescripcion(),
@@ -46,7 +45,10 @@ public record DonacionDTO(
             : donacion.getSubcategoria().getCategoria().getNombre(),
         Fechas.aTexto(donacion.getFechaHoraEntrega()),
         donacion.getBienes().stream().map(BienDTO::desde).toList(),
-        donacion.getFotoUrl()
+        donacion.getFotoUrl(),
+        donacion.getDonante() == null
+            ? null
+            : donacion.getDonante().getPersona().getNombreDisplay()
     );
   }
 
@@ -54,3 +56,4 @@ public record DonacionDTO(
     return donaciones.stream().map(DonacionDTO::desde).toList();
   }
 }
+

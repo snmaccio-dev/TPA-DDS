@@ -97,8 +97,28 @@ public class DonacionesService implements WithSimplePersistenceUnit {
                                 List<DatosBien> bienes,
                                 String descripcion,
                                 String fotoUrl) {
+        return crear(
+            donante,
+            bienes,
+            descripcion,
+            fotoUrl,
+            EstadosPosiblesDonacion.EN_DEPOSITO
+        );
+    }
+
+    public List<Donacion> crear(Donante donante,
+                                List<DatosBien> bienes,
+                                String descripcion,
+                                String fotoUrl,
+                                EstadosPosiblesDonacion estadoInicial) {
         List<Bien> armados = bienes.stream().map(this::bienDe).toList();
-        List<Donacion> segmentadas = segmentador.segmentar(armados, donante, descripcion);
+
+        List<Donacion> segmentadas = segmentador.segmentar(
+            armados,
+            donante,
+            descripcion,
+            estadoInicial
+        );
 
         if (fotoUrl != null && !fotoUrl.isBlank()) {
             segmentadas.forEach(donacion -> donacion.asignarFoto(fotoUrl));
@@ -192,11 +212,54 @@ public class DonacionesService implements WithSimplePersistenceUnit {
         withTransaction(() -> buscar(id).marcarEnDeposito());
     }
 
+    public void confirmarRecepcion(long id) {
+        withTransaction(() -> buscar(id).confirmarRecepcionEnDeposito());
+    }
+
+    public void confirmarRecepcion(long id, String documentoDonante) {
+        withTransaction(() -> {
+            Donacion donacion = buscar(id);
+
+            if (documentoDonante == null || documentoDonante.isBlank()) {
+                throw new DatosInvalidosException("El documento del donante es obligatorio.");
+            }
+
+            String documentoRegistrado = donacion.getDonante()
+                .getPersona()
+                .getDocumento();
+
+            if (!documentoRegistrado.equals(documentoDonante.trim())) {
+                throw new DatosInvalidosException(
+                    "El documento ingresado no corresponde al donante de la donación " + id + "."
+                );
+            }
+
+            //donacion.confirmarRecepcionEnDeposito();
+
+            EstadosPosiblesDonacion estadoActual = donacion.getEstado().getEstado();
+
+            if (estadoActual == EstadosPosiblesDonacion.PENDIENTE_RECEPCION) {
+                donacion.confirmarRecepcionEnDeposito();
+            } else if (estadoActual != EstadosPosiblesDonacion.EN_DEPOSITO) {
+                throw new TransicionNoPermitidaException(
+                    "No se puede confirmar la recepción desde el estado "
+                        + estadoActual + "."
+                );
+            }
+        });
+    }
+
     public void marcarVencida(long id) {
         withTransaction(() -> {
             buscar(id).marcarVencida();
             repositorioPropuestas.eliminar(id);
         });
+    }
+
+    // Nuevo metodo
+
+    public void deshacerVencimiento(long id) {
+        withTransaction(() -> buscar(id).deshacerVencimiento());
     }
 
     public List<EstadoDonacion> historial(long id) {

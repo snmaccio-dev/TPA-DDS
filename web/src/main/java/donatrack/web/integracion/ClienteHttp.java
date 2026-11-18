@@ -75,6 +75,23 @@ public class ClienteHttp {
     escribir("PUT", autorizacion, ruta, cuerpo);
   }
 
+  // Nuevo metodo
+
+  public void parchear(String autorizacion, String ruta) {
+    HttpResponse<String> respuesta = enviar(
+        conAutorizacion(
+            HttpRequest.newBuilder()
+                .uri(URI.create(urlBase + ruta))
+                .header("Accept", "application/json")
+                .timeout(ESPERA)
+                .method("PATCH", HttpRequest.BodyPublishers.noBody()),
+            autorizacion
+        ).build()
+    );
+
+    verificar(respuesta);
+  }
+
   public <T> T publicarArchivos(String autorizacion,
                                 String ruta,
                                 String campo,
@@ -217,5 +234,20 @@ public class ClienteHttp {
     } catch (IOException e) {
       throw new ServicioNoDisponibleException(servicio, "no está disponible", e);
     }
+  }
+
+  public void eliminar(String autorizacion, String ruta) {
+    HttpResponse<String> respuesta = enviar(
+        conAutorizacion(
+            HttpRequest.newBuilder()
+                .uri(URI.create(urlBase + ruta))
+                .header("Accept", "application/json")
+                .timeout(ESPERA)
+                .DELETE(),
+            autorizacion
+        ).build()
+    );
+
+    verificar(respuesta);
   }
 }

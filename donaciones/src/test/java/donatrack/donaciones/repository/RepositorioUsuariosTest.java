@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RepositorioUsuariosTest implements SimplePersistenceTest {
-
+  
   private final RepositorioPersonas repoPersonas = RepositorioPersonas.getInstance();
   private final RepositorioDonantes repoDonantes = new RepositorioDonantes();
   private final RepositorioEntidades repoEntidades = RepositorioEntidades.getInstance();

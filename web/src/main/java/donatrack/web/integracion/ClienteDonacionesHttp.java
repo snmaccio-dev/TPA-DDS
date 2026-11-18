@@ -73,9 +73,23 @@ public class ClienteDonacionesHttp implements ClienteDonaciones {
     http.publicar(autorizacion, "/donaciones/" + donacionId + "/vencer", Map.of());
   }
 
+  // Nuevo metodo
+
+  @Override
+  public void deshacerVencimiento(String autorizacion, long donacionId) {
+      http.publicar(autorizacion, "/donaciones/" + donacionId + "/deshacer-vencimiento", Map.of());
+  }
+  
   @Override
   public void crearDonacion(String autorizacion, NuevaDonacion datos) {
     http.publicar(autorizacion, "/donaciones", datos);
+  }
+
+  // Nuevo metodo
+
+  @Override
+  public void marcarNotificacionLeida(String autorizacion, long notificacionId) {
+    http.parchear(autorizacion, "/notificaciones/" + notificacionId + "/leida");
   }
 
   @Override
@@ -116,5 +130,18 @@ public class ClienteDonacionesHttp implements ClienteDonaciones {
   @Override
   public void marcarTodasLasNotificacionesLeidas(String autorizacion) {
     http.publicar(autorizacion, "/notificaciones/mias/leidas", Map.of());
+  }
+
+  @Override
+  public void confirmarRecepcion(
+      String autorizacion,
+      long donacionId,
+      String donanteDocumento
+  ) {
+    http.publicar(
+        autorizacion,
+        "/donaciones/" + donacionId + "/confirmar-recepcion",
+        Map.of("donanteDocumento", donanteDocumento)
+    );
   }
 }

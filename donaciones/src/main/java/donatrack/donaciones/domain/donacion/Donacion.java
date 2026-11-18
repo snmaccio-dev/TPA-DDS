@@ -78,6 +78,13 @@ public class Donacion {
     public Donacion(List<Bien> bienes,
                     Donante donante,
                     String descripcion) {
+        this(bienes, donante, descripcion, EstadosPosiblesDonacion.EN_DEPOSITO);
+    }
+
+    public Donacion(List<Bien> bienes,
+                    Donante donante,
+                    String descripcion,
+                    EstadosPosiblesDonacion estadoInicial) {
         if (bienes == null || bienes.isEmpty()) {
             throw new DatosInvalidosException("La donacion debe contener al menos un bien.");
         }
@@ -87,11 +94,15 @@ public class Donacion {
         if (descripcion == null || descripcion.isBlank()) {
             throw new DatosInvalidosException("La donacion debe tener una descripcion.");
         }
+        if (estadoInicial == null) {
+            throw new DatosInvalidosException("La donacion debe tener un estado inicial.");
+        }
+
         this.bienes = new ArrayList<>(bienes);
         this.subcategoria = this.bienes.get(0).getSubcategoria();
         this.donante = donante;
         this.descripcion = descripcion;
-        this.estado = new EstadoDonacion(EstadosPosiblesDonacion.EN_DEPOSITO);
+        this.estado = new EstadoDonacion(estadoInicial);
         this.historialEstados.add(this.estado);
     }
 
@@ -137,6 +148,15 @@ public class Donacion {
         cambiarEstado(new EstadoDonacion(EstadosPosiblesDonacion.EN_DEPOSITO));
     }
 
+    public void confirmarRecepcionEnDeposito() {
+        exigirEstado(
+            "confirmar la recepcion en deposito",
+            EstadosPosiblesDonacion.PENDIENTE_RECEPCION
+        );
+
+        cambiarEstado(new EstadoDonacion(EstadosPosiblesDonacion.EN_DEPOSITO));
+    }
+
     public void marcarVencida() {
         EstadosPosiblesDonacion actual = estado.getEstado();
         if (actual == EstadosPosiblesDonacion.ENTREGADA || actual == EstadosPosiblesDonacion.VENCIDA) {
@@ -145,6 +165,26 @@ public class Donacion {
             );
         }
         cambiarEstado(new EstadoDonacion(EstadosPosiblesDonacion.VENCIDA));
+    }
+
+    // Nuevo metodo 
+
+    public void deshacerVencimiento() {
+        if (estado.getEstado() != EstadosPosiblesDonacion.VENCIDA) {
+            throw new TransicionNoPermitidaException(
+                "Solo se puede deshacer el vencimiento de una donación vencida."
+            );
+        }
+
+        if (historialEstados.size() < 2 ||
+            historialEstados.get(historialEstados.size() - 2).getEstado()
+                != EstadosPosiblesDonacion.EN_DEPOSITO) {
+            throw new TransicionNoPermitidaException(
+                "La donación no estaba en depósito antes de vencer."
+            );
+        }
+
+        cambiarEstado(new EstadoDonacion(EstadosPosiblesDonacion.EN_DEPOSITO));
     }
 
     private void exigirEstado(String accion, EstadosPosiblesDonacion... permitidos) {
@@ -225,6 +265,13 @@ public class Donacion {
                                  Donante donante,
                                  String descripcion) {
         return new Donacion(bienes, donante, descripcion);
+    }
+
+    public static Donacion crear(List<Bien> bienes,
+                                Donante donante,
+                                String descripcion,
+                                EstadosPosiblesDonacion estadoInicial) {
+        return new Donacion(bienes, donante, descripcion, estadoInicial);
     }
 
     // === Getters / Setters de dominio ===

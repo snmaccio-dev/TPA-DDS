@@ -1,5 +1,5 @@
 package donatrack.donaciones.repository;
-
+import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Persona;
@@ -8,6 +8,9 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.util.List;
 import java.util.Optional;
+
+import java.util.Collection;
+import java.util.ArrayList;
 
 public class RepositorioPersonas implements WithSimplePersistenceUnit {
 
@@ -52,6 +55,7 @@ public class RepositorioPersonas implements WithSimplePersistenceUnit {
             .findFirst();
     }
 
+
     public Optional<PersonaJuridica> buscarJuridicaPorCuit(String cuit) {
         return createQuery(
             "select p from PersonaJuridica p where p.cuit = :cuit",
@@ -94,4 +98,46 @@ public class RepositorioPersonas implements WithSimplePersistenceUnit {
             .getSingleResult()
             .intValue();
     }
+
+    /////////////////////
+
+    public List<Persona> buscarPorEmails(Collection<String> emails) {
+    if (emails == null || emails.isEmpty()) {
+        return new ArrayList<>();
+    }
+
+    return createQuery(
+        "select distinct p from Persona p join p.contactos c "
+            + "where c.tipo = :tipo and c.valor in :emails",
+        Persona.class)
+        .setParameter("tipo", TipoContacto.EMAIL)
+        .setParameter("emails", emails)
+        .getResultList();
+    }
+
+    public List<PersonaHumana> buscarHumanasPorDocumentos(Collection<String> documentos) {
+        if (documentos == null || documentos.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return createQuery(
+            "select p from PersonaHumana p where p.documento in :documentos",
+            PersonaHumana.class)
+            .setParameter("documentos", documentos)
+            .getResultList();
+    }
+
+    public List<PersonaJuridica> buscarJuridicasPorCuits(Collection<String> cuis) {
+        if (cuis == null || cuis.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return createQuery(
+            "select p from PersonaJuridica p where p.cuit in :cuits",
+            PersonaJuridica.class)
+            .setParameter("cuits", cuis)
+            .getResultList();
+    }
+
+    
 }

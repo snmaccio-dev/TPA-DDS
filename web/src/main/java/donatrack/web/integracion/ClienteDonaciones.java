@@ -64,4 +64,17 @@ public interface ClienteDonaciones {
   // POST /notificaciones/mias/leidas. Marca todas como leidas en una sola llamada:
   // ClienteHttp no tiene PATCH, asi que no hay marcado individual.
   void marcarTodasLasNotificacionesLeidas(String autorizacion);
+
+  void marcarNotificacionLeida(String autorizacion, long notificacionId);
+
+  void deshacerVencimiento(String autorizacion, long donacionId);
+
+  // POST /donaciones/{id}/confirmar-recepcion. Solo admin.
+  //void confirmarRecepcion(String autorizacion, long donacionId);
+
+    void confirmarRecepcion(
+      String autorizacion,
+      long donacionId,
+      String donanteDocumento
+  );
 }

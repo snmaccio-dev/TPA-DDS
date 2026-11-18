@@ -14,7 +14,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class RepositorioSubcategoriasTest implements SimplePersistenceTest {
-
+ 
   private final RepositorioSubcategorias repositorio = new RepositorioSubcategorias();
 
   @Test

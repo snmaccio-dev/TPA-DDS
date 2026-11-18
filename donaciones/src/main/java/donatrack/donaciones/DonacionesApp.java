@@ -255,6 +255,7 @@ public class DonacionesApp {
     });
   }
 
+  /*
   private static void sembrarSubcategorias(RepositorioSubcategorias repo) {
     // Sin withTransaction el persist se queda en el contexto de persistencia y no se
     // commitea nunca: el catalogo quedaba vacio y cualquier alta de donacion fallaba
@@ -286,9 +287,149 @@ public class DonacionesApp {
       repo.guardar(new Subcategoria("Camperas de abrigo", vestimenta, Unidades.UNIDADES));
     });
   }
+  */
 
   private static String variable(String nombre, String valorPorDefecto) {
     String valor = System.getenv(nombre);
     return valor == null || valor.isBlank() ? valorPorDefecto : valor;
   }
+
+
+
+    private static void sembrarSubcategorias(RepositorioSubcategorias repo) {
+        repo.withTransaction(() -> {
+
+            // Crear o recuperar una categoría existente
+            Categoria mobiliario = obtenerOCrearCategoria(repo, "Mobiliario");
+            Categoria alimentos = obtenerOCrearCategoria(repo, "Alimentos");
+            Categoria vestimenta = obtenerOCrearCategoria(repo, "Vestimenta");
+            Categoria electronica = obtenerOCrearCategoria(repo, "Electrónica");
+            Categoria electrodomesticos = obtenerOCrearCategoria(repo, "Electrodomésticos");
+            Categoria juguetes = obtenerOCrearCategoria(repo, "Juguetes");
+            Categoria educacion = obtenerOCrearCategoria(repo, "Libros y educación");
+            Categoria higiene = obtenerOCrearCategoria(repo, "Higiene personal");
+            Categoria limpieza = obtenerOCrearCategoria(repo, "Limpieza");
+            Categoria deportes = obtenerOCrearCategoria(repo, "Deportes");
+
+            // MOBILIARIO
+            agregarSubcategoria(repo, "Sillas", mobiliario, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Mesas", mobiliario, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Bancos escolares", mobiliario, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Escritorios", mobiliario, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Armarios", mobiliario, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Estanterias", mobiliario, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Camas", mobiliario, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Colchones", mobiliario, Unidades.UNIDADES);
+
+            // ALIMENTOS
+            agregarSubcategoria(repo, "Fideos secos", alimentos, Unidades.KILOGRAMOS);
+            agregarSubcategoria(repo, "Arroz", alimentos, Unidades.KILOGRAMOS);
+            agregarSubcategoria(repo, "Harina", alimentos, Unidades.KILOGRAMOS);
+            agregarSubcategoria(repo, "Leche", alimentos, Unidades.LITROS);
+            agregarSubcategoria(repo, "Aceite", alimentos, Unidades.LITROS);
+            agregarSubcategoria(repo, "Azucar", alimentos, Unidades.KILOGRAMOS);
+            agregarSubcategoria(repo, "Yerba", alimentos, Unidades.KILOGRAMOS);
+            agregarSubcategoria(repo, "Legumbres", alimentos, Unidades.KILOGRAMOS);
+            agregarSubcategoria(repo, "Conservas", alimentos, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Tomate en tetrapak", alimentos, Unidades.UNIDADES);
+
+            // VESTIMENTA
+            agregarSubcategoria(repo, "Camperas", vestimenta, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Remeras", vestimenta, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Pantalones", vestimenta, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Buzos", vestimenta, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Calzado", vestimenta, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Medias", vestimenta, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Ropa de bebe", vestimenta, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Uniformes escolares", vestimenta, Unidades.UNIDADES);
+
+            // ELECTRONICA
+            agregarSubcategoria(repo, "Computadoras", electronica, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Notebooks", electronica, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Celulares", electronica, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Tablets", electronica, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Monitores", electronica, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Televisores", electronica, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Impresoras", electronica, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Teclados", electronica, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Mouse", electronica, Unidades.UNIDADES);
+
+            // ELECTRODOMESTICOS
+            agregarSubcategoria(repo, "Heladeras", electrodomesticos, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Cocinas", electrodomesticos, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Microondas", electrodomesticos, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Lavarropas", electrodomesticos, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Ventiladores", electrodomesticos, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Estufas", electrodomesticos, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Pavas electricas", electrodomesticos, Unidades.UNIDADES);
+
+            // JUGUETES
+            agregarSubcategoria(repo, "Peluches", juguetes, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Muñecas", juguetes, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Juegos de mesa", juguetes, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Bloques de construccion", juguetes, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Juguetes educativos", juguetes, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Rompecabezas", juguetes, Unidades.UNIDADES);
+
+            // LIBROS Y EDUCACION
+            agregarSubcategoria(repo, "Libros de literatura", educacion, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Manuales escolares", educacion, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Cuadernos", educacion, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Carpetas", educacion, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Diccionarios", educacion, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Utiles escolares", educacion, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Mochilas", educacion, Unidades.UNIDADES);
+
+            // HIGIENE PERSONAL
+            agregarSubcategoria(repo, "Jabones", higiene, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Champu", higiene, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Acondicionador", higiene, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Pasta dental", higiene, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Cepillos de dientes", higiene, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Toallas femeninas", higiene, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Pañales", higiene, Unidades.UNIDADES);
+
+            // LIMPIEZA
+            agregarSubcategoria(repo, "Detergente", limpieza, Unidades.LITROS);
+            agregarSubcategoria(repo, "Lavandina", limpieza, Unidades.LITROS);
+            agregarSubcategoria(repo, "Desinfectante", limpieza, Unidades.LITROS);
+            agregarSubcategoria(repo, "Jabon para ropa", limpieza, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Esponjas", limpieza, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Escobas", limpieza, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Trapos de piso", limpieza, Unidades.UNIDADES);
+
+            // DEPORTES
+            agregarSubcategoria(repo, "Pelotas", deportes, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Raquetas", deportes, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Bicicletas", deportes, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Colchonetas", deportes, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Pesas", deportes, Unidades.KILOGRAMOS);
+            agregarSubcategoria(repo, "Redes deportivas", deportes, Unidades.UNIDADES);
+            agregarSubcategoria(repo, "Indumentaria deportiva", deportes, Unidades.UNIDADES);
+        });
+    }
+
+    private static Categoria obtenerOCrearCategoria(
+        RepositorioSubcategorias repo, String nombre) {
+
+        return repo.buscarCategoriaPorNombre(nombre)
+            .orElseGet(() -> {
+                Categoria categoria = new Categoria(nombre);
+                repo.guardarCategoria(categoria);
+                return categoria;
+            });
+    }
+
+    private static void agregarSubcategoria(
+        RepositorioSubcategorias repo,
+        String nombre,
+        Categoria categoria,
+        Unidades unidad) {
+
+        if (repo.buscarPorNombre(nombre).isEmpty()) {
+            repo.guardar(new Subcategoria(nombre, categoria, unidad));
+        }
+    }
+
+
 }

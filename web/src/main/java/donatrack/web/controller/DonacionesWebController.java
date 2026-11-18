@@ -58,8 +58,9 @@ public class DonacionesWebController {
     app.get("/admin-donantes", this::donantes);
     app.post("/admin-donantes", this::crearDonanteAdmin);
     app.get("/deposito", this::deposito);
-    app.post("/deposito", this::registrarIngreso);
     app.post("/deposito/{id}/vencer", this::marcarVencida);
+    app.post("/deposito/{id}/deshacer-vencimiento", this::deshacerVencimiento);
+    app.post("/deposito/confirmar-recepcion", this::confirmarRecepcion);
     app.get("/asignaciones", this::asignaciones);
     app.post("/asignaciones/{id}", this::confirmarAsignacion);
     app.post("/asignaciones/ejecutar", this::ejecutarAsignaciones);
@@ -76,6 +77,7 @@ public class DonacionesWebController {
 
 
     // Entidad beneficiaria
+    app.post("/notificaciones/{id}/marcar-leida", this::marcarNotificacionLeida);
   }
 
   /*
@@ -205,15 +207,86 @@ public class DonacionesWebController {
   }
   */
 
- private void panelBeneficiaria(Context ctx) {
-    ctx.render("beneficiario-dashboard.html.hbs",
-        Modelo.de("Panel de la entidad")
-            .seccion("Panel")
-            .conUsuario(usuario(ctx).perfil())
-            .comoBeneficiaria()
-            .activa("panel")
-            .mapa());
-}
+  private void panelBeneficiaria(Context ctx) {
+      List<DonacionVista> donaciones = new ArrayList<>();
+      List<NecesidadVista> necesidades = new ArrayList<>();
+
+      boolean donacionesDisponibles = true;
+      boolean necesidadesDisponibles = true;
+
+      try {
+          donaciones = new ArrayList<>(
+              clienteDonaciones.donaciones(
+                  autorizacionDe(ctx),
+                  FiltroDonacionesWeb.vacio()
+              )
+          );
+      } catch (IntegracionException e) {
+          donacionesDisponibles = false;
+      }
+
+      try {
+          necesidades = new ArrayList<>(
+              clienteDonaciones.necesidades(autorizacionDe(ctx))
+          );
+      } catch (IntegracionException e) {
+          necesidadesDisponibles = false;
+      }
+
+      long entregadas = donaciones.stream()
+          .filter(d -> "ENTREGADA".equals(d.getEstado()))
+          .count();
+
+      long enTransito = donaciones.stream()
+          .filter(d -> "EN_TRASLADO".equals(d.getEstado()))
+          .count();
+
+      long pendientes = donaciones.stream()
+          .filter(d -> Set.of(
+              "EN_DEPOSITO",
+              "ASIGNACION_REALIZADA",
+              "LISTA_PARA_ENTREGAR"
+          ).contains(d.getEstado()))
+          .count();
+
+      donaciones.sort(
+          Comparator.comparing(
+              DonacionVista::getId,
+              Comparator.nullsLast(Comparator.reverseOrder())
+          )
+      );
+
+      List<DonacionVista> recientes = donaciones.stream()
+          .limit(3)
+          .toList();
+
+      String fechaActual = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("MMMM yyyy", new java.util.Locale("es", "AR")));
+      
+
+  
+      Modelo modelo = Modelo.de("Panel de la entidad")
+          .seccion("Panel")
+          .conUsuario(usuario(ctx).perfil())
+          .comoBeneficiaria()
+          .activa("panel")
+          .con("datosDonacionesDisponibles", donacionesDisponibles)
+          .con("datosNecesidadesDisponibles", necesidadesDisponibles)
+          .con("totalDonaciones", donaciones.size())
+          .con("donacionesEntregadas", entregadas)
+          .con("donacionesEnTransito", enTransito)
+          .con("donacionesPendientes", pendientes)
+          .con("totalNecesidades", necesidades.size())
+          .con("donacionesRecientes", recientes)
+          .con("fechaActual", fechaActual);
+
+      if (!donacionesDisponibles || !necesidadesDisponibles) {
+          modelo.conAlertaAdvertencia(
+              "No se pudieron cargar todos los datos del panel. Intentá nuevamente más tarde."
+          );
+      }
+
+      ctx.render("beneficiario-dashboard.html.hbs", modelo.mapa());
+  }
 
   private void panelAdmin(Context ctx) {
     ctx.render("admin-dashboard.html.hbs",
@@ -369,41 +442,6 @@ public class DonacionesWebController {
             .mapa());
   }
 
-  private void registrarIngreso(Context ctx) {
-    String donanteDocumento = ctx.formParam("donanteDocumento");
-    String descripcion = ctx.formParam("descripcion");
-    String bienDescripcion = ctx.formParam("bienDescripcion");
-    String subcategoria = ctx.formParam("subcategoria");
-    Double cantidad = parseDecimal(ctx.formParam("cantidad"));
-
-    if (donanteDocumento == null || donanteDocumento.isBlank()
-        || descripcion == null || descripcion.isBlank()
-        || bienDescripcion == null || bienDescripcion.isBlank()
-        || subcategoria == null || subcategoria.isBlank()
-        || cantidad == null || cantidad <= 0) {
-      mostrarDeposito(ctx, "Completá todos los campos obligatorios del ingreso.");
-      return;
-    }
-
-    NuevaDonacion.Bien bien = new NuevaDonacion.Bien(
-        bienDescripcion,
-        subcategoria,
-        cantidad,
-        ctx.formParam("condicion"),
-        ctx.formParam("fechaVencimiento")
-    );
-    NuevaDonacion datos = new NuevaDonacion(donanteDocumento, descripcion, List.of(bien));
-
-    try {
-      clienteDonaciones.crearDonacion(autorizacionDe(ctx), datos);
-    } catch (IntegracionException e) {
-      mostrarDeposito(ctx, mensajeDe(e));
-      return;
-    }
-
-    ctx.redirect("/deposito");
-  }
-
   private void marcarVencida(Context ctx) {
     long id = ctx.pathParamAsClass("id", Long.class).get();
     try {
@@ -413,6 +451,76 @@ public class DonacionesWebController {
     }
     ctx.redirect("/deposito");
   }
+
+  // Nuevo metodo
+
+  private void marcarNotificacionLeida(Context ctx) {
+  try {
+    long id = Long.parseLong(ctx.pathParam("id"));
+    clienteDonaciones.marcarNotificacionLeida(autorizacionDe(ctx), id);
+  } catch (IntegracionException e) {
+    Alertas.flashError(ctx, mensajeDe(e));
+  }
+
+  ctx.redirect("/notificaciones");
+}
+
+  // Nuevo metodo
+ 
+  private void deshacerVencimiento(Context ctx) {
+      long id = ctx.pathParamAsClass("id", Long.class).get();
+      try {
+          clienteDonaciones.deshacerVencimiento(autorizacionDe(ctx), id);
+      } catch (IntegracionException e) {
+          Alertas.flashError(ctx, mensajeDe(e));
+      }
+      ctx.redirect("/deposito");
+  }
+
+ 
+  private void confirmarRecepcion(Context ctx) {
+      Long id = parseLargo(ctx.formParam("donacionId"));
+      String documento = ctx.formParam("donanteDocumento");
+
+      if (id == null || id <= 0 || documento == null || documento.isBlank()) {
+          Alertas.flashError(ctx, "Ingresá un ID de donación y un documento válidos.");
+          ctx.redirect("/deposito");
+          return;
+      }
+
+      try {
+          clienteDonaciones.confirmarRecepcion(
+              autorizacionDe(ctx),
+              id,
+              documento.trim()
+          );
+      } catch (IntegracionException e) {
+          Alertas.flashError(ctx, mensajeDe(e));
+          ctx.redirect("/deposito");
+          return;
+      }
+
+      try {
+          ResultadoEjecucion resultado =
+              clienteDonaciones.ejecutarAsignaciones(autorizacionDe(ctx));
+
+          if (resultado.cantidadFallidas() > 0) {
+              Alertas.flashAdvertencia(ctx,
+                  "La recepción fue confirmada. Se procesaron "
+                      + resultado.procesadas() + " donaciones; "
+                      + resultado.cantidadFallidas()
+                      + " no pudieron procesarse.");
+          }
+      } catch (IntegracionException e) {
+          Alertas.flashAdvertencia(ctx,
+              "La recepción fue confirmada, pero no se pudo generar la propuesta de asignación: "
+                  + mensajeDe(e));
+      }
+
+      ctx.redirect("/asignaciones");
+  }
+
+ 
 
   private void asignaciones(Context ctx) {
     mostrarAsignaciones(ctx, null);
@@ -450,31 +558,68 @@ public class DonacionesWebController {
     ctx.render("asignaciones.html.hbs", modelo.mapa());
   }
 
+  // Esto lo cambie
   private List<PropuestaVista> propuestasEnriquecidas(Context ctx) {
-    List<PropuestaVista> propuestas =
-        clienteDonaciones.propuestasDeAsignacion(autorizacionDe(ctx));
-    if (propuestas.isEmpty()) {
-      return propuestas;
-    }
+      String autorizacion = autorizacionDe(ctx);
 
-    Map<Long, String> descripciones;
-    try {
-      List<DonacionVista> todas =
-          clienteDonaciones.donaciones(autorizacionDe(ctx), FiltroDonacionesWeb.vacio());
-      Map<Long, String> acum = new HashMap<>();
-      for (DonacionVista d : todas) {
-        acum.put(d.getId(), d.getDescripcion());
+      List<PropuestaVista> propuestas =
+          clienteDonaciones.propuestasDeAsignacion(autorizacion);
+
+      if (propuestas.isEmpty()) {
+        return propuestas;
       }
-      descripciones = acum;
-    } catch (RuntimeException e) {
-      descripciones = Map.of();
-    }
 
-    List<PropuestaVista> enriquecidas = new ArrayList<>(propuestas.size());
-    for (PropuestaVista p : propuestas) {
-      enriquecidas.add(p.conDescripcion(descripciones.get(p.getDonacionId())));
-    }
-    return enriquecidas;
+      List<DonacionVista> donaciones =
+          clienteDonaciones.donaciones(autorizacion, FiltroDonacionesWeb.vacio());
+
+      List<EntidadVista> entidades =
+          clienteDonaciones.entidades(autorizacion);
+
+      List<NecesidadVista> necesidades =
+          clienteDonaciones.necesidades(autorizacion);
+
+      Map<Long, DonacionVista> donacionesPorId = new HashMap<>();
+
+      for (DonacionVista donacion : donaciones) {
+        donacionesPorId.put(donacion.getId(), donacion);
+      }
+
+      List<PropuestaVista> enriquecidas = new ArrayList<>();
+
+      for (PropuestaVista propuesta : propuestas) {
+        DonacionVista donacion = donacionesPorId.get(propuesta.getDonacionId());
+
+        if (donacion == null) {
+          enriquecidas.add(propuesta.conDatos(
+              propuesta.getDescripcionDonacion(),
+              "Donante no identificado",
+              List.of()
+          ));
+          continue;
+        }
+
+        List<PropuestaVista.Candidata> compatibles = entidades.stream()
+            .filter(entidad -> necesidades.stream().anyMatch(necesidad ->
+                entidad.getCuit() != null
+                    && entidad.getCuit().equals(necesidad.cuitBeneficiaria())
+                    && donacion.getSubcategoria() != null
+                    && donacion.getSubcategoria().equals(necesidad.getSubcategoria())
+            ))
+            .map(entidad -> new PropuestaVista.Candidata(
+                entidad.getId(),
+                entidad.getRazonSocial(),
+                entidad.getCuit()
+            ))
+            .toList();
+
+        enriquecidas.add(propuesta.conDatos(
+            donacion.getDescripcion(),
+            donacion.getDonanteIdentificacion(),
+            compatibles
+        ));
+      }
+
+      return enriquecidas;
   }
 
   private void confirmarAsignacion(Context ctx) {

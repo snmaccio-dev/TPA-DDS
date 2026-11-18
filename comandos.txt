@@ -30,6 +30,10 @@ admin.donatrack@gmail.com
 1234567
 ID: fc6ba8e2-9756-44b2-8432-8c0f4e7f6098
 
+Beneficiaria
+martin.fernandez@example.com
+1234567890
+
 Actualizar
 
 mvn clean package

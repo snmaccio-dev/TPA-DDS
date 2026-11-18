@@ -136,4 +136,11 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
     return "/camiones/"
         + URLEncoder.encode(patente, StandardCharsets.UTF_8).replace("+", "%20");
   }
+
+  @Override
+  public void eliminarCamion(String autorizacion, String patente) {
+    http.eliminar(autorizacion, rutaDeCamion(patente));
+  }
+
+  
 }

@@ -347,6 +347,9 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
 
   @Test
   void elArchivoDeEjemploChicoCreaCuatroYActualizaUno() {
+
+    System.out.println("INICIO: ARCHIVO CHICO");
+
     ProveedorFalso proveedor = new ProveedorFalso();
     ImportacionDonantesService service = nuevoService(proveedor, repoUsuarios, new LectorCsvDonantes());
 
@@ -370,6 +373,9 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
 
   @Test
   void elArchivoDeEjemploGrandeCreaTodosMenosLosEmailsRepetidos() {
+
+    System.out.println("INICIO: ARCHIVO GRANDE");
+
     ProveedorFalso proveedor = new ProveedorFalso();
     ImportacionDonantesService service = nuevoService(proveedor, repoUsuarios, new LectorCsvDonantes());
 

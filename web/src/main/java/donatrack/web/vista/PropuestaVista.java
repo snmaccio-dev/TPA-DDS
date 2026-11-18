@@ -7,12 +7,14 @@ public record PropuestaVista(
     String fechaGeneracion,
     boolean huboCoincidencias,
     List<Candidata> candidatas,
-    String descripcionDonacion
+    String descripcionDonacion,
+    String donanteNombre
 ) {
 
-  public record Candidata(long id, String razonSocial) {
+  public record Candidata(long id, String razonSocial, String cuit) {
     public long getId() { return id; }
     public String getRazonSocial() { return razonSocial; }
+    public String getCuit() { return cuit; }
   }
 
   public PropuestaVista {
@@ -23,15 +25,35 @@ public record PropuestaVista(
   public List<Candidata> getCandidatas() { return candidatas; }
   public boolean isHuboCoincidencias() { return huboCoincidencias; }
   public boolean isTieneCandidatas() { return !candidatas.isEmpty(); }
+
   public String getDescripcionDonacion() {
-    return descripcionDonacion == null ? "Donación #" + donacionId : descripcionDonacion;
+    return descripcionDonacion == null
+        ? "Donación #" + donacionId
+        : descripcionDonacion;
+  }
+
+  public String getDonanteNombre() {
+    return donanteNombre == null || donanteNombre.isBlank()
+        ? "Donante no identificado"
+        : donanteNombre;
   }
 
   public String getFechaGeneracionTexto() {
     return Formato.fechaHoraCorta(fechaGeneracion);
   }
 
-  public PropuestaVista conDescripcion(String descripcion) {
-    return new PropuestaVista(donacionId, fechaGeneracion, huboCoincidencias, candidatas, descripcion);
+  public PropuestaVista conDatos(
+      String descripcion,
+      String nombreDonante,
+      List<Candidata> beneficiariasCompatibles
+  ) {
+    return new PropuestaVista(
+        donacionId,
+        fechaGeneracion,
+        huboCoincidencias,
+        beneficiariasCompatibles,
+        descripcion,
+        nombreDonante
+    );
   }
 }

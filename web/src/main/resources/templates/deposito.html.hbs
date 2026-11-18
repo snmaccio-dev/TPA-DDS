@@ -2,21 +2,27 @@
 <body data-page="warehouse" data-role="admin">
 {{> templates/partials/sidebar}}
 {{> templates/partials/topbar}}
+
 <main class="app-main">
     <div class="page-heading">
         <div>
             <span class="eyebrow">OPERACIÓN LOGÍSTICA</span>
             <h1>Depósito y donaciones</h1>
-            <p>Registrá ingresos y mantené actualizado el estado de los bienes.</p>
+            <p>Confirmá la recepción de donaciones y mantené actualizado el estado de los bienes.</p>
         </div>
-        <button class="btn btn-primary" data-open-modal="stock-modal">＋ Registrar ingreso</button>
+
+        <button class="btn btn-primary" data-open-modal="confirmar-modal">
+            Confirmar recepción
+        </button>
     </div>
+
     <section class="panel">
         <form class="filter-bar" method="get" action="/deposito">
             <label>Estado
                 <select name="estado">
                     <option value="">Todos</option>
                     <option value="EN_DEPOSITO">En depósito</option>
+                    <option value="PENDIENTE_RECEPCION">Pendiente de recepción</option>
                     <option value="ASIGNACION_REALIZADA">Asignada</option>
                     <option value="LISTA_PARA_ENTREGAR">Lista para entregar</option>
                     <option value="EN_TRASLADO">En traslado</option>
@@ -25,6 +31,7 @@
                     <option value="VENCIDA">Vencida</option>
                 </select>
             </label>
+
             <label>Categoría
                 <select name="categoria">
                     <option value="">Todas</option>
@@ -33,12 +40,15 @@
                     {{/each}}
                 </select>
             </label>
+
             <button class="btn btn-primary" type="submit">Filtrar</button>
         </form>
+
         <div class="table-wrap">
             <table>
                 <thead>
                     <tr>
+                        <th>ID</th>
                         <th>Donación</th>
                         <th>Cantidad</th>
                         <th>Categoría</th>
@@ -48,69 +58,88 @@
                         <th>Acción</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     {{#each donaciones}}
                     <tr>
+                        <td>#{{id}}</td>
                         <td>{{descripcion}}</td>
                         <td>{{cantidadTexto}}</td>
                         <td>{{categoria}}</td>
                         <td>{{subcategoria}}</td>
-                        <td><span class="status-pill {{estadoClase}}">{{estadoTexto}}</span></td>
+                        <td>
+                            <span class="status-pill {{estadoClase}}">
+                                {{estadoTexto}}
+                            </span>
+                        </td>
                         <td>{{fechaHoraEntregaTexto}}</td>
                         <td>
                             {{#if disponible}}
                             <form method="post" action="/deposito/{{id}}/vencer">
-                                <button class="table-action" type="submit">Marcar vencida</button>
+                                <button class="table-action" type="submit">
+                                    Marcar vencida
+                                </button>
+                            </form>
+                            {{/if}}
+
+                            {{#if vencida}}
+                            <form method="post" action="/deposito/{{id}}/deshacer-vencimiento">
+                                <button class="table-action" type="submit">
+                                    Deshacer vencimiento
+                                </button>
                             </form>
                             {{/if}}
                         </td>
                     </tr>
                     {{/each}}
+
                     {{#unless donaciones}}
-                    <tr><td colspan="7" class="muted">No hay donaciones registradas.</td></tr>
+                    <tr>
+                        <td colspan="8" class="muted">
+                            No hay donaciones registradas.
+                        </td>
+                    </tr>
                     {{/unless}}
                 </tbody>
             </table>
         </div>
     </section>
-    <div class="modal" id="stock-modal">
-        <form class="modal-card" action="/deposito" method="post">
+
+    <!-- Modal: confirmar recepción de una donación existente -->
+    <div class="modal" id="confirmar-modal">
+        <form class="modal-card" action="/deposito/confirmar-recepcion" method="post">
             <button type="button" class="modal-close" data-close-modal>×</button>
-            <h2>Registrar donación recibida</h2>
-            <label>Donante
-                <select name="donanteDocumento" required>
-                    {{#each donantes}}
-                    <option value="{{documento}}">{{nombreDisplay}} · {{documento}}</option>
-                    {{/each}}
-                </select>
+
+            <h2>Confirmar recepción de donación</h2>
+            <p>Ingresá los datos de la donación que ya fue registrada por el donante.</p>
+
+            <label>ID de donación
+                <input
+                    type="number"
+                    name="donacionId"
+                    min="1"
+                    required
+                    placeholder="Ingresá el ID de la donación"
+                >
             </label>
-            <label>Descripción general
-                <input name="descripcion" required placeholder="Descripción del lote">
+
+            <label>Documento del donante
+                <input
+                    type="text"
+                    name="donanteDocumento"
+                    required
+                    placeholder="Ingresá el CUIT o DNI del donante"
+                >
             </label>
-            <label>Descripción del bien
-                <input name="bienDescripcion" required placeholder="Ej. Alimentos en conserva">
-            </label>
-            <label>Subcategoría
-                <select name="subcategoria" required>
-                    {{#each subcategorias}}
-                    <option value="{{nombre}}">{{etiqueta}}</option>
-                    {{/each}}
-                </select>
-            </label>
-            <div class="form-row">
-                <label>Cantidad<input type="number" step="0.01" min="0.01" name="cantidad" required></label>
-                <label>Condición
-                    <select name="condicion">
-                        <option value="">Sin especificar</option>
-                        <option value="NUEVO">Nuevo</option>
-                        <option value="USADO">Usado</option>
-                    </select>
-                </label>
-            </div>
-            <label>Fecha de vencimiento<input type="date" name="fechaVencimiento"></label>
-            <button class="btn btn-primary btn-block" type="submit">Registrar ingreso</button>
+
+            <button class="btn btn-primary btn-block" type="submit">
+                Confirmar recepción
+            </button>
         </form>
     </div>
+
 </main>
+
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}
+</body>
