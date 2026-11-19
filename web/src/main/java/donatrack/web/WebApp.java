@@ -135,7 +135,7 @@ public class WebApp {
     new PublicoController(clienteDonaciones, clienteLogistica).registrarRutas(app);
     new SesionController(oidc, clienteDonaciones).registrarRutas(app);
     new DonacionesWebController(clienteDonaciones, identidad).registrarRutas(app);
-    new LogisticaWebController(clienteLogistica, identidad).registrarRutas(app);
+    new LogisticaWebController(clienteLogistica, identidad, urlLogistica).registrarRutas(app);
 
     System.out.println("Cliente web de DonaTrack escuchando en " + urlBase
         + " | Logistica: " + urlLogistica
