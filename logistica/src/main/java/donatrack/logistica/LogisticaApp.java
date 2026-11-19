@@ -2,6 +2,7 @@ package donatrack.logistica;
 
 import donatrack.logistica.controller.CamionesController;
 import donatrack.logistica.controller.ChoferesController;
+import donatrack.logistica.controller.CamionesWebController;
 import donatrack.logistica.controller.EntregasController;
 import donatrack.logistica.controller.MonitoreoController;
 import donatrack.logistica.controller.PlanificacionController;
@@ -121,6 +122,7 @@ public class LogisticaApp {
 
     app.after(ctx -> WithSimplePersistenceUnit.dispose());
 
+    /*
     ControlDeAcceso control;
     if (seguridadActiva) {
       new FiltroDeAcceso(new VerificadorDeTokens(
@@ -135,8 +137,38 @@ public class LogisticaApp {
     } else {
       control = new ControlDeAccesoAbierto();
     }
+    */
+
+    // Se reemplaza esta parte por esto 
+
+    VerificadorDeTokens verificador = seguridadActiva
+        ? new VerificadorDeTokens(
+            keycloakUrl,
+            keycloakRealm,
+            variable("KEYCLOAK_ISSUER", null)
+        )
+        : null;
+
+    ControlDeAcceso control;
+
+    if (seguridadActiva) {
+        new FiltroDeAcceso(verificador).registrarEn(app);
+
+        control = new ControlDeAccesoPorToken(
+            new DirectorioDeUsuariosHttp(urlDonaciones, json)
+        );
+    } else {
+        control = new ControlDeAccesoAbierto();
+    }
+
+    new CamionesWebController(
+        gestorCamiones,
+        verificador,
+        seguridadActiva
+    ).registrarRutas(app);
 
     new CamionesController(gestorCamiones).registrarRutas(app);
+    
     new ChoferesController(gestorChoferes).registrarRutas(app);
     new RutasController(gestorRutas, gestorEntregas, gestorChoferes, control)
         .registrarRutas(app);

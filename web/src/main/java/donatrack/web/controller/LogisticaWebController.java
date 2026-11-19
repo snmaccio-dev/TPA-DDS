@@ -31,17 +31,23 @@ public class LogisticaWebController {
   private final ClienteLogistica clienteLogistica;
   private final IdentidadDelUsuario identidad;
 
-  public LogisticaWebController(ClienteLogistica clienteLogistica,
-                                IdentidadDelUsuario identidad) {
-    this.clienteLogistica = clienteLogistica;
-    this.identidad = identidad;
-  }
+  private final String urlLogistica;
 
+  public LogisticaWebController(
+          ClienteLogistica clienteLogistica,
+          IdentidadDelUsuario identidad,
+          String urlLogistica
+  ) {
+      this.clienteLogistica = clienteLogistica;
+      this.identidad = identidad;
+      this.urlLogistica = urlLogistica;
+  }
+/*
   public void registrarRutas(Javalin app) {
     app.get("/camiones", this::camiones);
-    app.post("/camiones", this::crearCamion);
-    app.get("/camiones/{patente}/editar", this::formularioDeEdicion);
-    app.post("/camiones/{patente}", this::actualizarCamion);
+    //app.post("/camiones", this::crearCamion);
+    //app.get("/camiones/{patente}/editar", this::formularioDeEdicion);
+    //app.post("/camiones/{patente}", this::actualizarCamion);
 
     app.get("/monitoreo-flota", this::monitoreoDeFlota);
     app.get("/rutas-planificadas", this::rutasPlanificadas);
@@ -55,11 +61,70 @@ public class LogisticaWebController {
     app.get("/confirmar-recepcion", this::confirmarRecepcion);
     app.post("/confirmar-recepcion/{id}", this::registrarRecepcion);
 
-    app.post("/camiones/{patente}/eliminar", this::eliminarCamion);
+    //app.post("/camiones/{patente}/eliminar", this::eliminarCamion);
+
+    // Nuevo
+    app.get("/camiones", this::camiones);
+  }
+*/
+
+  public void registrarRutas(Javalin app) {
+      app.get("/camiones", this::camiones);
+
+      app.get("/monitoreo-flota", this::monitoreoDeFlota);
+      app.get("/rutas-planificadas", this::rutasPlanificadas);
+
+      app.get("/chofer-inicio-ruta", this::rutasDelChofer);
+      app.post("/chofer-inicio-ruta/{id}", this::iniciarRuta);
+
+      app.get("/seguimiento-donante", this::seguimientoDonante);
+      app.get("/seguimiento-beneficiario", this::seguimientoBeneficiaria);
+
+      app.get("/confirmar-recepcion", this::confirmarRecepcion);
+      app.post("/confirmar-recepcion/{id}", this::registrarRecepcion);
   }
 
+/*
   private void camiones(Context ctx) {
     mostrarCamiones(ctx, null);
+  }
+*/
+
+  private void camiones(Context ctx) {
+      String token = usuario(ctx).accessToken();
+
+      String destino = escaparHtml(urlLogistica)
+          + "/admin/camiones/sesion";
+
+      String html = """
+          <!DOCTYPE html>
+          <html lang="es">
+          <head>
+              <meta charset="UTF-8">
+              <title>Administración de camiones</title>
+          </head>
+          <body>
+              <p>Ingresando a administración de camiones...</p>
+              <form id="handoff" method="post" action="%s">
+                  <input type="hidden" name="token" value="%s">
+              </form>
+              <script>
+                  document.getElementById('handoff').submit();
+              </script>
+          </body>
+          </html>
+          """.formatted(destino, escaparHtml(token));
+
+      ctx.html(html);
+  }
+
+  private String escaparHtml(String valor) {
+      if (valor == null) return "";
+      return valor.replace("&", "&amp;")
+              .replace("<", "&lt;")
+              .replace(">", "&gt;")
+              .replace("\"", "&quot;")
+              .replace("'", "&#39;");
   }
 
   private void crearCamion(Context ctx) {
