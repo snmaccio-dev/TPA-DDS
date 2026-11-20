@@ -211,7 +211,8 @@ public class WebApp {
         "/donaciones-asignadas",
         "/seguimiento-beneficiario",
         "/confirmar-recepcion"
-    ).contains(ruta)) {
+    ).contains(ruta)
+        || ruta.startsWith("/confirmar-recepcion/")) {
       return "BENEFICIARIA";
     }
 
