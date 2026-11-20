@@ -1,0 +1,14 @@
+# Proxy inverso del despliegue en Oracle. Caddy obtiene y renueva solo los certificados
+# de Let's Encrypt para cada subdominio. DOMINIO sale del .env (ej: 140-238-1-2.sslip.io).
+
+web.{$DOMINIO} {
+	reverse_proxy web:8082
+}
+
+logistica.{$DOMINIO} {
+	reverse_proxy logistica:8081
+}
+
+auth.{$DOMINIO} {
+	reverse_proxy keycloak:8080
+}
