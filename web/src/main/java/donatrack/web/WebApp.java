@@ -43,6 +43,7 @@ public class WebApp {
   public static void main(String[] args) {
     String urlBase = variable("WEB_URL_BASE", "http://localhost:" + PUERTO);
     String urlLogistica = variable("LOGISTICA_URL_BASE", "http://localhost:8081");
+    String urlLogisticaPublica = variable("LOGISTICA_URL_PUBLICA", "http://localhost:8081");
     String urlDonaciones = variable("DONACIONES_URL_BASE", "http://localhost:8080");
     boolean seguridadActiva = !"off".equalsIgnoreCase(variable("WEB_SEGURIDAD", "on"));
 
@@ -135,7 +136,7 @@ public class WebApp {
     new PublicoController(clienteDonaciones, clienteLogistica).registrarRutas(app);
     new SesionController(oidc, clienteDonaciones).registrarRutas(app);
     new DonacionesWebController(clienteDonaciones, identidad).registrarRutas(app);
-    new LogisticaWebController(clienteLogistica, identidad, urlLogistica).registrarRutas(app);
+    new LogisticaWebController(clienteLogistica, identidad, urlLogisticaPublica).registrarRutas(app);
 
     System.out.println("Cliente web de DonaTrack escuchando en " + urlBase
         + " | Logistica: " + urlLogistica

@@ -49,10 +49,10 @@
           <td>{{cargaTexto}}</td>
           <td><span class="status-pill {{situacionEstilo}}">{{situacionTexto}}</span></td>
           <td>
-            <a class="table-action" href="/camiones/{{patente}}/editar">Editar</a>
+            <a class="table-action" href="/admin/camiones/{{patente}}/editar">Editar</a>
 
             <form method="post"
-                  action="/camiones/{{patente}}/eliminar"
+                  action="/admin/camiones/{{patente}}/eliminar"
                   style="display: inline">
               <button type="submit" class="table-action">Eliminar</button>
             </form>
@@ -68,7 +68,7 @@
   </section>
 
   <div class="modal" id="truck-modal">
-    <form class="modal-card" method="post" action="/camiones">
+    <form class="modal-card" method="post" action="/admin/camiones">
       <button type="button" class="modal-close" data-close-modal>×</button>
       <h2>Agregar camión</h2>
       <label>Patente<input name="patente" required placeholder="Ej. AB 123 CD"></label>

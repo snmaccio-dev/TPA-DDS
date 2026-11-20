@@ -3,15 +3,12 @@ package donatrack.web.controller;
 import donatrack.web.Alertas;
 import donatrack.web.Modelo;
 import donatrack.web.integracion.ArchivoSubido;
-import donatrack.web.integracion.CapacidadesDeCamion;
 import donatrack.web.integracion.ClienteLogistica;
 import donatrack.web.integracion.IntegracionException;
-import donatrack.web.integracion.NuevoCamion;
 import donatrack.web.integracion.OperacionRechazadaException;
 import donatrack.web.integracion.ServicioNoDisponibleException;
 import donatrack.web.sesion.IdentidadDelUsuario;
 import donatrack.web.sesion.UsuarioWeb;
-import donatrack.web.vista.FlotaVista;
 import donatrack.web.vista.PlanificacionVista;
 import donatrack.web.vista.RutaVista;
 import donatrack.web.vista.SeguimientoVista;
@@ -31,23 +28,22 @@ public class LogisticaWebController {
   private final ClienteLogistica clienteLogistica;
   private final IdentidadDelUsuario identidad;
 
-  private final String urlLogistica;
+  // URL de Logistica que resuelve el navegador. LOGISTICA_URL_BASE, en Docker, es la
+  // interna (http://logistica:8081) y el navegador no la alcanza.
+  private final String urlLogisticaPublica;
 
   public LogisticaWebController(
-          ClienteLogistica clienteLogistica,
-          IdentidadDelUsuario identidad,
-          String urlLogistica
+      ClienteLogistica clienteLogistica,
+      IdentidadDelUsuario identidad,
+      String urlLogisticaPublica
   ) {
-      this.clienteLogistica = clienteLogistica;
-      this.identidad = identidad;
-      this.urlLogistica = urlLogistica;
+    this.clienteLogistica = clienteLogistica;
+    this.identidad = identidad;
+    this.urlLogisticaPublica = urlLogisticaPublica;
   }
-/*
+
   public void registrarRutas(Javalin app) {
     app.get("/camiones", this::camiones);
-    //app.post("/camiones", this::crearCamion);
-    //app.get("/camiones/{patente}/editar", this::formularioDeEdicion);
-    //app.post("/camiones/{patente}", this::actualizarCamion);
 
     app.get("/monitoreo-flota", this::monitoreoDeFlota);
     app.get("/rutas-planificadas", this::rutasPlanificadas);
@@ -60,140 +56,11 @@ public class LogisticaWebController {
 
     app.get("/confirmar-recepcion", this::confirmarRecepcion);
     app.post("/confirmar-recepcion/{id}", this::registrarRecepcion);
-
-    //app.post("/camiones/{patente}/eliminar", this::eliminarCamion);
-
-    // Nuevo
-    app.get("/camiones", this::camiones);
-  }
-*/
-
-  public void registrarRutas(Javalin app) {
-      app.get("/camiones", this::camiones);
-
-      app.get("/monitoreo-flota", this::monitoreoDeFlota);
-      app.get("/rutas-planificadas", this::rutasPlanificadas);
-
-      app.get("/chofer-inicio-ruta", this::rutasDelChofer);
-      app.post("/chofer-inicio-ruta/{id}", this::iniciarRuta);
-
-      app.get("/seguimiento-donante", this::seguimientoDonante);
-      app.get("/seguimiento-beneficiario", this::seguimientoBeneficiaria);
-
-      app.get("/confirmar-recepcion", this::confirmarRecepcion);
-      app.post("/confirmar-recepcion/{id}", this::registrarRecepcion);
   }
 
-/*
+  // La administracion de camiones vive en Logistica, con su propio login.
   private void camiones(Context ctx) {
-    mostrarCamiones(ctx, null);
-  }
-*/
-
-  private void camiones(Context ctx) {
-      String token = usuario(ctx).accessToken();
-
-      String destino = escaparHtml(urlLogistica)
-          + "/admin/camiones/sesion";
-
-      String html = """
-          <!DOCTYPE html>
-          <html lang="es">
-          <head>
-              <meta charset="UTF-8">
-              <title>Administración de camiones</title>
-          </head>
-          <body>
-              <p>Ingresando a administración de camiones...</p>
-              <form id="handoff" method="post" action="%s">
-                  <input type="hidden" name="token" value="%s">
-              </form>
-              <script>
-                  document.getElementById('handoff').submit();
-              </script>
-          </body>
-          </html>
-          """.formatted(destino, escaparHtml(token));
-
-      ctx.html(html);
-  }
-
-  private String escaparHtml(String valor) {
-      if (valor == null) return "";
-      return valor.replace("&", "&amp;")
-              .replace("<", "&lt;")
-              .replace(">", "&gt;")
-              .replace("\"", "&quot;")
-              .replace("'", "&#39;");
-  }
-
-  private void crearCamion(Context ctx) {
-    String autorizacion = autorizacionDe(ctx);
-
-    Double volumen = parseDecimalForm(ctx, "capacidadVolumen");
-    Double altura = parseDecimalForm(ctx, "altura");
-    Double carga = parseDecimalForm(ctx, "capacidadCarga");
-    String patente = ctx.formParam("patente");
-
-    if (patente == null || patente.isBlank()
-        || volumen == null || altura == null || carga == null) {
-      mostrarCamiones(ctx, "Completá la patente y las tres medidas numéricas del camión.");
-      return;
-    }
-
-    NuevoCamion nuevo = new NuevoCamion(patente, volumen, altura, carga);
-
-    try {
-      clienteLogistica.crearCamion(autorizacion, nuevo);
-    } catch (IntegracionException e) {
-      mostrarCamiones(ctx, mensajeDe(e));
-      return;
-    }
-
-    ctx.redirect("/camiones");
-  }
-
-  private void formularioDeEdicion(Context ctx) {
-    mostrarEdicion(ctx, ctx.pathParam("patente"), null);
-  }
-
-  private void actualizarCamion(Context ctx) {
-    String autorizacion = autorizacionDe(ctx);
-    String patente = ctx.pathParam("patente");
-
-    Double volumen = parseDecimalForm(ctx, "capacidadVolumen");
-    Double altura = parseDecimalForm(ctx, "altura");
-    Double carga = parseDecimalForm(ctx, "capacidadCarga");
-
-    if (volumen == null || altura == null || carga == null) {
-      mostrarEdicion(ctx, patente, "Las tres medidas tienen que ser números válidos.");
-      return;
-    }
-
-    CapacidadesDeCamion capacidades = new CapacidadesDeCamion(volumen, altura, carga);
-
-    try {
-      clienteLogistica.actualizarCamion(autorizacion, patente, capacidades);
-    } catch (IntegracionException e) {
-      mostrarEdicion(ctx, patente, mensajeDe(e));
-      return;
-    }
-
-    ctx.redirect("/camiones");
-  }
-
-  private void eliminarCamion(Context ctx) {
-    String autorizacion = autorizacionDe(ctx);
-    String patente = ctx.pathParam("patente");
-
-    try {
-      clienteLogistica.eliminarCamion(autorizacion, patente);
-    } catch (IntegracionException e) {
-      mostrarCamiones(ctx, mensajeDe(e));
-      return;
-    }
-
-    ctx.redirect("/camiones");
+    ctx.redirect(urlLogisticaPublica + "/admin/camiones");
   }
 
   private void monitoreoDeFlota(Context ctx) {
@@ -320,26 +187,6 @@ public class LogisticaWebController {
     }
   }
 
-  private void mostrarCamiones(Context ctx, String alertaError) {
-    ctx.render("camiones.html.hbs",
-        modeloBase(ctx, "Camiones", "Camiones")
-            .comoAdmin().activa("camiones")
-            .conDatosDe("flota", FlotaVista.VACIA, () -> flota(ctx))
-            .conAlertaError(alertaError)
-            .mapa());
-  }
-
-  private void mostrarEdicion(Context ctx, String patente, String alertaError) {
-    ctx.render("camion-editar.html.hbs",
-        modeloBase(ctx, "Editar camión", "Camiones")
-            .comoAdmin().activa("camiones")
-            .conDatosDe("camion", null,
-                () -> clienteLogistica.camion(autorizacionDe(ctx), patente))
-            .con("patente", patente)
-            .conAlertaError(alertaError)
-            .mapa());
-  }
-
   private void mostrarConfirmacion(Context ctx, Long entregaId, String alertaError) {
     Modelo modelo = modeloBase(ctx, "Confirmar recepción", "Confirmar recepción")
         .comoBeneficiaria().activa("confirmar")
@@ -358,10 +205,6 @@ public class LogisticaWebController {
 
   private Modelo modeloBase(Context ctx, String titulo, String seccion) {
     return Modelo.de(titulo).seccion(seccion).conUsuario(usuario(ctx).perfil());
-  }
-
-  private FlotaVista flota(Context ctx) {
-    return new FlotaVista(clienteLogistica.camiones(autorizacionDe(ctx)));
   }
 
   private SeguimientoVista seguimiento(Context ctx) {
@@ -398,15 +241,5 @@ public class LogisticaWebController {
       return Alertas.SERVICIO_NO_DISPONIBLE;
     }
     return e.getMessage();
-  }
-
-  private static Double parseDecimalForm(Context ctx, String campo) {
-    String raw = ctx.formParam(campo);
-    if (raw == null || raw.isBlank()) return null;
-    try {
-      return Double.parseDouble(raw.trim());
-    } catch (NumberFormatException e) {
-      return null;
-    }
   }
 }

@@ -9,11 +9,11 @@
       <h1>Editar camión</h1>
       <p>Patente {{patente}}</p>
     </div>
-    <a class="btn btn-ghost" href="/camiones">Volver a la flota</a>
+    <a class="btn btn-ghost" href="/admin/camiones">Volver a la flota</a>
   </div>
 
   {{#if camion}}
-  <form class="panel form-panel" method="post" action="/camiones/{{patente}}">
+  <form class="panel form-panel" method="post" action="/admin/camiones/{{patente}}">
     <h2>Capacidades</h2>
     <p class="muted">La patente identifica al camión y no puede modificarse.</p>
     <label>Capacidad de volumen (m³)

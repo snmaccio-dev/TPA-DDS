@@ -1,10 +1,8 @@
-package donatrack.web.vista;
+package donatrack.logistica.vista;
 
 import java.util.List;
 
 public record FlotaVista(List<CamionVista> camiones) {
-
-  public static final FlotaVista VACIA = new FlotaVista(List.of());
 
   public FlotaVista {
     camiones = List.copyOf(camiones);
@@ -27,7 +25,7 @@ public record FlotaVista(List<CamionVista> camiones) {
   }
 
   public String getCargaTotalTexto() {
-    return Formato.kilos(
+    return CamionVista.kilos(
         camiones.stream().mapToDouble(CamionVista::capacidadCarga).sum()
     );
   }
