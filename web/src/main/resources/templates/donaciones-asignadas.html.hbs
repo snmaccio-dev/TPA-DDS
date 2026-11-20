@@ -34,9 +34,13 @@
                         <td>{{fechaHoraEntregaTexto}}</td>
                     </tr>
                     {{/each}}
+                    {{#if donacionesNoDisponible}}
+                    <tr><td colspan="4" class="muted">No disponible. Intentá nuevamente más tarde.</td></tr>
+                    {{else}}
                     {{#unless donaciones}}
                     <tr><td colspan="4" class="muted">Todavía no hay donaciones asignadas.</td></tr>
                     {{/unless}}
+                    {{/if}}
                 </tbody>
             </table>
         </div>

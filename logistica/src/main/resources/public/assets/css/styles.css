@@ -901,6 +901,41 @@ td:first-child {
     font-size:11px;
 }
 
+/* Tachito de eliminar: separado de "Editar" para no tocarlo por error. */
+.table-delete {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    width:30px;
+    height:30px;
+    margin-left:22px;
+    vertical-align:middle;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#fff;
+    color:#b94f4f;
+    cursor:pointer;
+}
+
+.table-delete:hover {
+    background:#ffeded;
+}
+
+.btn-danger {
+    background:#b43b3b;
+    color:#fff;
+}
+
+.btn-danger:hover {
+    background:#962f2f;
+}
+
+.modal-actions {
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
+}
+
 .entity-grid {
     display:grid;
     grid-template-columns:repeat(3,1fr);

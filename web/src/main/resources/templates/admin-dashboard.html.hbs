@@ -9,32 +9,32 @@
                 <h1>Panel de administración</h1>
                 <p>Monitoreá la operación general de DonaTrack.</p>
             </div>
-            <span class="date-chip">◷ Noviembre 2026</span>
+            <span class="date-chip">◷ {{fechaActual}}</span>
         </div>
         <div class="metric-grid">
             <article class="metric-card">
                 <span class="metric-icon green">▧</span>
-                <strong>248</strong>
+                <strong>{{#if datosDonacionesDisponibles}}{{totalDonaciones}}{{else}}—{{/if}}</strong>
                 <span>Donaciones registradas</span>
-                <small>Datos de demostración</small>
+                <small>{{#if datosDonacionesDisponibles}}Total de donaciones{{else}}No disponible{{/if}}</small>
             </article>
             <article class="metric-card">
                 <span class="metric-icon blue">▧</span>
-                <strong>36</strong>
+                <strong>{{#if datosDonacionesDisponibles}}{{donacionesEnDeposito}}{{else}}—{{/if}}</strong>
                 <span>Pendientes de asignación</span>
-                <small>Datos de demostración</small>
+                <small>{{#if datosDonacionesDisponibles}}Donaciones en depósito{{else}}No disponible{{/if}}</small>
             </article>
             <article class="metric-card">
                 <span class="metric-icon amber">▧</span>
-                <strong>12</strong>
-                <span>Camiones disponibles</span>
-                <small>Datos de demostración</small>
+                <strong>{{#if datosDonacionesDisponibles}}{{donacionesEnTraslado}}{{else}}—{{/if}}</strong>
+                <span>En traslado</span>
+                <small>{{#if datosDonacionesDisponibles}}Donaciones en camino{{else}}No disponible{{/if}}</small>
             </article>
             <article class="metric-card">
                 <span class="metric-icon lavender">▧</span>
-                <strong>84</strong>
+                <strong>{{#if datosDonacionesDisponibles}}{{donacionesEntregadas}}{{else}}—{{/if}}</strong>
                 <span>Entregas confirmadas</span>
-                <small>Datos de demostración</small>
+                <small>{{#if datosDonacionesDisponibles}}Donaciones entregadas{{else}}No disponible{{/if}}</small>
             </article>
         </div>
         <div class="dashboard-grid">
@@ -42,7 +42,7 @@
                 <div class="panel-head">
                     <div>
                         <h3>Actividad reciente</h3>
-                        <small>Últimos movimientos registrados</small>
+                        <small>Últimas donaciones registradas</small>
                     </div>
                     <a href="/deposito">Ver todos →</a>
                 </div>
@@ -51,14 +51,28 @@
                         <thead>
                             <tr>
                                 <th>Donación</th>
-                                <th>Fecha</th>
+                                <th>Fecha de entrega</th>
                                 <th>Estado</th>
                             </tr>
                         </thead>
                             <tbody>
-                                <tr>
-                                    <td colspan="3" class="muted">No hay movimientos registrados.</td>
-                                </tr>
+                                {{#if datosDonacionesDisponibles}}
+                                    {{#each donacionesRecientes}}
+                                        <tr>
+                                            <td><a href="/deposito">#{{id}} · {{descripcion}}</a></td>
+                                            <td>{{#if fechaHoraEntregaTexto}}{{fechaHoraEntregaTexto}}{{else}}—{{/if}}</td>
+                                            <td><span class="status-pill {{estadoClase}}">{{estadoTexto}}</span></td>
+                                        </tr>
+                                    {{else}}
+                                        <tr>
+                                            <td colspan="3" class="muted">Todavía no hay donaciones registradas.</td>
+                                        </tr>
+                                    {{/each}}
+                                {{else}}
+                                    <tr>
+                                        <td colspan="3" class="muted">No disponible. No se pudo cargar la actividad reciente.</td>
+                                    </tr>
+                                {{/if}}
                             </tbody>
                     </table>
                 </div>

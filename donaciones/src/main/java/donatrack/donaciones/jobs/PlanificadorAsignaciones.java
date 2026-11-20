@@ -2,6 +2,7 @@ package donatrack.donaciones.jobs;
 
 import donatrack.donaciones.service.AsignacionesService;
 import donatrack.donaciones.service.ResultadoCorrida;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -42,6 +43,8 @@ public class PlanificadorAsignaciones {
             TimeUnit.HOURS.toSeconds(PERIODO_HORAS),
             TimeUnit.SECONDS
         );
+        System.out.println("[JOB ASIGNACIONES] Corrida diaria a las " + hora
+            + ". Primera corrida en " + Duration.ofSeconds(delayInicial).toMinutes() + " minuto(s).");
     }
 
     public void detener() {
@@ -51,14 +54,25 @@ public class PlanificadorAsignaciones {
     private void ejecutar() {
         // scheduleAtFixedRate cancela silenciosamente todas las corridas futuras si la
         // tarea lanza una excepción — atrapar RuntimeException para que el job siga vivo.
+        //
+        // El hilo del job vive mientras viva la app y jpa-extras guarda un EntityManager
+        // por hilo: sin dispose() ese EntityManager no se cerraba nunca y cada corrida
+        // diaria reutilizaba el de la anterior, con sus entidades ya cargadas (la lectura
+        // de donaciones en deposito podia devolver estados viejos) y la conexion tomada
+        // por las lecturas fuera de transaccion.
+        System.out.println("[JOB ASIGNACIONES] Inicio de la corrida programada.");
         try {
             ResultadoCorrida resultado = service.ejecutarMatchmakingProgramado();
-            System.out.println("[MATCHMAKING] Corrida programada — donaciones procesadas: "
+            System.out.println("[JOB ASIGNACIONES] Corrida terminada. Donaciones procesadas: "
                 + resultado.exitosas() + ", fallidas: " + resultado.cantidadDeFallas());
             resultado.fallidas().forEach(falla ->
-                System.err.println("[MATCHMAKING] " + falla));
+                System.err.println("[JOB ASIGNACIONES] Fallida: " + falla));
         } catch (RuntimeException e) {
-            System.err.println("[MATCHMAKING] Error en corrida programada: " + e.getMessage());
+            System.err.println("[JOB ASIGNACIONES] La corrida fallo: " + e.getMessage()
+                + ". Se reintenta en la proxima ejecucion programada.");
+            e.printStackTrace();
+        } finally {
+            WithSimplePersistenceUnit.dispose();
         }
     }
 

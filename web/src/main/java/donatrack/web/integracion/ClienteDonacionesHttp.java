@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import donatrack.web.vista.DonacionVista;
 import donatrack.web.vista.DonanteVista;
 import donatrack.web.vista.EntidadVista;
+import donatrack.web.vista.ImportacionVista;
 import donatrack.web.vista.NecesidadVista;
 import donatrack.web.vista.NotificacionVista;
 import donatrack.web.vista.PerfilVista;
@@ -143,5 +144,28 @@ public class ClienteDonacionesHttp implements ClienteDonaciones {
         "/donaciones/" + donacionId + "/confirmar-recepcion",
         Map.of("donanteDocumento", donanteDocumento)
     );
+  }
+
+  @Override
+  public long importarDonantes(String autorizacion, ArchivoSubido archivo) {
+    return http.publicarArchivos(
+        autorizacion,
+        "/donantes/importaciones",
+        "archivo",
+        List.of(archivo),
+        new TypeReference<ImportacionIniciada>() {}
+    ).importacionId();
+  }
+
+  @Override
+  public List<ImportacionVista> importaciones(String autorizacion) {
+    return http.obtener(autorizacion, "/donantes/importaciones",
+        new TypeReference<List<ImportacionVista>>() {});
+  }
+
+  @Override
+  public ImportacionVista importacion(String autorizacion, long importacionId) {
+    return http.obtener(autorizacion, "/donantes/importaciones/" + importacionId,
+        new TypeReference<ImportacionVista>() {});
   }
 }

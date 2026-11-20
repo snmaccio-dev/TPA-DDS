@@ -229,6 +229,7 @@ public class WebApp {
     ).contains(ruta)
         || ruta.startsWith("/deposito/")
         || ruta.startsWith("/asignaciones/")
+        || ruta.startsWith("/importar-csv/")
         || ruta.startsWith("/camiones/")) {
       return "ADMINISTRADOR";
     }

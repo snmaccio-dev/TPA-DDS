@@ -18,6 +18,13 @@
   </section>
   {{/if}}
 
+  {{#if entregaNoDisponible}}
+  <section class="panel">
+    <strong>No disponible</strong>
+    <p class="muted">No se pudo cargar la entrega. Intentá nuevamente más tarde.</p>
+  </section>
+  {{/if}}
+
   {{#if entrega}}
   <div class="receipt-layout">
     <section class="panel">

@@ -9,7 +9,7 @@
       <h1>Monitoreo de flota</h1>
       <p>Posición de todos los vehículos con una ruta en curso.</p>
     </div>
-    {{#if seguimiento}}<span class="status-pill info">{{seguimiento.total}} en tránsito</span>{{/if}}
+    {{#unless seguimientoNoDisponible}}<span class="status-pill info">{{seguimiento.total}} en tránsito</span>{{/unless}}
   </div>
 
   <section class="panel map-panel">
@@ -23,7 +23,9 @@
   </section>
 
   <section class="panel">
-    {{#if seguimiento.vacio}}
+    {{#if seguimientoNoDisponible}}
+    <p class="muted">No disponible. Intentá nuevamente más tarde.</p>
+    {{else if seguimiento.vacio}}
     <p class="muted">No hay rutas en curso en este momento.</p>
     {{else}}
     <div class="table-wrap">

@@ -11,6 +11,9 @@
             <h1>Asignación de donaciones</h1>
             <p>Revisá las propuestas y confirmá la entidad beneficiaria final.</p>
         </div>
+        <form method="post" action="/asignaciones/ejecutar">
+            <button type="submit" class="btn btn-primary">Ejecutar asignación ahora</button>
+        </form>
     </div>
 
     <section class="panel">
@@ -76,11 +79,17 @@
         </div>
         {{/each}}
 
+        {{#if propuestasNoDisponible}}
+        <p class="muted">
+            No disponible. Intentá nuevamente más tarde.
+        </p>
+        {{else}}
         {{#unless propuestas}}
         <p class="muted">
             No hay propuestas pendientes de asignación.
         </p>
         {{/unless}}
+        {{/if}}
     </section>
 </main>
 

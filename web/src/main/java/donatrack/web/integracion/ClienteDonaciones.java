@@ -3,6 +3,7 @@ package donatrack.web.integracion;
 import donatrack.web.vista.DonacionVista;
 import donatrack.web.vista.DonanteVista;
 import donatrack.web.vista.EntidadVista;
+import donatrack.web.vista.ImportacionVista;
 import donatrack.web.vista.NecesidadVista;
 import donatrack.web.vista.NotificacionVista;
 import donatrack.web.vista.PerfilVista;
@@ -77,4 +78,14 @@ public interface ClienteDonaciones {
       long donacionId,
       String donanteDocumento
   );
+
+  // POST /donantes/importaciones (multipart, campo "archivo"). Asincronico: devuelve el
+  // id y el procesamiento sigue en Donaciones. Solo admin.
+  long importarDonantes(String autorizacion, ArchivoSubido archivo);
+
+  // GET /donantes/importaciones: las ultimas, de la mas reciente a la mas vieja.
+  List<ImportacionVista> importaciones(String autorizacion);
+
+  // GET /donantes/importaciones/{id}.
+  ImportacionVista importacion(String autorizacion, long importacionId);
 }

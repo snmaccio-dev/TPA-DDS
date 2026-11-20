@@ -60,7 +60,7 @@ public class JobPlanificacionRutas {
         TimeUnit.SECONDS
     );
 
-    System.out.println("[JOB] Planificacion diaria a las " + horario
+    System.out.println("[JOB PLANIFICACION-RUTAS] Corrida diaria a las " + horario
         + ". Primera corrida en " + Duration.ofSeconds(demora).toMinutes() + " minuto(s).");
   }
 
@@ -69,12 +69,15 @@ public class JobPlanificacionRutas {
   }
 
   private void correr() {
+    System.out.println("[JOB PLANIFICACION-RUTAS] Inicio de la corrida programada.");
     try {
       List<String> solicitudes = gestorLogistica.ejecutarCorrida();
-      System.out.println("[JOB] Corrida completada. Solicitudes enviadas: " + solicitudes.size());
+      System.out.println("[JOB PLANIFICACION-RUTAS] Corrida terminada. Solicitudes enviadas: "
+          + solicitudes.size());
     } catch (RuntimeException e) {
-      System.out.println("[JOB] La corrida fallo: " + e.getMessage()
+      System.err.println("[JOB PLANIFICACION-RUTAS] La corrida fallo: " + e.getMessage()
           + ". Se reintenta en la proxima ejecucion programada.");
+      e.printStackTrace();
     } finally {
       WithSimplePersistenceUnit.dispose();
     }

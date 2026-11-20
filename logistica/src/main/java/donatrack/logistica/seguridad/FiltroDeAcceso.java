@@ -31,9 +31,10 @@ public class FiltroDeAcceso {
   }
 
   public void aplicar(Context ctx) {
-    // beforeMatched tambien corre para los archivos estaticos, que no declaran roles.
-    // Los assets de la pantalla de camiones son publicos.
-    if (ctx.path().startsWith("/assets/")) {
+    // beforeMatched tambien corre para los archivos estaticos, que no declaran roles: sin
+    // esto respondian 403. Los assets de la pantalla de camiones y las fotos de las
+    // entregas (que muestran la landing y la pagina publica de donaciones) son publicos.
+    if (ctx.path().startsWith("/assets/") || ctx.path().startsWith("/fotos/")) {
       return;
     }
 

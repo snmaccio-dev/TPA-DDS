@@ -67,7 +67,10 @@ public class Modelo {
     } catch (IntegracionException e) {
       // Guardamos errorDeServicio por compatibilidad historica y, ademas, cargamos
       // alertaAdvertencia para que el componente unico muestre el aviso en pantalla.
+      // <clave>NoDisponible le permite al template distinguir "el backend no respondio"
+      // de "no hay datos", dato por dato.
       return con(clave, valorPorDefecto)
+          .con(clave + "NoDisponible", true)
           .con("errorDeServicio", e.getMessage())
           .conAlertaAdvertencia("No se pudieron cargar los datos: " + e.getMessage());
     }

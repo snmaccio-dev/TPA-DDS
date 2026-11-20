@@ -54,12 +54,14 @@ import donatrack.donaciones.service.NotificacionesService;
 import donatrack.donaciones.service.PersonasService;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import donatrack.donaciones.service.UsuariosService;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import io.javalin.Javalin;
 import io.javalin.config.JavalinConfig;
 import io.javalin.config.SizeUnit;
 import io.javalin.http.HttpResponseException;
 
 import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -179,6 +181,12 @@ public class DonacionesApp {
 
     Javalin app = Javalin.create(DonacionesApp::configurar).start(PUERTO);
 
+    // jpa-extras guarda un EntityManager por hilo. Sin esto, cada hilo de Jetty reusaba el
+    // suyo entre requests y em.find devolvia entidades cacheadas con estados viejos (por
+    // ejemplo, una donacion ya recibida en deposito seguia PENDIENTE_RECEPCION para el
+    // hilo que la habia creado). Igual que en Logistica.
+    app.after(ctx -> WithSimplePersistenceUnit.dispose());
+
     // El filtro se registra antes que las rutas: todas las rutas tienen
     // que declarar sus roles y el filtro las rechaza si no lo hacen.
     filtro.registrarEn(app);
@@ -199,12 +207,15 @@ public class DonacionesApp {
 
     registrarManejoDeErrores(app);
 
-    PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(asignacionesService, HORARIO_MATCHMAKING);
+    // Horarios configurables con el mismo formato HH:mm que PLANIFICACION_HORA de Logistica.
+    PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(
+        asignacionesService, horario("ASIGNACIONES_HORA", HORARIO_MATCHMAKING));
     planificador.iniciar();
     Runtime.getRuntime().addShutdownHook(new Thread(planificador::detener));
 
     PlanificadorAvisosInactividad planificadorAvisos =
-        new PlanificadorAvisosInactividad(donantesService, HORARIO_AVISOS_INACTIVIDAD);
+        new PlanificadorAvisosInactividad(
+            donantesService, horario("AVISOS_INACTIVIDAD_HORA", HORARIO_AVISOS_INACTIVIDAD));
     planificadorAvisos.iniciar();
     Runtime.getRuntime().addShutdownHook(new Thread(planificadorAvisos::detener));
     Runtime.getRuntime().addShutdownHook(new Thread(ejecutorImportaciones::shutdown));
@@ -292,6 +303,19 @@ public class DonacionesApp {
   private static String variable(String nombre, String valorPorDefecto) {
     String valor = System.getenv(nombre);
     return valor == null || valor.isBlank() ? valorPorDefecto : valor;
+  }
+
+  private static LocalTime horario(String nombre, LocalTime valorPorDefecto) {
+    String texto = variable(nombre, null);
+    if (texto == null) {
+      return valorPorDefecto;
+    }
+    try {
+      return LocalTime.parse(texto.trim());
+    } catch (DateTimeParseException e) {
+      throw new IllegalArgumentException(
+          "El horario de " + nombre + " '" + texto + "' no tiene el formato HH:mm.");
+    }
   }
 
 

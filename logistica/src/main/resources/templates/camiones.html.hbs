@@ -51,11 +51,16 @@
           <td>
             <a class="table-action" href="/admin/camiones/{{patente}}/editar">Editar</a>
 
-            <form method="post"
-                  action="/admin/camiones/{{patente}}/eliminar"
-                  style="display: inline">
-              <button type="submit" class="table-action">Eliminar</button>
-            </form>
+            <button type="button" class="table-delete"
+                    data-open-modal="delete-truck-modal"
+                    data-eliminar-camion="{{patente}}"
+                    aria-label="Eliminar camión {{patente}}" title="Eliminar">
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"
+                   fill="none" stroke="currentColor" stroke-width="2"
+                   stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/>
+              </svg>
+            </button>
           </td>
         </tr>
         {{/each}}
@@ -66,6 +71,17 @@
     <p class="muted">No hay camiones registrados.</p>
     {{/if}}
   </section>
+
+  <div class="modal" id="delete-truck-modal">
+    <form class="modal-card" method="post">
+      <button type="button" class="modal-close" data-close-modal>×</button>
+      <h2>¿Eliminar el camión <span data-patente-a-eliminar></span>?</h2>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-close-modal>Cancelar</button>
+        <button type="submit" class="btn btn-danger">Eliminar</button>
+      </div>
+    </form>
+  </div>
 
   <div class="modal" id="truck-modal">
     <form class="modal-card" method="post" action="/admin/camiones">

@@ -397,6 +397,109 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
     assertTrue(benjamin.tieneContacto(TipoContacto.EMAIL, "benjamíncastro8929@yahoo.com"));
   }
 
+  @Test
+  void importarDosVecesElMismoCsvNoDuplicaDonantesNiCreaCuentasLaSegundaVez() {
+    String dni = DatosDeTest.documentoUnico();
+    String cuit = DatosDeTest.cuitUnico();
+    String emailHumana = DatosDeTest.emailUnico("dos-veces-h");
+    String emailJuridica = DatosDeTest.emailUnico("dos-veces-j");
+    String contenido = csv(
+        "HUMANA,DNI," + dni + ",Ana Repetida," + emailHumana + ",",
+        "JURIDICA,CUIT," + cuit + ",Empresa Repetida S.A.," + emailJuridica + ",");
+    ProveedorFalso proveedor = new ProveedorFalso();
+
+    ImportacionCsv primera = importar(proveedor, contenido);
+    ImportacionCsv segunda = importar(proveedor, contenido);
+
+    assertEquals(2, primera.getCreados());
+    assertEquals(2, primera.getCuentasCreadas());
+    assertEquals(0, segunda.getCreados());
+    assertEquals(2, segunda.getActualizados());
+    assertEquals(0, segunda.getCuentasCreadas());
+    assertEquals(0, segunda.getCuentasVinculadas());
+    assertEquals(0, segunda.getFilasConError());
+    assertEquals(2, proveedor.creados.size(), "La segunda importacion no crea cuentas.");
+    assertEquals(1, donantesConDocumento(dni));
+    assertEquals(1, donantesConDocumento(cuit));
+  }
+
+  @Test
+  void importarDespuesDeBorrarLaBaseVinculaLasCuentasExistentesSinCrearNinguna() {
+    String dni = DatosDeTest.documentoUnico();
+    String cuit = DatosDeTest.cuitUnico();
+    String emailHumana = DatosDeTest.emailUnico("reset-h");
+    String emailJuridica = DatosDeTest.emailUnico("reset-j");
+    String contenido = csv(
+        "HUMANA,DNI," + dni + ",Ana Reseteada," + emailHumana + ",",
+        "JURIDICA,CUIT," + cuit + ",Empresa Reseteada S.A.," + emailJuridica + ",");
+    ProveedorFalso proveedor = new ProveedorFalso();
+    importar(proveedor, contenido);
+    String idHumana = proveedor.idDe(emailHumana);
+    String idJuridica = proveedor.idDe(emailJuridica);
+
+    // Keycloak conserva las cuentas de la importacion anterior...
+    proveedor.existentes.put(emailHumana, idHumana);
+    proveedor.existentes.put(emailJuridica, idJuridica);
+    // ...y la base queda vacia para esas personas, como despues de un reset.
+    withTransaction(() -> {
+      for (String documento : List.of(dni, cuit)) {
+        Donante donante = repoDonantes.buscarPorDocumento(documento).orElseThrow();
+        repoUsuarios.deDonante(donante).ifPresent(repoUsuarios::eliminar);
+        repoDonantes.eliminar(donante);
+        repoPersonas.eliminar(donante.getPersona());
+      }
+    });
+    entityManager().clear();
+
+    ImportacionCsv despues = importar(proveedor, contenido);
+
+    assertEquals(EstadoImportacion.FINALIZADA, despues.getEstado());
+    assertEquals(2, despues.getCreados());
+    assertEquals(0, despues.getCuentasCreadas());
+    assertEquals(2, despues.getCuentasVinculadas());
+    assertEquals(2, proveedor.creados.size(), "No se crea ninguna cuenta nueva.");
+    assertTrue(proveedor.eliminados.isEmpty());
+    assertEquals(dni, repoUsuarios.buscarPorKeycloakId(idHumana).orElseThrow()
+        .getDonante().getPersona().getDocumento());
+    assertEquals(cuit, repoUsuarios.buscarPorKeycloakId(idJuridica).orElseThrow()
+        .getDonante().getPersona().getDocumento());
+  }
+
+  @Test
+  void siFallaUnaTandaLaCompensacionNoBorraUnaCuentaQueYaExistia() {
+    String emailExistente = DatosDeTest.emailUnico("ya-existia");
+    String idExistente = DatosDeTest.keycloakIdUnico();
+    String emailRoto = DatosDeTest.emailUnico("roto");
+    String docExistente = DatosDeTest.documentoUnico();
+    ProveedorFalso proveedor = new ProveedorFalso();
+    proveedor.existentes.put(emailExistente, idExistente);
+    RepositorioUsuarios repoRoto = new RepositorioUsuarios() {
+      @Override
+      public void guardar(Usuario usuario) {
+        if (emailRoto.equals(proveedor.emailDe(usuario.getKeycloakId()))) {
+          throw new RuntimeException("DB caida simulada.");
+        }
+        super.guardar(usuario);
+      }
+    };
+
+    importar(nuevoService(proveedor, repoRoto, new LectorCsvDonantes()), csv(
+        "HUMANA,DNI," + DatosDeTest.documentoUnico() + ",Ana Nueva," + DatosDeTest.emailUnico("a") + ",",
+        "HUMANA,DNI," + docExistente + ",Eva Existente," + emailExistente + ",",
+        "HUMANA,DNI," + DatosDeTest.documentoUnico() + ",Roto Uno," + emailRoto + ","));
+
+    assertFalse(proveedor.eliminados.contains(idExistente),
+        "Solo se compensan las cuentas creadas por esta importacion.");
+    assertEquals(docExistente, repoUsuarios.buscarPorKeycloakId(idExistente).orElseThrow()
+        .getDonante().getPersona().getDocumento());
+  }
+
+  private long donantesConDocumento(String documento) {
+    return repoDonantes.todos().stream()
+        .filter(donante -> documento.equals(donante.getPersona().getDocumento()))
+        .count();
+  }
+
   private ImportacionCsv importar(ProveedorFalso proveedor, String contenido) {
     return importar(nuevoService(proveedor, repoUsuarios, new LectorCsvDonantes()), contenido);
   }

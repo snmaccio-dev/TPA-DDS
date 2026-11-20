@@ -36,6 +36,19 @@ document.addEventListener("DOMContentLoaded", () => {
         })
     );
 
+    // Modal unico de confirmacion para eliminar camiones: al abrirlo se completan la
+    // patente y el action del formulario segun la fila tocada.
+    document.querySelectorAll("[data-eliminar-camion]").forEach(el =>
+        el.addEventListener("click", () => {
+            const modal = document.getElementById(el.dataset.openModal);
+            if (!modal) return;
+            const patente = el.dataset.eliminarCamion;
+            modal.querySelector("[data-patente-a-eliminar]").textContent = patente;
+            modal.querySelector("form").action =
+                "/admin/camiones/" + encodeURIComponent(patente) + "/eliminar";
+        })
+    );
+
     // ALERTAS FIJAS (abajo a la derecha): se cierran solas a los 6 segundos o con el x.
     const cerrarAlerta = el => {
         if (!el || el.classList.contains("oculta")) return;
@@ -51,57 +64,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelector(".mobile-menu")?.addEventListener("click", () =>
         document.body.classList.toggle("menu-open")
     );
-
-    // MAPAS
-
- 
-    // MAPAS
-    if (
-        page === "public-donations" ||
-        page === "tracking-donor" ||
-        page === "tracking-beneficiary"
-    ) {
-        const id = page === "public-donations"
-            ? "donations-map"
-            : "tracking-map";
-
-        const map = L.map(id).setView([-34.70, -58.39], 11);
-
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        }).addTo(map);
-
-        if (page !== "public-donations") {
-            const points = [
-                [
-                    -34.70,
-                    -58.39,
-                    "<b>Camión DT-04</b><br>En camino a Fundación Puentes<br>Última actualización: 10:15"
-                ]
-            ];
-
-            points.forEach(p => {
-                L.marker([p[0], p[1]])
-                    .addTo(map)
-                    .bindPopup(p[2]);
-            });
-
-            L.polyline([
-                [-34.735, -58.43],
-                [-34.72, -58.415],
-                [-34.70, -58.39],
-                [-34.68, -58.37]
-            ], {
-                color: "#27835a",
-                weight: 4,
-                dashArray: "7 8"
-            }).addTo(map);
-        }
-
-        setTimeout(() => map.invalidateSize(), 250);
-    }
-
-
 
     // IMPORTACIÓN CSV
     const csv = document.getElementById("process-csv");

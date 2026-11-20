@@ -24,7 +24,10 @@
     </section>
 
     <aside class="panel tracking-details">
-      {{#if seguimiento.vacio}}
+      {{#if seguimientoNoDisponible}}
+      <span class="eyebrow">SEGUIMIENTO</span>
+      <p class="muted">No disponible. Intentá nuevamente más tarde.</p>
+      {{else if seguimiento.vacio}}
       <span class="eyebrow">SIN ENTREGAS ACTIVAS</span>
       <p class="muted">No hay rutas en curso con entregas para tu entidad.</p>
       {{else}}

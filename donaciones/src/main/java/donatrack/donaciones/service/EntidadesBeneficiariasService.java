@@ -131,7 +131,9 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
     }
     String email = emailDeUnRepresentante(datos);
 
-    String keycloakId = usuariosService.crearEnProveedor(email, null, RolDeAcceso.BENEFICIARIA);
+    UsuariosService.CuentaObtenida cuenta =
+        usuariosService.obtenerCuenta(email, RolDeAcceso.BENEFICIARIA, true);
+    String keycloakId = cuenta.keycloakId();
     Beneficiaria[] creada = new Beneficiaria[1];
     try {
       withTransaction(() -> {
@@ -140,7 +142,9 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
         usuariosService.vincular(keycloakId, creada[0]);
       });
     } catch (RuntimeException e) {
-      usuariosService.compensar(keycloakId);
+      if (cuenta.creada()) {
+        usuariosService.compensar(keycloakId);
+      }
       throw e;
     }
     return creada[0];
@@ -155,7 +159,9 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
     }
     String email = emailDeUnRepresentante(datos);
 
-    String keycloakId = usuariosService.crearEnProveedor(email, null, RolDeAcceso.BENEFICIARIA);
+    UsuariosService.CuentaObtenida cuenta =
+        usuariosService.obtenerCuenta(email, RolDeAcceso.BENEFICIARIA, true);
+    String keycloakId = cuenta.keycloakId();
     Beneficiaria[] creada = new Beneficiaria[1];
     try {
       withTransaction(() -> {
@@ -163,7 +169,9 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
         usuariosService.vincular(keycloakId, creada[0]);
       });
     } catch (RuntimeException e) {
-      usuariosService.compensar(keycloakId);
+      if (cuenta.creada()) {
+        usuariosService.compensar(keycloakId);
+      }
       throw e;
     }
     return creada[0];

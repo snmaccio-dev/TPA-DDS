@@ -52,76 +52,136 @@ document.addEventListener("DOMContentLoaded", () => {
         document.body.classList.toggle("menu-open")
     );
 
-    // MAPAS
-
- 
-    // MAPAS
-    if (
-        page === "public-donations" ||
-        page === "tracking-donor" ||
-        page === "tracking-beneficiary"
-    ) {
-        const id = page === "public-donations"
-            ? "donations-map"
-            : "tracking-map";
-
-        const map = L.map(id).setView([-34.70, -58.39], 11);
+    // MAPA DE DONACIONES PUBLICAS
+    // Solo el mapa base: las entregas todavia no traen coordenadas, y la pantalla lo
+    // aclara. Los mapas de seguimiento los arma mapa-seguimiento.js con datos reales.
+    if (page === "public-donations" && document.getElementById("donations-map")) {
+        const map = L.map("donations-map").setView([-34.70, -58.39], 11);
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
 
-        if (page !== "public-donations") {
-            const points = [
-                [
-                    -34.70,
-                    -58.39,
-                    "<b>Camión DT-04</b><br>En camino a Fundación Puentes<br>Última actualización: 10:15"
-                ]
-            ];
-
-            points.forEach(p => {
-                L.marker([p[0], p[1]])
-                    .addTo(map)
-                    .bindPopup(p[2]);
-            });
-
-            L.polyline([
-                [-34.735, -58.43],
-                [-34.72, -58.415],
-                [-34.70, -58.39],
-                [-34.68, -58.37]
-            ], {
-                color: "#27835a",
-                weight: 4,
-                dashArray: "7 8"
-            }).addTo(map);
-        }
-
         setTimeout(() => map.invalidateSize(), 250);
     }
 
-
-
     // IMPORTACIÓN CSV
-    const csv = document.getElementById("process-csv");
+    // El archivo se sube con fetch; la lista "Archivos subidos" se actualiza sin recargar.
+    const csvForm = document.getElementById("csv-form");
+    const csvLista = document.getElementById("csv-importaciones");
 
-    csv?.addEventListener("click", () => {
-        const file = document.getElementById("csv-file").files[0];
-        const out = document.getElementById("csv-feedback");
+    if (csvForm && csvLista) {
+        const CONSULTA_MS = 3000;
 
-        if (!file) {
-            out.textContent = "Seleccioná un archivo CSV antes de continuar.";
-            return;
-        }
+        // Misma estructura que el partial de alerta.
+        const mostrarAlertaCsv = (texto) => {
+            const alerta = document.createElement("div");
+            alerta.className = "alerta error";
+            alerta.setAttribute("role", "alert");
+            alerta.innerHTML =
+                '<span class="alerta-icono" aria-hidden="true">⚠</span>' +
+                '<span class="alerta-texto"></span>' +
+                '<button type="button" class="alerta-cerrar" aria-label="Cerrar alerta">×</button>';
+            alerta.querySelector(".alerta-texto").textContent = texto;
+            alerta.querySelector(".alerta-cerrar").addEventListener("click", () => cerrarAlerta(alerta));
+            document.body.appendChild(alerta);
+            setTimeout(() => cerrarAlerta(alerta), 6000);
+        };
 
-        if (!file.name.toLowerCase().endsWith(".csv")) {
-            out.textContent = "El archivo debe tener extensión .csv.";
-            return;
-        }
+        // Respuesta JSON de web; si no es JSON (p. ej. redirect al login) se informa igual.
+        const leerJson = async (respuesta) => {
+            try {
+                return await respuesta.json();
+            } catch (e) {
+                return { mensaje: "No se pudo completar la operación. Recargá la página." };
+            }
+        };
 
-        out.textContent = `Archivo seleccionado: ${file.name} (${(file.size / 1024).toFixed(1)} KB). La validación de filas y la importación real se realizarán en el backend.`;
-    });
+        const actualizarFila = (fila, datos) => {
+            const estado = fila.querySelector("[data-estado]");
+            estado.className = "status-pill " + datos.estadoClase;
+            estado.textContent = datos.estadoTexto;
+            fila.querySelector("[data-motivo]").textContent = datos.motivoFallo || "";
+            const fecha = fila.querySelector("[data-fecha]");
+            if (fecha.textContent.trim() === "") fecha.textContent = datos.fechaTexto;
+        };
+
+        // Consulta el estado de una fila en curso cada 3 segundos hasta que termine.
+        const seguir = (fila, espera = CONSULTA_MS) => {
+            setTimeout(async () => {
+                try {
+                    const respuesta = await fetch(
+                        "/importar-csv/" + fila.dataset.importacion + "/estado",
+                        { headers: { "Accept": "application/json" } });
+                    if (respuesta.ok) {
+                        const datos = await respuesta.json();
+                        actualizarFila(fila, datos);
+                        if (!datos.enCurso) return;
+                    }
+                } catch (e) {
+                    // Sin respuesta: se vuelve a intentar en la proxima consulta.
+                }
+                seguir(fila);
+            }, espera);
+        };
+
+        csvLista.querySelectorAll("tr[data-en-curso]").forEach(fila => seguir(fila));
+
+        csvForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const input = document.getElementById("csv-file");
+            const archivo = input.files[0];
+
+            if (!archivo) {
+                mostrarAlertaCsv("Seleccioná un archivo CSV antes de subirlo.");
+                return;
+            }
+            if (!archivo.name.toLowerCase().endsWith(".csv")) {
+                mostrarAlertaCsv("El archivo tiene que tener extensión .csv.");
+                return;
+            }
+
+            const boton = csvForm.querySelector("button[type=submit]");
+            boton.disabled = true;
+
+            try {
+                const datos = new FormData();
+                datos.append("archivo", archivo);
+
+                const respuesta = await fetch("/importar-csv", {
+                    method: "POST",
+                    body: datos,
+                    headers: { "Accept": "application/json" }
+                });
+                const cuerpo = await leerJson(respuesta);
+
+                if (!respuesta.ok || cuerpo.id === undefined) {
+                    mostrarAlertaCsv(cuerpo.mensaje || "No se pudo subir el archivo.");
+                    return;
+                }
+
+                csvLista.querySelectorAll("[data-sin-importaciones]").forEach(f => f.remove());
+
+                const fila = document.createElement("tr");
+                fila.dataset.importacion = cuerpo.id;
+                fila.innerHTML =
+                    '<td></td><td data-fecha></td>' +
+                    '<td><span class="status-pill info" data-estado>En curso</span> ' +
+                    '<small class="muted" data-motivo></small></td>';
+                fila.firstChild.textContent = archivo.name;
+                csvLista.prepend(fila);
+                input.value = "";
+
+                // La primera consulta sale enseguida para traer la fecha que registró el backend.
+                seguir(fila, 0);
+            } catch (err) {
+                mostrarAlertaCsv("El servicio no está disponible, intentá de nuevo en unos minutos.");
+            } finally {
+                boton.disabled = false;
+            }
+        });
+    }
 
     // CARRUSEL DE DONACIONES
 

@@ -18,7 +18,7 @@
                 <h3>Historias de nuestras entregas</h3>
                 <small>Fotografías de donaciones realizadas</small>
             </div>
-            <span class="muted">{{entregas.size}} registros</span>
+            <span class="muted">{{#if entregasNoDisponible}}No disponible{{else}}{{entregas.size}} registros{{/if}}</span>
         </div>
 
         {{#if entregas}}
@@ -47,7 +47,11 @@
                 </div>
             </div>
         {{else}}
+            {{#if entregasNoDisponible}}
+            <p class="muted">No disponible. Intentá nuevamente más tarde.</p>
+            {{else}}
             <p class="muted">Todavía no hay entregas confirmadas para mostrar.</p>
+            {{/if}}
         {{/if}}
     </section>
 
@@ -69,7 +73,7 @@
         <aside class="panel donation-list">
             <div class="panel-head">
                 <h3>Entregas recientes</h3>
-                <span class="muted">{{entregas.size}} registros</span>
+                <span class="muted">{{#if entregasNoDisponible}}No disponible{{else}}{{entregas.size}} registros{{/if}}</span>
             </div>
 
             {{#each entregas}}
@@ -86,9 +90,13 @@
                 </article>
             {{/each}}
 
+            {{#if entregasNoDisponible}}
+                <p class="muted">No disponible. Intentá nuevamente más tarde.</p>
+            {{else}}
             {{#unless entregas}}
                 <p class="muted">Todavía no hay entregas confirmadas para mostrar.</p>
             {{/unless}}
+            {{/if}}
         </aside>
     </div>
 </main>

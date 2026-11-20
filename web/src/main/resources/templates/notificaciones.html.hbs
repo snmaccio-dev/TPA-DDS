@@ -51,6 +51,13 @@
                     </tr>
                     {{/each}}
 
+                    {{#if notificacionesNoDisponible}}
+                    <tr>
+                        <td colspan="4" class="muted">
+                            No disponible. Intentá nuevamente más tarde.
+                        </td>
+                    </tr>
+                    {{else}}
                     {{#unless notificaciones}}
                     <tr>
                         <td colspan="4" class="muted">
@@ -58,6 +65,7 @@
                         </td>
                     </tr>
                     {{/unless}}
+                    {{/if}}
                 </tbody>
             </table>
         </div>

@@ -413,19 +413,14 @@ public class ImportacionDonantesService implements WithSimplePersistenceUnit {
     }
   }
 
+  // La regla (vincular si existe, crear si no) vive en UsuariosService y la comparten
+  // las altas del admin. Solo las cuentas creadas aca se compensan si falla la tanda.
   private void obtenerCuenta(Destino destino, String email) {
-    try {
-      destino.keycloakId = usuariosService.crearSinContrasena(email, RolDeAcceso.DONANTE, enviarMails);
-      destino.cuentaCreada = true;
-    } catch (ConflictoDeNegocioException e) {
-      String existente = usuariosService.buscarIdPorEmail(email).orElseThrow(() -> e);
-      if (repositorioUsuarios.buscarPorKeycloakId(existente).isPresent()) {
-        throw new ConflictoDeNegocioException(
-            "El email " + email + " ya está vinculado a otro perfil.");
-      }
-      destino.keycloakId = existente;
-      destino.cuentaVinculada = true;
-    }
+    UsuariosService.CuentaObtenida cuenta =
+        usuariosService.obtenerCuenta(email, RolDeAcceso.DONANTE, enviarMails);
+    destino.keycloakId = cuenta.keycloakId();
+    destino.cuentaCreada = cuenta.creada();
+    destino.cuentaVinculada = !cuenta.creada();
   }
 
   private static void aplicar(Persona persona, FilaDonanteCsv fila) {
