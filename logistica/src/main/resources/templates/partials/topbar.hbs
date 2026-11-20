@@ -1,0 +1,14 @@
+<header class="app-topbar">
+    <button class="mobile-menu" aria-label="Abrir menú">☰</button>
+    <div class="breadcrumb">
+        DonaTrack
+        <span>/</span>
+        {{seccion}}
+    </div>
+    <div class="top-actions">
+        <div class="avatar small" title="{{usuario.nombre}}">{{usuario.iniciales}}</div>
+        <form method="post" action="/admin/camiones/salir">
+            <button class="table-action" type="submit">Salir</button>
+        </form>
+    </div>
+</header>

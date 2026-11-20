@@ -8,6 +8,7 @@ import donatrack.logistica.controller.MonitoreoController;
 import donatrack.logistica.controller.PlanificacionController;
 import donatrack.logistica.controller.RutasCallbackController;
 import donatrack.logistica.controller.RutasController;
+import donatrack.logistica.controller.SesionCamionesController;
 import donatrack.logistica.controller.dto.ErrorDTO;
 import donatrack.logistica.domain.ConflictoDeNegocioException;
 import donatrack.logistica.domain.DatosInvalidosException;
@@ -32,7 +33,10 @@ import donatrack.logistica.seguridad.ControlDeAcceso;
 import donatrack.logistica.seguridad.ControlDeAccesoAbierto;
 import donatrack.logistica.seguridad.ControlDeAccesoPorToken;
 import donatrack.logistica.seguridad.FiltroDeAcceso;
+import donatrack.logistica.seguridad.RolDeAcceso;
 import donatrack.logistica.seguridad.VerificadorDeTokens;
+import donatrack.logistica.seguridad.web.ClienteOidc;
+import donatrack.logistica.seguridad.web.ConfiguracionOidc;
 import donatrack.logistica.service.GestorCamiones;
 import donatrack.logistica.service.GestorChoferes;
 import donatrack.logistica.service.GestorEntregas;
@@ -40,10 +44,13 @@ import donatrack.logistica.service.GestorLogistica;
 import donatrack.logistica.service.GestorMonitoreo;
 import donatrack.logistica.service.GestorRutas;
 import donatrack.logistica.service.RecursoInexistenteException;
+import donatrack.logistica.templates.JavalinHandlebars;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
 import io.javalin.http.staticfiles.Location;
+import org.eclipse.jetty.http.HttpCookie;
+import org.eclipse.jetty.server.session.SessionHandler;
 
 import java.time.LocalTime;
 
@@ -55,6 +62,7 @@ public class LogisticaApp {
   public static void main(String[] args) {
     String urlBase = variable("LOGISTICA_URL_BASE", "http://localhost:" + PUERTO);
     String urlDonaciones = variable("DONACIONES_URL_BASE", "http://localhost:8080");
+    String urlWeb = variable("WEB_URL_BASE", "http://localhost:8082");
     String urlPlanificador = variable("PLANIFICADOR_URL", "http://localhost:9090/planificaciones");
     String tokenPlanificador = variable("PLANIFICADOR_TOKEN", "token-de-desarrollo");
     boolean donacionesSimuladas =
@@ -112,13 +120,24 @@ public class LogisticaApp {
         urlBase + "/planificacion/callback"
     );
 
-    Javalin app = Javalin.create(config ->
-        config.staticFiles.add(estaticos -> {
-          estaticos.directory = directorioFotos;
-          estaticos.location = Location.EXTERNAL;
-          estaticos.hostedPath = "/fotos";
-        })
-    ).start(PUERTO);
+    Javalin app = Javalin.create(config -> {
+      config.fileRenderer(new JavalinHandlebars());
+      config.staticFiles.add("/public", Location.CLASSPATH);
+      config.staticFiles.add(estaticos -> {
+        estaticos.directory = directorioFotos;
+        estaticos.location = Location.EXTERNAL;
+        estaticos.hostedPath = "/fotos";
+      });
+      // Web tambien usa JSESSIONID y en localhost las cookies no distinguen puerto: con
+      // el mismo nombre una sesion pisaria a la otra. Lax permite que la cookie viaje en
+      // la redireccion de vuelta desde Keycloak al callback.
+      config.jetty.modifyServletContextHandler(contexto -> {
+        SessionHandler sesiones = contexto.getSessionHandler();
+        sesiones.setSessionCookie("LOGISTICA_SESSION");
+        sesiones.setHttpOnly(true);
+        sesiones.setSameSite(HttpCookie.SameSite.LAX);
+      });
+    }).start(PUERTO);
 
     app.after(ctx -> WithSimplePersistenceUnit.dispose());
 
@@ -161,11 +180,24 @@ public class LogisticaApp {
         control = new ControlDeAccesoAbierto();
     }
 
-    new CamionesWebController(
-        gestorCamiones,
-        verificador,
-        seguridadActiva
-    ).registrarRutas(app);
+    // Las rutas de sesion van antes que las de la pantalla: POST /admin/camiones/salir
+    // tambien coincide con POST /admin/camiones/{patente}.
+    if (seguridadActiva) {
+      ClienteOidc oidc = new ClienteOidc(new ConfiguracionOidc(
+          keycloakUrl,
+          variable("KEYCLOAK_URL_PUBLICA", keycloakUrl),
+          keycloakRealm,
+          variable("KEYCLOAK_WEB_CLIENT_ID", "logistica-web"),
+          urlBase,
+          urlWeb
+      ));
+      new SesionCamionesController(oidc, verificador, urlWeb).registrarRutas(app);
+    } else {
+      // Sin seguridad no hay login: salir solo vuelve a web.
+      app.post("/admin/camiones/salir", ctx -> ctx.redirect(urlWeb), RolDeAcceso.PUBLICO);
+    }
+
+    new CamionesWebController(gestorCamiones, urlWeb).registrarRutas(app);
 
     new CamionesController(gestorCamiones).registrarRutas(app);
     

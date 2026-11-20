@@ -18,6 +18,7 @@
         <slf4j.version>2.0.13</slf4j.version>
         <nimbus.version>9.37.3</nimbus.version>
         <graphql.version>21.3</graphql.version>
+        <handlebars.version>4.3.1</handlebars.version>
         <db.url>jdbc:postgresql://localhost:5432/donatrack_logistica</db.url>
         <db.user>postgres</db.user>
         <db.password>${env.DONATRACK_DB_PASSWORD}</db.password>
@@ -68,13 +69,49 @@
             <artifactId>graphql-java</artifactId>
             <version>${graphql.version}</version>
         </dependency>
+
+        <!-- Template engine de la pantalla de administracion de camiones. -->
+        <dependency>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin-rendering</artifactId>
+            <version>${javalin.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.jknack</groupId>
+            <artifactId>handlebars</artifactId>
+            <version>${handlebars.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>io.javalin</groupId>
+            <artifactId>javalin-testtools</artifactId>
+            <version>${javalin.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
+        <!--
+          Templates y assets no se filtran: app.js usa template literals (${...}) y el CSS
+          usa @, que Maven interpretaria como placeholders.
+        -->
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
                 <filtering>true</filtering>
+                <excludes>
+                    <exclude>templates/**</exclude>
+                    <exclude>public/**</exclude>
+                </excludes>
+            </resource>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <includes>
+                    <include>templates/**</include>
+                    <include>public/**</include>
+                </includes>
             </resource>
         </resources>
 

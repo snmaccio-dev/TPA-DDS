@@ -20,16 +20,7 @@ import static donatrack.donaciones.seguridad.RolDeAcceso.DONANTE;
 import static donatrack.donaciones.seguridad.RolDeAcceso.PUBLICO;
 import static donatrack.donaciones.seguridad.RolDeAcceso.SERVICIO_LOGISTICA;
 
-// Punto unico donde se declara toda la API del modulo Donaciones. Mirar este archivo
-// alcanza para ver que metodos, paths y roles se exponen.
-//
-// Regla: toda ruta declara sus roles. PUBLICO marca las que no piden token, porque
-// FiltroDeAcceso rechaza con 403 cualquier ruta sin roles.
-//
-// Orden dentro de cada grupo: las rutas con segmentos fijos (p. ej. /donantes/inactivos,
-// /entidades/consulta) van antes que las que tienen path params homologos
-// (/donantes/{documento}, /entidades/{id}), para que Javalin no interprete el segmento
-// fijo como valor del parametro.
+
 public class Rutas {
 
   private final RegistroController registro;

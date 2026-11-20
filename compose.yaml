@@ -75,6 +75,7 @@ services:
       DB_USER: postgres
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       LOGISTICA_URL_BASE: http://localhost:8081
+      WEB_URL_BASE: http://localhost:8082
       DONACIONES_URL_BASE: http://donaciones:8080
       LOGISTICA_MODO: http
       LOGISTICA_PLANIFICADOR: simulado
@@ -85,6 +86,8 @@ services:
       KEYCLOAK_CLIENT_ID: logistica-backend
       KEYCLOAK_CLIENT_SECRET: ${LOGISTICA_CLIENT_SECRET}
       KEYCLOAK_ISSUER: http://localhost:8180/realms/donatrack
+      KEYCLOAK_URL_PUBLICA: http://localhost:8180
+      KEYCLOAK_WEB_CLIENT_ID: logistica-web
     ports:
       - "8081:8081"
     volumes:
@@ -103,6 +106,7 @@ services:
       WEB_URL_BASE: http://localhost:8082
       DONACIONES_URL_BASE: http://donaciones:8080
       LOGISTICA_URL_BASE: http://logistica:8081
+      LOGISTICA_URL_PUBLICA: http://localhost:8081
       KEYCLOAK_URL: http://keycloak:8080
       KEYCLOAK_REALM: donatrack
       KEYCLOAK_CLIENT_ID: donatrack-web

@@ -1,7 +1,6 @@
 package donatrack.web.integracion;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import donatrack.web.vista.CamionVista;
 import donatrack.web.vista.EntregaPublicaVista;
 import donatrack.web.vista.EntregaVista;
 import donatrack.web.integracion.graphql.ConsultaGraphQl;
@@ -10,8 +9,6 @@ import donatrack.web.vista.MonitoreoRutaVista;
 import donatrack.web.vista.PlanificacionVista;
 import donatrack.web.vista.RutaVista;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -29,28 +26,6 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
   public List<EntregaPublicaVista> entregasPublicas() {
     return http.obtener(null, "/entregas/publicas",
         new TypeReference<List<EntregaPublicaVista>>() {});
-  }
-
-  @Override
-  public List<CamionVista> camiones(String autorizacion) {
-    return http.obtener(autorizacion, "/camiones", new TypeReference<List<CamionVista>>() {});
-  }
-
-  @Override
-  public CamionVista camion(String autorizacion, String patente) {
-    return http.obtener(autorizacion, rutaDeCamion(patente), new TypeReference<CamionVista>() {});
-  }
-
-  @Override
-  public void crearCamion(String autorizacion, NuevoCamion camion) {
-    http.publicar(autorizacion, "/camiones", camion);
-  }
-
-  @Override
-  public void actualizarCamion(String autorizacion,
-                               String patente,
-                               CapacidadesDeCamion capacidades) {
-    http.reemplazar(autorizacion, rutaDeCamion(patente), capacidades);
   }
 
   @Override
@@ -132,15 +107,4 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
     );
   }
 
-  private String rutaDeCamion(String patente) {
-    return "/camiones/"
-        + URLEncoder.encode(patente, StandardCharsets.UTF_8).replace("+", "%20");
-  }
-
-  @Override
-  public void eliminarCamion(String autorizacion, String patente) {
-    http.eliminar(autorizacion, rutaDeCamion(patente));
-  }
-
-  
 }

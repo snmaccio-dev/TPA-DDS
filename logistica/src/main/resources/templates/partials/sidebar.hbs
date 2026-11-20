@@ -1,0 +1,53 @@
+<aside class="sidebar">
+    <a class="brand" href="{{urlWeb}}/admin-dashboard">
+        <span class="brand-mark">D</span>
+        <span>DonaTrack</span>
+    </a>
+    <div class="side-caption">ADMIN</div>
+    <nav class="side-nav">
+        <a class="side-link" href="{{urlWeb}}/admin-dashboard">
+            <span>◫</span>
+            Panel
+        </a>
+        <a class="side-link" href="{{urlWeb}}/admin-donantes">
+            <span>♙</span>
+            Donantes
+        </a>
+        <a class="side-link" href="{{urlWeb}}/deposito">
+            <span>▣</span>
+            Depósito
+        </a>
+        <a class="side-link" href="{{urlWeb}}/asignaciones">
+            <span>⇄</span>
+            Asignaciones
+        </a>
+        <a class="side-link active" href="/admin/camiones">
+            <span>▱</span>
+            Camiones
+        </a>
+        <a class="side-link" href="{{urlWeb}}/monitoreo-flota">
+            <span>⌖</span>
+            Monitoreo
+        </a>
+        <a class="side-link" href="{{urlWeb}}/rutas-planificadas">
+            <span>⇄</span>
+            Rutas
+        </a>
+        <a class="side-link" href="{{urlWeb}}/importar-csv">
+            <span>⇧</span>
+            Importar CSV
+        </a>
+    </nav>
+    <div class="sidebar-bottom">
+        <div class="user-mini">
+            <div class="avatar">{{usuario.iniciales}}</div>
+            <div>
+                <strong>{{usuario.nombre}}</strong>
+                <small>Administración</small>
+            </div>
+        </div>
+        <form method="post" action="/admin/camiones/salir">
+            <button class="side-link" type="submit">↪ Cerrar sesión</button>
+        </form>
+    </div>
+</aside>
