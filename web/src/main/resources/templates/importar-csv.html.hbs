@@ -11,56 +11,58 @@
             </div>
         </div>
         <div class="csv-layout">
-            <section class="panel form-panel">
+            <form class="panel form-panel" id="csv-form" method="post" action="/importar-csv"
+                  enctype="multipart/form-data">
                 <h3>Archivo de importación</h3>
                 <label class="upload-box large-upload">
                     <span class="upload-symbol">⇧</span>
                     <b>Arrastrá tu archivo CSV o seleccioná uno</b>
                     <small>Formato .csv · Más de 10.000 filas admitidas</small>
-                    <input type="file" accept=".csv,text/csv" id="csv-file">
+                    <input type="file" name="archivo" accept=".csv,text/csv" id="csv-file">
                 </label>
                 <div class="csv-requirements">
                     <b>Columnas esperadas</b>
-                    <code>nombre,email,documento,telefono</code>
+                    <code>tipoPersona,tipoDocumento,documento,nombre,email,telefono</code>
+                    <small>La primera fila es el encabezado. tipoPersona es HUMANA o JURIDICA.</small>
                     <small>El correo electrónico será utilizado para vincular o crear el usuario.</small>
                 </div>
-                <button class="btn btn-primary btn-block" id="process-csv">Validar archivo</button>
-                <div id="csv-feedback" class="csv-feedback">
-                </div>
-            </section>
+                <button type="submit" class="btn btn-primary btn-block" id="process-csv">Subir archivo</button>
+            </form>
             <aside class="panel">
-                <h3>Proceso de importación</h3>
-                <div class="process-step">
-                    <span>1</span>
-                    <div>
-                        <b>Seleccionar archivo</b>
-                        <small>Elegí el CSV con los donantes.</small>
-                    </div>
+                <h3>Archivos subidos</h3>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Archivo</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="csv-importaciones">
+                            {{#if importacionesNoDisponible}}
+                                <tr data-sin-importaciones>
+                                    <td colspan="3" class="muted">No disponible. Intentá nuevamente más tarde.</td>
+                                </tr>
+                            {{else}}
+                                {{#each importaciones}}
+                                    <tr data-importacion="{{id}}" {{#if enCurso}}data-en-curso{{/if}}>
+                                        <td>{{archivo}}</td>
+                                        <td data-fecha>{{fechaTexto}}</td>
+                                        <td>
+                                            <span class="status-pill {{estadoClase}}" data-estado>{{estadoTexto}}</span>
+                                            <small class="muted" data-motivo>{{motivoFallo}}</small>
+                                        </td>
+                                    </tr>
+                                {{else}}
+                                    <tr data-sin-importaciones>
+                                        <td colspan="3" class="muted">Todavía no subiste ningún archivo.</td>
+                                    </tr>
+                                {{/each}}
+                            {{/if}}
+                        </tbody>
+                    </table>
                 </div>
-                <div class="process-step">
-                    <span>2</span>
-                    <div>
-                        <b>Validar datos</b>
-                        <small>Revisar formato, duplicados y campos obligatorios.</small>
-                    </div>
-                </div>
-                <div class="process-step">
-                    <span>3</span>
-                    <div>
-                        <b>Crear usuarios</b>
-                        <small>El backend procesará los registros en lotes.</small>
-                    </div>
-                </div>
-                <div class="process-step">
-                    <span>4</span>
-                    <div>
-                        <b>Ver resultado</b>
-                        <small>Resumen de importados y errores.</small>
-                    </div>
-                </div>
-                <p class="notice">
-                    Para archivos grandes, el backend deberá procesar por lotes/streaming y evitar cargar las 10.000+ filas completas en memoria.
-                </p>
             </aside>
         </div>
     </main>

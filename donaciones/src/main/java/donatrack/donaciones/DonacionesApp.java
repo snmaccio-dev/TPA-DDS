@@ -60,6 +60,7 @@ import io.javalin.config.SizeUnit;
 import io.javalin.http.HttpResponseException;
 
 import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -199,12 +200,15 @@ public class DonacionesApp {
 
     registrarManejoDeErrores(app);
 
-    PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(asignacionesService, HORARIO_MATCHMAKING);
+    // Horarios configurables con el mismo formato HH:mm que PLANIFICACION_HORA de Logistica.
+    PlanificadorAsignaciones planificador = new PlanificadorAsignaciones(
+        asignacionesService, horario("ASIGNACIONES_HORA", HORARIO_MATCHMAKING));
     planificador.iniciar();
     Runtime.getRuntime().addShutdownHook(new Thread(planificador::detener));
 
     PlanificadorAvisosInactividad planificadorAvisos =
-        new PlanificadorAvisosInactividad(donantesService, HORARIO_AVISOS_INACTIVIDAD);
+        new PlanificadorAvisosInactividad(
+            donantesService, horario("AVISOS_INACTIVIDAD_HORA", HORARIO_AVISOS_INACTIVIDAD));
     planificadorAvisos.iniciar();
     Runtime.getRuntime().addShutdownHook(new Thread(planificadorAvisos::detener));
     Runtime.getRuntime().addShutdownHook(new Thread(ejecutorImportaciones::shutdown));
@@ -292,6 +296,19 @@ public class DonacionesApp {
   private static String variable(String nombre, String valorPorDefecto) {
     String valor = System.getenv(nombre);
     return valor == null || valor.isBlank() ? valorPorDefecto : valor;
+  }
+
+  private static LocalTime horario(String nombre, LocalTime valorPorDefecto) {
+    String texto = variable(nombre, null);
+    if (texto == null) {
+      return valorPorDefecto;
+    }
+    try {
+      return LocalTime.parse(texto.trim());
+    } catch (DateTimeParseException e) {
+      throw new IllegalArgumentException(
+          "El horario de " + nombre + " '" + texto + "' no tiene el formato HH:mm.");
+    }
   }
 
 

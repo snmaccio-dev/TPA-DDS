@@ -13,22 +13,24 @@
 
   <div class="metric-grid compact">
     <article class="metric-card">
-      <strong>{{planificacion.totalRutas}}</strong><span>Rutas totales</span>
+      <strong>{{#if planificacionNoDisponible}}—{{else}}{{planificacion.totalRutas}}{{/if}}</strong><span>Rutas totales</span>
     </article>
     <article class="metric-card">
-      <strong>{{planificacion.planificadas}}</strong><span>Sin iniciar</span>
+      <strong>{{#if planificacionNoDisponible}}—{{else}}{{planificacion.planificadas}}{{/if}}</strong><span>Sin iniciar</span>
     </article>
     <article class="metric-card">
-      <strong>{{planificacion.enCurso}}</strong><span>En curso</span>
+      <strong>{{#if planificacionNoDisponible}}—{{else}}{{planificacion.enCurso}}{{/if}}</strong><span>En curso</span>
     </article>
     <article class="metric-card">
-      <strong>{{planificacion.totalPendientes}}</strong><span>Entregas sin ruta</span>
+      <strong>{{#if planificacionNoDisponible}}—{{else}}{{planificacion.totalPendientes}}{{/if}}</strong><span>Entregas sin ruta</span>
     </article>
   </div>
 
   <section class="panel">
     <div class="panel-head"><h3>Rutas</h3></div>
-    {{#if planificacion.sinRutas}}
+    {{#if planificacionNoDisponible}}
+    <p class="muted">No disponible. Intentá nuevamente más tarde.</p>
+    {{else if planificacion.sinRutas}}
     <p class="muted">Todavía no hay rutas. Corré una planificación para generarlas.</p>
     {{else}}
     <div class="table-wrap">
@@ -66,7 +68,9 @@
 
   <section class="panel">
     <div class="panel-head"><h3>Entregas esperando planificación</h3></div>
-    {{#if planificacion.sinPendientes}}
+    {{#if planificacionNoDisponible}}
+    <p class="muted">No disponible. Intentá nuevamente más tarde.</p>
+    {{else if planificacion.sinPendientes}}
     <p class="muted">No hay entregas medidas esperando una ruta.</p>
     {{else}}
     <div class="table-wrap">

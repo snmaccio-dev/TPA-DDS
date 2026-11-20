@@ -2,6 +2,7 @@ package donatrack.web.controller;
 
 import donatrack.web.Alertas;
 import donatrack.web.Modelo;
+import donatrack.web.integracion.ArchivoSubido;
 import donatrack.web.integracion.ClienteDonaciones;
 import donatrack.web.integracion.FiltroDonacionesWeb;
 import donatrack.web.integracion.IntegracionException;
@@ -12,10 +13,12 @@ import donatrack.web.integracion.OperacionRechazadaException;
 import donatrack.web.integracion.ResultadoEjecucion;
 import donatrack.web.integracion.ServicioNoDisponibleException;
 import donatrack.web.sesion.IdentidadDelUsuario;
+import donatrack.web.sesion.SesionExpiradaException;
 import donatrack.web.sesion.UsuarioWeb;
 import donatrack.web.vista.DonacionVista;
 import donatrack.web.vista.DonanteVista;
 import donatrack.web.vista.EntidadVista;
+import donatrack.web.vista.ImportacionVista;
 import donatrack.web.vista.NecesidadVista;
 import donatrack.web.vista.NotificacionVista;
 import donatrack.web.vista.PerfilVista;
@@ -24,7 +27,10 @@ import donatrack.web.vista.SubcategoriaVista;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
 import io.javalin.http.InternalServerErrorResponse;
+import io.javalin.http.UploadedFile;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -62,9 +68,13 @@ public class DonacionesWebController {
     app.post("/deposito/{id}/deshacer-vencimiento", this::deshacerVencimiento);
     app.post("/deposito/confirmar-recepcion", this::confirmarRecepcion);
     app.get("/asignaciones", this::asignaciones);
-    app.post("/asignaciones/{id}", this::confirmarAsignacion);
+    // "ejecutar" va antes que {id}: Javalin usa la primera ruta que coincide y, si no,
+    // toma "ejecutar" como id.
     app.post("/asignaciones/ejecutar", this::ejecutarAsignaciones);
+    app.post("/asignaciones/{id}", this::confirmarAsignacion);
     app.get("/importar-csv", this::importarCsv);
+    app.post("/importar-csv", this::subirCsv);
+    app.get("/importar-csv/{id}/estado", this::estadoDeImportacion);
 
     app.get("/notificaciones", this::notificaciones);
     app.post("/notificaciones/marcar-leidas", this::marcarNotificacionesLeidas);
@@ -289,13 +299,52 @@ public class DonacionesWebController {
   }
 
   private void panelAdmin(Context ctx) {
-    ctx.render("admin-dashboard.html.hbs",
-        Modelo.de("Panel de administración")
-            .seccion("Panel")
-            .conUsuario(usuario(ctx).perfil())
-            .comoAdmin()
-            .activa("panel")
-            .mapa());
+    // Un solo GET /donaciones (el admin ve todas) y los conteos por estado en memoria,
+    // igual que el panel de la entidad.
+    List<DonacionVista> donaciones = new ArrayList<>();
+    boolean donacionesDisponibles = true;
+
+    try {
+      donaciones = new ArrayList<>(
+          clienteDonaciones.donaciones(autorizacionDe(ctx), FiltroDonacionesWeb.vacio())
+      );
+    } catch (IntegracionException e) {
+      donacionesDisponibles = false;
+    }
+
+    donaciones.sort(Comparator.comparing(
+        DonacionVista::getId,
+        Comparator.nullsLast(Comparator.reverseOrder())
+    ));
+
+    String fechaActual = java.time.LocalDate.now().format(
+        java.time.format.DateTimeFormatter.ofPattern(
+            "MMMM yyyy", new java.util.Locale("es", "AR")));
+    fechaActual = fechaActual.substring(0, 1).toUpperCase() + fechaActual.substring(1);
+
+    Modelo modelo = Modelo.de("Panel de administración")
+        .seccion("Panel")
+        .conUsuario(usuario(ctx).perfil())
+        .comoAdmin()
+        .activa("panel")
+        .con("datosDonacionesDisponibles", donacionesDisponibles)
+        .con("totalDonaciones", donaciones.size())
+        .con("donacionesEnDeposito", contarPorEstado(donaciones, "EN_DEPOSITO"))
+        .con("donacionesEnTraslado", contarPorEstado(donaciones, "EN_TRASLADO"))
+        .con("donacionesEntregadas", contarPorEstado(donaciones, "ENTREGADA"))
+        .con("donacionesRecientes", donaciones.stream().limit(5).toList())
+        .con("fechaActual", fechaActual);
+
+    if (!donacionesDisponibles) {
+      modelo.conAlertaAdvertencia(
+          "No se pudieron cargar los datos del panel. Intentá nuevamente más tarde.");
+    }
+
+    ctx.render("admin-dashboard.html.hbs", modelo.mapa());
+  }
+
+  private static long contarPorEstado(List<DonacionVista> donaciones, String estado) {
+    return donaciones.stream().filter(d -> estado.equals(d.getEstado())).count();
   }
 
   private void necesidades(Context ctx) {
@@ -552,6 +601,15 @@ public class DonacionesWebController {
         sb.append("La donación #").append(propuestas.get(i).getDonacionId())
             .append(" no tiene entidades compatibles.");
       }
+
+      // Si viene el resultado de "Ejecutar asignación ahora" como flash, JavalinRenderer
+      // lo descartaria (no pisa una advertencia ya cargada): se muestran los dos juntos.
+      Object flash = ctx.sessionAttribute(Alertas.CLAVE_FLASH);
+      if (flash instanceof Map<?, ?> previo && Alertas.TIPO_ADVERTENCIA.equals(previo.get("tipo"))) {
+        Alertas.consumir(ctx);
+        sb.insert(0, previo.get("texto") + " ");
+      }
+
       modelo.conAlertaAdvertencia(sb.toString());
     }
 
@@ -641,11 +699,11 @@ public class DonacionesWebController {
   private void ejecutarAsignaciones(Context ctx) {
     try {
       ResultadoEjecucion resultado = clienteDonaciones.ejecutarAsignaciones(autorizacionDe(ctx));
-      if (resultado.cantidadFallidas() > 0) {
-        Alertas.flashAdvertencia(ctx,
-            "Se asignaron " + resultado.procesadas() + " donaciones; "
-                + resultado.cantidadFallidas() + " no pudieron procesarse.");
-      }
+      // El partial de alerta solo tiene error y advertencia: el resultado va siempre
+      // como advertencia, con procesadas y fallidas.
+      Alertas.flashAdvertencia(ctx,
+          "Asignación ejecutada: " + resultado.procesadas() + " donaciones procesadas, "
+              + resultado.cantidadFallidas() + " fallidas.");
     } catch (IntegracionException e) {
       Alertas.flashError(ctx, mensajeDe(e));
     }
@@ -657,8 +715,75 @@ public class DonacionesWebController {
         Modelo.de("Importar CSV").seccion("Importar CSV")
             .conUsuario(usuario(ctx).perfil())
             .comoAdmin().activa("importar")
-            .conAlertaAdvertencia("Funcionalidad no disponible todavía")
+            .conDatosDe("importaciones", List.<ImportacionVista>of(),
+                () -> clienteDonaciones.importaciones(autorizacionDe(ctx)))
             .mapa());
+  }
+
+  // POST /importar-csv: lo llama el JS de la pantalla con fetch. Reenvia el archivo a
+  // Donaciones y responde JSON; los errores van como {"mensaje": ...} para que el JS
+  // los muestre con el estilo de la alerta.
+  private void subirCsv(Context ctx) {
+    UploadedFile archivo = ctx.uploadedFile("archivo");
+
+    if (archivo == null || archivo.size() == 0) {
+      errorJson(ctx, 400, "Seleccioná un archivo CSV antes de subirlo.");
+      return;
+    }
+
+    String nombre = archivo.filename();
+    if (nombre == null || !nombre.toLowerCase(java.util.Locale.ROOT).endsWith(".csv")) {
+      errorJson(ctx, 400, "El archivo tiene que tener extensión .csv.");
+      return;
+    }
+
+    byte[] contenido;
+    try (InputStream entrada = archivo.content()) {
+      contenido = entrada.readAllBytes();
+    } catch (IOException e) {
+      errorJson(ctx, 400, "No se pudo leer el archivo " + nombre + ".");
+      return;
+    }
+
+    try {
+      long id = clienteDonaciones.importarDonantes(
+          autorizacionDe(ctx),
+          new ArchivoSubido(nombre, "text/csv", contenido)
+      );
+      ctx.status(202).json(Map.of("id", id));
+    } catch (IntegracionException e) {
+      errorJson(ctx, e instanceof ServicioNoDisponibleException ? 503 : 400, mensajeDe(e));
+    } catch (SesionExpiradaException e) {
+      errorJson(ctx, 401, "Tu sesión expiró. Volvé a ingresar.");
+    }
+  }
+
+  // GET /importar-csv/{id}/estado: el JS lo consulta cada 3 segundos mientras la
+  // importacion siga en curso.
+  private void estadoDeImportacion(Context ctx) {
+    long id = ctx.pathParamAsClass("id", Long.class).get();
+
+    try {
+      ImportacionVista importacion = clienteDonaciones.importacion(autorizacionDe(ctx), id);
+
+      Map<String, Object> respuesta = new HashMap<>();
+      respuesta.put("id", importacion.getId());
+      respuesta.put("enCurso", importacion.isEnCurso());
+      respuesta.put("estadoTexto", importacion.getEstadoTexto());
+      respuesta.put("estadoClase", importacion.getEstadoClase());
+      respuesta.put("fechaTexto", importacion.getFechaTexto());
+      respuesta.put("motivoFallo", importacion.getMotivoFallo());
+
+      ctx.json(respuesta);
+    } catch (IntegracionException e) {
+      errorJson(ctx, e instanceof ServicioNoDisponibleException ? 503 : 400, mensajeDe(e));
+    } catch (SesionExpiradaException e) {
+      errorJson(ctx, 401, "Tu sesión expiró. Volvé a ingresar.");
+    }
+  }
+
+  private static void errorJson(Context ctx, int estado, String mensaje) {
+    ctx.status(estado).json(Map.of("mensaje", mensaje));
   }
 
   private void notificaciones(Context ctx) {

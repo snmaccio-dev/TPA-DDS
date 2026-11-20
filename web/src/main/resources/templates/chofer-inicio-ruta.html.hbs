@@ -11,7 +11,12 @@
     </div>
   </div>
 
-  {{#if sinRutas}}
+  {{#if rutasNoDisponible}}
+  <section class="panel">
+    <h3>No disponible</h3>
+    <p class="muted">No se pudieron cargar tus rutas. Intentá nuevamente más tarde.</p>
+  </section>
+  {{else if sinRutas}}
   <section class="panel">
     <h3>No tenés rutas asignadas</h3>
     <p class="muted">Cuando el planificador arme una ruta para tu camión, va a aparecer acá.</p>

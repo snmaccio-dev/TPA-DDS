@@ -41,6 +41,13 @@
                     </tr>
                     {{/each}}
 
+                    {{#if donantesNoDisponible}}
+                    <tr>
+                        <td colspan="5" class="muted">
+                            No disponible. Intentá nuevamente más tarde.
+                        </td>
+                    </tr>
+                    {{else}}
                     {{#unless donantes}}
                     <tr>
                         <td colspan="5" class="muted">
@@ -48,6 +55,7 @@
                         </td>
                     </tr>
                     {{/unless}}
+                    {{/if}}
                 </tbody>
             </table>
         </div>

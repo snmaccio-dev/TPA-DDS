@@ -48,6 +48,7 @@ services:
       dockerfile: docker/donaciones.Dockerfile
     container_name: tp-donaciones-local
     environment:
+      TZ: America/Argentina/Buenos_Aires
       DB_URL: jdbc:postgresql://db:5432/donatrack_donaciones
       DB_USER: postgres
       DB_PASSWORD: ${POSTGRES_PASSWORD}
@@ -71,6 +72,7 @@ services:
       dockerfile: docker/logistica.Dockerfile
     container_name: tp-logistica-local
     environment:
+      TZ: America/Argentina/Buenos_Aires
       DB_URL: jdbc:postgresql://db:5432/donatrack_logistica
       DB_USER: postgres
       DB_PASSWORD: ${POSTGRES_PASSWORD}

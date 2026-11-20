@@ -2,6 +2,7 @@ package donatrack.donaciones.jobs;
 
 import donatrack.donaciones.service.DonantesService;
 import donatrack.donaciones.service.ResultadoCorrida;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
 import java.time.Duration;
 import java.time.LocalDate;
@@ -44,6 +45,8 @@ public class PlanificadorAvisosInactividad {
             TimeUnit.HOURS.toSeconds(PERIODO_HORAS),
             TimeUnit.SECONDS
         );
+        System.out.println("[JOB AVISOS-INACTIVIDAD] Corrida diaria a las " + hora
+            + ". Primera corrida en " + Duration.ofSeconds(delayInicial).toMinutes() + " minuto(s).");
     }
 
     public void detener() {
@@ -53,14 +56,22 @@ public class PlanificadorAvisosInactividad {
     private void ejecutar() {
         // scheduleAtFixedRate cancela silenciosamente todas las corridas futuras si la
         // tarea lanza una excepción — atrapar RuntimeException para que el job siga vivo.
+        //
+        // Mismo motivo que en PlanificadorAsignaciones: el EntityManager del hilo del job
+        // se cierra al final de cada corrida.
+        System.out.println("[JOB AVISOS-INACTIVIDAD] Inicio de la corrida programada.");
         try {
             ResultadoCorrida resultado = service.avisarInactivos();
-            System.out.println("[AVISO-INACTIVIDAD] Corrida programada — donantes avisados: "
+            System.out.println("[JOB AVISOS-INACTIVIDAD] Corrida terminada. Donantes avisados: "
                 + resultado.exitosas() + ", fallidos: " + resultado.cantidadDeFallas());
             resultado.fallidas().forEach(falla ->
-                System.err.println("[AVISO-INACTIVIDAD] " + falla));
+                System.err.println("[JOB AVISOS-INACTIVIDAD] Fallido: " + falla));
         } catch (RuntimeException e) {
-            System.err.println("[AVISO-INACTIVIDAD] Error en corrida programada: " + e.getMessage());
+            System.err.println("[JOB AVISOS-INACTIVIDAD] La corrida fallo: " + e.getMessage()
+                + ". Se reintenta en la proxima ejecucion programada.");
+            e.printStackTrace();
+        } finally {
+            WithSimplePersistenceUnit.dispose();
         }
     }
 
