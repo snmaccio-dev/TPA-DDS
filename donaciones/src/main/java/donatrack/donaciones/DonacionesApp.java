@@ -54,6 +54,7 @@ import donatrack.donaciones.service.NotificacionesService;
 import donatrack.donaciones.service.PersonasService;
 import donatrack.donaciones.service.RecursoInexistenteException;
 import donatrack.donaciones.service.UsuariosService;
+import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import io.javalin.Javalin;
 import io.javalin.config.JavalinConfig;
 import io.javalin.config.SizeUnit;
@@ -179,6 +180,12 @@ public class DonacionesApp {
         importacionEnviaMails);
 
     Javalin app = Javalin.create(DonacionesApp::configurar).start(PUERTO);
+
+    // jpa-extras guarda un EntityManager por hilo. Sin esto, cada hilo de Jetty reusaba el
+    // suyo entre requests y em.find devolvia entidades cacheadas con estados viejos (por
+    // ejemplo, una donacion ya recibida en deposito seguia PENDIENTE_RECEPCION para el
+    // hilo que la habia creado). Igual que en Logistica.
+    app.after(ctx -> WithSimplePersistenceUnit.dispose());
 
     // El filtro se registra antes que las rutas: todas las rutas tienen
     // que declarar sus roles y el filtro las rechaza si no lo hacen.

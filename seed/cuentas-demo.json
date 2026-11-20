@@ -1,0 +1,64 @@
+{
+  "_comentario": "Cuentas de demostracion. Tienen que existir en el realm de Keycloak con el rol indicado en 'tipo' (seed.sh lo verifica antes de borrar nada). No se usan IDs fijos: el keycloak_id se resuelve por mail en cada ejecucion. 'perfil' son los datos con los que la seed crea el perfil en la base; el nombre y apellido salen de la cuenta de Keycloak.",
+  "cuentas": [
+    {
+      "email": "admin@gmail.com",
+      "tipo": "ADMINISTRADOR"
+    },
+    {
+      "email": "donante1@gmail.com",
+      "tipo": "DONANTE",
+      "perfil": {
+        "tipoPersona": "HUMANA",
+        "documento": "30111222",
+        "edad": 34,
+        "genero": "FEMENINO",
+        "direccion": "Av. Rivadavia 4500, CABA"
+      }
+    },
+    {
+      "email": "donante2@gmail.com",
+      "tipo": "DONANTE",
+      "perfil": {
+        "tipoPersona": "JURIDICA",
+        "cuit": "30712345671",
+        "razonSocial": "Distribuidora del Plata S.A.",
+        "tipoOrganizacion": "EMPRESA",
+        "rubro": "Alimentos y bebidas",
+        "direccion": "Av. Belgrano 1200, CABA"
+      }
+    },
+    {
+      "email": "beneficiaria1@gmail.com",
+      "tipo": "BENEFICIARIA",
+      "perfil": {
+        "cuit": "30700000011",
+        "razonSocial": "Comedor Los Gorriones",
+        "tipoOrganizacion": "ONG",
+        "rubro": "Comedor comunitario",
+        "direccion": "Av. Sáenz 950, CABA",
+        "telefono": "+54 11 4911-1001"
+      }
+    },
+    {
+      "email": "beneficiaria2@gmail.com",
+      "tipo": "BENEFICIARIA",
+      "perfil": {
+        "cuit": "30700000022",
+        "razonSocial": "Escuela Rural N° 14",
+        "tipoOrganizacion": "INSTITUCION",
+        "rubro": "Educación",
+        "direccion": "Av. Mitre 2300, Avellaneda",
+        "telefono": "+54 11 4201-2002"
+      }
+    },
+    {
+      "email": "chofer1@gmail.com",
+      "tipo": "CHOFER",
+      "perfil": {
+        "documento": "28999111",
+        "licencia": "C2"
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+tipoPersona,tipoDocumento,documento,nombre,email,telefono
+HUMANA,DNI,40000001,Lucía Fernández,donante01@demo.donatrack.ar,+54 11 5001-1001
+HUMANA,DNI,40000002,Martín Gómez,donante02@demo.donatrack.ar,+54 11 5002-1002
+HUMANA,DNI,40000003,Sofía Rodríguez,donante03@demo.donatrack.ar,
+HUMANA,DNI,40000004,Juan Pérez,donante04@demo.donatrack.ar,+54 11 5004-1004
+HUMANA,DNI,40000005,Valentina López,donante05@demo.donatrack.ar,+54 11 5005-1005
+HUMANA,DNI,40000006,Mateo Díaz,donante06@demo.donatrack.ar,
+HUMANA,DNI,40000007,Camila Martínez,donante07@demo.donatrack.ar,+54 11 5007-1007
+HUMANA,DNI,40000008,Benjamín Sánchez,donante08@demo.donatrack.ar,+54 11 5008-1008
+HUMANA,DNI,40000009,Martina Romero,donante09@demo.donatrack.ar,
+HUMANA,DNI,40000010,Thiago Álvarez,donante10@demo.donatrack.ar,+54 11 5010-1010
+HUMANA,DNI,40000011,Emilia Torres,donante11@demo.donatrack.ar,+54 11 5011-1011
+HUMANA,DNI,40000012,Santiago Ruiz,donante12@demo.donatrack.ar,
+HUMANA,DNI,40000013,Julieta Flores,donante13@demo.donatrack.ar,+54 11 5013-1013
+HUMANA,DNI,40000014,Joaquín Acosta,donante14@demo.donatrack.ar,+54 11 5014-1014
+HUMANA,DNI,40000015,Catalina Benítez,donante15@demo.donatrack.ar,
+HUMANA,DNI,40000016,Tomás Medina,donante16@demo.donatrack.ar,+54 11 5016-1016
+HUMANA,DNI,40000017,Florencia Herrera,donante17@demo.donatrack.ar,+54 11 5017-1017
+HUMANA,DNI,40000018,Agustín Castro,donante18@demo.donatrack.ar,
+HUMANA,DNI,40000019,Abril Suárez,donante19@demo.donatrack.ar,+54 11 5019-1019
+HUMANA,DNI,40000020,Nicolás Rojas,donante20@demo.donatrack.ar,+54 11 5020-1020
+HUMANA,DNI,40000021,Paula Molina,donante21@demo.donatrack.ar,
+HUMANA,DNI,40000022,Facundo Ortiz,donante22@demo.donatrack.ar,+54 11 5022-1022
+HUMANA,DNI,40000023,Milagros Silva,donante23@demo.donatrack.ar,+54 11 5023-1023
+HUMANA,DNI,40000024,Franco Núñez,donante24@demo.donatrack.ar,
+HUMANA,DNI,40000025,Rocío Luna,donante25@demo.donatrack.ar,+54 11 5025-1025
+HUMANA,DNI,40000026,Ignacio Cabrera,donante26@demo.donatrack.ar,+54 11 5026-1026
+HUMANA,DNI,40000027,Antonella Ríos,donante27@demo.donatrack.ar,
+HUMANA,DNI,40000028,Lautaro Morales,donante28@demo.donatrack.ar,+54 11 5028-1028
+HUMANA,DNI,40000029,Delfina Giménez,donante29@demo.donatrack.ar,+54 11 5029-1029
+HUMANA,DNI,40000030,Bruno Vega,donante30@demo.donatrack.ar,
+HUMANA,DNI,40000031,Carolina Peralta,donante31@demo.donatrack.ar,+54 11 5031-1031
+HUMANA,DNI,40000032,Gonzalo Aguirre,donante32@demo.donatrack.ar,+54 11 5032-1032
+HUMANA,DNI,40000033,Micaela Sosa,donante33@demo.donatrack.ar,
+HUMANA,DNI,40000034,Federico Ramos,donante34@demo.donatrack.ar,+54 11 5034-1034
+JURIDICA,CUIT,30-71000001-1,Panificadora La Espiga S.R.L.,donante35@demo.donatrack.ar,+54 11 4035-2035
+JURIDICA,CUIT,30-71000002-2,Textil Norte S.A.,donante36@demo.donatrack.ar,+54 11 4036-2036
+JURIDICA,CUIT,30-71000003-3,Muebles del Sur S.A.,donante37@demo.donatrack.ar,+54 11 4037-2037
+JURIDICA,CUIT,30-71000004-4,Supermercados Barrio S.A.,donante38@demo.donatrack.ar,+54 11 4038-2038
+JURIDICA,CUIT,30-71000005-5,Librería Central S.R.L.,donante39@demo.donatrack.ar,+54 11 4039-2039
+JURIDICA,CUIT,30-71000006-6,Farmacia Vida S.A.,donante40@demo.donatrack.ar,+54 11 4040-2040

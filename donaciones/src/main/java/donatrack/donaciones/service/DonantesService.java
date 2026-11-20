@@ -59,7 +59,8 @@ public class DonantesService implements WithSimplePersistenceUnit {
                 "Ya existe una persona con ese documento o CUIT. Si se la quiere hacer donante, "
                     + "usa el alta con persona existente.");
         }
-        return crearConCuenta(persona, email, null);
+        return crearConCuenta(persona, email,
+            usuariosService.obtenerCuenta(email, RolDeAcceso.DONANTE, true));
     }
 
     public Donante registrarConPersonaExistente(String documento, String email) {
@@ -70,7 +71,9 @@ public class DonantesService implements WithSimplePersistenceUnit {
             throw new ConflictoDeNegocioException("La persona ya es donante.");
         }
 
-        String keycloakId = usuariosService.crearEnProveedor(email, null, RolDeAcceso.DONANTE);
+        UsuariosService.CuentaObtenida cuenta =
+            usuariosService.obtenerCuenta(email, RolDeAcceso.DONANTE, true);
+        String keycloakId = cuenta.keycloakId();
         Donante[] creado = new Donante[1];
         try {
             withTransaction(() -> {
@@ -82,7 +85,9 @@ public class DonantesService implements WithSimplePersistenceUnit {
                 usuariosService.vincular(keycloakId, creado[0]);
             });
         } catch (RuntimeException e) {
-            usuariosService.compensar(keycloakId);
+            if (cuenta.creada()) {
+                usuariosService.compensar(keycloakId);
+            }
             throw e;
         }
         return creado[0];
@@ -96,11 +101,15 @@ public class DonantesService implements WithSimplePersistenceUnit {
         if (repositorioPersonas.buscarPorDocumento(persona.getDocumento()).isPresent()) {
             throw new ConflictoDeNegocioException(UsuariosService.MENSAJE_PERSONA_DUPLICADA);
         }
-        return crearConCuenta(persona, email, contrasena);
+        // El registro publico siempre crea la cuenta: si el mail ya existe, el proveedor
+        // responde 409 y la persona tiene que ingresar con esa cuenta.
+        return crearConCuenta(persona, email, new UsuariosService.CuentaObtenida(
+            usuariosService.crearEnProveedor(email, contrasena, RolDeAcceso.DONANTE), true));
     }
 
-    private Donante crearConCuenta(Persona persona, String email, String contrasena) {
-        String keycloakId = usuariosService.crearEnProveedor(email, contrasena, RolDeAcceso.DONANTE);
+    private Donante crearConCuenta(Persona persona, String email,
+                                   UsuariosService.CuentaObtenida cuenta) {
+        String keycloakId = cuenta.keycloakId();
         Donante[] creado = new Donante[1];
         try {
             withTransaction(() -> {
@@ -108,7 +117,9 @@ public class DonantesService implements WithSimplePersistenceUnit {
                 usuariosService.vincular(keycloakId, creado[0]);
             });
         } catch (RuntimeException e) {
-            usuariosService.compensar(keycloakId);
+            if (cuenta.creada()) {
+                usuariosService.compensar(keycloakId);
+            }
             throw e;
         }
         return creado[0];

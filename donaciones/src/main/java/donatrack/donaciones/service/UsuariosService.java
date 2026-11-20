@@ -1,5 +1,6 @@
 package donatrack.donaciones.service;
 
+import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
@@ -42,6 +43,29 @@ public class UsuariosService {
 
     public Optional<String> buscarIdPorEmail(String email) {
         return proveedor.buscarIdPorEmail(email);
+    }
+
+    // Cuenta para un perfil nuevo (altas del admin e importacion CSV). Regla: si el mail
+    // ya tiene cuenta en el proveedor, se reutiliza; solo se crea si nunca existio. Asi un
+    // reset de la base no hace crecer Keycloak. Se intenta crear primero porque es el
+    // caso comun en una importacion grande; el 409 del proveedor indica que ya existe.
+    // Si la cuenta existente ya esta vinculada a otro perfil, es conflicto.
+    // creada() dice si hay que compensarla (borrarla) cuando falla el resto del alta:
+    // una cuenta que ya existia nunca se borra.
+    public CuentaObtenida obtenerCuenta(String email, RolDeAcceso rol, boolean enviarMail) {
+        try {
+            return new CuentaObtenida(proveedor.crearUsuarioSinContrasena(email, rol, enviarMail), true);
+        } catch (ConflictoDeNegocioException e) {
+            String existente = proveedor.buscarIdPorEmail(email).orElseThrow(() -> e);
+            if (repositorioUsuarios.buscarPorKeycloakId(existente).isPresent()) {
+                throw new ConflictoDeNegocioException(
+                    "El email " + email + " ya está vinculado a otro perfil.");
+            }
+            return new CuentaObtenida(existente, false);
+        }
+    }
+
+    public record CuentaObtenida(String keycloakId, boolean creada) {
     }
 
     public void vincular(String keycloakId, Donante donante) {
