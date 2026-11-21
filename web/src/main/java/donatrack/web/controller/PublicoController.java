@@ -10,7 +10,10 @@ import donatrack.web.integracion.RegistroDonante;
 import donatrack.web.integracion.ServicioNoDisponibleException;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import jakarta.servlet.http.HttpSession;
 
+import donatrack.web.sesion.IdentidadPorSesion;
+import donatrack.web.sesion.UsuarioWeb;
 import donatrack.web.vista.EntregaPublicaVista;
 import donatrack.web.vista.MapaDeEntregasVista;
 
@@ -26,6 +29,7 @@ public class PublicoController {
   // /donaciones-publicas: mapa, lista y carrusel.
   static final int ENTREGAS_RECIENTES = 5;
   private static final String CAMPO_CONTRASENA = "contrasena";
+  private static final String REGISTRO_EXITOSO = "/registro/exito";
   // Landing: las ultimas entregas, todas visibles sin paginar.
   static final int ENTREGAS_LANDING = 3;
 
@@ -45,6 +49,7 @@ public class PublicoController {
     app.get("/donaciones-publicas", this::donacionesPublicas);
     app.get("/registro", this::registro);
     app.post("/registro", this::crearCuenta);
+    app.get("/registro/exito", this::registroExitoso);
     // Compatibilidad con links viejos: el ingreso es directo contra Keycloak.
     app.get("/login", ctx -> ctx.redirect("/sesion/ingresar"));
     app.get("/privacidad", this::privacidad);
@@ -97,10 +102,16 @@ public class PublicoController {
   }
 
   private void registro(Context ctx) {
+    if (redirigirSiYaInicioSesion(ctx)) {
+      return;
+    }
     mostrarRegistro(ctx, null, Map.of());
   }
 
   private void crearCuenta(Context ctx) {
+    if (redirigirSiYaInicioSesion(ctx)) {
+      return;
+    }
     String perfil = ctx.formParam("perfil");
     String email = ctx.formParam("email");
 
@@ -125,7 +136,42 @@ public class PublicoController {
       return;
     }
 
-    ctx.redirect("/sesion/ingresar");
+    cuentaCreada(ctx, email.trim());
+  }
+
+  // Registro exitoso: no queda ningun usuario de la web en sesion y se muestra la
+  // confirmacion. El correo va en la sesion, no en la URL: lo usan la confirmacion y el
+  // ingreso que sigue, que pide el formulario de Keycloak (aunque haya una sesion SSO de
+  // otra cuenta) con ese correo.
+  private static void cuentaCreada(Context ctx, String email) {
+    HttpSession anterior = ctx.req().getSession(false);
+    if (anterior != null) {
+      anterior.invalidate();
+    }
+    ctx.sessionAttribute(SesionController.CLAVE_EMAIL_REGISTRADO, email);
+    ctx.redirect(REGISTRO_EXITOSO);
+  }
+
+  // Solo tiene sentido justo despues de un registro: sin correo registrado en la sesion
+  // (entrada directa, o ya se inicio sesion con esa cuenta) se va a la landing.
+  private void registroExitoso(Context ctx) {
+    String email = ctx.sessionAttribute(SesionController.CLAVE_EMAIL_REGISTRADO);
+    if (email == null || email.isBlank()) {
+      ctx.redirect("/");
+      return;
+    }
+    ctx.render("registro-exito.html.hbs",
+        Modelo.de("Registro exitoso").con("emailRegistrado", email).mapa());
+  }
+
+  // Con una sesion de la web ya iniciada, registrarse no tiene sentido: se va al panel.
+  private static boolean redirigirSiYaInicioSesion(Context ctx) {
+    UsuarioWeb usuario = ctx.sessionAttribute(IdentidadPorSesion.CLAVE_USUARIO);
+    if (usuario == null) {
+      return false;
+    }
+    ctx.redirect(usuario.perfil() == null ? "/" : usuario.perfil().inicioSegunRol());
+    return true;
   }
 
   private RegistroDonante donanteDelFormulario(Context ctx) {

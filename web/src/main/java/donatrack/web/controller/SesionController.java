@@ -23,6 +23,9 @@ public class SesionController {
 
     private static final String CLAVE_ESTADO = "estadoDeIngreso";
     private static final String CLAVE_VERIFICADOR = "verificadorDeIngreso";
+    // Correo de la cuenta recien creada en /registro. Viaja en la sesion de la web (no en
+    // la URL): lo muestra /registro/exito y lo consume el ingreso que sigue al registro.
+    public static final String CLAVE_EMAIL_REGISTRADO = "emailRegistrado";
 
     private static final String LANDING = "/";
 
@@ -54,9 +57,16 @@ public class SesionController {
         app.post("/logout", this::salir);
     }
 
+    // Despues de un registro (?registro=1) se pide prompt=login: si Keycloak tiene abierta
+    // la sesion SSO de otra cuenta, igual muestra el formulario en lugar de entrar con esa
+    // cuenta. login_hint completa el correo recien registrado. El ingreso normal no cambia.
     private void ingresar(Context ctx) {
         String estado = nuevoValorAlAzar();
         String verificador = Pkce.nuevoVerificador();
+
+        boolean vieneDeRegistro = "1".equals(ctx.queryParam("registro"));
+        String emailRegistrado = ctx.sessionAttribute(CLAVE_EMAIL_REGISTRADO);
+        ctx.sessionAttribute(CLAVE_EMAIL_REGISTRADO, null);
 
         ctx.sessionAttribute(CLAVE_ESTADO, estado);
         ctx.sessionAttribute(CLAVE_VERIFICADOR, verificador);
@@ -64,7 +74,9 @@ public class SesionController {
         ctx.redirect(
             oidc.urlDeIngreso(
                 estado,
-                Pkce.desafioDe(verificador)
+                Pkce.desafioDe(verificador),
+                vieneDeRegistro,
+                vieneDeRegistro ? emailRegistrado : null
             )
         );
     }

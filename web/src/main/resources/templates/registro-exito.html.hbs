@@ -1,0 +1,19 @@
+{{> templates/partials/head}}
+<body data-page="register-success" data-role="public">
+{{> templates/partials/header-publico}}
+<main class="public-main">
+    <section class="panel registro-exito">
+        <span class="registro-exito-icono" aria-hidden="true">✓</span>
+        <h1>¡Registro exitoso!</h1>
+        <p>Tu cuenta fue creada. Ya podés iniciar sesión con tu correo y contraseña.</p>
+        {{#if emailRegistrado}}
+            <p class="registro-exito-correo">Correo registrado: <b>{{emailRegistrado}}</b></p>
+        {{/if}}
+        {{!-- Ingreso con prompt=login y login_hint: muestra el formulario de Keycloak aunque
+              haya una sesion SSO abierta de otra cuenta. --}}
+        <a class="btn btn-primary" href="/sesion/ingresar?registro=1">Iniciar sesión</a>
+    </section>
+</main>
+{{> templates/partials/footer}}
+{{> templates/partials/scripts}}
+</body>

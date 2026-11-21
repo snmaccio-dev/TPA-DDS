@@ -31,14 +31,31 @@ public class ClienteOidc {
   }
 
   public String urlDeIngreso(String estado, String desafio) {
-    return configuracion.urlDeAutorizacion()
-        + "?response_type=code"
-        + "&client_id=" + codificar(configuracion.clientId())
-        + "&redirect_uri=" + codificar(configuracion.urlDeRetorno())
-        + "&scope=" + codificar("openid email profile")
-        + "&state=" + codificar(estado)
-        + "&code_challenge=" + codificar(desafio)
-        + "&code_challenge_method=S256";
+    return urlDeIngreso(estado, desafio, false, null);
+  }
+
+  // pedirCredenciales agrega prompt=login: Keycloak muestra el formulario aunque haya una
+  // sesion SSO abierta (por ejemplo, de otra cuenta). loginHint (opcional) agrega
+  // login_hint para completar el usuario del formulario.
+  public String urlDeIngreso(String estado,
+                             String desafio,
+                             boolean pedirCredenciales,
+                             String loginHint) {
+    StringBuilder url = new StringBuilder(configuracion.urlDeAutorizacion())
+        .append("?response_type=code")
+        .append("&client_id=").append(codificar(configuracion.clientId()))
+        .append("&redirect_uri=").append(codificar(configuracion.urlDeRetorno()))
+        .append("&scope=").append(codificar("openid email profile"))
+        .append("&state=").append(codificar(estado))
+        .append("&code_challenge=").append(codificar(desafio))
+        .append("&code_challenge_method=S256");
+    if (pedirCredenciales) {
+      url.append("&prompt=login");
+    }
+    if (loginHint != null && !loginHint.isBlank()) {
+      url.append("&login_hint=").append(codificar(loginHint.trim()));
+    }
+    return url.toString();
   }
 
   public String urlDeSalida(String idToken) {

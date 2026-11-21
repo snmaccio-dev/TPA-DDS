@@ -2275,3 +2275,42 @@ td:first-child {
     color: #7a2020;
     font-size: 13px;
 }
+
+/* Confirmacion despues del registro (/registro/exito). */
+.registro-exito {
+    max-width: 520px;
+    margin: 65px auto;
+    padding: 36px 32px;
+    text-align: center;
+}
+
+.registro-exito h1 {
+    font-size: 32px;
+    margin: 14px 0 10px;
+}
+
+.registro-exito p {
+    margin: 0 0 12px;
+}
+
+.registro-exito .btn {
+    margin-top: 12px;
+}
+
+.registro-exito-icono {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--green);
+    color: white;
+    font-size: 28px;
+}
+
+.registro-exito-correo {
+    color: var(--muted);
+    font-size: 13px;
+    word-break: break-all;
+}
