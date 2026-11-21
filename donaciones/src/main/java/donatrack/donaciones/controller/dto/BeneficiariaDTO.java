@@ -4,7 +4,6 @@ import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
-import donatrack.donaciones.domain.persona.Representante;
 
 import java.util.List;
 
