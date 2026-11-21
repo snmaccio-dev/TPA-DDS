@@ -10,9 +10,12 @@ import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.donacion.SegmentadorDonaciones;
 import donatrack.donaciones.domain.notificacion.DonacionObserver;
 import donatrack.donaciones.domain.notificacion.NotificacionesDeDonacionObserver;
+import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
+import donatrack.donaciones.domain.persona.PersonaJuridica;
+import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioNotificaciones;
 import donatrack.donaciones.repository.RepositorioPropuestas;
@@ -104,7 +107,47 @@ public class DonacionesServiceTest {
         nuevoService().subcategoriaPorNombre("Nada"));
   }
 
+  @Test
+  public void unaEntregaConfirmadaDevuelveLaBeneficiariaQueLaRecibio() throws Exception {
+    Donacion donacion = donacionEnTrasladoA(beneficiariaConId(42L));
+    when(repoDonaciones.buscarPorId(7L)).thenReturn(Optional.of(donacion));
+
+    Optional<Long> beneficiaria = nuevoService().registrarEntrega(
+        7L, "ENTREGADA", "2026-11-20T10:00:00", "AE123CD", null);
+
+    assertEquals(Optional.of(42L), beneficiaria);
+  }
+
+  @Test
+  public void unaEntregaNoRecibidaNoDevuelveBeneficiaria() throws Exception {
+    Donacion donacion = donacionEnTrasladoA(beneficiariaConId(42L));
+    when(repoDonaciones.buscarPorId(7L)).thenReturn(Optional.of(donacion));
+
+    Optional<Long> beneficiaria = nuevoService().registrarEntrega(
+        7L, "NO_RECIBIDA", null, null, "No habia nadie");
+
+    assertEquals(Optional.empty(), beneficiaria);
+  }
+
   // === Helpers ===
+
+  private Donacion donacionEnTrasladoA(Beneficiaria destino) {
+    Donacion donacion = donacionDeSillas();
+    donacion.confirmarRecepcionEnDeposito();
+    donacion.confirmarDestino(destino);
+    donacion.marcarListaParaEntregar();
+    donacion.marcarEnTraslado();
+    return donacion;
+  }
+
+  private Beneficiaria beneficiariaConId(long id) throws Exception {
+    Beneficiaria beneficiaria = new Beneficiaria(
+        new PersonaJuridica("30-" + id + "-1", "Comedor " + id, TipoOrganizacion.ONG, "Comedor"));
+    Field campo = Beneficiaria.class.getDeclaredField("id");
+    campo.setAccessible(true);
+    campo.set(beneficiaria, id);
+    return beneficiaria;
+  }
 
   private DonacionesService nuevoService() {
     return new DonacionesService(

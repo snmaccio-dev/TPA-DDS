@@ -25,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class DonacionesService implements WithSimplePersistenceUnit {
@@ -284,11 +285,13 @@ public class DonacionesService implements WithSimplePersistenceUnit {
         );
     }
 
-    public void registrarEntrega(long id,
-                                 String resultado,
-                                 String fechaHora,
-                                 String patenteCamion,
-                                 String motivo) {
+    // Devuelve la beneficiaria que recibio la donacion si la entrega quedo confirmada
+    // (ENTREGADA); vacio si no se recibio.
+    public Optional<Long> registrarEntrega(long id,
+                                           String resultado,
+                                           String fechaHora,
+                                           String patenteCamion,
+                                           String motivo) {
         Donacion donacion = buscar(id);
         EstadosPosiblesDonacion actual = donacion.getEstado().getEstado();
 
@@ -299,6 +302,7 @@ public class DonacionesService implements WithSimplePersistenceUnit {
                 );
             }
             marcarEntregada(donacion.getId(), fechaHoraDe(fechaHora), patenteCamion);
+            return Optional.ofNullable(donacion.getDestinatarioAsignado()).map(Beneficiaria::getId);
         } else if ("NO_RECIBIDA".equals(resultado)) {
             if (actual == EstadosPosiblesDonacion.ENTREGA_FALLIDA) {
                 throw new EventoYaAplicadoException(
@@ -306,6 +310,7 @@ public class DonacionesService implements WithSimplePersistenceUnit {
                 );
             }
             marcarEntregaFallida(donacion.getId(), motivo);
+            return Optional.empty();
         } else {
             throw new DatosInvalidosException(
                 "El resultado del evento debe ser ENTREGADA o NO_RECIBIDA (recibido: "

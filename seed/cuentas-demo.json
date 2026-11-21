@@ -1,5 +1,5 @@
 {
-  "_comentario": "Cuentas de demostracion. Tienen que existir en el realm de Keycloak con el rol indicado en 'tipo' (seed.sh lo verifica antes de borrar nada). No se usan IDs fijos: el keycloak_id se resuelve por mail en cada ejecucion. 'perfil' son los datos con los que la seed crea el perfil en la base; el nombre y apellido salen de la cuenta de Keycloak.",
+  "_comentario": "Cuentas de demostracion. Tienen que existir en el realm de Keycloak con el rol indicado en 'tipo' (seed.sh lo verifica antes de borrar nada). No se usan IDs fijos: el keycloak_id se resuelve por mail en cada ejecucion. 'perfil' son los datos con los que la seed crea el perfil en la base; el nombre y apellido salen de la cuenta de Keycloak. Las beneficiarias llevan coordenadas fijas (latitud/longitud) para el mapa publico: con ellas no se geocodifica.",
   "cuentas": [
     {
       "email": "admin@gmail.com",
@@ -36,7 +36,9 @@
         "razonSocial": "Comedor Los Gorriones",
         "tipoOrganizacion": "ONG",
         "rubro": "Comedor comunitario",
-        "direccion": "Av. Sáenz 950, CABA",
+        "direccion": "Brandsen 805, La Boca, CABA",
+        "latitud": -34.6356,
+        "longitud": -58.3647,
         "telefono": "+54 11 4911-1001"
       }
     },
@@ -48,7 +50,9 @@
         "razonSocial": "Escuela Rural N° 14",
         "tipoOrganizacion": "INSTITUCION",
         "rubro": "Educación",
-        "direccion": "Av. Mitre 2300, Avellaneda",
+        "direccion": "Av. Rivadavia 1864, Balvanera, CABA",
+        "latitud": -34.6098,
+        "longitud": -58.3925,
         "telefono": "+54 11 4201-2002"
       }
     },

@@ -16,27 +16,25 @@
         <div class="panel-head">
             <div>
                 <h3>Historias de nuestras entregas</h3>
-                <small>Fotografías de donaciones realizadas</small>
+                <small>Fotografías de las últimas entregas confirmadas</small>
             </div>
-            <span class="muted">{{#if entregasNoDisponible}}No disponible{{else}}{{entregas.size}} registros{{/if}}</span>
+            <span class="muted">{{#if entregasNoDisponible}}No disponible{{else}}{{recientesConFoto.size}} con fotos{{/if}}</span>
         </div>
 
-        {{#if entregas}}
+        {{#if recientesConFoto}}
             <div class="delivery-carousel">
                 <div class="carousel-container">
-                    {{#each entregas}}
-                        {{#if tieneFoto}}
-                            <article class="delivery-slide">
-                                <img src="{{primeraFoto}}" alt="Fotografía de {{descripcion}}">
-                                <div class="delivery-slide-content">
-                                    <h3>{{descripcion}}</h3>
-                                    <p>{{cantidadTexto}}</p>
-                                    {{#if fechaHoraEntrega}}
-                                        <small>Entregada el {{fechaHoraEntrega}}</small>
-                                    {{/if}}
-                                </div>
-                            </article>
-                        {{/if}}
+                    {{#each recientesConFoto}}
+                        <article class="delivery-slide">
+                            <img src="{{primeraFoto}}" alt="Fotografía de {{descripcion}}">
+                            <div class="delivery-slide-content">
+                                <h3>{{descripcion}}</h3>
+                                <p>{{cantidadTexto}}</p>
+                                {{#if fechaHoraEntrega}}
+                                    <small>Entregada el {{fechaHoraEntrega}}</small>
+                                {{/if}}
+                            </div>
+                        </article>
                     {{/each}}
                 </div>
 
@@ -50,7 +48,11 @@
             {{#if entregasNoDisponible}}
             <p class="muted">No disponible. Intentá nuevamente más tarde.</p>
             {{else}}
+            {{#if recientes}}
+            <p class="muted">Las últimas entregas confirmadas todavía no tienen fotos.</p>
+            {{else}}
             <p class="muted">Todavía no hay entregas confirmadas para mostrar.</p>
+            {{/if}}
             {{/if}}
         {{/if}}
     </section>
@@ -60,23 +62,32 @@
             <div class="panel-head">
                 <div>
                     <h3>Mapa de entregas</h3>
-                    <small>Ubicaciones de las entregas confirmadas</small>
+                    <small>Cada marcador es una entidad: tocalo para ver lo que recibió</small>
                 </div>
+                <span class="muted">{{#if entregasNoDisponible}}No disponible{{else}}{{entregas.size}} entregas{{/if}}</span>
             </div>
             <div id="donations-map" class="map-canvas"></div>
-            <p class="muted map-empty-message">
-                Las ubicaciones geográficas estarán disponibles cuando se incorporen
-                las coordenadas de las entregas.
-            </p>
+            {{#if ubicacionesNoDisponible}}
+                <p class="muted map-empty-message">
+                    No se pudieron cargar las ubicaciones de las entidades. Intentá nuevamente más tarde.
+                </p>
+            {{else}}
+            {{#if mapaEntregas.hayEntregasSinUbicacion}}
+                <p class="muted map-empty-message">
+                    {{mapaEntregas.entregasSinUbicacion}} de las entregas no aparecen en el mapa porque
+                    su entidad todavía no tiene ubicación.
+                </p>
+            {{/if}}
+            {{/if}}
         </section>
 
         <aside class="panel donation-list">
             <div class="panel-head">
                 <h3>Entregas recientes</h3>
-                <span class="muted">{{#if entregasNoDisponible}}No disponible{{else}}{{entregas.size}} registros{{/if}}</span>
+                <span class="muted">{{#if entregasNoDisponible}}No disponible{{else}}Últimas {{recientes.size}}{{/if}}</span>
             </div>
 
-            {{#each entregas}}
+            {{#each recientes}}
                 <article class="donation-item">
                     <div class="item-icon">▧</div>
                     <div>
@@ -93,13 +104,16 @@
             {{#if entregasNoDisponible}}
                 <p class="muted">No disponible. Intentá nuevamente más tarde.</p>
             {{else}}
-            {{#unless entregas}}
+            {{#unless recientes}}
                 <p class="muted">Todavía no hay entregas confirmadas para mostrar.</p>
             {{/unless}}
             {{/if}}
         </aside>
     </div>
 </main>
+
+{{!-- Marcadores del mapa: una entidad por elemento, con sus entregas. Lo lee app.js. --}}
+<script type="application/json" id="mapa-entregas">{{{mapaEntregas.json}}}</script>
 
 {{> templates/partials/footer}}
 {{> templates/partials/scripts}}

@@ -63,17 +63,27 @@ public class Modelo {
   }
 
   public <T> Modelo conDatosDe(String clave, T valorPorDefecto, Supplier<T> consulta) {
+    cargar(clave, valorPorDefecto, consulta);
+    return this;
+  }
+
+  // Igual que conDatosDe, pero devuelve lo que se cargo para seguir usandolo en el
+  // controller (por ejemplo, para armar otros datos a partir de esos).
+  public <T> T cargar(String clave, T valorPorDefecto, Supplier<T> consulta) {
     try {
-      return con(clave, consulta.get());
+      T valor = consulta.get();
+      con(clave, valor);
+      return valor;
     } catch (IntegracionException e) {
       // Guardamos errorDeServicio por compatibilidad historica y, ademas, cargamos
       // alertaAdvertencia para que el componente unico muestre el aviso en pantalla.
       // <clave>NoDisponible le permite al template distinguir "el backend no respondio"
       // de "no hay datos", dato por dato.
-      return con(clave, valorPorDefecto)
+      con(clave, valorPorDefecto)
           .con(clave + "NoDisponible", true)
           .con("errorDeServicio", e.getMessage())
           .conAlertaAdvertencia("No se pudieron cargar los datos: " + e.getMessage());
+      return valorPorDefecto;
     }
   }
 

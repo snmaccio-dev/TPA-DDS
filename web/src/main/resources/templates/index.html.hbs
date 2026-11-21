@@ -107,35 +107,38 @@
             {{#if entregas}}
                 <div class="deliveries-grid" id="deliveries-grid">
 
+                    {{!-- Las ultimas 5 entregas confirmadas, una tarjeta por entrega. --}}
                     {{#each entregas}}
-                        {{#each fotos}}
-                            <article class="delivery-card">
-                                <div class="delivery-image-container">
+                        <article class="delivery-card">
+                            <div class="delivery-image-container">
+                                {{#if tieneFoto}}
                                     <img
-                                        src="{{this}}"
-                                        alt="Fotografía de una donación entregada"
+                                        src="{{primeraFoto}}"
+                                        alt="Fotografía de {{descripcion}}"
                                         class="delivery-image"
                                         loading="lazy"
                                     >
-                                </div>
+                                {{else}}
+                                    <div class="delivery-image-vacia" aria-hidden="true">♡</div>
+                                {{/if}}
+                            </div>
 
-                                <div class="delivery-content">
-                                    <span class="delivery-status">
-                                        ✓ ENTREGA CONFIRMADA
-                                    </span>
+                            <div class="delivery-content">
+                                <span class="delivery-status">
+                                    ✓ ENTREGA CONFIRMADA
+                                </span>
 
-                                    <h3>{{../descripcion}}</h3>
+                                <h3>{{descripcion}}</h3>
 
-                                    <p class="delivery-quantity">
-                                        {{../cantidadTexto}}
-                                    </p>
+                                <p class="delivery-quantity">
+                                    {{cantidadTexto}}
+                                </p>
 
-                                    <small class="delivery-date">
-                                        {{../fechaHoraEntrega}}
-                                    </small>
-                                </div>
-                            </article>
-                        {{/each}}
+                                <small class="delivery-date">
+                                    {{fechaHoraEntrega}}
+                                </small>
+                            </div>
+                        </article>
                     {{/each}}
 
                 </div>

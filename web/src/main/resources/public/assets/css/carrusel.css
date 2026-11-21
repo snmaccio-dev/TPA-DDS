@@ -179,3 +179,14 @@
         font-size: 0.8rem;
     }
 }
+
+/* Tarjeta de una entrega confirmada que todavia no tiene fotos. */
+.delivery-image-vacia {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 48px;
+    color: var(--muted, #8a93a6);
+}

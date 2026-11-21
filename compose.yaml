@@ -59,6 +59,8 @@ services:
       KEYCLOAK_CLIENT_ID: donaciones-backend
       KEYCLOAK_CLIENT_SECRET: ${DONACIONES_CLIENT_SECRET}
       KEYCLOAK_ISSUER: http://localhost:8180/realms/donatrack
+      # Coordenadas de las entidades para el mapa publico: nominatim (default) o simulado.
+      GEOCODIFICADOR: ${GEOCODIFICADOR:-nominatim}
     ports:
       - "8080:8080"
     depends_on:

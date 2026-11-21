@@ -2216,3 +2216,51 @@ td:first-child {
     margin-top: 10px;
     font-size: 12px;
 }
+
+/* Popup del mapa publico: una entidad con todas sus entregas confirmadas. */
+.popup-entregas {
+    min-width: 200px;
+}
+
+.popup-entregas-titulo {
+    display: block;
+    font-size: 13px;
+}
+
+.popup-entregas-cantidad {
+    display: block;
+    color: var(--muted);
+    margin: 2px 0 8px;
+}
+
+.popup-entregas ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.popup-entregas li {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    padding: 6px 0;
+    border-top: 1px solid var(--line);
+}
+
+.popup-entregas li img {
+    width: 52px;
+    height: 52px;
+    flex: none;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.popup-entrega-descripcion {
+    display: block;
+    font-weight: 600;
+}
+
+.popup-entregas li small {
+    display: block;
+    color: var(--muted);
+}

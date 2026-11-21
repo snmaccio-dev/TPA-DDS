@@ -6,6 +6,7 @@ import donatrack.donaciones.domain.Enumerados;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.Coordenadas;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
@@ -19,6 +20,7 @@ import donatrack.donaciones.repository.RepositorioPropuestas;
 import donatrack.donaciones.seguridad.RolDeAcceso;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
+import java.util.Collection;
 import java.util.List;
 
 public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit {
@@ -60,6 +62,11 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
             new RecursoInexistenteException(
                 "No existe la beneficiaria con id: " + id
             ));
+  }
+
+  // Para el mapa publico: de las pedidas, las que tienen coordenadas.
+  public List<Beneficiaria> conUbicacion(Collection<Long> ids) {
+    return repositorioEntidades.conUbicacion(ids);
   }
 
   public Beneficiaria buscarPorCuit(String cuit) {
@@ -110,8 +117,10 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
       withTransaction(() -> {
         modificada[0] = buscar(id);
         PersonaJuridica juridica = modificada[0].getPersona();
+        String direccionAnterior = juridica.getDireccion();
         juridica.actualizarDatos(razonSocial, tipo, rubro);
         datos.reemplazarEn(juridica);
+        modificada[0].olvidarUbicacionSiCambioLaDireccion(direccionAnterior);
       });
     } catch (RuntimeException e) {
       entityManager().clear();
@@ -121,6 +130,13 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
   }
 
   public Beneficiaria registrarConPersonaExistente(String cuit, DatosEntidad datos) {
+    return registrarConPersonaExistente(cuit, datos, null);
+  }
+
+  // ubicacion es opcional (null): si viene, la entidad no se geocodifica.
+  public Beneficiaria registrarConPersonaExistente(String cuit,
+                                                   DatosEntidad datos,
+                                                   Coordenadas ubicacion) {
     exigirDatos(datos);
     PersonaJuridica juridica = repositorioPersonas.buscarJuridicaPorCuit(cuit)
         .orElseThrow(() -> new RecursoInexistenteException(
@@ -138,7 +154,7 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
     try {
       withTransaction(() -> {
         datos.aplicarA(juridica);
-        creada[0] = guardarBeneficiaria(juridica);
+        creada[0] = guardarBeneficiaria(juridica, ubicacion);
         usuariosService.vincular(keycloakId, creada[0]);
       });
     } catch (RuntimeException e) {
@@ -151,6 +167,13 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
   }
 
   public Beneficiaria registrarConPersonaNueva(PersonaJuridica juridica, DatosEntidad datos) {
+    return registrarConPersonaNueva(juridica, datos, null);
+  }
+
+  // ubicacion es opcional (null): si viene, la entidad no se geocodifica.
+  public Beneficiaria registrarConPersonaNueva(PersonaJuridica juridica,
+                                               DatosEntidad datos,
+                                               Coordenadas ubicacion) {
     exigirDatos(datos);
     if (repositorioPersonas.buscarPorDocumento(juridica.getCuit()).isPresent()) {
       throw new ConflictoDeNegocioException(
@@ -165,7 +188,7 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
     Beneficiaria[] creada = new Beneficiaria[1];
     try {
       withTransaction(() -> {
-        creada[0] = crearPersonaYBeneficiaria(juridica, datos);
+        creada[0] = crearPersonaYBeneficiaria(juridica, datos, ubicacion);
         usuariosService.vincular(keycloakId, creada[0]);
       });
     } catch (RuntimeException e) {
@@ -196,7 +219,7 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
     try {
       withTransaction(() -> {
         juridica.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
-        creada[0] = crearPersonaYBeneficiaria(juridica, datos);
+        creada[0] = crearPersonaYBeneficiaria(juridica, datos, null);
         usuariosService.vincular(keycloakId, creada[0]);
       });
     } catch (RuntimeException e) {
@@ -206,14 +229,17 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
     return creada[0];
   }
 
-  private Beneficiaria crearPersonaYBeneficiaria(PersonaJuridica juridica, DatosEntidad datos) {
+  private Beneficiaria crearPersonaYBeneficiaria(PersonaJuridica juridica,
+                                                 DatosEntidad datos,
+                                                 Coordenadas ubicacion) {
     datos.aplicarA(juridica);
     repositorioPersonas.guardar(juridica);
-    return guardarBeneficiaria(juridica);
+    return guardarBeneficiaria(juridica, ubicacion);
   }
 
-  private Beneficiaria guardarBeneficiaria(PersonaJuridica juridica) {
+  private Beneficiaria guardarBeneficiaria(PersonaJuridica juridica, Coordenadas ubicacion) {
     Beneficiaria beneficiaria = new Beneficiaria(juridica);
+    beneficiaria.ubicarEn(ubicacion);
     repositorioEntidades.guardar(beneficiaria);
     return beneficiaria;
   }

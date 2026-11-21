@@ -130,8 +130,9 @@ public class GestorEntregas implements WithSimplePersistenceUnit {
     return repositorioEntregas.todas();
   }
 
-  public List<Entrega> entregadas() {
-    return repositorioEntregas.entregadas();
+  // limite null: todas.
+  public List<Entrega> entregadas(Integer limite) {
+    return repositorioEntregas.entregadas(limite);
   }
 
   // Entregas de una beneficiaria; con soloConfirmables, las que todavia puede confirmar.

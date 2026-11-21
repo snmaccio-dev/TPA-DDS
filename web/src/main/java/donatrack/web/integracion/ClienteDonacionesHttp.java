@@ -11,11 +11,14 @@ import donatrack.web.vista.PerfilVista;
 import donatrack.web.vista.PaginaVista;
 import donatrack.web.vista.PropuestaVista;
 import donatrack.web.vista.SubcategoriaVista;
+import donatrack.web.vista.UbicacionEntidadVista;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ClienteDonacionesHttp implements ClienteDonaciones {
 
@@ -47,6 +50,16 @@ public class ClienteDonacionesHttp implements ClienteDonaciones {
   public List<EntidadVista> entidades(String autorizacion) {
     return http.obtener(autorizacion, "/entidades",
         new TypeReference<List<EntidadVista>>() {});
+  }
+
+  @Override
+  public List<UbicacionEntidadVista> ubicacionesDeEntidades(Collection<Long> ids) {
+    if (ids == null || ids.isEmpty()) {
+      return List.of();
+    }
+    String lista = ids.stream().distinct().map(String::valueOf).collect(Collectors.joining(","));
+    return http.obtener(SIN_TOKEN, "/entidades/ubicaciones?ids=" + lista,
+        new TypeReference<List<UbicacionEntidadVista>>() {});
   }
 
   @Override
