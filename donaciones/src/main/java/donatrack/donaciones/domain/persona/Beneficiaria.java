@@ -1,6 +1,7 @@
 package donatrack.donaciones.domain.persona;
 
 import donatrack.donaciones.domain.DatosInvalidosException;
+import donatrack.donaciones.domain.catalogo.Subcategoria;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.necesidad.Necesidad;
 
@@ -69,6 +70,21 @@ public class Beneficiaria {
             .filter(donacion -> donacion.getFechaHoraEntrega() != null)
             .filter(donacion -> !donacion.getFechaHoraEntrega().toLocalDate().isBefore(limite))
             .count();
+    }
+
+    // Regla de compatibilidad de la asignacion: la entidad declaro al menos una necesidad
+    // (recurrente o extraordinaria) de la subcategoria del bien donado. La usan el
+    // matchmaking (para elegir candidatas) y la confirmacion del destino.
+    public boolean tieneNecesidadDe(Subcategoria subcategoria) {
+        return necesidades.stream().anyMatch(n -> n.esDeLaSubcategoria(subcategoria));
+    }
+
+    // Cantidad total pedida en las necesidades de esa subcategoria (0 si no tiene).
+    public int cantidadNecesitadaDe(Subcategoria subcategoria) {
+        return necesidades.stream()
+            .filter(n -> n.esDeLaSubcategoria(subcategoria))
+            .mapToInt(Necesidad::getCantidad)
+            .sum();
     }
 
     public List<Necesidad> getNecesidades() {

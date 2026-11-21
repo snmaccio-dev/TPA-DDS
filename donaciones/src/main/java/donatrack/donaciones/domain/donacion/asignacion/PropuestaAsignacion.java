@@ -125,13 +125,6 @@ public class PropuestaAsignacion {
             .toList();
     }
 
-    // Propuesta guardada antes de registrar algoritmo y posicion: no se puede mostrar
-    // por algoritmo y conviene recalcularla.
-    public boolean esDeFormatoAnterior() {
-        return candidatas.stream()
-            .anyMatch(c -> c.getOrigen() == null || c.getPosicion() == null);
-    }
-
     public LocalDateTime getFechaGeneracion() {
         return fechaGeneracion;
     }
