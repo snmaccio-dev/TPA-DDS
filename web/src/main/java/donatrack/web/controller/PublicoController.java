@@ -21,7 +21,10 @@ public class PublicoController {
 
   private static final String DONANTE = "donante";
   private static final String BENEFICIARIA = "beneficiaria";
+  // /donaciones-publicas: mapa, lista y carrusel.
   static final int ENTREGAS_RECIENTES = 5;
+  // Landing: las ultimas entregas, todas visibles sin paginar.
+  static final int ENTREGAS_LANDING = 3;
 
   private final ClienteDonaciones clienteDonaciones;
   private final ClienteLogistica clienteLogistica;
@@ -44,34 +47,35 @@ public class PublicoController {
     app.get("/privacidad", this::privacidad);
   }
 
-  // La landing muestra las ultimas entregas confirmadas: Logistica ya las recorta.
+  // La landing muestra las ultimas 3 entregas confirmadas: Logistica ya las recorta.
   private void landing(Context ctx) {
     ctx.render("index.html.hbs",
         Modelo.de("Inicio")
             .conDatosDe("entregas", List.<EntregaPublicaVista>of(),
-                () -> clienteLogistica.entregasPublicasRecientes(ENTREGAS_RECIENTES))
+                () -> clienteLogistica.entregasPublicasRecientes(ENTREGAS_LANDING))
             .mapa());
   }
 
-  // El mapa necesita todas las entregas confirmadas; la lista y el carrusel, solo las
-  // ultimas. Se piden todas una sola vez y las recientes salen de ahi.
+  // Mapa, lista y carrusel usan las mismas entregas: las ultimas 5 confirmadas, por fecha
+  // de entrega descendente. Logistica ya las recorta; se reordena igual para que las tres
+  // vistas no dependan de ese detalle.
   private void donacionesPublicas(Context ctx) {
     Modelo modelo = Modelo.de("Donaciones entregadas").conMapa();
-    List<EntregaPublicaVista> entregas = modelo.cargar(
-        "entregas", List.<EntregaPublicaVista>of(), clienteLogistica::entregasPublicas);
-    List<EntregaPublicaVista> recientes =
-        EntregaPublicaVista.recientes(entregas, ENTREGAS_RECIENTES);
+    List<EntregaPublicaVista> recientes = EntregaPublicaVista.recientes(
+        modelo.cargar("recientes", List.<EntregaPublicaVista>of(),
+            () -> clienteLogistica.entregasPublicasRecientes(ENTREGAS_RECIENTES)),
+        ENTREGAS_RECIENTES);
 
     ctx.render("donaciones-publicas.html.hbs",
         modelo
             .con("recientes", recientes)
             .con("recientesConFoto",
                 recientes.stream().filter(EntregaPublicaVista::getTieneFoto).toList())
-            .con("mapaEntregas", mapaDe(entregas, modelo))
+            .con("mapaEntregas", mapaDe(recientes, modelo))
             .mapa());
   }
 
-  // Ubicaciones de todas las entidades que recibieron entregas, en una sola consulta. Si
+  // Ubicaciones de las entidades de esas entregas, en una sola consulta. Si
   // Donaciones no responde, el mapa queda sin marcadores y la pagina sigue igual.
   private MapaDeEntregasVista mapaDe(List<EntregaPublicaVista> entregas, Modelo modelo) {
     if (entregas.isEmpty()) {

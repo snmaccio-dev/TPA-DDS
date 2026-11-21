@@ -56,8 +56,8 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     // MAPA DE DONACIONES PUBLICAS
-    // Los datos los arma el servidor (#mapa-entregas): un marcador por entidad
-    // beneficiaria con coordenadas y, en su popup, todas las entregas que recibio. El popup
+    // Los datos los arma el servidor (#mapa-entregas) con las ultimas 5 entregas
+    // confirmadas: un marcador por entidad y, en su popup, solo sus entregas de esas 5. El popup
     // se arma con nodos del DOM (textContent), nunca con HTML de los datos.
     if (page === "public-donations" && document.getElementById("donations-map")
         && typeof L !== "undefined") {
