@@ -5,10 +5,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-// Mapa publico de entregas: un marcador por entidad beneficiaria con coordenadas, con
-// todas sus entregas confirmadas (asi una entidad que recibio varias no queda con un
-// marcador encima de otro). Las entregas de entidades sin coordenadas no se dibujan; se
-// cuentan para avisarlo en la pantalla.
+// Mapa publico de entregas: recibe solo las entregas a mostrar (las ultimas confirmadas) y
+// las pone en la posicion de su entidad beneficiaria. Las de una misma entidad van en un
+// solo marcador, en el orden en que llegaron, asi no queda un marcador encima de otro. Las
+// de entidades sin coordenadas no se dibujan; se cuentan para avisarlo en la pantalla.
 public record MapaDeEntregasVista(List<Marcador> marcadores, int entregasSinUbicacion) {
 
   public record Marcador(long entidadId,

@@ -431,6 +431,24 @@ def armar_plan(doc_donante1, doc_donante2, beneficiarias, documentos_csv):
              "beneficiariaId": beneficiarias.get(dest)} for d, e, dest, s in plan]
 
 
+def orden_de_confirmacion(items):
+    """Orden en que se confirman las entregas. El mapa publico muestra las ultimas 5: se
+    arman con 4 entidades distintas y una de ellas con 2 entregas, para que haya un popup
+    con varias."""
+    repetida = "beneficiaria1@gmail.com"
+    dos = [i for i in items if i["destino"] == repetida][:2]
+    otras = [i for i in items if all(i is not d for d in dos)]
+    tres, vistas = [], set()
+    for item in reversed(otras):
+        if item["destino"] != repetida and item["destino"] not in vistas and len(tres) < 3:
+            tres.insert(0, item)
+            vistas.add(item["destino"])
+    if len(dos) < 2 or len(tres) < 3:
+        return items
+    resto = [i for i in otras if all(i is not t for t in tres)]
+    return resto + [dos[0], tres[0], tres[1], dos[1], tres[2]]
+
+
 def png(ancho, alto, desde, hasta):
     """PNG con un degradado: alcanza como foto de comprobante y no hace falta un archivo."""
     filas = []
@@ -764,14 +782,22 @@ class Carga:
                           html or "", re.S)
         marcadores = json.loads(datos.group(1)) if datos else []
         items = (html or "").count('class="donation-item"')
-        if len(marcadores) != len(por_entidad):
+        # El mapa muestra las mismas 5 que la lista: un marcador por entidad de esas 5, y
+        # entre todos los popups, exactamente esas 5 entregas.
+        entidades_recientes = {e["beneficiariaId"] for e in recientes}
+        if len(recientes) == 5 and len(entidades_recientes) != 4:
+            raise SeedError("Las ultimas 5 entregas tenian que ser de 4 entidades (una con 2) y "
+                            + "son de " + str(len(entidades_recientes)) + ".")
+        en_popups = sum(len(m["entregas"]) for m in marcadores)
+        if len(marcadores) != len(entidades_recientes) or en_popups != len(recientes):
             raise SeedError("/donaciones-publicas muestra " + str(len(marcadores))
-                            + " marcadores y se esperaban " + str(len(por_entidad)) + ".")
-        if items != min(5, len(entregadas)):
+                            + " marcadores con " + str(en_popups) + " entregas y se esperaban "
+                            + str(len(entidades_recientes)) + " con " + str(len(recientes)) + ".")
+        if items != len(recientes):
             raise SeedError("/donaciones-publicas lista " + str(items) + " entregas recientes y "
-                            + "se esperaban " + str(min(5, len(entregadas))) + ".")
-        log("/donaciones-publicas: " + str(len(marcadores)) + " marcadores (uno por entidad con "
-            + "entregas confirmadas) y " + str(items) + " entregas recientes.")
+                            + "se esperaban " + str(len(recientes)) + ".")
+        log("/donaciones-publicas: " + str(items) + " entregas recientes en " + str(len(marcadores))
+            + " marcadores (uno por entidad de esas entregas).")
 
     # -- orquestacion -----------------------------------------------------------------
     def correr(self):
@@ -805,7 +831,7 @@ class Carga:
 
         # Ruta 1: el chofer la hizo completa y cada entrega se confirmo con fotos.
         self.iniciar(ruta_entregada, chofer_id)
-        self.entregar_con_fotos(por_estado[ENTREGADA])
+        self.entregar_con_fotos(orden_de_confirmacion(por_estado[ENTREGADA]))
         # Ruta 2: en curso, con posiciones GPS. La ruta 3 queda planificada para hoy.
         self.iniciar(ruta_en_curso, chofer_id)
         self.reportar_posiciones(ruta_en_curso, CAMIONES[1]["patente"])

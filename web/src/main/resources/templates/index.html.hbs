@@ -107,7 +107,7 @@
             {{#if entregas}}
                 <div class="deliveries-grid" id="deliveries-grid">
 
-                    {{!-- Las ultimas 5 entregas confirmadas, una tarjeta por entrega. --}}
+                    {{!-- Las ultimas 3 entregas confirmadas, todas visibles, una tarjeta por entrega. --}}
                     {{#each entregas}}
                         <article class="delivery-card">
                             <div class="delivery-image-container">
@@ -143,30 +143,6 @@
 
                 </div>
 
-                <div
-                    class="deliveries-pagination"
-                    id="deliveries-pagination"
-                    hidden
-                >
-                    <button
-                        type="button"
-                        class="btn btn-ghost"
-                        id="deliveries-prev"
-                    >
-                        ← Anterior
-                    </button>
-
-                    <span id="deliveries-page-info"></span>
-
-                    <button
-                        type="button"
-                        class="btn btn-primary"
-                        id="deliveries-next"
-                    >
-                        Siguiente →
-                    </button>
-                </div>
-
             {{else}}
                 <div class="deliveries-empty">
                     <span class="feature-icon">♡</span>
@@ -183,7 +159,7 @@
 
             <div class="deliveries-link">
                 <a href="/donaciones-publicas" class="btn btn-ghost">
-                    Ver todas las entregas →
+                    Ver últimas entregas →
                 </a>
             </div>
 

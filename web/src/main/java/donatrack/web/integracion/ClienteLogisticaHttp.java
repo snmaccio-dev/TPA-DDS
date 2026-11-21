@@ -23,12 +23,6 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
   }
 
   @Override
-  public List<EntregaPublicaVista> entregasPublicas() {
-    return http.obtener(null, "/entregas/publicas",
-        new TypeReference<List<EntregaPublicaVista>>() {});
-  }
-
-  @Override
   public List<EntregaPublicaVista> entregasPublicasRecientes(int limite) {
     return http.obtener(null, "/entregas/publicas?limite=" + limite,
         new TypeReference<List<EntregaPublicaVista>>() {});
