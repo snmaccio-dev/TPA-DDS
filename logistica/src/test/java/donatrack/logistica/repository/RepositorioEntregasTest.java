@@ -106,6 +106,23 @@ class RepositorioEntregasTest implements SimplePersistenceTest {
   }
 
   @Test
+  void deBeneficiariaSoloTraeLasEntregasDeEsaBeneficiaria() {
+    repositorio.guardar(new Entrega(401L, 500L, 9101L, "Destino A", "Leche", 10, "litros"));
+    repositorio.guardar(new Entrega(402L, 500L, 9101L, "Destino A", "Arroz", 5, "kg"));
+    repositorio.guardar(new Entrega(403L, 500L, 9102L, "Destino B", "Ropa", 2, "bolsas"));
+
+    entityManager().flush();
+
+    List<Long> donaciones = repositorio.deBeneficiaria(9101L).stream()
+        .map(Entrega::getDonacionId)
+        .toList();
+
+    assertEquals(2, donaciones.size());
+    assertTrue(donaciones.containsAll(List.of(401L, 402L)));
+    assertFalse(donaciones.contains(403L));
+  }
+
+  @Test
   void buscarPorDonacionNoDevuelveNadaSiLaDonacionNoFueIncorporada() {
     assertTrue(repositorio.buscarPorDonacion(999999L).isEmpty());
   }

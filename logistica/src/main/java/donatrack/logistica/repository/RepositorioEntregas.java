@@ -69,6 +69,16 @@ public class RepositorioEntregas implements WithSimplePersistenceUnit {
         .getResultList();
   }
 
+  public List<Entrega> deBeneficiaria(long beneficiariaId) {
+    return createQuery(
+        "select e from Entrega e "
+            + "where e.beneficiariaId = :beneficiariaId "
+            + "order by e.id desc",
+        Entrega.class)
+        .setParameter("beneficiariaId", beneficiariaId)
+        .getResultList();
+  }
+
   public List<Entrega> pendientesDeMedicion() {
     return createQuery(
         "select e from Entrega e "

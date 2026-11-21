@@ -86,6 +86,15 @@ public class ClienteLogisticaHttp implements ClienteLogistica {
   }
 
   @Override
+  public List<EntregaVista> entregasPendientesDeConfirmar(String autorizacion) {
+    return http.obtener(
+        autorizacion,
+        "/entregas/mias?soloConfirmables=true",
+        new TypeReference<List<EntregaVista>>() {}
+    );
+  }
+
+  @Override
   public List<String> subirFotos(String autorizacion,
                                  long entregaId,
                                  List<ArchivoSubido> fotos) {

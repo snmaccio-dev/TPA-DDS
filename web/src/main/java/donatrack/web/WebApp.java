@@ -35,7 +35,6 @@ public class WebApp {
       "/login",
       "/privacidad",
       "/sesion/ingresar",
-      "/sesion/ingresar-admin",
       "/callback",
       "/logout"
   );
@@ -78,7 +77,7 @@ public class WebApp {
       UsuarioWeb usuario = identidad.actual(ctx).orElse(null);
 
       if (usuario == null) {
-        ctx.redirect("/login");
+        ctx.redirect("/sesion/ingresar");
         ctx.skipRemainingHandlers();
         return;
       }
@@ -110,7 +109,7 @@ public class WebApp {
     app.exception(SesionExpiradaException.class, (e, ctx) -> {
       ctx.sessionAttribute(IdentidadPorSesion.CLAVE_USUARIO, null);
       Alertas.flashAdvertencia(ctx, "Tu sesión expiró, volvé a ingresar.");
-      ctx.redirect("/login");
+      ctx.redirect("/sesion/ingresar");
     });
 
     app.exception(OperacionRechazadaException.class, (e, ctx) -> {

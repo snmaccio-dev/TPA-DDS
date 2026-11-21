@@ -17,7 +17,8 @@ public record EntregaVista(
     String patenteCamion,
     String fechaHoraEntrega,
     List<String> fotos,
-    String motivoNoRecepcion
+    String motivoNoRecepcion,
+    String fechaHoraSalida
 ) {
 
   private static final String EN_TRASLADO = "EN_TRASLADO";
@@ -72,6 +73,11 @@ public record EntregaVista(
 
   public String getFechaHoraEntregaTexto() {
     return Formato.fechaHoraCorta(fechaHoraEntrega);
+  }
+
+  // Salida del camion con la ruta; vacio mientras la ruta no se inicio.
+  public String getFechaHoraSalidaTexto() {
+    return Formato.fechaHoraCorta(fechaHoraSalida);
   }
 
   public List<String> getFotos() {

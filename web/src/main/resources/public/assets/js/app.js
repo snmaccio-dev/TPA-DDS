@@ -36,7 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
         })
     );
 
-    // ALERTAS FIJAS (abajo a la derecha): se cierran solas a los 6 segundos o con el x.
+    // ALERTAS FIJAS (abajo a la derecha): las de error quedan hasta que se cierran con
+    // la x; las demas (exito, advertencia) se cierran solas a los 6 segundos.
     const cerrarAlerta = el => {
         if (!el || el.classList.contains("oculta")) return;
         el.classList.add("oculta");
@@ -44,7 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     document.querySelectorAll("[data-alerta]").forEach(el => {
         el.querySelector("[data-alerta-cerrar]")?.addEventListener("click", () => cerrarAlerta(el));
-        setTimeout(() => cerrarAlerta(el), 6000);
+        if (!el.classList.contains("error")) {
+            setTimeout(() => cerrarAlerta(el), 6000);
+        }
     });
 
     // MENÚ MÓVIL
@@ -85,7 +88,6 @@ document.addEventListener("DOMContentLoaded", () => {
             alerta.querySelector(".alerta-texto").textContent = texto;
             alerta.querySelector(".alerta-cerrar").addEventListener("click", () => cerrarAlerta(alerta));
             document.body.appendChild(alerta);
-            setTimeout(() => cerrarAlerta(alerta), 6000);
         };
 
         // Respuesta JSON de web; si no es JSON (p. ej. redirect al login) se informa igual.

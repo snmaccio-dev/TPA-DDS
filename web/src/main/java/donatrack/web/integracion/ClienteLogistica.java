@@ -24,6 +24,10 @@ public interface ClienteLogistica {
 
   EntregaVista entrega(String autorizacion, long entregaId);
 
+  // Entregas de la beneficiaria autenticada que todavia puede confirmar. Logistica
+  // deduce la beneficiaria a partir del token.
+  List<EntregaVista> entregasPendientesDeConfirmar(String autorizacion);
+
   List<String> subirFotos(String autorizacion, long entregaId, List<ArchivoSubido> fotos);
 
   void confirmarRecepcion(String autorizacion, long entregaId, List<String> fotos);

@@ -134,6 +134,23 @@ public class GestorEntregas implements WithSimplePersistenceUnit {
     return repositorioEntregas.entregadas();
   }
 
+  // Entregas de una beneficiaria; con soloConfirmables, las que todavia puede confirmar.
+  public List<Entrega> deBeneficiaria(long beneficiariaId, boolean soloConfirmables) {
+    List<Entrega> entregas = repositorioEntregas.deBeneficiaria(beneficiariaId);
+
+    return soloConfirmables
+        ? entregas.stream().filter(Entrega::esConfirmable).toList()
+        : entregas;
+  }
+
+  public List<Entrega> todas(boolean soloConfirmables) {
+    List<Entrega> entregas = repositorioEntregas.todas();
+
+    return soloConfirmables
+        ? entregas.stream().filter(Entrega::esConfirmable).toList()
+        : entregas;
+  }
+
   public List<Entrega> deRuta(long rutaId) {
     return buscarRuta(rutaId).getEntregas();
   }

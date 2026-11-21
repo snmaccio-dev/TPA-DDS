@@ -1,13 +1,14 @@
 package donatrack.web.controller;
 
 import donatrack.web.Alertas;
-import donatrack.web.Modelo;
 import donatrack.web.integracion.ClienteDonaciones;
 import donatrack.web.integracion.IntegracionException;
+import donatrack.web.integracion.OperacionRechazadaException;
 import donatrack.web.integracion.ServicioNoDisponibleException;
 import donatrack.web.sesion.ClienteOidc;
 import donatrack.web.sesion.IdentidadPorSesion;
 import donatrack.web.sesion.Pkce;
+import donatrack.web.sesion.SesionExpiradaException;
 import donatrack.web.sesion.TokensDeKeycloak;
 import donatrack.web.sesion.UsuarioWeb;
 import donatrack.web.vista.PerfilVista;
@@ -22,7 +23,14 @@ public class SesionController {
 
     private static final String CLAVE_ESTADO = "estadoDeIngreso";
     private static final String CLAVE_VERIFICADOR = "verificadorDeIngreso";
-    private static final String CLAVE_ROL_ESPERADO = "rolEsperado";
+
+    private static final String LANDING = "/";
+
+    private static final String INGRESO_INCOMPLETO =
+        "El ingreso no se pudo completar. Volvé a intentarlo.";
+    private static final String SIN_PERMISOS =
+        "Tu cuenta no tiene permisos para ingresar a DonaTrack. "
+            + "Cerramos la sesión para que puedas entrar con otra cuenta.";
 
     private static final SecureRandom AZAR = new SecureRandom();
     private static final Base64.Encoder BASE64 =
@@ -40,24 +48,18 @@ public class SesionController {
     }
 
     public void registrarRutas(Javalin app) {
-        // Acceso para donantes y beneficiarias.
-        app.get("/sesion/ingresar", ctx -> ingresar(ctx, null));
-
-        // Acceso exclusivo para administradores.
-        app.get("/sesion/ingresar-admin",
-            ctx -> ingresar(ctx, "ADMINISTRADOR"));
-
+        // Unico ingreso: el destino se decide por rol despues del callback.
+        app.get("/sesion/ingresar", this::ingresar);
         app.get("/callback", this::recibirCodigo);
         app.post("/logout", this::salir);
     }
 
-    private void ingresar(Context ctx, String rolEsperado) {
+    private void ingresar(Context ctx) {
         String estado = nuevoValorAlAzar();
         String verificador = Pkce.nuevoVerificador();
 
         ctx.sessionAttribute(CLAVE_ESTADO, estado);
         ctx.sessionAttribute(CLAVE_VERIFICADOR, verificador);
-        ctx.sessionAttribute(CLAVE_ROL_ESPERADO, rolEsperado);
 
         ctx.redirect(
             oidc.urlDeIngreso(
@@ -74,24 +76,20 @@ public class SesionController {
         String verificador =
             ctx.sessionAttribute(CLAVE_VERIFICADOR);
 
-        String rolEsperado =
-            ctx.sessionAttribute(CLAVE_ROL_ESPERADO);
-
         ctx.sessionAttribute(CLAVE_ESTADO, null);
         ctx.sessionAttribute(CLAVE_VERIFICADOR, null);
-        ctx.sessionAttribute(CLAVE_ROL_ESPERADO, null);
 
         String codigo = ctx.queryParam("code");
         String estadoRecibido = ctx.queryParam("state");
 
+        // State invalido o sesion perdida: fallo pasajero, volvemos a la landing sin
+        // reenviar a Keycloak para no entrar en un bucle.
         if (codigo == null
             || estadoEsperado == null
+            || verificador == null
             || !estadoEsperado.equals(estadoRecibido)) {
 
-            mostrarFalloDeIngreso(
-                ctx,
-                "El ingreso no se pudo completar. Volvé a intentarlo."
-            );
+            falloPasajero(ctx, INGRESO_INCOMPLETO);
             return;
         }
 
@@ -100,10 +98,7 @@ public class SesionController {
         try {
             tokens = oidc.intercambiar(codigo, verificador);
         } catch (RuntimeException e) {
-            mostrarFalloDeIngreso(
-                ctx,
-                "El ingreso no se pudo completar. Volvé a intentarlo."
-            );
+            falloPasajero(ctx, INGRESO_INCOMPLETO);
             return;
         }
 
@@ -113,44 +108,36 @@ public class SesionController {
             perfil = clienteDonaciones.perfil(
                 "Bearer " + tokens.accessToken()
             );
-        } catch (IntegracionException e) {
-            String detalle =
-                e instanceof ServicioNoDisponibleException
-                    ? Alertas.SERVICIO_NO_DISPONIBLE
-                    : e.getMessage();
-
-            mostrarFalloDeIngreso(
-                ctx,
+        } catch (SesionExpiradaException e) {
+            // /usuarios/yo respondio 401: Donaciones no acepta esta cuenta.
+            falloDePermisos(ctx, tokens, SIN_PERMISOS);
+            return;
+        } catch (OperacionRechazadaException e) {
+            // 403/404 (u otro 4xx): la cuenta autentico pero no tiene perfil en la app.
+            falloDePermisos(ctx, tokens, SIN_PERMISOS);
+            return;
+        } catch (ServicioNoDisponibleException e) {
+            falloPasajero(ctx,
                 "Te autenticaste bien, pero no se pudo completar el ingreso: "
-                    + detalle
-            );
+                    + Alertas.SERVICIO_NO_DISPONIBLE);
+            return;
+        } catch (IntegracionException e) {
+            falloPasajero(ctx,
+                "Te autenticaste bien, pero no se pudo completar el ingreso: "
+                    + e.getMessage());
             return;
         }
 
-        // Validación de roles según el tipo de acceso.
-        boolean accesoInvalido =
-            ("ADMINISTRADOR".equals(rolEsperado)
-                && !perfil.isAdministrador())
-            ||
-            (rolEsperado == null
-                && !perfil.isDonante()
-                && !perfil.isBeneficiaria());
-
-        if (accesoInvalido) {
-            mostrarFalloDeIngreso(
-                ctx,
-                "Tu cuenta no tiene permisos para este tipo de acceso."
-            );
+        if (!tieneRolDeLaApp(perfil)) {
+            falloDePermisos(ctx, tokens, SIN_PERMISOS);
             return;
         }
 
-        // Guardar la identidad autenticada en la sesión.
         ctx.sessionAttribute(
             IdentidadPorSesion.CLAVE_USUARIO,
             UsuarioWeb.de(tokens, perfil)
         );
 
-        // Redirigir según el rol del usuario.
         ctx.redirect(perfil.inicioSegunRol());
     }
 
@@ -170,17 +157,28 @@ public class SesionController {
         );
     }
 
-    private void mostrarFalloDeIngreso(
-        Context ctx,
-        String mensaje
-    ) {
-        ctx.status(400).render(
-            "login.html.hbs",
-            Modelo.de("Ingresar")
-                .seccion("Ingresar")
-                .conAlertaError(mensaje)
-                .mapa()
-        );
+    private static boolean tieneRolDeLaApp(PerfilVista perfil) {
+        return perfil != null
+            && (perfil.isAdministrador()
+                || perfil.isBeneficiaria()
+                || perfil.isDonante()
+                || perfil.isChofer());
+    }
+
+    // Fallo pasajero: mostramos el motivo en la landing y el usuario reintenta a mano.
+    private void falloPasajero(Context ctx, String mensaje) {
+        ctx.sessionAttribute(IdentidadPorSesion.CLAVE_USUARIO, null);
+        Alertas.flashError(ctx, mensaje);
+        ctx.redirect(LANDING);
+    }
+
+    // Fallo de permisos o de perfil: cerramos la sesion de Keycloak (si no, el SSO nos
+    // devolveria la misma cuenta) y Keycloak vuelve a la landing, donde se ve el flash
+    // guardado en la sesion de la web.
+    private void falloDePermisos(Context ctx, TokensDeKeycloak tokens, String mensaje) {
+        ctx.sessionAttribute(IdentidadPorSesion.CLAVE_USUARIO, null);
+        Alertas.flashError(ctx, mensaje);
+        ctx.redirect(oidc.urlDeSalida(tokens.idToken()));
     }
 
     private String nuevoValorAlAzar() {
@@ -190,4 +188,3 @@ public class SesionController {
         return BASE64.encodeToString(bytes);
     }
 }
-
