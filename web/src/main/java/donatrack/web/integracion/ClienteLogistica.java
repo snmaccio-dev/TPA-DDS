@@ -12,7 +12,11 @@ public interface ClienteLogistica {
 
   // Sin autorizacion: el endpoint esta declarado PUBLICO en Logistica, porque alimenta
   // la pantalla de transparencia que se ve sin iniciar sesion.
+  // Solo entregas confirmadas, de la mas reciente a la mas vieja. Sin limite, todas.
   List<EntregaPublicaVista> entregasPublicas();
+
+  // Las ultimas `limite` entregas confirmadas (Logistica recorta con ?limite=).
+  List<EntregaPublicaVista> entregasPublicasRecientes(int limite);
 
   List<MonitoreoRutaVista> monitoreoDeRutasEnCurso(String autorizacion);
 

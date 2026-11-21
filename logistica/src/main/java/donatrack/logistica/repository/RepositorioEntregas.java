@@ -4,6 +4,7 @@ import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.entrega.EstadoEntrega;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
+import javax.persistence.TypedQuery;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,14 +60,18 @@ public class RepositorioEntregas implements WithSimplePersistenceUnit {
         .getResultList();
   }
 
-  public List<Entrega> entregadas() {
-    return createQuery(
+  // Confirmadas, de la mas reciente a la mas vieja (el id desempata). limite null: todas.
+  public List<Entrega> entregadas(Integer limite) {
+    TypedQuery<Entrega> consulta = createQuery(
         "select e from Entrega e "
             + "where e.estado = :estado "
-            + "order by e.fechaHoraEntrega desc",
+            + "order by e.fechaHoraEntrega desc, e.id desc",
         Entrega.class)
-        .setParameter("estado", EstadoEntrega.ENTREGADA)
-        .getResultList();
+        .setParameter("estado", EstadoEntrega.ENTREGADA);
+    if (limite != null) {
+      consulta.setMaxResults(limite);
+    }
+    return consulta.getResultList();
   }
 
   public List<Entrega> deBeneficiaria(long beneficiariaId) {

@@ -145,6 +145,9 @@ public class Rutas {
     // /entidades/consulta tiene que ir ANTES que /entidades/{id}: si no, "consulta" se
     // lee como id y el handler nunca recibe el request.
     app.get(   "/entidades/consulta",   c::consultarPorCuit,        ADMINISTRADOR);
+    // Publica (mapa de entregas): solo id, razon social y coordenadas. Tambien va antes
+    // que /entidades/{id}.
+    app.get(   "/entidades/ubicaciones", c::ubicaciones,            PUBLICO);
     app.get(   "/entidades/{id}",       c::buscar,                  ADMINISTRADOR, DONANTE);
     app.post(  "/entidades/existente",  c::altaDePersonaExistente,  ADMINISTRADOR);
     app.post(  "/entidades/nueva",      c::altaConPersonaNueva,     ADMINISTRADOR);

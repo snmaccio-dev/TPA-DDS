@@ -5,9 +5,11 @@ import donatrack.donaciones.controller.dto.ModificarEntidadRequest;
 import donatrack.donaciones.controller.dto.NuevaBeneficiariaExistenteRequest;
 import donatrack.donaciones.controller.dto.NuevaBeneficiariaNuevaRequest;
 import donatrack.donaciones.controller.dto.RepresentanteRequest;
+import donatrack.donaciones.controller.dto.UbicacionEntidadDTO;
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.contacto.MedioContacto;
 import donatrack.donaciones.domain.contacto.TipoContacto;
+import donatrack.donaciones.domain.persona.Coordenadas;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
@@ -18,10 +20,14 @@ import donatrack.donaciones.service.EntidadesBeneficiariasService;
 import donatrack.donaciones.service.PersonasService;
 import io.javalin.http.Context;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class EntidadesBeneficiariasController {
+
+  public static final int MAXIMO_IDS_UBICACIONES = 1000;
 
   private final EntidadesBeneficiariasService service;
   private final PersonasService personasService;
@@ -43,6 +49,35 @@ public class EntidadesBeneficiariasController {
 
   public void buscar(Context ctx) {
     ctx.json(BeneficiariaDTO.desde(service.buscar(idDe(ctx))));
+  }
+
+  // GET /entidades/ubicaciones?ids=1,2,3 (publico): solo id, razon social y coordenadas de
+  // las pedidas que ya estan ubicadas, para el mapa de entregas. Nada de contactos.
+  public void ubicaciones(Context ctx) {
+    ctx.json(UbicacionEntidadDTO.desde(service.conUbicacion(idsDe(ctx.queryParam("ids")))));
+  }
+
+  static List<Long> idsDe(String parametro) {
+    if (parametro == null || parametro.isBlank()) {
+      return List.of();
+    }
+    Set<Long> ids = new LinkedHashSet<>();
+    for (String parte : parametro.split(",")) {
+      String id = parte.trim();
+      if (id.isEmpty()) {
+        continue;
+      }
+      try {
+        ids.add(Long.valueOf(id));
+      } catch (NumberFormatException e) {
+        throw new DatosInvalidosException("Los ids tienen que ser numeros separados por coma.");
+      }
+    }
+    if (ids.size() > MAXIMO_IDS_UBICACIONES) {
+      throw new DatosInvalidosException(
+          "Se pueden pedir hasta " + MAXIMO_IDS_UBICACIONES + " entidades por consulta.");
+    }
+    return List.copyOf(ids);
   }
 
   public void consultarPorCuit(Context ctx) {
@@ -73,7 +108,8 @@ public class EntidadesBeneficiariasController {
         mapRepresentantes(request.representantes())
     );
     ctx.status(201).json(BeneficiariaDTO.desde(
-        service.registrarConPersonaExistente(request.cuit(), datos)
+        service.registrarConPersonaExistente(request.cuit(), datos,
+            Coordenadas.opcionales(request.latitud(), request.longitud()))
     ));
   }
 
@@ -92,7 +128,8 @@ public class EntidadesBeneficiariasController {
         mapRepresentantes(request.representantes())
     );
     ctx.status(201).json(BeneficiariaDTO.desde(
-        service.registrarConPersonaNueva(juridica, datos)
+        service.registrarConPersonaNueva(juridica, datos,
+            Coordenadas.opcionales(request.latitud(), request.longitud()))
     ));
   }
 

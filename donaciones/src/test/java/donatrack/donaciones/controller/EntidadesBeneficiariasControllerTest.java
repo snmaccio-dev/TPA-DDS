@@ -14,6 +14,7 @@ import com.nimbusds.jwt.SignedJWT;
 import donatrack.donaciones.controller.dto.ErrorDTO;
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.Coordenadas;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.domain.usuario.Usuario;
@@ -163,6 +164,67 @@ class EntidadesBeneficiariasControllerTest {
           req -> req.header("Authorization", "Bearer " + token));
       assertEquals(404, resp.code());
     });
+  }
+
+  @Test
+  void lasUbicacionesSonPublicasYSoloTraenIdRazonSocialYCoordenadas() throws Exception {
+    EntidadesBeneficiariasService service = mock(EntidadesBeneficiariasService.class);
+    Beneficiaria ubicada = beneficiariaConId(5L);
+    ubicada.ubicarEn(new Coordenadas(-34.6356, -58.3647));
+    when(service.conUbicacion(List.of(5L, 7L))).thenReturn(List.of(ubicada));
+
+    JavalinTest.test(app(service, mock(RepositorioUsuarios.class)), (server, client) -> {
+      var resp = client.get("/entidades/ubicaciones?ids=5,7,5");
+      assertEquals(200, resp.code());
+      String cuerpo = resp.body().string();
+      assertEquals("[{\"id\":5,\"razonSocial\":\"Escuela 5\","
+          + "\"latitud\":-34.6356,\"longitud\":-58.3647}]", cuerpo);
+    });
+    verify(service).conUbicacion(List.of(5L, 7L));
+  }
+
+  @Test
+  void unIdQueNoEsNumeroEnUbicacionesDa400() {
+    EntidadesBeneficiariasService service = mock(EntidadesBeneficiariasService.class);
+
+    JavalinTest.test(app(service, mock(RepositorioUsuarios.class)), (server, client) ->
+        assertEquals(400, client.get("/entidades/ubicaciones?ids=5,abc").code()));
+    verify(service, never()).conUbicacion(any());
+  }
+
+  @Test
+  void elAltaDeEntidadAceptaCoordenadasOpcionales() throws Exception {
+    EntidadesBeneficiariasService service = mock(EntidadesBeneficiariasService.class);
+    when(service.registrarConPersonaNueva(any(), any(), any())).thenReturn(beneficiariaConId(9L));
+    RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
+    when(repoUsuarios.buscarPorKeycloakId(anyString())).thenReturn(Optional.empty());
+    String conCoordenadas = BODY.substring(0, BODY.length() - 1)
+        + ",\"latitud\":-34.6098,\"longitud\":-58.3925}";
+
+    String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
+    JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
+      var resp = client.post("/entidades/nueva", conCoordenadas,
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(201, resp.code());
+    });
+    verify(service).registrarConPersonaNueva(any(), any(),
+        eq(new Coordenadas(-34.6098, -58.3925)));
+  }
+
+  @Test
+  void elAltaConUnaSolaCoordenadaDa400() throws Exception {
+    EntidadesBeneficiariasService service = mock(EntidadesBeneficiariasService.class);
+    RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
+    when(repoUsuarios.buscarPorKeycloakId(anyString())).thenReturn(Optional.empty());
+    String conLatitudSola = BODY.substring(0, BODY.length() - 1) + ",\"latitud\":-34.6}";
+
+    String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
+    JavalinTest.test(app(service, repoUsuarios), (server, client) -> {
+      var resp = client.post("/entidades/nueva", conLatitudSola,
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(400, resp.code());
+    });
+    verify(service, never()).registrarConPersonaNueva(any(), any(), any());
   }
 
   // === Helpers ===

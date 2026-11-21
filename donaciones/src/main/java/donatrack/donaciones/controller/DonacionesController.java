@@ -22,6 +22,7 @@ import donatrack.donaciones.service.DatosBien;
 import donatrack.donaciones.service.DonacionesService;
 import donatrack.donaciones.service.DonantesService;
 import donatrack.donaciones.service.FiltroDonaciones;
+import donatrack.donaciones.service.UbicacionesService;
 import io.javalin.http.Context;
 
 import java.util.List;
@@ -30,10 +31,14 @@ public class DonacionesController {
 
   private final DonacionesService service;
   private final DonantesService donantesService;
+  private final UbicacionesService ubicaciones;
 
-  public DonacionesController(DonacionesService service, DonantesService donantesService) {
+  public DonacionesController(DonacionesService service,
+                              DonantesService donantesService,
+                              UbicacionesService ubicaciones) {
     this.service = service;
     this.donantesService = donantesService;
+    this.ubicaciones = ubicaciones;
   }
 
   public void listar(Context ctx) {
@@ -173,7 +178,9 @@ public class DonacionesController {
         evento.fechaHora(),
         evento.patenteCamion(),
         evento.motivo()
-    );
+    ).ifPresent(ubicaciones::ubicarSiHaceFalta);
+    // La geocodificacion de la entidad (si le falta) corre aparte: no demora la respuesta
+    // ni la hace fallar.
     ctx.status(200);
   }
 

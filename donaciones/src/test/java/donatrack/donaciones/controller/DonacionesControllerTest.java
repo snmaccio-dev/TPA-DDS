@@ -34,6 +34,7 @@ import donatrack.donaciones.seguridad.FiltroDeAcceso;
 import donatrack.donaciones.seguridad.VerificadorDeTokens;
 import donatrack.donaciones.service.DonacionesService;
 import donatrack.donaciones.service.DonantesService;
+import donatrack.donaciones.service.UbicacionesService;
 import io.javalin.Javalin;
 import io.javalin.http.HttpResponseException;
 import io.javalin.testtools.JavalinTest;
@@ -52,11 +53,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 class DonacionesControllerTest {
@@ -223,6 +227,45 @@ class DonacionesControllerTest {
 
   // === Helpers ===
 
+  @Test
+  void unaEntregaConfirmadaPideUbicarALaBeneficiariaSinDemorarLaRespuesta() throws Exception {
+    DonacionesService service = mock(DonacionesService.class);
+    when(service.registrarEntrega(eq(7L), eq("ENTREGADA"), any(), any(), any()))
+        .thenReturn(Optional.of(42L));
+    UbicacionesService ubicaciones = mock(UbicacionesService.class);
+    RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
+    when(repoUsuarios.buscarPorKeycloakId(anyString())).thenReturn(Optional.empty());
+
+    String token = firmar("kc-logistica", "logistica@servicio", "SERVICIO_LOGISTICA");
+    JavalinTest.test(app(service, repoUsuarios, ubicaciones), (server, client) -> {
+      var resp = client.post("/donaciones/eventos/entrega",
+          "{\"donacionId\":7,\"resultado\":\"ENTREGADA\","
+              + "\"fechaHora\":\"2026-11-20T10:00:00\",\"patenteCamion\":\"AE123CD\"}",
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(200, resp.code());
+    });
+    verify(ubicaciones).ubicarSiHaceFalta(42L);
+  }
+
+  @Test
+  void unaEntregaNoRecibidaNoPideUbicarANadie() throws Exception {
+    DonacionesService service = mock(DonacionesService.class);
+    when(service.registrarEntrega(anyLong(), any(), any(), any(), any()))
+        .thenReturn(Optional.empty());
+    UbicacionesService ubicaciones = mock(UbicacionesService.class);
+    RepositorioUsuarios repoUsuarios = mock(RepositorioUsuarios.class);
+    when(repoUsuarios.buscarPorKeycloakId(anyString())).thenReturn(Optional.empty());
+
+    String token = firmar("kc-logistica", "logistica@servicio", "SERVICIO_LOGISTICA");
+    JavalinTest.test(app(service, repoUsuarios, ubicaciones), (server, client) -> {
+      var resp = client.post("/donaciones/eventos/entrega",
+          "{\"donacionId\":7,\"resultado\":\"NO_RECIBIDA\",\"motivo\":\"Cerrado\"}",
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(200, resp.code());
+    });
+    verifyNoInteractions(ubicaciones);
+  }
+
   private static final String MODIFICACION =
       "{\"descripcion\":\"Sillas nuevas\",\"fotoUrl\":null,"
           + "\"bienes\":[{\"id\":1,\"descripcion\":\"Silla nueva\",\"cantidad\":3}]}";
@@ -240,9 +283,16 @@ class DonacionesControllerTest {
   }
 
   private Javalin app(DonacionesService service, RepositorioUsuarios repoUsuarios) {
+    return app(service, repoUsuarios, mock(UbicacionesService.class));
+  }
+
+  private Javalin app(DonacionesService service,
+                      RepositorioUsuarios repoUsuarios,
+                      UbicacionesService ubicaciones) {
     Javalin app = Javalin.create();
     new FiltroDeAcceso(verificador, repoUsuarios).registrarEn(app);
-    donatrack.donaciones.Rutas.donaciones(app, new DonacionesController(service, mock(DonantesService.class)));
+    donatrack.donaciones.Rutas.donaciones(app,
+        new DonacionesController(service, mock(DonantesService.class), ubicaciones));
 
     app.exception(DatosInvalidosException.class, (e, ctx) ->
         ctx.status(400).json(new ErrorDTO(e.getMessage())));

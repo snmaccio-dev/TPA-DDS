@@ -20,12 +20,14 @@ Variables de entorno (seed.sh las toma del .env):
                              reporta las posiciones GPS de la ruta en curso
   PLANIFICADOR_TOKEN         token del callback del planificador (default el de Logistica)
   KEYCLOAK_REALM, SEED_KEYCLOAK_URL, SEED_DONACIONES_URL, SEED_LOGISTICA_URL,
-  SEED_WEB_CLIENT_ID         opcionales, con defaults para la red de compose
+  SEED_WEB_URL, SEED_WEB_CLIENT_ID
+                             opcionales, con defaults para la red de compose
 """
 
 import datetime
 import json
 import os
+import re
 import struct
 import sys
 import time
@@ -48,6 +50,7 @@ KEYCLOAK = env("SEED_KEYCLOAK_URL", "http://keycloak:8080").rstrip("/")
 REALM = env("KEYCLOAK_REALM", "donatrack")
 DONACIONES = env("SEED_DONACIONES_URL", "http://donaciones:8080").rstrip("/")
 LOGISTICA = env("SEED_LOGISTICA_URL", "http://logistica:8081").rstrip("/")
+WEB = env("SEED_WEB_URL", "http://web:8082").rstrip("/")
 CLIENTE_WEB = env("SEED_WEB_CLIENT_ID", "donatrack-web")
 TOKEN_PLANIFICADOR = env("PLANIFICADOR_TOKEN", "token-de-desarrollo")
 
@@ -283,18 +286,23 @@ BIENES = {
 
 # Beneficiarias extra para que el matchmaking tenga varias candidatas. Mismas reglas que
 # las cuentas de demo: mail fijo, la primera vez se crea la cuenta y despues se vincula.
+# Las 5 beneficiarias que reciben entregas (las 2 de cuentas-demo.json y estas 3) tienen
+# direccion en CABA y coordenadas fijas: el alta las manda y Donaciones no geocodifica.
 BENEFICIARIAS_EXTRA = [
     {"email": "beneficiaria03@demo.donatrack.ar", "cuit": "30700000033",
      "razonSocial": "Hogar Rayito de Sol", "tipoOrganizacion": "ONG", "rubro": "Hogar de niños",
-     "direccion": "Av. Eva Perón 3100, CABA", "telefono": "+54 11 4633-3003",
+     "direccion": "Av. del Libertador 1473, Recoleta, CABA",
+     "latitud": -34.5838, "longitud": -58.3930, "telefono": "+54 11 4633-3003",
      "nombre": "Marta", "apellido": "Quiroga"},
     {"email": "beneficiaria04@demo.donatrack.ar", "cuit": "30700000044",
      "razonSocial": "Club de Barrio Villa Soldati", "tipoOrganizacion": "ONG", "rubro": "Club social",
-     "direccion": "Av. Mariano Acosta 2800, CABA", "telefono": "+54 11 4919-4004",
+     "direccion": "Av. Ángel Gallardo 470, Caballito, CABA",
+     "latitud": -34.6051, "longitud": -58.4386, "telefono": "+54 11 4919-4004",
      "nombre": "Raúl", "apellido": "Ferreyra"},
     {"email": "beneficiaria05@demo.donatrack.ar", "cuit": "30700000055",
      "razonSocial": "Parroquia San Cayetano Liniers", "tipoOrganizacion": "INSTITUCION",
-     "rubro": "Asistencia social", "direccion": "Cuzco 150, CABA", "telefono": "+54 11 4641-5005",
+     "rubro": "Asistencia social", "direccion": "Av. Sarmiento 2601, Palermo, CABA",
+     "latitud": -34.5696, "longitud": -58.4115, "telefono": "+54 11 4641-5005",
      "nombre": "Inés", "apellido": "Domínguez"},
 ]
 
@@ -517,6 +525,8 @@ class Carga:
                 "direccion": alta["direccion"], "telefono": alta["telefono"],
                 "representantes": [{"nombre": alta["nombre"], "apellido": alta["apellido"],
                                     "email": alta["email"]}],
+                # Solo las que reciben entregas; la red de escritorios queda sin ubicar.
+                "latitud": alta.get("latitud"), "longitud": alta.get("longitud"),
             })
             self.beneficiarias[alta["email"]] = creada["id"]
             for orden, subcategoria in enumerate(NECESIDADES[alta["email"]]):
@@ -703,6 +713,66 @@ class Carga:
                             + str(por_id.get(distintas[0]["id"])) + " en vez de "
                             + ESPERADO[distintas[0]["estado"]] + ").")
 
+    def verificar_mapa_publico(self):
+        """Lo que tiene que mostrar /donaciones-publicas con estos datos."""
+        fijas = {c["email"]: (c["perfil"]["latitud"], c["perfil"]["longitud"])
+                 for c in self.cuentas_de("BENEFICIARIA")}
+        fijas.update({b["email"]: (b["latitud"], b["longitud"]) for b in BENEFICIARIAS_EXTRA})
+        email_de = {self.beneficiarias[email]: email for email in fijas}
+
+        # Todas las entregas (en traslado, entregadas, pendientes) van a las 5 ubicadas.
+        otras = [e for e in self.log_("GET", "/entregas") if e["beneficiariaId"] not in email_de]
+        if otras:
+            raise SeedError(str(len(otras)) + " entregas van a entidades sin ubicacion fija, por "
+                            + "ejemplo la " + str(otras[0]["id"]) + ".")
+
+        entregadas = pedir("GET", LOGISTICA + "/entregas/publicas") or []
+        por_entidad = {}
+        for entrega in entregadas:
+            por_entidad[entrega["beneficiariaId"]] = por_entidad.get(entrega["beneficiariaId"], 0) + 1
+        if len(por_entidad) < 4 or max(por_entidad.values()) < 2:
+            raise SeedError("Las entregas confirmadas tienen que repartirse entre al menos 4 "
+                            + "entidades y alguna tener 2 o mas: " + str(por_entidad))
+
+        ids = ",".join(str(i) for i in sorted(por_entidad))
+        ubicaciones = {u["id"]: u for u in
+                       pedir("GET", DONACIONES + "/entidades/ubicaciones?ids=" + ids) or []}
+        for beneficiaria_id in por_entidad:
+            ubicacion = ubicaciones.get(beneficiaria_id)
+            latitud, longitud = fijas[email_de[beneficiaria_id]]
+            if (ubicacion is None or abs(ubicacion["latitud"] - latitud) > 1e-6
+                    or abs(ubicacion["longitud"] - longitud) > 1e-6):
+                raise SeedError("La entidad " + email_de[beneficiaria_id] + " no quedo con sus "
+                                + "coordenadas fijas: " + str(ubicacion))
+
+        recientes = pedir("GET", LOGISTICA + "/entregas/publicas?limite=5") or []
+        if [e["entregaId"] for e in recientes] != [e["entregaId"] for e in entregadas[:5]]:
+            raise SeedError("GET /entregas/publicas?limite=5 no devolvio las 5 ultimas confirmadas.")
+
+        log("Mapa publico: " + str(len(entregadas)) + " entregas confirmadas en "
+            + str(len(por_entidad)) + " entidades ("
+            + ", ".join(email_de[i] + " " + str(n) for i, n in sorted(por_entidad.items())) + ").")
+
+        # La pagina, tal como la arma Web.
+        try:
+            html = pedir("GET", WEB + "/donaciones-publicas", encabezados={"Accept": "text/html"})
+        except (SeedError, OSError) as e:
+            log("ATENCION: no se pudo abrir " + WEB + "/donaciones-publicas para verificarla: "
+                + str(e))
+            return
+        datos = re.search(r'<script type="application/json" id="mapa-entregas">(.*?)</script>',
+                          html or "", re.S)
+        marcadores = json.loads(datos.group(1)) if datos else []
+        items = (html or "").count('class="donation-item"')
+        if len(marcadores) != len(por_entidad):
+            raise SeedError("/donaciones-publicas muestra " + str(len(marcadores))
+                            + " marcadores y se esperaban " + str(len(por_entidad)) + ".")
+        if items != min(5, len(entregadas)):
+            raise SeedError("/donaciones-publicas lista " + str(items) + " entregas recientes y "
+                            + "se esperaban " + str(min(5, len(entregadas))) + ".")
+        log("/donaciones-publicas: " + str(len(marcadores)) + " marcadores (uno por entidad con "
+            + "entregas confirmadas) y " + str(items) + " entregas recientes.")
+
     # -- orquestacion -----------------------------------------------------------------
     def correr(self):
         self.esperar_servicios()
@@ -744,6 +814,7 @@ class Carga:
         self.confirmar_destino(por_estado[ASIGNADA])
 
         self.resumen(plan)
+        self.verificar_mapa_publico()
         log("Carga terminada.")
 
 

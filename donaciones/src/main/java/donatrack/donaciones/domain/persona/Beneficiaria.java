@@ -6,6 +6,7 @@ import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.necesidad.Necesidad;
 
 import javax.persistence.Column;
+import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -18,6 +19,8 @@ import javax.persistence.Table;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 @Entity
 @Table(name = "beneficiaria")
@@ -38,6 +41,12 @@ public class Beneficiaria {
     @OneToMany(mappedBy = "destinatarioAsignado")
     private List<Donacion> donacionesRecibidas = new ArrayList<>();
 
+    // Ubicacion de la direccion de la entidad, para el mapa publico de entregas. Es
+    // opcional: se carga en el alta (solo administracion) o se geocodifica la primera vez
+    // que se le confirma una entrega. Si cambia la direccion, se borra para recalcularla.
+    @Embedded
+    private Coordenadas ubicacion;
+
     protected Beneficiaria() {
     }
 
@@ -54,6 +63,26 @@ public class Beneficiaria {
 
     public PersonaJuridica getPersona() {
         return persona;
+    }
+
+    public Optional<Coordenadas> getUbicacion() {
+        return Optional.ofNullable(ubicacion);
+    }
+
+    public boolean tieneUbicacion() {
+        return ubicacion != null;
+    }
+
+    public void ubicarEn(Coordenadas coordenadas) {
+        this.ubicacion = coordenadas;
+    }
+
+    // Se llama despues de modificar los datos de la persona: si la direccion ya no es la
+    // que tenia, las coordenadas quedaron viejas y se descartan.
+    public void olvidarUbicacionSiCambioLaDireccion(String direccionAnterior) {
+        if (!Objects.equals(direccionAnterior, persona.getDireccion())) {
+            this.ubicacion = null;
+        }
     }
 
     public void registrarNecesidad(Necesidad necesidad) {

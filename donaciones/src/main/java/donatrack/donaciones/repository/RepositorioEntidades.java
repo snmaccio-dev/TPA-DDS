@@ -3,6 +3,7 @@ package donatrack.donaciones.repository;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +43,22 @@ public class RepositorioEntidades implements WithSimplePersistenceUnit {
 
     public List<Beneficiaria> todas() {
         return createQuery("select b from Beneficiaria b", Beneficiaria.class).getResultList();
+    }
+
+    // Las beneficiarias pedidas que ya tienen coordenadas, con su persona juridica en la
+    // misma consulta (el mapa publico muestra la razon social).
+    public List<Beneficiaria> conUbicacion(Collection<Long> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        return createQuery(
+            "select b from Beneficiaria b join fetch b.persona "
+                + "where b.id in :ids "
+                + "and b.ubicacion.latitud is not null and b.ubicacion.longitud is not null "
+                + "order by b.id",
+            Beneficiaria.class)
+            .setParameter("ids", ids)
+            .getResultList();
     }
 
     public void eliminar(long id) {

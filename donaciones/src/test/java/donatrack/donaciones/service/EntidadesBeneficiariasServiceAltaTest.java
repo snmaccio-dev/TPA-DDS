@@ -4,6 +4,7 @@ import donatrack.donaciones.DatosDeTest;
 import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.persona.Beneficiaria;
+import donatrack.donaciones.domain.persona.Coordenadas;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
 import donatrack.donaciones.domain.persona.Representante;
@@ -24,6 +25,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -52,6 +54,32 @@ class EntidadesBeneficiariasServiceAltaTest implements WithSimplePersistenceUnit
     assertTrue(repoEntidades.buscarPorCuit(cuit).isPresent());
     assertEquals(creada.getId(),
         repoUsuarios.buscarPorKeycloakId(kcId).orElseThrow().getBeneficiaria().getId());
+  }
+
+  @Test
+  void conPersonaNuevaYCoordenadasLaEntidadQuedaUbicada() {
+    String cuit = DatosDeTest.cuitUnico();
+    EntidadesBeneficiariasService service =
+        nuevoService(new ProveedorFalso(DatosDeTest.keycloakIdUnico()), repoUsuarios);
+
+    service.registrarConPersonaNueva(juridicaNueva(cuit),
+        datos(DatosDeTest.emailUnico("rep-ubicada")), new Coordenadas(-34.5838, -58.3930));
+
+    entityManager().clear();
+    assertEquals(Optional.of(new Coordenadas(-34.5838, -58.3930)),
+        repoEntidades.buscarPorCuit(cuit).orElseThrow().getUbicacion());
+  }
+
+  @Test
+  void conPersonaNuevaSinCoordenadasLaEntidadQuedaSinUbicar() {
+    String cuit = DatosDeTest.cuitUnico();
+    EntidadesBeneficiariasService service =
+        nuevoService(new ProveedorFalso(DatosDeTest.keycloakIdUnico()), repoUsuarios);
+
+    service.registrarConPersonaNueva(juridicaNueva(cuit), datos(DatosDeTest.emailUnico("rep")));
+
+    entityManager().clear();
+    assertFalse(repoEntidades.buscarPorCuit(cuit).orElseThrow().tieneUbicacion());
   }
 
   @Test

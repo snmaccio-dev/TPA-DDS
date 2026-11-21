@@ -33,6 +33,7 @@ import donatrack.donaciones.service.EntidadesBeneficiariasService;
 import donatrack.donaciones.service.ImportacionDonantesService;
 import donatrack.donaciones.service.NecesidadesService;
 import donatrack.donaciones.service.PersonasService;
+import donatrack.donaciones.service.UbicacionesService;
 import donatrack.donaciones.service.UsuariosService;
 import io.javalin.Javalin;
 import io.javalin.testtools.JavalinTest;
@@ -121,6 +122,23 @@ class RutasTest {
   }
 
   @Test
+  void lasUbicacionesDeEntidadesSonPublicasYNoCaenEnEntidadesPorId() {
+    Dependencias deps = new Dependencias();
+    when(deps.entidadesService.conUbicacion(List.of(1L, 2L))).thenReturn(List.of());
+    Javalin app = app(deps);
+
+    JavalinTest.test(app, (server, client) -> {
+      var resp = client.get("/entidades/ubicaciones?ids=1,2");
+      assertEquals(200, resp.code(), "GET /entidades/ubicaciones es publica.");
+      assertEquals("[]", resp.body().string().trim());
+    });
+
+    org.mockito.Mockito.verify(deps.entidadesService).conUbicacion(List.of(1L, 2L));
+    org.mockito.Mockito.verify(deps.entidadesService, org.mockito.Mockito.never())
+        .buscar(org.mockito.ArgumentMatchers.anyLong());
+  }
+
+  @Test
   void laRutaPatchDeDireccionDeEntidadesYaNoExiste() {
     Dependencias deps = new Dependencias();
     Javalin app = app(deps);
@@ -166,7 +184,7 @@ class RutasTest {
         new RegistroController(deps.donantesService, deps.entidadesService),
         new UsuariosController(),
         new AdministradoresController(deps.usuariosService),
-        new DonacionesController(deps.donacionesService, deps.donantesService),
+        new DonacionesController(deps.donacionesService, deps.donantesService, deps.ubicacionesService),
         new AsignacionesController(deps.asignacionesService),
         new DonantesController(deps.donantesService),
         new ImportacionesController(deps.importacionService),
@@ -210,6 +228,7 @@ class RutasTest {
     final PersonasService personasService = mock(PersonasService.class);
     final DonantesService donantesService = mock(DonantesService.class);
     final ImportacionDonantesService importacionService = mock(ImportacionDonantesService.class);
+    final UbicacionesService ubicacionesService = mock(UbicacionesService.class);
     final BandejaDeNotificacionesService bandejaDeNotificaciones =
         mock(BandejaDeNotificacionesService.class);
 

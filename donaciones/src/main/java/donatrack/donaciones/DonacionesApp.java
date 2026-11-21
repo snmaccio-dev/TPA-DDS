@@ -21,6 +21,9 @@ import donatrack.donaciones.domain.catalogo.Unidades;
 import donatrack.donaciones.domain.donacion.SegmentadorDonaciones;
 import donatrack.donaciones.domain.donacion.asignacion.CompatibilidadSemantica;
 import donatrack.donaciones.domain.donacion.asignacion.PrioridadSubatendidos;
+import donatrack.donaciones.domain.geocodificacion.Geocodificador;
+import donatrack.donaciones.infrastructure.geocodificacion.GeocodificadorNominatim;
+import donatrack.donaciones.infrastructure.geocodificacion.GeocodificadorSimulado;
 import donatrack.donaciones.infrastructure.identidad.ProveedorDeIdentidadKeycloak;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorEmail;
 import donatrack.donaciones.infrastructure.notificacion.NotificadorSMS;
@@ -53,6 +56,7 @@ import donatrack.donaciones.service.NecesidadesService;
 import donatrack.donaciones.service.NotificacionesService;
 import donatrack.donaciones.service.PersonasService;
 import donatrack.donaciones.service.RecursoInexistenteException;
+import donatrack.donaciones.service.UbicacionesService;
 import donatrack.donaciones.service.UsuariosService;
 import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import io.javalin.Javalin;
@@ -179,6 +183,16 @@ public class DonacionesApp {
         ejecutorImportaciones,
         importacionEnviaMails);
 
+    // Coordenadas de las beneficiarias para el mapa publico. Un solo hilo: las consultas al
+    // geocodificador quedan en fila (Nominatim admite una por segundo).
+    ExecutorService ejecutorGeocodificacion = Executors.newSingleThreadExecutor(tarea -> {
+      Thread hilo = new Thread(tarea, "geocodificacion-entidades");
+      hilo.setDaemon(true);
+      return hilo;
+    });
+    UbicacionesService ubicacionesService = new UbicacionesService(
+        repositorioEntidades, geocodificador(), ejecutorGeocodificacion);
+
     Javalin app = Javalin.create(DonacionesApp::configurar).start(PUERTO);
 
     // jpa-extras guarda un EntityManager por hilo. Sin esto, cada hilo de Jetty reusaba el
@@ -195,7 +209,7 @@ public class DonacionesApp {
         new RegistroController(donantesService, entidadesService),
         new UsuariosController(),
         new AdministradoresController(usuariosService),
-        new DonacionesController(donacionesService, donantesService),
+        new DonacionesController(donacionesService, donantesService, ubicacionesService),
         new AsignacionesController(asignacionesService),
         new DonantesController(donantesService),
         new ImportacionesController(importacionService),
@@ -219,8 +233,22 @@ public class DonacionesApp {
     planificadorAvisos.iniciar();
     Runtime.getRuntime().addShutdownHook(new Thread(planificadorAvisos::detener));
     Runtime.getRuntime().addShutdownHook(new Thread(ejecutorImportaciones::shutdown));
+    Runtime.getRuntime().addShutdownHook(new Thread(ejecutorGeocodificacion::shutdown));
 
     System.out.println("Microservicio Donaciones escuchando en " + urlBase);
+  }
+
+  // GEOCODIFICADOR=simulado deja a todas las entidades sin coordenadas nuevas (para correr
+  // sin Internet); por defecto se usa Nominatim. NOMINATIM_URL permite apuntar a una
+  // instancia propia y NOMINATIM_USER_AGENT identifica a la aplicacion, como pide la
+  // politica de uso del servicio publico.
+  private static Geocodificador geocodificador() {
+    if ("simulado".equalsIgnoreCase(variable("GEOCODIFICADOR", "nominatim"))) {
+      return new GeocodificadorSimulado();
+    }
+    return new GeocodificadorNominatim(
+        variable("NOMINATIM_URL", GeocodificadorNominatim.URL_PUBLICA),
+        variable("NOMINATIM_USER_AGENT", "DonaTrack/1.0 (trabajo practico DDS UTN)"));
   }
 
   static void configurar(JavalinConfig config) {

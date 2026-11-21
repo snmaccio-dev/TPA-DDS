@@ -169,7 +169,14 @@ public class DonantesService implements WithSimplePersistenceUnit {
         try {
             withTransaction(() -> {
                 modificada[0] = buscarPorDocumento(documento);
+                String direccionAnterior = modificada[0].getDireccion();
                 aplicar(modificada[0], datos);
+                // Si la persona juridica tambien es beneficiaria, sus coordenadas son de la
+                // direccion anterior: se borran para que se recalculen.
+                if (modificada[0] instanceof PersonaJuridica juridica) {
+                    repositorioEntidades.buscarPorCuit(juridica.getCuit())
+                        .ifPresent(b -> b.olvidarUbicacionSiCambioLaDireccion(direccionAnterior));
+                }
             });
         } catch (RuntimeException e) {
             entityManager().clear();

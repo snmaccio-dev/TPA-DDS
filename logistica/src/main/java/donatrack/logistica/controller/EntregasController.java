@@ -6,6 +6,7 @@ import donatrack.logistica.controller.dto.EntregaPublicaDTO;
 import donatrack.logistica.controller.dto.FotosSubidasDTO;
 import donatrack.logistica.controller.dto.NoRecepcionRequest;
 import donatrack.logistica.controller.dto.RegistrarMedidasRequest;
+import donatrack.logistica.domain.DatosInvalidosException;
 import donatrack.logistica.domain.almacenamiento.FotoParaSubir;
 import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.integracion.IntegracionExternaException;
@@ -85,8 +86,26 @@ public class EntregasController {
     ctx.json(EntregaDTO.desde(gestor.pendientesDeMedicion()));
   }
 
+  // Solo entregas confirmadas (ENTREGADA), de la mas reciente a la mas vieja. ?limite=n
+  // trae solo las n ultimas (la landing y la lista de recientes); sin limite, todas (el
+  // mapa).
   private void publicas(Context ctx) {
-    ctx.json(EntregaPublicaDTO.desde(gestor.entregadas()));
+    ctx.json(EntregaPublicaDTO.desde(gestor.entregadas(limiteDe(ctx.queryParam("limite")))));
+  }
+
+  static Integer limiteDe(String parametro) {
+    if (parametro == null || parametro.isBlank()) {
+      return null;
+    }
+    try {
+      int limite = Integer.parseInt(parametro.trim());
+      if (limite > 0) {
+        return limite;
+      }
+    } catch (NumberFormatException e) {
+      // cae al error de abajo
+    }
+    throw new DatosInvalidosException("El limite tiene que ser un numero mayor a cero.");
   }
 
   private void registrarMedidas(Context ctx) {

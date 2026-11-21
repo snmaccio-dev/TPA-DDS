@@ -13,9 +13,12 @@ public final class MapaJson {
   private MapaJson() {
   }
 
-  public static String de(List<PuntoDeMapa> puntos) {
+  // Va dentro de un <script type="application/json">: se escapan los "<" para que ningun
+  // texto (una descripcion, una razon social) pueda cerrar el script. Sigue siendo JSON
+  // valido.
+  public static String de(List<?> puntos) {
     try {
-      return JSON.writeValueAsString(puntos).replace("</", "<\\/");
+      return JSON.writeValueAsString(puntos).replace("<", "\\u003c");
     } catch (JsonProcessingException e) {
       return SIN_PUNTOS;
     }

@@ -70,6 +70,50 @@ class RepositorioEntregasTest implements SimplePersistenceTest {
   }
 
   @Test
+  void entregadasSoloTraeLasConfirmadasDeLaMasRecienteALaMasViejaYRespetaElLimite() {
+    Camion camion = new Camion("PUB111", 30.0, 2.5, 1000.0);
+    Chofer chofer = new Chofer("Luis", "Paz", "30111999", "B1");
+    persist(camion);
+    persist(chofer);
+
+    Entrega primera = medida(601L);
+    Entrega segunda = medida(602L);
+    Entrega tercera = medida(603L);
+    Entrega enTraslado = medida(604L);
+    RutaReparto ruta = new RutaReparto(camion, List.of(new DestinoEntrega(
+        0, "Av. Siempreviva 742", List.of(primera, segunda, tercera, enTraslado))));
+    persist(ruta);
+    ruta.iniciarRuta(chofer);
+    primera.confirmarRecepcion(List.of());
+    segunda.confirmarRecepcion(List.of());
+    tercera.confirmarRecepcion(List.of());
+    Entrega pendiente = nuevaEntrega(605L);
+    repositorio.guardar(pendiente);
+
+    entityManager().flush();
+    entityManager().clear();
+
+    List<Long> todas = donacionesDe(repositorio.entregadas(null));
+    assertTrue(todas.containsAll(List.of(601L, 602L, 603L)));
+    assertFalse(todas.contains(604L));
+    assertFalse(todas.contains(605L));
+
+    // Las tres son las mas recientes de la base; misma fecha, desempata el id.
+    assertEquals(List.of(603L, 602L), donacionesDe(repositorio.entregadas(2)));
+  }
+
+  private Entrega medida(long donacionId) {
+    Entrega entrega = nuevaEntrega(donacionId);
+    entrega.registrarMedicion(5.0, 0.2);
+    repositorio.guardar(entrega);
+    return entrega;
+  }
+
+  private static List<Long> donacionesDe(List<Entrega> entregas) {
+    return entregas.stream().map(Entrega::getDonacionId).toList();
+  }
+
+  @Test
   void queEsperanPlanificacionSoloTraeLasPendientesYaMedidas() {
     Entrega medida = nuevaEntrega(201L);
     medida.registrarMedicion(10.0, 1.0);

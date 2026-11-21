@@ -56,14 +56,87 @@ document.addEventListener("DOMContentLoaded", () => {
     );
 
     // MAPA DE DONACIONES PUBLICAS
-    // Solo el mapa base: las entregas todavia no traen coordenadas, y la pantalla lo
-    // aclara. Los mapas de seguimiento los arma mapa-seguimiento.js con datos reales.
-    if (page === "public-donations" && document.getElementById("donations-map")) {
-        const map = L.map("donations-map").setView([-34.70, -58.39], 11);
+    // Los datos los arma el servidor (#mapa-entregas): un marcador por entidad
+    // beneficiaria con coordenadas y, en su popup, todas las entregas que recibio. El popup
+    // se arma con nodos del DOM (textContent), nunca con HTML de los datos.
+    if (page === "public-donations" && document.getElementById("donations-map")
+        && typeof L !== "undefined") {
+        let marcadoresDatos = [];
+        try {
+            const datos = document.getElementById("mapa-entregas");
+            marcadoresDatos = JSON.parse(datos ? datos.textContent : "[]") || [];
+        } catch (e) {
+            marcadoresDatos = [];
+        }
+
+        const map = L.map("donations-map").setView([-34.61, -58.42], 12);
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         }).addTo(map);
+
+        // Solo fotos http(s) (o relativas al sitio): nada de javascript: ni data:.
+        const urlDeFoto = (foto) => {
+            if (!foto) return null;
+            try {
+                const url = new URL(foto, window.location.href);
+                return url.protocol === "http:" || url.protocol === "https:" ? url.href : null;
+            } catch (e) {
+                return null;
+            }
+        };
+
+        const texto = (etiqueta, contenido, clase) => {
+            const el = document.createElement(etiqueta);
+            el.textContent = contenido;
+            if (clase) el.className = clase;
+            return el;
+        };
+
+        const popupDe = (marcador) => {
+            const cuerpo = document.createElement("div");
+            cuerpo.className = "popup-entregas";
+            cuerpo.appendChild(texto("b", marcador.razonSocial, "popup-entregas-titulo"));
+            cuerpo.appendChild(texto("small",
+                marcador.entregas.length === 1
+                    ? "1 entrega confirmada"
+                    : marcador.entregas.length + " entregas confirmadas",
+                "popup-entregas-cantidad"));
+
+            const lista = document.createElement("ul");
+            marcador.entregas.forEach(entrega => {
+                const item = document.createElement("li");
+                const foto = urlDeFoto(entrega.foto);
+                if (foto) {
+                    const img = document.createElement("img");
+                    img.src = foto;
+                    img.alt = "Fotografía de " + entrega.descripcion;
+                    img.loading = "lazy";
+                    item.appendChild(img);
+                }
+                const detalle = document.createElement("div");
+                detalle.appendChild(texto("span", entrega.descripcion, "popup-entrega-descripcion"));
+                detalle.appendChild(texto("small",
+                    entrega.cantidad + (entrega.fecha ? " · " + entrega.fecha : "")));
+                item.appendChild(detalle);
+                lista.appendChild(item);
+            });
+            cuerpo.appendChild(lista);
+            return cuerpo;
+        };
+
+        const marcadores = marcadoresDatos.map(marcador =>
+            L.marker([marcador.latitud, marcador.longitud], { title: marcador.razonSocial })
+                .addTo(map)
+                .bindPopup(popupDe(marcador), { maxWidth: 280, maxHeight: 320 })
+        );
+
+        // Igual que mapa-seguimiento.js: el mapa se ajusta a los marcadores.
+        if (marcadores.length === 1) {
+            map.setView(marcadores[0].getLatLng(), 14);
+        } else if (marcadores.length > 1) {
+            map.fitBounds(L.featureGroup(marcadores).getBounds().pad(0.2));
+        }
 
         setTimeout(() => map.invalidateSize(), 250);
     }

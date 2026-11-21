@@ -10,7 +10,9 @@ import donatrack.web.vista.PerfilVista;
 import donatrack.web.vista.PaginaVista;
 import donatrack.web.vista.PropuestaVista;
 import donatrack.web.vista.SubcategoriaVista;
+import donatrack.web.vista.UbicacionEntidadVista;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface ClienteDonaciones {
@@ -24,6 +26,10 @@ public interface ClienteDonaciones {
   void registrarBeneficiaria(RegistroBeneficiaria datos);
 
   List<EntidadVista> entidades(String autorizacion);
+
+  // Publico, sin token: id, razon social y coordenadas de las entidades pedidas que ya
+  // estan ubicadas (las demas no vienen). Una sola consulta para todos los ids.
+  List<UbicacionEntidadVista> ubicacionesDeEntidades(Collection<Long> ids);
 
   // Donaciones ya acota el listado: a una beneficiaria le devuelve solo las suyas.
   List<NecesidadVista> necesidades(String autorizacion);

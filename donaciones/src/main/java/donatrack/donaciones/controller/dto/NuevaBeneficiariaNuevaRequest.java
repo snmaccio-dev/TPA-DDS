@@ -9,6 +9,9 @@ public record NuevaBeneficiariaNuevaRequest(
     String rubro,
     String direccion,
     String telefono,
-    List<RepresentanteRequest> representantes
+    List<RepresentanteRequest> representantes,
+    // Opcionales: si vienen las dos, la entidad queda ubicada y no se geocodifica.
+    Double latitud,
+    Double longitud
 ) {
 }
