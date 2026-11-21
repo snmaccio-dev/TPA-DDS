@@ -31,6 +31,8 @@ public class JavalinRenderer implements FileRenderer {
                 enriquecido.putIfAbsent(Modelo.CLAVE_ALERTA_ERROR, texto);
             } else if (Alertas.TIPO_ADVERTENCIA.equals(tipo)) {
                 enriquecido.putIfAbsent(Modelo.CLAVE_ALERTA_ADVERTENCIA, texto);
+            } else if (Alertas.TIPO_EXITO.equals(tipo)) {
+                enriquecido.putIfAbsent(Modelo.CLAVE_ALERTA_EXITO, texto);
             }
         }
 

@@ -9,6 +9,7 @@ import donatrack.logistica.controller.dto.RegistrarMedidasRequest;
 import donatrack.logistica.domain.almacenamiento.FotoParaSubir;
 import donatrack.logistica.domain.entrega.Entrega;
 import donatrack.logistica.domain.integracion.IntegracionExternaException;
+import donatrack.logistica.seguridad.AlcanceDeMonitoreo;
 import donatrack.logistica.seguridad.ControlDeAcceso;
 import donatrack.logistica.seguridad.RolDeAcceso;
 import donatrack.logistica.service.GestorEntregas;
@@ -37,6 +38,7 @@ public class EntregasController {
     app.get("/entregas/pendientes-de-medicion", this::pendientesDeMedicion,
         RolDeAcceso.ADMINISTRADOR);
     app.get("/entregas/publicas", this::publicas, RolDeAcceso.PUBLICO);
+    app.get("/entregas/mias", this::mias, RolDeAcceso.BENEFICIARIA);
     app.get("/entregas/{id}", this::buscar,
         RolDeAcceso.ADMINISTRADOR, RolDeAcceso.BENEFICIARIA, RolDeAcceso.DONANTE);
     app.post("/entregas/{id}/medidas", this::registrarMedidas,
@@ -60,6 +62,23 @@ public class EntregasController {
     control.exigirAccesoAEntrega(ctx, entrega);
 
     ctx.json(EntregaDTO.desde(entrega));
+  }
+
+  // Entregas de la beneficiaria autenticada. La beneficiaria sale del token (igual que en
+  // el monitoreo), nunca de un parametro del cliente. ?soloConfirmables=true deja solo las
+  // que todavia puede confirmar.
+  private void mias(Context ctx) {
+    boolean soloConfirmables = Boolean.parseBoolean(ctx.queryParam("soloConfirmables"));
+    AlcanceDeMonitoreo alcance = control.alcanceDeMonitoreo(ctx, AlcanceDeMonitoreo.todas());
+
+    // Con seguridad, una beneficiaria siempre tiene alcance propio. Sin seguridad
+    // (LOGISTICA_SEGURIDAD=off) no hay a quien atribuirlas y se listan todas, como en el
+    // monitoreo.
+    List<Entrega> entregas = alcance.esDeBeneficiaria()
+        ? gestor.deBeneficiaria(alcance.beneficiariaId(), soloConfirmables)
+        : gestor.todas(soloConfirmables);
+
+    ctx.json(EntregaDTO.desde(entregas));
   }
 
   private void pendientesDeMedicion(Context ctx) {

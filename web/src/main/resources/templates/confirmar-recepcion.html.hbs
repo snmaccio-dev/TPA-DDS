@@ -11,12 +11,49 @@
     </div>
   </div>
 
-  {{#if faltaLaEntrega}}
+  {{#if modoLista}}
   <section class="panel">
-    <strong>No indicaste qué entrega querés confirmar</strong>
-    <p class="muted">Entrá desde el listado de donaciones asignadas para elegir una.</p>
+    <div class="panel-head">
+      <h3>Entregas pendientes de confirmar</h3>
+      {{#unless entregasNoDisponible}}
+      <span class="muted">{{entregas.size}} pendientes</span>
+      {{/unless}}
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+        <tr>
+          <th>Donación</th>
+          <th>Cantidad</th>
+          <th>Camión</th>
+          <th>Salida</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody>
+        {{#each entregas}}
+        <tr>
+          <td>{{descripcionDonacion}}</td>
+          <td>{{cantidadTexto}}</td>
+          <td>{{patenteCamion}}</td>
+          <td>{{#if fechaHoraSalidaTexto}}{{fechaHoraSalidaTexto}}{{else}}<span class="muted">Sin informar</span>{{/if}}</td>
+          <td><a class="table-action" href="/confirmar-recepcion?entrega={{id}}">Confirmar recepción</a></td>
+        </tr>
+        {{/each}}
+        {{#if entregasNoDisponible}}
+        <tr><td colspan="5" class="muted">No disponible. Intentá nuevamente más tarde.</td></tr>
+        {{/if}}
+        {{#if sinEntregas}}
+        {{#unless entregasNoDisponible}}
+        <tr><td colspan="5" class="muted">No tenés entregas pendientes de confirmar.</td></tr>
+        {{/unless}}
+        {{/if}}
+        </tbody>
+      </table>
+    </div>
   </section>
-  {{/if}}
+  {{else}}
+  <p><a class="table-action" href="/confirmar-recepcion">← Volver a las entregas pendientes</a></p>
 
   {{#if entregaNoDisponible}}
   <section class="panel">
@@ -37,6 +74,9 @@
       <div class="detail-pair"><span>Donación</span><b>#{{entrega.donacionId}}</b></div>
       <div class="detail-pair"><span>Cantidad declarada</span><b>{{entrega.cantidadTexto}}</b></div>
       <div class="detail-pair"><span>Transporte</span><b>{{entrega.patenteCamion}}</b></div>
+      {{#if entrega.fechaHoraSalidaTexto}}
+      <div class="detail-pair"><span>Salida del camión</span><b>{{entrega.fechaHoraSalidaTexto}}</b></div>
+      {{/if}}
       {{#if entrega.fechaHoraEntregaTexto}}
       <div class="detail-pair"><span>Recepción registrada</span><b>{{entrega.fechaHoraEntregaTexto}}</b></div>
       {{/if}}
@@ -85,6 +125,7 @@
     </section>
     {{/if}}
   </div>
+  {{/if}}
   {{/if}}
 </main>
 {{> templates/partials/footer}}

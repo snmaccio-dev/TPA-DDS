@@ -37,7 +37,8 @@ public class PublicoController {
     app.get("/donaciones-publicas", this::donacionesPublicas);
     app.get("/registro", this::registro);
     app.post("/registro", this::crearCuenta);
-    app.get("/login", this::login);
+    // Compatibilidad con links viejos: el ingreso es directo contra Keycloak.
+    app.get("/login", ctx -> ctx.redirect("/sesion/ingresar"));
     app.get("/privacidad", this::privacidad);
   }
 
@@ -87,7 +88,7 @@ public class PublicoController {
       return;
     }
 
-    ctx.redirect("/login?cuentaCreada=1");
+    ctx.redirect("/sesion/ingresar");
   }
 
   private RegistroDonante donanteDelFormulario(Context ctx) {
@@ -124,13 +125,6 @@ public class PublicoController {
   private void mostrarRegistro(Context ctx, String alertaError) {
     ctx.render("registro.html.hbs",
         Modelo.de("Crear cuenta").conAlertaError(alertaError).mapa());
-  }
-
-  private void login(Context ctx) {
-    ctx.render("login.html.hbs",
-        Modelo.de("Iniciar sesión")
-            .con("cuentaCreada", ctx.queryParam("cuentaCreada") != null)
-            .mapa());
   }
 
   private void privacidad(Context ctx) {

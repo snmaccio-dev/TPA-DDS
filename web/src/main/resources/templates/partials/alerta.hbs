@@ -5,6 +5,13 @@
     <button type="button" class="alerta-cerrar" aria-label="Cerrar alerta" data-alerta-cerrar>×</button>
 </div>
 {{/if}}
+{{#if alertaExito}}
+<div class="alerta exito" role="status" data-alerta>
+    <span class="alerta-icono" aria-hidden="true">✓</span>
+    <span class="alerta-texto">{{alertaExito}}</span>
+    <button type="button" class="alerta-cerrar" aria-label="Cerrar alerta" data-alerta-cerrar>×</button>
+</div>
+{{/if}}
 {{#if alertaAdvertencia}}
 <div class="alerta advertencia" role="status" data-alerta>
     <span class="alerta-icono" aria-hidden="true">!</span>

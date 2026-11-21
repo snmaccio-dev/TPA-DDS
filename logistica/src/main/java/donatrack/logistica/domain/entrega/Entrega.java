@@ -175,6 +175,11 @@ public class Entrega {
     this.estado = EstadoEntrega.EN_TRASLADO;
   }
 
+  // La beneficiaria solo puede confirmar (o rechazar) una entrega que esta en camino.
+  public boolean esConfirmable() {
+    return estado == EstadoEntrega.EN_TRASLADO;
+  }
+
   public void confirmarRecepcion(List<String> fotos) {
     exigirEstado("confirmar la recepcion", EstadoEntrega.EN_TRASLADO);
     this.fechaHoraEntrega = LocalDateTime.now();

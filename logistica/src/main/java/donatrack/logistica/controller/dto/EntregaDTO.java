@@ -20,7 +20,9 @@ public record EntregaDTO(
     String patenteCamion,
     String fechaHoraEntrega,
     List<String> fotos,
-    String motivoNoRecepcion
+    String motivoNoRecepcion,
+    // Momento en que el camion salio con la ruta; null mientras la ruta no se inicio.
+    String fechaHoraSalida
 ) {
 
   public static EntregaDTO desde(Entrega entrega) {
@@ -39,7 +41,10 @@ public record EntregaDTO(
         entrega.getPatenteCamion(),
         Fechas.aTexto(entrega.getFechaHoraEntrega()),
         entrega.getFotos(),
-        entrega.getMotivoNoRecepcion()
+        entrega.getMotivoNoRecepcion(),
+        entrega.getRuta() == null
+            ? null
+            : Fechas.aTexto(entrega.getRuta().getFechaHoraInicio())
     );
   }
 

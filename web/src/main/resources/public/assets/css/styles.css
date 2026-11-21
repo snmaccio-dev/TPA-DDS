@@ -859,6 +859,28 @@ td:first-child {
     flex:1;
 }
 
+/* Texto de ayuda debajo de un campo de la barra de filtros: va en absoluto para no
+   cambiar la altura del label ni romper la alineacion (align-items:end) con los
+   demas campos y botones. La barra reserva abajo (y entre filas, si se parte en
+   pantallas chicas) el lugar de hasta dos lineas de ayuda. */
+.filter-bar.con-ayuda {
+    row-gap:44px;
+    margin-bottom:52px;
+}
+
+.filter-bar .campo-con-ayuda {
+    position:relative;
+}
+
+.filter-bar .campo-con-ayuda .ayuda-campo {
+    position:absolute;
+    top:100%;
+    left:0;
+    right:0;
+    margin-top:5px;
+    line-height:1.3;
+}
+
 .filter-bar.panel {
     padding:14px;
     margin-bottom:16px;
@@ -1485,6 +1507,10 @@ td:first-child {
 
 .alerta.advertencia {
     background:#c88520;
+}
+
+.alerta.exito {
+    background:var(--green);
 }
 
 .alerta-icono {

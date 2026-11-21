@@ -12,6 +12,7 @@ public class Modelo {
 
   public static final String CLAVE_ALERTA_ERROR = "alertaError";
   public static final String CLAVE_ALERTA_ADVERTENCIA = "alertaAdvertencia";
+  public static final String CLAVE_ALERTA_EXITO = "alertaExito";
 
   private final Map<String, Object> datos = new HashMap<>();
   private final Map<String, String> activa = new LinkedHashMap<>();

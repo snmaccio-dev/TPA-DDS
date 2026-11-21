@@ -12,6 +12,7 @@ public final class Alertas {
   public static final String CLAVE_FLASH = "alerta";
   public static final String TIPO_ERROR = "error";
   public static final String TIPO_ADVERTENCIA = "advertencia";
+  public static final String TIPO_EXITO = "exito";
 
   public static final String SERVICIO_NO_DISPONIBLE =
       "El servicio no está disponible, intentá de nuevo en unos minutos.";
@@ -21,6 +22,10 @@ public final class Alertas {
 
   public static void flashError(Context ctx, String texto) {
     flash(ctx, TIPO_ERROR, texto);
+  }
+
+  public static void flashExito(Context ctx, String texto) {
+    flash(ctx, TIPO_EXITO, texto);
   }
 
   public static void flashAdvertencia(Context ctx, String texto) {

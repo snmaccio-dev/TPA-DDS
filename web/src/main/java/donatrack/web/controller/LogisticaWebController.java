@@ -9,6 +9,7 @@ import donatrack.web.integracion.OperacionRechazadaException;
 import donatrack.web.integracion.ServicioNoDisponibleException;
 import donatrack.web.sesion.IdentidadDelUsuario;
 import donatrack.web.sesion.UsuarioWeb;
+import donatrack.web.vista.EntregaVista;
 import donatrack.web.vista.PlanificacionVista;
 import donatrack.web.vista.RutaVista;
 import donatrack.web.vista.SeguimientoVista;
@@ -129,8 +130,16 @@ public class LogisticaWebController {
             .mapa());
   }
 
+  // Sin ?entrega lista las entregas pendientes de confirmar; con ?entrega=<id> muestra
+  // esa entrega con el formulario de fotos (se llega desde la accion de cada fila).
   private void confirmarRecepcion(Context ctx) {
-    mostrarConfirmacion(ctx, entregaPedida(ctx), null);
+    Long entregaId = entregaPedida(ctx);
+
+    if (entregaId == null) {
+      mostrarPendientes(ctx);
+    } else {
+      mostrarConfirmacion(ctx, entregaId, null);
+    }
   }
 
   private void registrarRecepcion(Context ctx) {
@@ -156,7 +165,8 @@ public class LogisticaWebController {
       return;
     }
 
-    ctx.redirect("/confirmar-recepcion?entrega=" + entregaId);
+    Alertas.flashExito(ctx, "Registramos la recepción de la donación. ¡Gracias!");
+    ctx.redirect("/confirmar-recepcion");
   }
 
   private List<ArchivoSubido> fotosDe(Context ctx) {
@@ -187,20 +197,31 @@ public class LogisticaWebController {
     }
   }
 
-  private void mostrarConfirmacion(Context ctx, Long entregaId, String alertaError) {
-    Modelo modelo = modeloBase(ctx, "Confirmar recepción", "Confirmar recepción")
-        .comoBeneficiaria().activa("confirmar")
-        .conAlertaError(alertaError);
+  private void mostrarPendientes(Context ctx) {
+    Modelo modelo = modeloConfirmacion(ctx, null)
+        .con("modoLista", true)
+        .conDatosDe("entregas", List.<EntregaVista>of(),
+            () -> clienteLogistica.entregasPendientesDeConfirmar(autorizacionDe(ctx)));
 
-    if (entregaId == null) {
-      modelo.con("faltaLaEntrega", true);
-    } else {
-      modelo.con("entregaId", entregaId)
-          .conDatosDe("entrega", null,
-              () -> clienteLogistica.entrega(autorizacionDe(ctx), entregaId));
-    }
+    Object entregas = modelo.mapa().get("entregas");
+    modelo.con("sinEntregas", entregas instanceof List<?> lista && lista.isEmpty());
 
     ctx.render("confirmar-recepcion.html.hbs", modelo.mapa());
+  }
+
+  private void mostrarConfirmacion(Context ctx, long entregaId, String alertaError) {
+    Modelo modelo = modeloConfirmacion(ctx, alertaError)
+        .con("entregaId", entregaId)
+        .conDatosDe("entrega", null,
+            () -> clienteLogistica.entrega(autorizacionDe(ctx), entregaId));
+
+    ctx.render("confirmar-recepcion.html.hbs", modelo.mapa());
+  }
+
+  private Modelo modeloConfirmacion(Context ctx, String alertaError) {
+    return modeloBase(ctx, "Confirmar recepción", "Confirmar recepción")
+        .comoBeneficiaria().activa("confirmar")
+        .conAlertaError(alertaError);
   }
 
   private Modelo modeloBase(Context ctx, String titulo, String seccion) {
