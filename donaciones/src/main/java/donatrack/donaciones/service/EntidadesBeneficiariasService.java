@@ -118,6 +118,7 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
         modificada[0] = buscar(id);
         PersonaJuridica juridica = modificada[0].getPersona();
         String direccionAnterior = juridica.getDireccion();
+        datos.validarCambiosRespectoDe(juridica);
         juridica.actualizarDatos(razonSocial, tipo, rubro);
         datos.reemplazarEn(juridica);
         modificada[0].olvidarUbicacionSiCambioLaDireccion(direccionAnterior);
@@ -138,6 +139,7 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
                                                    DatosEntidad datos,
                                                    Coordenadas ubicacion) {
     exigirDatos(datos);
+    datos.validarParaAlta();
     PersonaJuridica juridica = repositorioPersonas.buscarJuridicaPorCuit(cuit)
         .orElseThrow(() -> new RecursoInexistenteException(
             "No existe una persona juridica con CUIT " + cuit
@@ -175,6 +177,7 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
                                                DatosEntidad datos,
                                                Coordenadas ubicacion) {
     exigirDatos(datos);
+    datos.validarParaAlta();
     if (repositorioPersonas.buscarPorDocumento(juridica.getCuit()).isPresent()) {
       throw new ConflictoDeNegocioException(
           "Ya existe una persona con ese CUIT. Si se la quiere hacer beneficiaria, "
@@ -209,6 +212,7 @@ public class EntidadesBeneficiariasService implements WithSimplePersistenceUnit 
       throw new DatosInvalidosException("Los datos de la persona juridica son obligatorios.");
     }
     exigirDatos(datos);
+    datos.validarParaAlta();
     if (repositorioPersonas.buscarPorDocumento(juridica.getCuit()).isPresent()) {
       throw new ConflictoDeNegocioException(UsuariosService.MENSAJE_PERSONA_DUPLICADA);
     }

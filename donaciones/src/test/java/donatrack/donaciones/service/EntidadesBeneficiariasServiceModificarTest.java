@@ -44,7 +44,7 @@ class EntidadesBeneficiariasServiceModificarTest implements WithSimplePersistenc
     entityManager().clear();
 
     nuevoService().modificar(id, "Comedor Renovado", "ong", "Alimentos", new DatosEntidad(
-        "Calle Nueva 456", "+54 11 9999-9999", List.of(
+        "Calle Nueva 456", "1199999999", List.of(
             new Representante("Sigue", "Dos", emailQueSigue),
             new Representante("Nueva", "Tres", emailNuevo))));
 
@@ -58,8 +58,8 @@ class EntidadesBeneficiariasServiceModificarTest implements WithSimplePersistenc
     assertEquals(Set.of(emailQueSigue, emailNuevo),
         recargada.getRepresentantes().stream().map(Representante::getEmail)
             .collect(Collectors.toSet()));
-    assertTrue(recargada.tieneContacto(TipoContacto.TELEFONO, "+54 11 9999-9999"));
-    assertFalse(recargada.tieneContacto(TipoContacto.TELEFONO, "+54 11 0000-0000"));
+    assertTrue(recargada.tieneContacto(TipoContacto.TELEFONO, "1199999999"));
+    assertFalse(recargada.tieneContacto(TipoContacto.TELEFONO, "1100000000"));
     assertTrue(recargada.tieneContacto(TipoContacto.EMAIL, emailQueSigue));
     assertTrue(recargada.tieneContacto(TipoContacto.EMAIL, emailNuevo));
     assertFalse(recargada.tieneContacto(TipoContacto.EMAIL, emailViejo));
@@ -83,6 +83,59 @@ class EntidadesBeneficiariasServiceModificarTest implements WithSimplePersistenc
   }
 
   @Test
+  void unTelefonoViejoQueNoCumpleLasReglasSePuedeConservar() {
+    String email = DatosDeTest.emailUnico("rep");
+    long id = beneficiariaPersistida(DatosDeTest.cuitUnico(),
+        List.of(new Representante("Rep", "Uno", email)));
+    // Registro viejo: telefono con un formato que hoy se rechaza.
+    withTransaction(() -> repoEntidades.buscarPorId(id).orElseThrow().getPersona()
+        .reemplazarContacto(TipoContacto.TELEFONO, "+54 11 0000-0000"));
+    entityManager().clear();
+
+    nuevoService().modificar(id, "Comedor Renovado", "ONG", null, new DatosEntidad(
+        "Calle Falsa 123", "+54 11 0000-0000", List.of(new Representante("Rep", "Uno", email))));
+
+    entityManager().clear();
+    assertEquals("Comedor Renovado",
+        repoEntidades.buscarPorId(id).orElseThrow().getPersona().getRazonSocial());
+  }
+
+  @Test
+  void unTelefonoNuevoQueNoCumpleLasReglasDa400YNoPersisteNada() {
+    String email = DatosDeTest.emailUnico("rep");
+    long id = beneficiariaPersistida(DatosDeTest.cuitUnico(),
+        List.of(new Representante("Rep", "Uno", email)));
+    entityManager().clear();
+
+    assertThrows(DatosInvalidosException.class, () ->
+        nuevoService().modificar(id, "Comedor Renovado", "ONG", null, new DatosEntidad(
+            "Calle Falsa 123", "11-4911-1001", List.of(new Representante("Rep", "Uno", email)))));
+
+    entityManager().clear();
+    assertTrue(repoEntidades.buscarPorId(id).orElseThrow().getPersona()
+        .tieneContacto(TipoContacto.TELEFONO, "1100000000"));
+  }
+
+  @Test
+  void unRepresentanteNuevoSeValidaPeroUnoViejoNo() {
+    String emailViejo = DatosDeTest.emailUnico("viejo");
+    // Representante viejo sin nombre ni apellido: hoy no se podria cargar.
+    long id = beneficiariaPersistida(DatosDeTest.cuitUnico(), List.of(new Representante(emailViejo)));
+    entityManager().clear();
+
+    assertThrows(DatosInvalidosException.class, () ->
+        nuevoService().modificar(id, "Comedor", "ONG", null, new DatosEntidad(
+            "Calle Falsa 123", "1100000000", List.of(
+                new Representante(emailViejo),
+                new Representante("Al", "Nuevo", DatosDeTest.emailUnico("nuevo"))))));
+
+    nuevoService().modificar(id, "Comedor", "ONG", null, new DatosEntidad(
+        "Calle Falsa 123", "1100000000", List.of(
+            new Representante(emailViejo),
+            new Representante("Alba", "Nueva", DatosDeTest.emailUnico("nuevo")))));
+  }
+
+  @Test
   void unaEntidadInexistenteDa404() {
     assertThrows(RecursoInexistenteException.class, () ->
         nuevoService().modificar(Long.MAX_VALUE, "X", null, null, new DatosEntidad(
@@ -94,7 +147,7 @@ class EntidadesBeneficiariasServiceModificarTest implements WithSimplePersistenc
     withTransaction(() -> {
       PersonaJuridica juridica = new PersonaJuridica(
           cuit, DatosDeTest.textoUnico("Comedor"), TipoOrganizacion.INSTITUCION, "Rubro");
-      new DatosEntidad("Calle Falsa 123", "+54 11 0000-0000", representantes).aplicarA(juridica);
+      new DatosEntidad("Calle Falsa 123", "1100000000", representantes).aplicarA(juridica);
       repoPersonas.guardar(juridica);
       Beneficiaria beneficiaria = new Beneficiaria(juridica);
       repoEntidades.guardar(beneficiaria);

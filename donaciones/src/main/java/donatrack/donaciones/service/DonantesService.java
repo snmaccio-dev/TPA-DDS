@@ -12,6 +12,7 @@ import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.domain.persona.PersonaHumana;
 import donatrack.donaciones.domain.persona.PersonaJuridica;
+import donatrack.donaciones.domain.persona.ReglasDePersona;
 import donatrack.donaciones.domain.persona.TipoOrganizacion;
 import donatrack.donaciones.repository.RepositorioDonaciones;
 import donatrack.donaciones.repository.RepositorioDonantes;
@@ -53,7 +54,8 @@ public class DonantesService implements WithSimplePersistenceUnit {
         this.usuariosService = usuariosService;
     }
 
-    public Donante registrarConPersonaNueva(Persona persona, String email) {
+    public Donante registrarConPersonaNueva(Persona persona, String emailRecibido) {
+        String email = ReglasDePersona.email("El correo", emailRecibido);
         if (repositorioPersonas.buscarPorDocumento(persona.getDocumento()).isPresent()) {
             throw new ConflictoDeNegocioException(
                 "Ya existe una persona con ese documento o CUIT. Si se la quiere hacer donante, "
@@ -63,7 +65,9 @@ public class DonantesService implements WithSimplePersistenceUnit {
             usuariosService.obtenerCuenta(email, RolDeAcceso.DONANTE, true));
     }
 
-    public Donante registrarConPersonaExistente(String documento, String email) {
+    public Donante registrarConPersonaExistente(String documento, String emailRecibido) {
+        // La persona ya existe: se valida solo el correo, que es lo unico que se carga.
+        String email = ReglasDePersona.email("El correo", emailRecibido);
         Persona persona = repositorioPersonas.buscarPorDocumento(documento)
             .orElseThrow(() -> new RecursoInexistenteException(
                 "No existe la persona con documento " + documento));
@@ -93,8 +97,9 @@ public class DonantesService implements WithSimplePersistenceUnit {
         return creado[0];
     }
 
-    public Donante registrarPublico(Persona persona, String email, String contrasena) {
-        UsuariosService.validarCredenciales(email, contrasena);
+    public Donante registrarPublico(Persona persona, String emailRecibido, String contrasena) {
+        UsuariosService.validarCredenciales(emailRecibido, contrasena);
+        String email = ReglasDePersona.email("El correo", emailRecibido);
         if (persona == null) {
             throw new DatosInvalidosException("Los datos de la persona son obligatorios.");
         }
@@ -199,9 +204,21 @@ public class DonantesService implements WithSimplePersistenceUnit {
         persona.setDireccion(datos.direccion() == null || datos.direccion().isBlank()
             ? null
             : datos.direccion().trim());
+        validarTelefonoSiCambia(persona, TipoContacto.TELEFONO, "El teléfono", datos.telefono());
+        validarTelefonoSiCambia(persona, TipoContacto.WHATSAPP, "El WhatsApp", datos.whatsapp());
         persona.reemplazarContacto(TipoContacto.TELEFONO, datos.telefono());
         persona.reemplazarContacto(TipoContacto.WHATSAPP, datos.whatsapp());
         persona.elegirContactoPredeterminado(predeterminado);
+    }
+
+    // Se valida solo un numero nuevo: uno viejo que no cumple las reglas se puede conservar.
+    private static void validarTelefonoSiCambia(Persona persona,
+                                                TipoContacto tipo,
+                                                String campo,
+                                                String valor) {
+        if (valor != null && !valor.isBlank() && !persona.tieneContacto(tipo, valor.trim())) {
+            ReglasDePersona.telefono(campo, valor);
+        }
     }
 
     public static final int TAMANIO_POR_DEFECTO = 20;

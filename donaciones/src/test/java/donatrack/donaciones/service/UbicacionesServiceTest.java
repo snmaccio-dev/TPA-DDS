@@ -100,7 +100,7 @@ class UbicacionesServiceTest implements WithSimplePersistenceUnit {
     long id = beneficiariaPersistida("Brandsen 805", new Coordenadas(-34.6356, -58.3647), email);
 
     entidades().modificar(id, "Comedor", "ONG", "Comedor", new DatosEntidad(
-        "Av. Sarmiento 2601", "+54 11 0000-0000", List.of(new Representante("Rep", "Uno", email))));
+        "Av. Sarmiento 2601", "1100000000", List.of(new Representante("Rep", "Uno", email))));
 
     assertEquals(Optional.empty(), ubicacionDe(id));
   }
@@ -111,7 +111,7 @@ class UbicacionesServiceTest implements WithSimplePersistenceUnit {
     long id = beneficiariaPersistida("Brandsen 805", new Coordenadas(-34.6356, -58.3647), email);
 
     entidades().modificar(id, "Comedor Renovado", "ONG", "Comedor", new DatosEntidad(
-        "Brandsen 805", "+54 11 1111-1111", List.of(new Representante("Rep", "Uno", email))));
+        "Brandsen 805", "1111111111", List.of(new Representante("Rep", "Uno", email))));
 
     assertEquals(Optional.of(new Coordenadas(-34.6356, -58.3647)), ubicacionDe(id));
   }
@@ -151,7 +151,7 @@ class UbicacionesServiceTest implements WithSimplePersistenceUnit {
     withTransaction(() -> {
       PersonaJuridica juridica = new PersonaJuridica(
           DatosDeTest.cuitUnico(), DatosDeTest.textoUnico("Comedor"), TipoOrganizacion.ONG, "Rubro");
-      new DatosEntidad(direccion, "+54 11 0000-0000",
+      new DatosEntidad(direccion, "1100000000",
           List.of(new Representante("Rep", "Uno", email))).aplicarA(juridica);
       repoPersonas.guardar(juridica);
       Beneficiaria beneficiaria = new Beneficiaria(juridica);

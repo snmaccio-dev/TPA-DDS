@@ -45,7 +45,7 @@ class DonantesServiceModificarTest implements WithSimplePersistenceUnit {
 
     nuevoService().modificar(documento, new DatosDonante(
         "Ana Maria", "Gomez", 31, "otro", null, null, null,
-        "Calle Nueva 123", "", "+54 9 11 2222-2222", "WHATSAPP"));
+        "Calle Nueva 123", "", "1122222222", "WHATSAPP"));
 
     entityManager().clear();
     PersonaHumana recargada = (PersonaHumana) repoPersonas.buscarPorDocumento(documento).orElseThrow();
@@ -55,7 +55,7 @@ class DonantesServiceModificarTest implements WithSimplePersistenceUnit {
     assertEquals(Genero.OTRO, recargada.getGenero());
     assertEquals("Calle Nueva 123", recargada.getDireccion());
     assertFalse(recargada.tieneContactoDeTipo(TipoContacto.TELEFONO));
-    assertTrue(recargada.tieneContacto(TipoContacto.WHATSAPP, "+54 9 11 2222-2222"));
+    assertTrue(recargada.tieneContacto(TipoContacto.WHATSAPP, "1122222222"));
     assertTrue(recargada.tieneContacto(TipoContacto.EMAIL, email));
     assertEquals(TipoContacto.WHATSAPP, recargada.getContactoPredeterminado().getTipo());
     assertEquals(2, recargada.getContactos().size());
@@ -76,7 +76,7 @@ class DonantesServiceModificarTest implements WithSimplePersistenceUnit {
 
     nuevoService().modificar(cuit, new DatosDonante(
         "ignorado", null, -5, "NO-EXISTE", "Empresa Renovada", "ONG", "Alimentos",
-        "Av. Siempre Viva 742", "+54 11 3333-3333", null, "TELEFONO"));
+        "Av. Siempre Viva 742", "1133333333", null, "TELEFONO"));
 
     entityManager().clear();
     PersonaJuridica recargada = repoPersonas.buscarJuridicaPorCuit(cuit).orElseThrow();
@@ -85,7 +85,7 @@ class DonantesServiceModificarTest implements WithSimplePersistenceUnit {
     assertEquals("Alimentos", recargada.getRubro());
     assertEquals("Av. Siempre Viva 742", recargada.getDireccion());
     assertEquals(cuit, recargada.getCuit());
-    assertTrue(recargada.tieneContacto(TipoContacto.TELEFONO, "+54 11 3333-3333"));
+    assertTrue(recargada.tieneContacto(TipoContacto.TELEFONO, "1133333333"));
     assertTrue(recargada.tieneContacto(TipoContacto.EMAIL, email));
     assertEquals(TipoContacto.TELEFONO, recargada.getContactoPredeterminado().getTipo());
   }
@@ -109,6 +109,33 @@ class DonantesServiceModificarTest implements WithSimplePersistenceUnit {
     entityManager().clear();
     PersonaHumana recargada = (PersonaHumana) repoPersonas.buscarPorDocumento(documento).orElseThrow();
     assertEquals("Ana", recargada.getNombre());
+    assertTrue(recargada.tieneContacto(TipoContacto.TELEFONO, "111"));
+  }
+
+  @Test
+  void unTelefonoNuevoConSimbolosDa400PeroUnoViejoSeConserva() {
+    String documento = DatosDeTest.documentoUnico();
+    withTransaction(() -> {
+      PersonaHumana persona = new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
+      persona.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, DatosDeTest.emailUnico("t")));
+      persona.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, "111"));
+      repoPersonas.guardar(persona);
+      repoDonantes.guardar(new Donante(persona));
+    });
+    entityManager().clear();
+
+    DatosInvalidosException error = assertThrows(DatosInvalidosException.class, () ->
+        nuevoService().modificar(documento, new DatosDonante(
+            "Ana", "Perez", 30, null, null, null, null, null, "+54 11 2222-2222", null, null)));
+    assertEquals("El teléfono tiene que tener entre 8 y 15 dígitos, solo números.",
+        error.getMessage());
+
+    // El "111" viejo no cumple, pero no cambia: se puede modificar lo demas.
+    nuevoService().modificar(documento, new DatosDonante(
+        "Ana", "Gomez", 30, null, null, null, null, null, "111", null, null));
+    entityManager().clear();
+    PersonaHumana recargada = (PersonaHumana) repoPersonas.buscarPorDocumento(documento).orElseThrow();
+    assertEquals("Gomez", recargada.getApellido());
     assertTrue(recargada.tieneContacto(TipoContacto.TELEFONO, "111"));
   }
 

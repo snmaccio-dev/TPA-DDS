@@ -20,9 +20,9 @@ class PersonaContactosTest {
   void reemplazarContactoConValorCreaElContactoSiNoExistia() {
     PersonaHumana persona = personaConEmail();
 
-    persona.reemplazarContacto(TipoContacto.WHATSAPP, " +54 9 11 1111-1111 ");
+    persona.reemplazarContacto(TipoContacto.WHATSAPP, " 1111111111 ");
 
-    assertEquals(List.of("+54 9 11 1111-1111"), valores(persona, TipoContacto.WHATSAPP));
+    assertEquals(List.of("1111111111"), valores(persona, TipoContacto.WHATSAPP));
     assertEquals(TipoContacto.EMAIL, persona.getContactoPredeterminado().getTipo());
   }
 

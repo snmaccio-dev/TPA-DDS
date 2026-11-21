@@ -116,7 +116,7 @@ public class EntidadesBeneficiariasController {
   public void altaConPersonaNueva(Context ctx) {
     NuevaBeneficiariaNuevaRequest request =
         ctx.bodyAsClass(NuevaBeneficiariaNuevaRequest.class);
-    PersonaJuridica juridica = new PersonaJuridica(
+    PersonaJuridica juridica = PersonaJuridica.nueva(
         request.cuit(),
         request.razonSocial(),
         request.tipoOrganizacion() == null ? null : TipoOrganizacion.valueOf(request.tipoOrganizacion()),

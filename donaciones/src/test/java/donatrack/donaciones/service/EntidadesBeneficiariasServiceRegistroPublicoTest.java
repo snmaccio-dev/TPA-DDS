@@ -114,7 +114,7 @@ class EntidadesBeneficiariasServiceRegistroPublicoTest implements WithSimplePers
   private DatosEntidad datos() {
     return new DatosEntidad(
         "Calle Falsa 123",
-        "+54 11 0000-0000",
+        "1100000000",
         List.of(new Representante("Rep", "Uno", DatosDeTest.emailUnico("rep1")))
     );
   }

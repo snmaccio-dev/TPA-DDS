@@ -14,7 +14,9 @@ import io.javalin.http.Context;
 import donatrack.web.vista.EntregaPublicaVista;
 import donatrack.web.vista.MapaDeEntregasVista;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class PublicoController {
@@ -23,6 +25,7 @@ public class PublicoController {
   private static final String BENEFICIARIA = "beneficiaria";
   // /donaciones-publicas: mapa, lista y carrusel.
   static final int ENTREGAS_RECIENTES = 5;
+  private static final String CAMPO_CONTRASENA = "contrasena";
   // Landing: las ultimas entregas, todas visibles sin paginar.
   static final int ENTREGAS_LANDING = 3;
 
@@ -94,7 +97,7 @@ public class PublicoController {
   }
 
   private void registro(Context ctx) {
-    mostrarRegistro(ctx, null);
+    mostrarRegistro(ctx, null, Map.of());
   }
 
   private void crearCuenta(Context ctx) {
@@ -102,7 +105,7 @@ public class PublicoController {
     String email = ctx.formParam("email");
 
     if (email == null || email.isBlank()) {
-      mostrarRegistro(ctx, "El correo es obligatorio.");
+      mostrarRegistro(ctx, "El correo es obligatorio.", datosCargados(ctx));
       return;
     }
 
@@ -112,11 +115,13 @@ public class PublicoController {
       } else if (BENEFICIARIA.equals(perfil)) {
         clienteDonaciones.registrarBeneficiaria(beneficiariaDelFormulario(ctx));
       } else {
-        mostrarRegistro(ctx, "Elegí un tipo de cuenta.");
+        mostrarRegistro(ctx, "Elegí un tipo de cuenta.", datosCargados(ctx));
         return;
       }
     } catch (IntegracionException e) {
-      mostrarRegistro(ctx, mensajeDe(e));
+      // El mensaje de Donaciones dice el campo y la regla; se muestra en el formulario con
+      // los datos que se habian cargado.
+      mostrarRegistro(ctx, mensajeDe(e), datosCargados(ctx));
       return;
     }
 
@@ -154,9 +159,24 @@ public class PublicoController {
     );
   }
 
-  private void mostrarRegistro(Context ctx, String alertaError) {
-    ctx.render("registro.html.hbs",
-        Modelo.de("Crear cuenta").conAlertaError(alertaError).mapa());
+  private void mostrarRegistro(Context ctx, String error, Map<String, String> cargados) {
+    Modelo modelo = Modelo.de("Crear cuenta").con("form", cargados);
+    if (error != null && !error.isBlank()) {
+      modelo.con("errorRegistro", error);
+    }
+    ctx.render("registro.html.hbs", modelo.mapa());
+  }
+
+  // Lo que se habia cargado en el formulario, para volver a mostrarlo si el registro falla.
+  // La contrasena nunca vuelve a la pagina.
+  private static Map<String, String> datosCargados(Context ctx) {
+    Map<String, String> cargados = new HashMap<>();
+    ctx.formParamMap().forEach((campo, valores) -> {
+      if (!CAMPO_CONTRASENA.equals(campo) && !valores.isEmpty()) {
+        cargados.put(campo, valores.get(0));
+      }
+    });
+    return cargados;
   }
 
   private void privacidad(Context ctx) {

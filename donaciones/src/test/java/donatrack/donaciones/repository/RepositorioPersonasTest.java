@@ -120,7 +120,7 @@ class RepositorioPersonasTest implements SimplePersistenceTest {
     String documento = DatosDeTest.documentoUnico();
     PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, documento, Genero.FEMENINO);
     ana.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, DatosDeTest.emailUnico("ana")));
-    ana.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, "+54 11 0000-0000"));
+    ana.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, "1100000000"));
     repositorio.guardar(ana);
     entityManager().flush();
     assertNotNull(ana.getContactoPredeterminado(),

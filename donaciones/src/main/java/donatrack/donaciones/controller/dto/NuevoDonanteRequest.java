@@ -24,18 +24,20 @@ public record NuevoDonanteRequest(
     String rubro
 ) {
 
+    // Alta (registro publico o por administracion): las fabricas aplican las reglas de
+    // ReglasDePersona.
     public Persona aPersona() {
         if ("HUMANA".equalsIgnoreCase(tipo)) {
-            return new PersonaHumana(
+            return PersonaHumana.nueva(
                 nombre,
                 apellido,
-                edad == null ? 0 : edad,
+                edad,
                 documento,
                 genero == null ? null : Genero.valueOf(genero)
             );
         }
         if ("JURIDICA".equalsIgnoreCase(tipo)) {
-            return new PersonaJuridica(
+            return PersonaJuridica.nueva(
                 cuit,
                 razonSocial,
                 tipoOrganizacion == null ? null : TipoOrganizacion.valueOf(tipoOrganizacion),

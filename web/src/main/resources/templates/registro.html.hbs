@@ -13,7 +13,10 @@
         <h2>Crear cuenta</h2>
         <p>Completá tus datos para comenzar.</p>
 </div>
-<label>Tipo de cuenta<select id="perfil" name="perfil" required>
+{{#if errorRegistro}}
+<div class="error-formulario" role="alert">{{errorRegistro}}</div>
+{{/if}}
+<label>Tipo de cuenta<select id="perfil" name="perfil" required data-valor="{{form.perfil}}">
         <option value="">Seleccionar perfil</option>
         <option value="donante">Persona donante</option>
         <option value="beneficiaria">Entidad beneficiaria</option>
@@ -21,50 +24,74 @@
 
 <fieldset id="campos-donante" class="form-group" hidden disabled>
         <div class="form-row">
-                <label>Nombre<input name="nombre" required placeholder="Tu nombre"></label>
-                <label>Apellido<input name="apellido" required placeholder="Tu apellido"></label>
+                <label>Nombre<input name="nombre" value="{{form.nombre}}" required minlength="3" maxlength="80"
+                        pattern="(?:[' ]*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]){3}[A-Za-zÁÉÍÓÚáéíóúÜüÑñ' ]*"
+                        title="Al menos 3 letras. Solo letras, espacios y apóstrofo ('), sin números ni otros símbolos." placeholder="Tu nombre"></label>
+                <label>Apellido<input name="apellido" value="{{form.apellido}}" required minlength="3" maxlength="80"
+                        pattern="(?:[' ]*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]){3}[A-Za-zÁÉÍÓÚáéíóúÜüÑñ' ]*"
+                        title="Al menos 3 letras. Solo letras, espacios y apóstrofo ('), sin números ni otros símbolos." placeholder="Tu apellido"></label>
         </div>
         <div class="form-row">
-                <label>Documento<input name="documento" required placeholder="Sin puntos"></label>
-                <label>Edad<input name="edad" type="number" min="18" max="120" required></label>
+                <label>Documento<input name="documento" value="{{form.documento}}" required
+                        inputmode="numeric" minlength="7" maxlength="8" pattern="[0-9]{7,8}"
+                        title="DNI: 7 u 8 dígitos, solo números (sin puntos)." placeholder="Sin puntos"></label>
+                <label>Edad<input name="edad" value="{{form.edad}}" type="number" min="18" max="120" step="1"
+                        inputmode="numeric" required title="Número entero, 18 o más."></label>
         </div>
-        <label>Género<select name="genero" required>
+        <label>Género<select name="genero" required data-valor="{{form.genero}}">
                 <option value="FEMENINO">Femenino</option>
                 <option value="MASCULINO">Masculino</option>
                 <option value="OTRO">Otro</option>
         </select></label>
-        <label>Dirección<input name="direccion" required placeholder="Calle, número, localidad"></label>
+        <label>Dirección<input name="direccion" value="{{form.direccion}}" required placeholder="Calle, número, localidad"></label>
 </fieldset>
 
 <fieldset id="campos-beneficiaria" class="form-group" hidden disabled>
         <div class="form-row">
-                <label>Razón social<input name="razonSocial" required placeholder="Nombre de la entidad"></label>
-                <label>CUIT<input name="cuit" required placeholder="30-12345678-9"></label>
+                <label>Razón social<input name="razonSocial" value="{{form.razonSocial}}" required maxlength="120"
+                        pattern="(?:\P{L}*\p{L}){3}.*"
+                        title="Al menos 3 letras. Puede tener números y signos (por ejemplo, Escuela N° 14)."
+                        placeholder="Nombre de la entidad"></label>
+                <label>CUIT<input name="cuit" value="{{form.cuit}}" required inputmode="numeric"
+                        minlength="11" maxlength="13" pattern="[0-9]{11}|[0-9]{2}-[0-9]{8}-[0-9]"
+                        title="11 dígitos, con o sin guiones (XX-XXXXXXXX-X)." placeholder="30-12345678-9"></label>
         </div>
         <div class="form-row">
-                <label>Tipo de organización<select name="tipoOrganizacion" required>
+                <label>Tipo de organización<select name="tipoOrganizacion" required data-valor="{{form.tipoOrganizacion}}">
                         <option value="ONG">ONG</option>
                         <option value="GUBERNAMENTAL">Gubernamental</option>
                         <option value="EMPRESA">Empresa</option>
                         <option value="INSTITUCION">Institución</option>
                 </select></label>
-                <label>Rubro<input name="rubro" required placeholder="Asistencia alimentaria"></label>
+                <label>Rubro<input name="rubro" value="{{form.rubro}}" required placeholder="Asistencia alimentaria"></label>
         </div>
         <div class="form-row">
-                <label>Dirección<input name="direccion" required placeholder="Calle, número, localidad"></label>
-                <label>Teléfono<input name="telefono" required placeholder="1145550101"></label>
+                <label>Dirección<input name="direccion" value="{{form.direccion}}" required placeholder="Calle, número, localidad"></label>
+                <label>Teléfono<input name="telefono" value="{{form.telefono}}" required inputmode="numeric"
+                        minlength="8" maxlength="15" pattern="[0-9]{8,15}"
+                        title="Entre 8 y 15 dígitos, solo números: sin +, guiones ni espacios."
+                        placeholder="1145550101"></label>
         </div>
         <p class="muted">Persona representante de la entidad</p>
         <div class="form-row">
-                <label>Nombre<input name="repNombre" required></label>
-                <label>Apellido<input name="repApellido" required></label>
+                <label>Nombre<input name="repNombre" value="{{form.repNombre}}" required minlength="3" maxlength="80"
+                        pattern="(?:[' ]*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]){3}[A-Za-zÁÉÍÓÚáéíóúÜüÑñ' ]*"
+                        title="Al menos 3 letras. Solo letras, espacios y apóstrofo ('), sin números ni otros símbolos."></label>
+                <label>Apellido<input name="repApellido" value="{{form.repApellido}}" required minlength="3" maxlength="80"
+                        pattern="(?:[' ]*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]){3}[A-Za-zÁÉÍÓÚáéíóúÜüÑñ' ]*"
+                        title="Al menos 3 letras. Solo letras, espacios y apóstrofo ('), sin números ni otros símbolos."></label>
         </div>
-        <label>Correo de la persona representante<input name="repEmail" type="email" required placeholder="nombre@correo.com"></label>
+        <label>Correo de la persona representante<input name="repEmail" value="{{form.repEmail}}" type="email" required
+                maxlength="120" pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+                title="Formato usuario@dominio.ext, sin espacios." placeholder="nombre@correo.com"></label>
 </fieldset>
 
 <div class="form-row">
-        <label>Correo electrónico<input name="email" type="email" required placeholder="nombre@correo.com"></label>
-        <label>Contraseña<input name="contrasena" type="password" required minlength="8" placeholder="Mínimo 8 caracteres"></label>
+        <label>Correo electrónico<input name="email" value="{{form.email}}" type="email" required
+                maxlength="120" pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+                title="Formato usuario@dominio.ext, sin espacios." placeholder="nombre@correo.com"></label>
+        <label>Contraseña<input name="contrasena" type="password" required minlength="8"
+                title="Mínimo 8 caracteres." placeholder="Mínimo 8 caracteres"></label>
 </div>
         <label class="check-label"><input type="checkbox" required> Acepto los <a href="/privacidad">términos y la política de privacidad</a>.</label>
         <button class="btn btn-primary btn-block">Crear cuenta</button><p class="form-bottom">¿Ya tenés cuenta? <a href="/sesion/ingresar">Iniciá sesión</a></p></form></section></main>
@@ -73,6 +100,13 @@
     // porque un campo oculto pero habilitado igual se envia y, si tiene `required`,
     // bloquea el submit sin que se vea por que.
     (function () {
+        // Si el registro volvio con un error, los selects recuperan lo elegido.
+        document.querySelectorAll("select[data-valor]").forEach(function (select) {
+            if (select.dataset.valor) {
+                select.value = select.dataset.valor;
+            }
+        });
+
         var perfil = document.getElementById("perfil");
         var grupos = {
             donante: document.getElementById("campos-donante"),

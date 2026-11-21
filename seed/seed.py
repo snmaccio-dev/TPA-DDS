@@ -207,6 +207,17 @@ def leer_cuentas():
         return json.load(archivo)["cuentas"]
 
 
+# Misma regla que ReglasDePersona.nombre en Donaciones: letras (con tildes, dieresis y
+# enie), espacios y apostrofo, con al menos 3 letras.
+LETRAS_NOMBRE = "A-Za-zÁÉÍÓÚáéíóúÜüÑñ"
+
+
+def nombre_valido(valor):
+    valor = " ".join((valor or "").split())
+    return (re.fullmatch("[" + LETRAS_NOMBRE + "' ]+", valor) is not None
+            and len(re.findall("[" + LETRAS_NOMBRE + "]", valor)) >= 3)
+
+
 def verificar_cuentas(cuentas):
     """Resuelve cada cuenta por mail (sin IDs fijos) y controla rol y estado."""
     servicio = token_de_servicio("donaciones-backend", "DONACIONES_CLIENT_SECRET")
@@ -235,12 +246,15 @@ def verificar_cuentas(cuentas):
         if len(perfiles) > 1:
             errores.append(email + ": tiene mas de un perfil (" + ", ".join(sorted(perfiles))
                            + "); Donaciones rechaza esos tokens.")
-        if not usuario.get("firstName") or not usuario.get("lastName"):
-            log("Aviso: " + email + " no tiene nombre y apellido cargados en Keycloak.")
+        nombre, apellido = usuario.get("firstName"), usuario.get("lastName")
+        if not nombre_valido(nombre) or not nombre_valido(apellido):
+            log("Aviso: " + email + " no tiene en Keycloak un nombre y apellido que cumplan las "
+                + "reglas de Donaciones (al menos 3 letras, sin numeros ni simbolos): se usan "
+                + "valores de demo.")
         encontradas[email] = {
             "id": usuario["id"],
-            "nombre": usuario.get("firstName") or tipo.capitalize(),
-            "apellido": usuario.get("lastName") or "Demo",
+            "nombre": nombre if nombre_valido(nombre) else tipo.capitalize(),
+            "apellido": apellido if nombre_valido(apellido) else "Demo",
         }
 
     if errores:
@@ -292,17 +306,17 @@ BENEFICIARIAS_EXTRA = [
     {"email": "beneficiaria03@demo.donatrack.ar", "cuit": "30700000033",
      "razonSocial": "Hogar Rayito de Sol", "tipoOrganizacion": "ONG", "rubro": "Hogar de niños",
      "direccion": "Av. del Libertador 1473, Recoleta, CABA",
-     "latitud": -34.5838, "longitud": -58.3930, "telefono": "+54 11 4633-3003",
+     "latitud": -34.5838, "longitud": -58.3930, "telefono": "1146333003",
      "nombre": "Marta", "apellido": "Quiroga"},
     {"email": "beneficiaria04@demo.donatrack.ar", "cuit": "30700000044",
      "razonSocial": "Club de Barrio Villa Soldati", "tipoOrganizacion": "ONG", "rubro": "Club social",
      "direccion": "Av. Ángel Gallardo 470, Caballito, CABA",
-     "latitud": -34.6051, "longitud": -58.4386, "telefono": "+54 11 4919-4004",
+     "latitud": -34.6051, "longitud": -58.4386, "telefono": "1149194004",
      "nombre": "Raúl", "apellido": "Ferreyra"},
     {"email": "beneficiaria05@demo.donatrack.ar", "cuit": "30700000055",
      "razonSocial": "Parroquia San Cayetano Liniers", "tipoOrganizacion": "INSTITUCION",
      "rubro": "Asistencia social", "direccion": "Av. Sarmiento 2601, Palermo, CABA",
-     "latitud": -34.5696, "longitud": -58.4115, "telefono": "+54 11 4641-5005",
+     "latitud": -34.5696, "longitud": -58.4115, "telefono": "1146415005",
      "nombre": "Inés", "apellido": "Domínguez"},
 ]
 
@@ -312,11 +326,19 @@ BENEFICIARIAS_EXTRA = [
 # 10 candidatas. Ninguna recibio donaciones: Prioridad desempata por id y se queda con las
 # 10 primeras en darse de alta, que piden poco; Compatibilidad se queda con las 10
 # ultimas, que piden mucho. Los dos rankings quedan disjuntos.
+# Apellidos de los representantes de la red: solo letras (las reglas de Donaciones no
+# aceptan numeros en nombres y apellidos).
+APELLIDOS_RED = [
+    "Acosta", "Benítez", "Cabrera", "Díaz", "Escobar", "Ferreyra", "Giménez", "Herrera",
+    "Ibáñez", "Juárez", "Ledesma", "Medina", "Núñez", "Ortiz", "Peralta", "Quiroga",
+    "Ríos", "Sosa", "Toledo", "Vera",
+]
+
 RED_ESCRITORIOS = [
     {"email": "red-escritorios-%02d@demo.donatrack.ar" % n, "cuit": "3071%07d" % n,
      "razonSocial": "Escuela Red Sur N.º %d" % n, "tipoOrganizacion": "INSTITUCION",
      "rubro": "Educación", "direccion": "Av. Sáenz %d, CABA" % (1000 + n * 10),
-     "telefono": "+54 11 4900-%04d" % n, "nombre": "Docente", "apellido": "Red %02d" % n,
+     "telefono": "114900%04d" % n, "nombre": "Docente", "apellido": APELLIDOS_RED[n - 1],
      "cantidadNecesidad": 2 if n <= 10 else 20 + n}
     for n in range(1, 21)
 ]

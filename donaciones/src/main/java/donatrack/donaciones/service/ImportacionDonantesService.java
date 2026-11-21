@@ -426,9 +426,9 @@ public class ImportacionDonantesService implements WithSimplePersistenceUnit {
   private static void aplicar(Persona persona, FilaDonanteCsv fila) {
     if (persona instanceof PersonaHumana humana) {
       PersonaFactory.NombreYApellido nombre = PersonaFactory.separarNombre(fila.nombre());
-      humana.actualizarNombre(nombre.nombre(), nombre.apellido());
+      humana.actualizarNombreValidado(nombre.nombre(), nombre.apellido());
     } else if (persona instanceof PersonaJuridica juridica) {
-      juridica.actualizarRazonSocial(fila.nombre());
+      juridica.actualizarRazonSocialValidada(fila.nombre());
     }
     if (fila.tieneTelefono()) {
       persona.reemplazarContacto(TipoContacto.TELEFONO, fila.telefono());

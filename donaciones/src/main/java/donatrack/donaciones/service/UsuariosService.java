@@ -4,6 +4,7 @@ import donatrack.donaciones.domain.ConflictoDeNegocioException;
 import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 import donatrack.donaciones.domain.persona.Donante;
+import donatrack.donaciones.domain.persona.ReglasDePersona;
 import donatrack.donaciones.domain.usuario.Usuario;
 import donatrack.donaciones.repository.RepositorioUsuarios;
 import donatrack.donaciones.seguridad.PoliticaDeContrasenas;
@@ -105,9 +106,7 @@ public class UsuariosService {
     }
 
     static void validarCredenciales(String email, String contrasena) {
-        if (email == null || email.isBlank() || !email.contains("@")) {
-            throw new DatosInvalidosException("El email es obligatorio y debe ser valido.");
-        }
+        ReglasDePersona.email("El correo", email);
         PoliticaDeContrasenas.validar(contrasena);
     }
 

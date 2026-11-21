@@ -16,13 +16,13 @@ class PersonaFactoryTest {
   @Test
   void creaUnaPersonaHumanaConEmailYTelefono() {
     Persona persona = PersonaFactory.crear(new FilaDonanteCsv(2, FilaDonanteCsv.TipoPersona.HUMANA,
-        "DNI", "12345678", "Ana Perez Gomez", "ana@mail.com", "+54 11 5555-5555"));
+        "DNI", "12345678", "Ana Perez Gomez", "ana@mail.com", "1155555555"));
 
     PersonaHumana humana = assertInstanceOf(PersonaHumana.class, persona);
     assertEquals("Ana", humana.getNombre());
     assertEquals("Perez Gomez", humana.getApellido());
     assertEquals("ana@mail.com", persona.getContactoPredeterminado().getValor());
-    assertTrue(persona.tieneContacto(TipoContacto.TELEFONO, "+54 11 5555-5555"));
+    assertTrue(persona.tieneContacto(TipoContacto.TELEFONO, "1155555555"));
   }
 
   @Test
