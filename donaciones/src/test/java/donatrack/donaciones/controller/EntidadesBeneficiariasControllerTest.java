@@ -54,7 +54,7 @@ class EntidadesBeneficiariasControllerTest {
   private static final String BODY =
       "{\"razonSocial\":\"Escuela Nueva\",\"tipoOrganizacion\":\"INSTITUCION\","
           + "\"rubro\":\"Educacion\",\"direccion\":\"Nueva 123\","
-          + "\"telefono\":\"+54 11 5555-5555\",\"cuit\":\"30-99999999-9\","
+          + "\"telefono\":\"1155555555\",\"cuit\":\"30-99999999-9\","
           + "\"representantes\":[{\"nombre\":\"Rep\",\"apellido\":\"Uno\","
           + "\"email\":\"rep@escuela.com\"}]}";
   private static RSAKey clave;
@@ -83,7 +83,7 @@ class EntidadesBeneficiariasControllerTest {
 
     verify(service).modificar(eq(5L), eq("Escuela Nueva"), eq("INSTITUCION"), eq("Educacion"),
         argThat(datos -> datos.direccion().equals("Nueva 123")
-            && datos.telefono().equals("+54 11 5555-5555")
+            && datos.telefono().equals("1155555555")
             && datos.representantes().size() == 1
             && datos.representantes().get(0).getEmail().equals("rep@escuela.com")));
   }

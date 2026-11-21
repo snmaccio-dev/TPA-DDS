@@ -22,7 +22,7 @@ class LectorCsvDonantesTest {
   void parseaLasFilasValidasYSalteaElEncabezado() {
     List<LineaCsv> lineas = leer(
         "TipoPersona,TipoDoc,Documento,NombreRazonSocial,Email,Telefono\r\n"
-            + "HUMANA,DNI,12345678,Ana Perez,ana@mail.com,+54 11 5555-5555\r\n"
+            + "HUMANA,DNI,12345678,Ana Perez,ana@mail.com,1155555555\r\n"
             + "juridica,CUIT,30-12345678-9, Arcos S.A. ,contacto@arcos.com,\r\n");
 
     assertEquals(2, lineas.size());
@@ -33,7 +33,7 @@ class LectorCsvDonantesTest {
     assertEquals("12345678", ana.documento());
     assertEquals("Ana Perez", ana.nombre());
     assertEquals("ana@mail.com", ana.email());
-    assertEquals("+54 11 5555-5555", ana.telefono());
+    assertEquals("1155555555", ana.telefono());
 
     FilaDonanteCsv arcos = assertInstanceOf(FilaDonanteCsv.class, lineas.get(1));
     assertEquals(3, arcos.numero());
@@ -51,7 +51,7 @@ class LectorCsvDonantesTest {
             + "EXTRATERRESTRE,DNI,1,ET,et@espacio.com,1111\n"
             + "HUMANA,DNI,22222222,Sin Mail,,1111\n"
             + "\n"
-            + "HUMANA,DNI,33333333,Ok Persona,ok@mail.com,\n");
+            + "HUMANA,DNI,33333333,Olga Persona,ok@mail.com,\n");
 
     assertEquals(4, lineas.size());
     LineaInvalida columnas = assertInstanceOf(LineaInvalida.class, lineas.get(0));
@@ -68,10 +68,32 @@ class LectorCsvDonantesTest {
   }
 
   @Test
+  void lasFilasQueNoCumplenLasReglasQuedanComoErrorConSuMotivo() {
+    List<LineaCsv> lineas = leer(
+        "TipoPersona,TipoDoc,Documento,NombreRazonSocial,Email,Telefono\n"
+            + "HUMANA,DNI,123456,Ana Perez,ana@mail.com,\n"
+            + "HUMANA,DNI,12345678,Ana Perez2,ana@mail.com,\n"
+            + "HUMANA,DNI,12345678,Ana Perez,ana@mail,\n"
+            + "HUMANA,DNI,12345678,Ana Perez,ana@mail.com,+54 11 5555-5555\n"
+            + "JURIDICA,CUIT,30-1234567-8,Arcos S.A.,contacto@arcos.com,\n"
+            + "JURIDICA,CUIT,30123456789,S.A.,contacto@arcos.com,\n");
+
+    List<String> mensajes = lineas.stream()
+        .map(linea -> assertInstanceOf(LineaInvalida.class, linea).mensaje())
+        .toList();
+    assertTrue(mensajes.get(0).startsWith("El documento"), mensajes.get(0));
+    assertTrue(mensajes.get(1).startsWith("El apellido"), mensajes.get(1));
+    assertTrue(mensajes.get(2).startsWith("El correo"), mensajes.get(2));
+    assertEquals("El teléfono tiene que tener entre 8 y 15 dígitos, solo números.", mensajes.get(3));
+    assertTrue(mensajes.get(4).startsWith("El CUIT"), mensajes.get(4));
+    assertTrue(mensajes.get(5).startsWith("La razón social"), mensajes.get(5));
+  }
+
+  @Test
   void leeEnUtf8YDescartaElBom() {
     List<LineaCsv> lineas = leer(
         "﻿TipoPersona,TipoDoc,Documento,Nombre/Razón Social,Email,Teléfono\n"
-            + "HUMANA,DNI,11780798,Benjamín Castro,benjamíncastro8929@yahoo.com,+54 11 4379-4026\n");
+            + "HUMANA,DNI,11780798,Benjamín Castro,benjamíncastro8929@yahoo.com,1143794026\n");
 
     FilaDonanteCsv fila = assertInstanceOf(FilaDonanteCsv.class, lineas.get(0));
     assertEquals("Benjamín Castro", fila.nombre());

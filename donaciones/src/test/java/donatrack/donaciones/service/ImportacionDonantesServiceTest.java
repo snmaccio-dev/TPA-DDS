@@ -64,7 +64,7 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
     ProveedorFalso proveedor = new ProveedorFalso();
 
     ImportacionCsv resultado = importar(proveedor,
-        csv("HUMANA,DNI," + documento + ",Nora Diaz," + email + ",+54 11 1111-1111"));
+        csv("HUMANA,DNI," + documento + ",Nora Diaz," + email + ",1111111111"));
 
     assertEquals(EstadoImportacion.FINALIZADA, resultado.getEstado());
     assertEquals(1, resultado.getCreados());
@@ -77,7 +77,7 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
     assertEquals("Nora", persona.getNombre());
     assertEquals("Diaz", persona.getApellido());
     assertTrue(persona.tieneContacto(TipoContacto.EMAIL, email));
-    assertTrue(persona.tieneContacto(TipoContacto.TELEFONO, "+54 11 1111-1111"));
+    assertTrue(persona.tieneContacto(TipoContacto.TELEFONO, "1111111111"));
     assertEquals(donante.getId(),
         repoUsuarios.buscarPorKeycloakId(proveedor.idDe(email)).orElseThrow().getDonante().getId());
   }
@@ -92,7 +92,7 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
           cuit, DatosDeTest.textoUnico("Vieja"), TipoOrganizacion.ONG, "Rubro");
       juridica.setDireccion("Calle Vieja 123");
       juridica.agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, email));
-      juridica.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, "+54 11 0000-0000"));
+      juridica.agregarMedioContacto(new MedioContacto(TipoContacto.TELEFONO, "1100000000"));
       juridica.agregarRepresentante(new Representante("Rep", "Uno", emailRepresentante));
       repoPersonas.guardar(juridica);
       Donante donante = new Donante(juridica);
@@ -103,7 +103,7 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
     ProveedorFalso proveedor = new ProveedorFalso();
 
     ImportacionCsv resultado = importar(proveedor,
-        csv("JURIDICA,CUIT," + cuitConGuiones + ",Razon Nueva S.A.," + email + ",+54 11 2222-2222"));
+        csv("JURIDICA,CUIT," + cuitConGuiones + ",Razon Nueva S.A.," + email + ",1122222222"));
 
     assertEquals(1, resultado.getActualizados());
     assertEquals(0, resultado.getCreados());
@@ -113,7 +113,7 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
     assertEquals("Calle Vieja 123", actualizada.getDireccion());
     assertEquals(1, actualizada.getRepresentantes().size());
     assertEquals(emailRepresentante, actualizada.getRepresentantes().get(0).getEmail());
-    assertEquals(List.of("+54 11 2222-2222"), telefonosDe(actualizada));
+    assertEquals(List.of("1122222222"), telefonosDe(actualizada));
   }
 
   @Test
@@ -133,7 +133,7 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
     ProveedorFalso proveedor = new ProveedorFalso();
 
     ImportacionCsv resultado = importar(proveedor,
-        csv("HUMANA,DNI," + documento + ",Luis Alberto Garcia," + emailNuevo + ",+54 11 3333-3333"));
+        csv("HUMANA,DNI," + documento + ",Luis Alberto Garcia," + emailNuevo + ",1133333333"));
 
     assertEquals(1, resultado.getActualizados());
     assertEquals(0, resultado.getFilasConError());
@@ -144,7 +144,7 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
     assertEquals("Av. Siempre Viva 742", persona.getDireccion());
     assertTrue(persona.tieneContacto(TipoContacto.EMAIL, emailViejo));
     assertTrue(persona.tieneContacto(TipoContacto.EMAIL, emailNuevo));
-    assertEquals(List.of("+54 11 3333-3333"), telefonosDe(persona));
+    assertEquals(List.of("1133333333"), telefonosDe(persona));
   }
 
   @Test
@@ -291,8 +291,8 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
     ProveedorFalso proveedor = new ProveedorFalso();
 
     ImportacionCsv resultado = importar(proveedor, csv(
-        "HUMANA,DNI," + documento + ",Ana Perez," + email + ",+54 11 1111-1111",
-        "HUMANA,DNI," + documento + ",Ana Perez Actualizada," + email + ",+54 11 9999-9999",
+        "HUMANA,DNI," + documento + ",Ana Perez," + email + ",1111111111",
+        "HUMANA,DNI," + documento + ",Ana Perez Actualizada," + email + ",1199999999",
         "HUMANA,DNI",
         "JURIDICA,CUIT," + DatosDeTest.cuitUnico() + ",Empresa S.A.," + DatosDeTest.emailUnico("e") + ","));
 
@@ -312,8 +312,8 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
   void conMilFilasTerminaConLosTotalesYLasLlamadasEsperadas() {
     List<String> filas = new ArrayList<>();
     for (int i = 0; i < 1000; i++) {
-      filas.add("HUMANA,DNI," + DatosDeTest.documentoUnico() + ",Persona Numero" + i + ","
-          + DatosDeTest.emailUnico("mil") + ",+54 11 " + i);
+      filas.add("HUMANA,DNI," + DatosDeTest.documentoUnico() + ",Persona Numerada,"
+          + DatosDeTest.emailUnico("mil") + ",11" + (10_000_000 + i));
     }
     ProveedorFalso proveedor = new ProveedorFalso();
 
@@ -365,7 +365,7 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
 
     Persona ana = repoPersonas.buscarPorDocumento("12345678").orElseThrow();
     assertEquals("Ana Perez Actualizada", ana.getNombreDisplay());
-    assertEquals(List.of("+54 11 9999-9999"), telefonosDe(ana));
+    assertEquals(List.of("1199999999"), telefonosDe(ana));
     Persona maria = repoPersonas.buscarPorDocumento("11111111").orElseThrow();
     assertFalse(maria.tieneContactoDeTipo(TipoContacto.TELEFONO));
     assertTrue(repoDonantes.buscarPorDocumento("30-12345678-9").isPresent());

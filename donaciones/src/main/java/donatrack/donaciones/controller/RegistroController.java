@@ -43,7 +43,7 @@ public class RegistroController {
 
     public void registrarBeneficiaria(Context ctx) {
         RegistroBeneficiariaRequest request = ctx.bodyAsClass(RegistroBeneficiariaRequest.class);
-        PersonaJuridica juridica = new PersonaJuridica(
+        PersonaJuridica juridica = PersonaJuridica.nueva(
             request.cuit(),
             request.razonSocial(),
             request.tipoOrganizacion() == null ? null : TipoOrganizacion.valueOf(request.tipoOrganizacion()),

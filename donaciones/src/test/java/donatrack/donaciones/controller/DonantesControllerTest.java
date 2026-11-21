@@ -193,14 +193,14 @@ class DonantesControllerTest implements WithSimplePersistenceUnit {
     JavalinTest.test(app(), (server, client) -> {
       var resp = client.put("/donantes/" + documentoDonante,
           "{\"nombre\":\"Ana\",\"apellido\":\"Renovada\",\"edad\":31,\"genero\":\"FEMENINO\","
-              + "\"telefono\":\"+54 11 1111-1111\",\"contactoPredeterminado\":\"TELEFONO\","
+              + "\"telefono\":\"1111111111\",\"contactoPredeterminado\":\"TELEFONO\","
               + "\"documento\":\"00000000\",\"email\":\"otro@mail.com\"}",
           req -> req.header("Authorization", "Bearer " + token));
       assertEquals(200, resp.code());
       String body = resp.body().string();
       assertTrue(body.contains("\"" + documentoDonante + "\""), body);
       assertTrue(body.contains("Ana Renovada"), body);
-      assertTrue(body.contains("+54 11 1111-1111"), body);
+      assertTrue(body.contains("1111111111"), body);
     });
   }
 

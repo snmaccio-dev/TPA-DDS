@@ -35,11 +35,17 @@ public class Representante {
         this(null, null, email);
     }
 
+    // Representante nuevo que entra al sistema: nombre, apellido y correo con las reglas de
+    // ReglasDePersona. El constructor solo normaliza, para poder comparar con los ya
+    // cargados (que pueden no cumplir las reglas) sin rechazarlos.
+    public static Representante nuevo(String nombre, String apellido, String email) {
+        Representante representante = new Representante(nombre, apellido, email);
+        ReglasDePersona.representante(representante);
+        return representante;
+    }
+
     private static String normalizarOpcional(String valor) {
-        if (valor == null) {
-            return null;
-        }
-        String limpio = valor.trim();
+        String limpio = ReglasDePersona.colapsarEspacios(valor);
         return limpio.isEmpty() ? null : limpio;
     }
 

@@ -1,5 +1,8 @@
 package donatrack.donaciones.infrastructure.importacion;
 
+import donatrack.donaciones.domain.DatosInvalidosException;
+import donatrack.donaciones.domain.persona.ReglasDePersona;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -69,8 +72,27 @@ public class LectorCsvDonantes {
     if (campos[4].isEmpty()) {
       return new LineaInvalida(numero, "El email es obligatorio.");
     }
-    return new FilaDonanteCsv(
-        numero, tipo, campos[1], campos[2], campos[3], campos[4], campos[5]);
+    // Mismas reglas que el registro y el alta por administracion: una fila que no cumple
+    // queda como error con el motivo.
+    try {
+      String documento;
+      if (tipo == FilaDonanteCsv.TipoPersona.HUMANA) {
+        documento = ReglasDePersona.documento(campos[2]);
+        PersonaFactory.NombreYApellido nombre = PersonaFactory.separarNombre(campos[3]);
+        ReglasDePersona.nombre("El nombre", nombre.nombre());
+        ReglasDePersona.nombre("El apellido", nombre.apellido());
+      } else {
+        documento = ReglasDePersona.cuit(campos[2]);
+        ReglasDePersona.razonSocial(campos[3]);
+      }
+      String email = ReglasDePersona.email("El correo", campos[4]);
+      String telefono = campos[5].isEmpty()
+          ? campos[5]
+          : ReglasDePersona.telefono("El teléfono", campos[5]);
+      return new FilaDonanteCsv(numero, tipo, campos[1], documento, campos[3], email, telefono);
+    } catch (DatosInvalidosException e) {
+      return new LineaInvalida(numero, e.getMessage());
+    }
   }
 
   private static void cerrar(BufferedReader reader) {

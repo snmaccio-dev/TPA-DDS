@@ -130,6 +130,21 @@ class DonantesServiceRegistroPublicoTest implements WithSimplePersistenceUnit {
     assertTrue(proveedor.creados.isEmpty());
   }
 
+  @Test
+  void unCorreoSinDominioConExtensionDevuelve400YNoLlamaAKeycloak() {
+    ProveedorDeIdentidadFalso proveedor =
+        new ProveedorDeIdentidadFalso(DatosDeTest.keycloakIdUnico());
+    DonantesService service = nuevoService(proveedor, repoUsuarios);
+
+    Persona persona =
+        new PersonaHumana("Ana", "Perez", 30, DatosDeTest.documentoUnico(), Genero.FEMENINO);
+    DatosInvalidosException error = assertThrows(DatosInvalidosException.class, () ->
+        service.registrarPublico(persona, "ana@mail", "unaSegura123"));
+
+    assertTrue(error.getMessage().contains("usuario@dominio.ext"), error.getMessage());
+    assertTrue(proveedor.creados.isEmpty());
+  }
+
   private DonantesService nuevoService(ProveedorDeIdentidad proveedor, RepositorioUsuarios usuarios) {
     return new DonantesService(
         repoDonantes,

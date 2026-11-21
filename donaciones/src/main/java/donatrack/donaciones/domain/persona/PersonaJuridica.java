@@ -46,6 +46,8 @@ public class PersonaJuridica extends Persona {
     protected PersonaJuridica() {
     }
 
+    // No valida el formato: lo usan los tests y la carga de datos. Las entradas del sistema
+    // (registro, alta por administracion, importacion) crean la persona con nueva(...).
     public PersonaJuridica(String cuit, String razonSocial, TipoOrganizacion tipo, String rubro) {
         if (razonSocial == null || razonSocial.isBlank()) {
             throw new DatosInvalidosException("La razon social es obligatoria.");
@@ -73,10 +75,32 @@ public class PersonaJuridica extends Persona {
         this.razonSocial = razonSocial.trim();
     }
 
+    // Alta de una persona juridica (donante o entidad beneficiaria): aplica las reglas de
+    // ReglasDePersona al CUIT (11 digitos, con o sin guiones; se guarda sin guiones) y a la
+    // razon social.
+    public static PersonaJuridica nueva(String cuit,
+                                        String razonSocial,
+                                        TipoOrganizacion tipo,
+                                        String rubro) {
+        return new PersonaJuridica(
+            ReglasDePersona.cuit(cuit), ReglasDePersona.razonSocial(razonSocial), tipo, rubro);
+    }
+
+    // Modificacion: la razon social se valida solo si cambia (un registro viejo que no
+    // cumple las reglas se puede seguir editando en lo demas).
     public void actualizarDatos(String razonSocial, TipoOrganizacion tipo, String rubro) {
-        actualizarRazonSocial(razonSocial);
+        actualizarRazonSocialValidada(razonSocial);
         this.tipo = tipo;
         this.rubro = rubro == null ? null : rubro.trim();
+    }
+
+    public void actualizarRazonSocialValidada(String razonSocial) {
+        if (razonSocial != null
+            && !ReglasDePersona.colapsarEspacios(razonSocial)
+                .equals(ReglasDePersona.colapsarEspacios(this.razonSocial))) {
+            ReglasDePersona.razonSocial(razonSocial);
+        }
+        actualizarRazonSocial(razonSocial);
     }
 
     // Cambiar los representantes no cambia la cuenta de Keycloak de la entidad: el usuario

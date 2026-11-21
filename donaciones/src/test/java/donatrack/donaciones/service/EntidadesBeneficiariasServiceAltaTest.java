@@ -57,6 +57,37 @@ class EntidadesBeneficiariasServiceAltaTest implements WithSimplePersistenceUnit
   }
 
   @Test
+  void conUnTelefonoConSimbolosDa400SinLlamarAKeycloak() {
+    String cuit = DatosDeTest.cuitUnico();
+    ProveedorFalso proveedor = new ProveedorFalso(DatosDeTest.keycloakIdUnico());
+    EntidadesBeneficiariasService service = nuevoService(proveedor, repoUsuarios);
+
+    DatosInvalidosException error = assertThrows(DatosInvalidosException.class, () ->
+        service.registrarConPersonaNueva(juridicaNueva(cuit), new DatosEntidad(
+            "Calle Falsa 123", "+54 11 4911-1001",
+            List.of(new Representante("Rep", "Uno", DatosDeTest.emailUnico("rep"))))));
+
+    assertEquals("El teléfono tiene que tener entre 8 y 15 dígitos, solo números.",
+        error.getMessage());
+    assertTrue(proveedor.emailsCreados.isEmpty());
+    entityManager().clear();
+    assertFalse(repoEntidades.buscarPorCuit(cuit).isPresent());
+  }
+
+  @Test
+  void conUnRepresentanteSinApellidoValidoDa400() {
+    EntidadesBeneficiariasService service =
+        nuevoService(new ProveedorFalso(DatosDeTest.keycloakIdUnico()), repoUsuarios);
+
+    DatosInvalidosException error = assertThrows(DatosInvalidosException.class, () ->
+        service.registrarConPersonaNueva(juridicaNueva(DatosDeTest.cuitUnico()), new DatosEntidad(
+            "Calle Falsa 123", "1100000000",
+            List.of(new Representante("Rep", "U2", DatosDeTest.emailUnico("rep"))))));
+
+    assertTrue(error.getMessage().startsWith("El apellido del representante"), error.getMessage());
+  }
+
+  @Test
   void conPersonaNuevaYCoordenadasLaEntidadQuedaUbicada() {
     String cuit = DatosDeTest.cuitUnico();
     EntidadesBeneficiariasService service =
@@ -163,7 +194,7 @@ class EntidadesBeneficiariasServiceAltaTest implements WithSimplePersistenceUnit
 
     assertThrows(DatosInvalidosException.class, () ->
         service.registrarConPersonaExistente(
-            cuit, new DatosEntidad("Calle Falsa 123", "+54 11 0000-0000", List.of())));
+            cuit, new DatosEntidad("Calle Falsa 123", "1100000000", List.of())));
 
     assertTrue(proveedor.emailsCreados.isEmpty());
     entityManager().clear();
@@ -200,7 +231,7 @@ class EntidadesBeneficiariasServiceAltaTest implements WithSimplePersistenceUnit
   private DatosEntidad datos(String emailRepresentante) {
     return new DatosEntidad(
         "Calle Falsa 123",
-        "+54 11 0000-0000",
+        "1100000000",
         List.of(new Representante("Rep", "Uno", emailRepresentante))
     );
   }
