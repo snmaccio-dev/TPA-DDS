@@ -27,8 +27,9 @@ class RepositorioPropuestasTest implements SimplePersistenceTest {
     Beneficiaria segunda = crearBeneficiaria("30-22222222-2", "Segunda");
     Beneficiaria tercera = crearBeneficiaria("30-33333333-3", "Tercera");
 
-    repositorio.guardar(new PropuestaAsignacion(
-        42L, List.of(primera, segunda, tercera), LocalDateTime.now(), true
+    List<Beneficiaria> ranking = List.of(primera, segunda, tercera);
+    repositorio.guardar(PropuestaAsignacion.desdeRankings(
+        42L, ranking, ranking, LocalDateTime.now()
     ));
 
     entityManager().flush();
@@ -47,8 +48,8 @@ class RepositorioPropuestasTest implements SimplePersistenceTest {
   void buscarPorDonacionEncuentraLaPropuestaGuardada() {
     Beneficiaria beneficiaria = crearBeneficiaria("30-44444444-4", "Escuela");
 
-    repositorio.guardar(new PropuestaAsignacion(
-        77L, List.of(beneficiaria), LocalDateTime.now(), false
+    repositorio.guardar(PropuestaAsignacion.desdeRankings(
+        77L, List.of(beneficiaria), List.of(), LocalDateTime.now()
     ));
 
     entityManager().flush();
@@ -64,8 +65,8 @@ class RepositorioPropuestasTest implements SimplePersistenceTest {
   void eliminarBorraLaPropuesta() {
     Beneficiaria beneficiaria = crearBeneficiaria("30-55555555-5", "Otra");
 
-    repositorio.guardar(new PropuestaAsignacion(
-        99L, List.of(beneficiaria), LocalDateTime.now(), false
+    repositorio.guardar(PropuestaAsignacion.desdeRankings(
+        99L, List.of(beneficiaria), List.of(), LocalDateTime.now()
     ));
 
     entityManager().flush();

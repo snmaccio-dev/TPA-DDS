@@ -1179,6 +1179,100 @@ td:first-child {
     font-size:10px;
 }
 
+/* Pantalla de asignaciones: opciones propuestas por los algoritmos. Con coincidencias
+   hay una sola lista; sin coincidencias, una columna por algoritmo. */
+.asignacion-form {
+    display:flex;
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+    margin-top:6px;
+}
+
+.rankings {
+    display:grid;
+    grid-template-columns:1fr;
+    gap:12px;
+    width:100%;
+}
+
+.rankings.rankings-por-algoritmo {
+    grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.ranking {
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:10px 12px 12px;
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    min-width:0;
+}
+
+.ranking legend {
+    padding:0 6px;
+    font-size:11px;
+    font-weight:700;
+    color:#536158;
+}
+
+.opcion-candidata {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:8px 10px;
+    border:1px solid #e2e9e3;
+    border-radius:8px;
+    background:#fff;
+    cursor:pointer;
+}
+
+.opcion-candidata:hover {
+    border-color:#7bb69a;
+}
+
+.opcion-candidata:has(input:checked) {
+    border-color:var(--green);
+    background:var(--green-soft);
+}
+
+/* Anula el estilo general de "label input" (pensado para campos de texto). */
+.opcion-candidata input {
+    width:auto;
+    margin:0;
+    padding:0;
+    border:0;
+    box-shadow:none;
+    flex:0 0 auto;
+    accent-color:var(--green);
+}
+
+.opcion-posicion {
+    flex:0 0 auto;
+    min-width:30px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--green);
+}
+
+.opcion-datos {
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    min-width:0;
+}
+
+.select-donation .opcion-datos b {
+    font-size:13px;
+}
+
+.select-donation .opcion-datos small {
+    font-size:11px;
+    color:var(--muted);
+}
+
 .recommendation {
     background:#f0f8f2;
     border:1px solid #dceee1;

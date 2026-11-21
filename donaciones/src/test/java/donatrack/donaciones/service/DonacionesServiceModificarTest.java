@@ -98,8 +98,8 @@ class DonacionesServiceModificarTest implements WithSimplePersistenceUnit {
       creada[0] = Donacion.crear(
           List.of(new Bien("Silla", sillas, 2, CondicionBien.USADO)), donante, "Sillas viejas");
       repoDonaciones.guardar(creada[0]);
-      repoPropuestas.guardar(new PropuestaAsignacion(
-          creada[0].getId(), List.of(), LocalDateTime.now(), false));
+      repoPropuestas.guardar(PropuestaAsignacion.desdeRankings(
+          creada[0].getId(), List.of(), List.of(), LocalDateTime.now()));
     });
     return creada[0];
   }

@@ -34,7 +34,7 @@ public class RepositorioPropuestas implements WithSimplePersistenceUnit {
 
     // Saca a la beneficiaria de la lista de candidatas de todas las propuestas
     // que la tengan. Devuelve cuantas propuestas quedaron afectadas. La
-    // mutacion de la coleccion @ManyToMany la hace Hibernate al commitear
+    // mutacion de la coleccion de candidatas la hace Hibernate al commitear
     // la transaccion actual (no usamos delete nativo para no romper el
     // @OrderColumn).
     public int quitarComoCandidata(Beneficiaria beneficiaria) {
@@ -42,7 +42,8 @@ public class RepositorioPropuestas implements WithSimplePersistenceUnit {
             return 0;
         }
         List<PropuestaAsignacion> conEsaCandidata = createQuery(
-            "select p from PropuestaAsignacion p join p.candidatas c where c = :b",
+            "select distinct p from PropuestaAsignacion p join p.candidatas c "
+                + "where c.beneficiaria = :b",
             PropuestaAsignacion.class)
             .setParameter("b", beneficiaria)
             .getResultList();

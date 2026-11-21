@@ -35,34 +35,25 @@
                   method="post"
                   action="/asignaciones/{{donacionId}}">
 
-                <label for="beneficiaria-busqueda-{{donacionId}}">
-                    Buscar entidad beneficiaria
-                </label>
-
-                <input
-                    type="text"
-                    id="beneficiaria-busqueda-{{donacionId}}"
-                    class="beneficiaria-busqueda"
-                    list="beneficiarias-{{donacionId}}"
-                    placeholder="Escribí la razón social..."
-                    autocomplete="off"
-                    required
-                >
-
-                <datalist id="beneficiarias-{{donacionId}}">
-                    {{#each candidatas}}
-                    <option
-                        value="{{razonSocial}} — CUIT {{cuit}}"
-                        data-id="{{id}}">
-                    </option>
+                <div class="rankings{{#unless huboCoincidencias}} rankings-por-algoritmo{{/unless}}">
+                    {{#each rankings}}
+                    <fieldset class="ranking">
+                        <legend>{{nombre}}</legend>
+                        {{#each candidatas}}
+                        <label class="opcion-candidata">
+                            <input type="radio" name="beneficiariaId" value="{{id}}" required>
+                            <span class="opcion-posicion">#{{posicion}}</span>
+                            <span class="opcion-datos">
+                                <b>{{razonSocial}}</b>
+                                <small>CUIT {{cuit}}</small>
+                            </span>
+                        </label>
+                        {{else}}
+                        <p class="muted">Este algoritmo no propuso entidades.</p>
+                        {{/each}}
+                    </fieldset>
                     {{/each}}
-                </datalist>
-
-                <input
-                    type="hidden"
-                    name="beneficiariaId"
-                    class="beneficiaria-id"
-                >
+                </div>
 
                 <button class="btn btn-primary confirmar-asignacion"
                         type="submit"
@@ -97,46 +88,11 @@
 {{> templates/partials/scripts}}
 
 <script>
+// El boton se habilita recien cuando se elige una de las entidades propuestas.
 document.querySelectorAll(".asignacion-form").forEach(form => {
-    const busqueda = form.querySelector(".beneficiaria-busqueda");
-    const beneficiariaId = form.querySelector(".beneficiaria-id");
     const boton = form.querySelector(".confirmar-asignacion");
-
-    const datalist = document.getElementById(
-        busqueda.getAttribute("list")
-    );
-
-    function validarSeleccion() {
-        const opcion = Array.from(datalist.options).find(
-            option => option.value === busqueda.value
-        );
-
-        if (opcion) {
-            beneficiariaId.value = opcion.dataset.id;
-            boton.disabled = false;
-        } else {
-            beneficiariaId.value = "";
-            boton.disabled = true;
-        }
-    }
-
-    busqueda.addEventListener("input", validarSeleccion);
-    busqueda.addEventListener("change", validarSeleccion);
-
-    form.addEventListener("submit", event => {
-        validarSeleccion();
-
-        if (!beneficiariaId.value) {
-            event.preventDefault();
-            busqueda.setCustomValidity(
-                "Seleccioná una beneficiaria de la lista."
-            );
-            busqueda.reportValidity();
-        }
-    });
-
-    busqueda.addEventListener("input", () => {
-        busqueda.setCustomValidity("");
+    form.addEventListener("change", () => {
+        boton.disabled = !form.querySelector('input[name="beneficiariaId"]:checked');
     });
 });
 </script>

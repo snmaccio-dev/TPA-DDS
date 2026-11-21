@@ -1,5 +1,6 @@
 package donatrack.donaciones.service;
 
+import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.TransicionNoPermitidaException;
 import donatrack.donaciones.domain.donacion.asignacion.Algoritmo;
 import donatrack.donaciones.domain.donacion.asignacion.PropuestaAsignacion;
@@ -14,7 +15,7 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class AsignacionesService implements WithSimplePersistenceUnit {
 
@@ -41,37 +42,9 @@ public class AsignacionesService implements WithSimplePersistenceUnit {
 
   public List<Beneficiaria> ejecutarAsignacion(long donacionId) {
     Donacion donacion = donacionesService.buscar(donacionId);
-    return calcularPropuesta(donacion).candidatas();
+    return calcularPropuesta(donacion).getCandidatas();
   }
 
-/*
-
-  public ResultadoCorrida ejecutarMatchmakingProgramado() {
-    List<Donacion> pendientes = repositorioDonaciones.enEstado(EstadosPosiblesDonacion.EN_DEPOSITO);
-
-    int procesadas = 0;
-    List<String> fallidas = new ArrayList<>();
-    for (Donacion donacion : pendientes) {
-      try {
-        ResultadoMatchmaking resultado = calcularPropuesta(donacion);
-        withTransaction(() -> {
-          PropuestaAsignacion propuesta = new PropuestaAsignacion(
-              donacion.getId(),
-              resultado.candidatas(),
-              LocalDateTime.now(),
-              resultado.huboCoincidencias()
-          );
-          repositorioPropuestas.guardar(propuesta);
-        });
-        procesadas++;
-      } catch (RuntimeException e) {
-        fallidas.add("donación " + donacion.getId() + ": " + e.getMessage());
-      }
-    }
-    return new ResultadoCorrida(procesadas, fallidas);
-  }
-
-*/
 
 
 public ResultadoCorrida ejecutarMatchmakingProgramado() {
@@ -83,20 +56,19 @@ public ResultadoCorrida ejecutarMatchmakingProgramado() {
 
     for (Donacion donacion : pendientes) {
       try {
-        if (repositorioPropuestas.buscarPorDonacion(donacion.getId()).isPresent()) {
+        Optional<PropuestaAsignacion> existente =
+            repositorioPropuestas.buscarPorDonacion(donacion.getId());
+
+        // Una propuesta guardada antes de registrar algoritmo y posicion se recalcula:
+        // sin esos datos la pantalla no puede mostrar las dos ejecuciones.
+        if (existente.isPresent() && !existente.get().esDeFormatoAnterior()) {
           continue;
         }
 
-        ResultadoMatchmaking resultado = calcularPropuesta(donacion);
+        PropuestaAsignacion propuesta = calcularPropuesta(donacion);
 
         withTransaction(() -> {
-          PropuestaAsignacion propuesta = new PropuestaAsignacion(
-              donacion.getId(),
-              resultado.candidatas(),
-              LocalDateTime.now(),
-              resultado.huboCoincidencias()
-          );
-
+          existente.ifPresent(anterior -> repositorioPropuestas.eliminar(donacion.getId()));
           repositorioPropuestas.guardar(propuesta);
         });
 
@@ -130,13 +102,28 @@ public ResultadoCorrida ejecutarMatchmakingProgramado() {
 
       Donacion donacion = donacionesService.buscar(donacionId);
 
+      // El admin elige el destino a partir del resultado de los algoritmos: la entidad
+      // tiene que estar entre las candidatas de la propuesta de esta donacion.
+      PropuestaAsignacion propuesta = repositorioPropuestas.buscarPorDonacion(donacionId)
+          .orElseThrow(() -> new DatosInvalidosException(
+              "No se puede asignar la donación " + donacionId
+                  + ": todavía no tiene una propuesta de asignación generada."
+          ));
+
+      if (!propuesta.esCandidata(destinatario)) {
+        throw new DatosInvalidosException(
+            "No se puede asignar la donación: la beneficiaria seleccionada no está "
+                + "entre las candidatas propuestas por los algoritmos para esta donación."
+        );
+      }
+
       boolean tieneNecesidadCompatible = destinatario.getNecesidades().stream()
           .anyMatch(necesidad ->
               necesidad.getSubcategoria().equals(donacion.getSubcategoria())
           );
 
       if (!tieneNecesidadCompatible) {
-        throw new donatrack.donaciones.domain.DatosInvalidosException(
+        throw new DatosInvalidosException(
             "No se puede asignar la donación: la beneficiaria seleccionada "
                 + "no tiene una necesidad compatible con su subcategoría."
         );
@@ -149,7 +136,7 @@ public ResultadoCorrida ejecutarMatchmakingProgramado() {
   }
 
 
-  private ResultadoMatchmaking calcularPropuesta(Donacion donacion) {
+  private PropuestaAsignacion calcularPropuesta(Donacion donacion) {
     if (donacion.getEstado().getEstado() != EstadosPosiblesDonacion.EN_DEPOSITO) {
       throw new TransicionNoPermitidaException(
           "Solo pueden asignarse donaciones en estado En Depósito."
@@ -164,29 +151,8 @@ public ResultadoCorrida ejecutarMatchmakingProgramado() {
     List<Beneficiaria> rankingPrioridad =
         prioridadSubAtendidos.matchmaking(donacion, beneficiarias);
 
-    return filtrarCoincidencias(rankingCompatibilidad, rankingPrioridad);
+    return PropuestaAsignacion.desdeRankings(
+        donacion.getId(), rankingCompatibilidad, rankingPrioridad, LocalDateTime.now());
   }
 
-  private ResultadoMatchmaking filtrarCoincidencias(
-      List<Beneficiaria> ranking1,
-      List<Beneficiaria> ranking2) {
-
-    List<Beneficiaria> coincidencias =
-        ranking1.stream()
-            .filter(ranking2::contains)
-            .collect(Collectors.toList());
-
-    if (!coincidencias.isEmpty()) {
-      return new ResultadoMatchmaking(coincidencias, true);
-    }
-
-    List<Beneficiaria> resultado = new ArrayList<>(ranking1);
-    ranking2.stream()
-        .filter(beneficiaria -> !resultado.contains(beneficiaria))
-        .forEach(resultado::add);
-
-    return new ResultadoMatchmaking(resultado, false);
-  }
-
-  private record ResultadoMatchmaking(List<Beneficiaria> candidatas, boolean huboCoincidencias) {}
 }
