@@ -7,6 +7,7 @@ import donatrack.web.vista.ImportacionVista;
 import donatrack.web.vista.NecesidadVista;
 import donatrack.web.vista.NotificacionVista;
 import donatrack.web.vista.PerfilVista;
+import donatrack.web.vista.PaginaVista;
 import donatrack.web.vista.PropuestaVista;
 import donatrack.web.vista.SubcategoriaVista;
 
@@ -43,8 +44,9 @@ public interface ClienteDonaciones {
   // POST /donaciones. Solo admin, con un bien por formulario.
   void crearDonacion(String autorizacion, NuevaDonacion datos);
 
-  // GET /donantes. Solo admin.
-  List<DonanteVista> donantes(String autorizacion);
+  // GET /donantes?pagina=&busqueda=. Solo admin. Paginado: pagina empieza en 1 y
+  // busqueda (opcional) filtra por nombre o razon social, documento o mail.
+  PaginaVista<DonanteVista> donantes(String autorizacion, String busqueda, int pagina);
 
   // POST /donantes. Alta desde el panel de administracion.
   void registrarDonanteAdmin(String autorizacion, NuevoDonanteAdmin datos);

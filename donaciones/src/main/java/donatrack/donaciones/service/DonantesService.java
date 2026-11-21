@@ -197,10 +197,29 @@ public class DonantesService implements WithSimplePersistenceUnit {
         persona.elegirContactoPredeterminado(predeterminado);
     }
 
-    public List<Persona> todos() {
-        return repositorio.todos().stream()
-            .map(Donante::getPersona)
-            .toList();
+    public static final int TAMANIO_POR_DEFECTO = 20;
+    public static final int TAMANIO_MAXIMO = 100;
+
+    // Listado paginado para el panel de administracion. pagina empieza en 1; un tamanio
+    // mayor al maximo se recorta. busqueda (opcional) filtra por nombre o razon social,
+    // documento o CUIT, o mail, sin distinguir mayusculas.
+    public Pagina<Persona> pagina(String busqueda, int pagina, int tamanio) {
+        if (pagina < 1) {
+            throw new DatosInvalidosException("La pagina empieza en 1.");
+        }
+        if (tamanio < 1) {
+            throw new DatosInvalidosException("El tamanio de pagina tiene que ser mayor a 0.");
+        }
+        int tamanioEfectivo = Math.min(tamanio, TAMANIO_MAXIMO);
+
+        long total = repositorio.contar(busqueda);
+        List<Persona> personas = total == 0
+            ? List.of()
+            : repositorio.pagina(busqueda, pagina, tamanioEfectivo).stream()
+                .map(Donante::getPersona)
+                .toList();
+
+        return new Pagina<>(personas, total, pagina, tamanioEfectivo);
     }
 
     public Persona buscarPorDocumento(String documento) {
