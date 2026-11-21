@@ -1,8 +1,15 @@
-# Despliegue en Oracle Cloud (VM con IP publica).
-# Agrega Caddy como proxy inverso con HTTPS automatico y reemplaza las URLs de localhost
-# por las publicas. No se carga solo: hay que pasarlo explicitamente.
+# Despliegue en Oracle Cloud (VM con IP publica). Archivo AUTOSUFICIENTE: define todo el
+# sistema por si solo y NO se combina con compose.yaml (que queda para desarrollo local).
 #
-#   docker compose -f compose.yaml -f compose.oracle.yaml up -d --build
+#   docker compose -f compose.oracle.yaml up -d --build
+#
+# Diferencias con compose.yaml:
+#   - Caddy como proxy inverso con HTTPS automatico (Let's Encrypt) en los puertos 80 y 443.
+#   - URLs publicas (https://web|logistica|auth.<DOMINIO>) en lugar de localhost.
+#   - Keycloak detras del proxy, con su URL publica fija (es la que va como issuer de los
+#     tokens aunque los servicios le hablen por la red interna).
+#   - Los servicios no se publican en la IP de la VM: solo en 127.0.0.1, para revisarlos
+#     desde la propia VM (o por un tunel SSH). Desde internet se entra unicamente por Caddy.
 #
 # Variables requeridas en .env (ver .env.example): DOMINIO, POSTGRES_PASSWORD,
 # KEYCLOAK_ADMIN_PASSWORD, DONACIONES_CLIENT_SECRET, LOGISTICA_CLIENT_SECRET.
@@ -22,38 +29,153 @@ services:
       - caddy_data:/data
     networks:
       default:
-        # Web usa la misma URL de Keycloak para el navegador y para canjear el codigo.
-        # Con este alias el canje va directo a Caddy por la red interna de Docker.
+        # Los contenedores que llaman a las URLs publicas (web canjeando el codigo con
+        # Keycloak, el planificador simulado llamando al callback de Logistica) llegan a
+        # Caddy por la red interna de Docker, sin salir por la IP publica de la VM.
         aliases:
           - auth.${DOMINIO}
+          - logistica.${DOMINIO}
+          - web.${DOMINIO}
+    depends_on:
+      - keycloak
+      - logistica
+      - web
+
+  db:
+    image: postgres:16
+    container_name: tp-postgres-local
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD}
+      POSTGRES_DB: keycloak
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
 
   keycloak:
+    build:
+      context: .
+      dockerfile: docker/keycloak.Dockerfile
+    container_name: tp-keycloak-local
     environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://db:5432/keycloak
+      KC_DB_USERNAME: postgres
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
+      KC_HTTP_ENABLED: "true"
+      # Detras de Caddy: URL publica fija. No usar KC_HOSTNAME junto con KC_HOSTNAME_URL
+      # (Keycloak no arranca si estan las dos).
       KC_PROXY: edge
-      KC_HOSTNAME: auth.${DOMINIO}
-      KC_HOSTNAME_URL: https://auth.${DOMINIO}
+      KC_HOSTNAME_URL: https://auth.${DOMINIO:?Falta DOMINIO}
       KC_HOSTNAME_ADMIN_URL: https://auth.${DOMINIO}
-      KC_HOSTNAME_PORT: "-1"
+      KC_HOSTNAME_STRICT: "false"
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    ports:
+      - "127.0.0.1:8180:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
   donaciones:
+    build:
+      context: .
+      dockerfile: docker/donaciones.Dockerfile
+    container_name: tp-donaciones-local
     environment:
+      TZ: America/Argentina/Buenos_Aires
+      DB_URL: jdbc:postgresql://db:5432/donatrack_donaciones
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      DONACIONES_URL_BASE: http://donaciones:8080
       WEB_URL_BASE: https://web.${DOMINIO}
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: donatrack
+      KEYCLOAK_CLIENT_ID: donaciones-backend
+      KEYCLOAK_CLIENT_SECRET: ${DONACIONES_CLIENT_SECRET}
       KEYCLOAK_ISSUER: https://auth.${DOMINIO}/realms/donatrack
+      # Coordenadas de las entidades para el mapa publico: nominatim (default) o simulado.
+      GEOCODIFICADOR: ${GEOCODIFICADOR:-nominatim}
+      # Horas (HH:mm) de los jobs de asignacion y de avisos de inactividad; para
+      # probarlos, ponelas en el .env.
+      ASIGNACIONES_HORA: ${ASIGNACIONES_HORA:-03:00}
+      AVISOS_INACTIVIDAD_HORA: ${AVISOS_INACTIVIDAD_HORA:-09:00}
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
   logistica:
+    build:
+      context: .
+      dockerfile: docker/logistica.Dockerfile
+    container_name: tp-logistica-local
     environment:
+      TZ: America/Argentina/Buenos_Aires
+      DB_URL: jdbc:postgresql://db:5432/donatrack_logistica
+      DB_USER: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
       LOGISTICA_URL_BASE: https://logistica.${DOMINIO}
       WEB_URL_BASE: https://web.${DOMINIO}
+      DONACIONES_URL_BASE: http://donaciones:8080
+      LOGISTICA_MODO: http
+      LOGISTICA_PLANIFICADOR: simulado
+      # Hora (HH:mm) de JobPlanificacionRutas; para probarlo, ponela en el .env.
+      PLANIFICACION_HORA: ${PLANIFICACION_HORA:-03:00}
+      LOGISTICA_SEGURIDAD: "on"
+      LOGISTICA_FOTOS_DIR: /app/fotos
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: donatrack
+      KEYCLOAK_CLIENT_ID: logistica-backend
+      KEYCLOAK_CLIENT_SECRET: ${LOGISTICA_CLIENT_SECRET}
       KEYCLOAK_ISSUER: https://auth.${DOMINIO}/realms/donatrack
       KEYCLOAK_URL_PUBLICA: https://auth.${DOMINIO}
+      KEYCLOAK_WEB_CLIENT_ID: logistica-web
+    ports:
+      - "127.0.0.1:8081:8081"
+    volumes:
+      - logistica_fotos:/app/fotos
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
 
   web:
+    build:
+      context: .
+      dockerfile: docker/web.Dockerfile
+    container_name: tp-web-local
     environment:
       WEB_URL_BASE: https://web.${DOMINIO}
+      DONACIONES_URL_BASE: http://donaciones:8080
+      LOGISTICA_URL_BASE: http://logistica:8081
       LOGISTICA_URL_PUBLICA: https://logistica.${DOMINIO}
+      # Web usa esta URL para redirigir al navegador y para canjear el codigo: por eso
+      # es la publica (el alias de Caddy resuelve el canje por la red interna).
       KEYCLOAK_URL: https://auth.${DOMINIO}
+      KEYCLOAK_REALM: donatrack
+      KEYCLOAK_CLIENT_ID: donatrack-web
+      WEB_SEGURIDAD: "on"
+    ports:
+      - "127.0.0.1:8082:8082"
     depends_on:
-      - caddy
+      - donaciones
+      - logistica
+      - keycloak
+    restart: unless-stopped
 
 volumes:
+  postgres_data:
+  logistica_fotos:
   caddy_data:

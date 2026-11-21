@@ -44,9 +44,10 @@ while [ $# -gt 0 ]; do
 done
 
 if [ ${#ARCHIVOS[@]} -eq 0 ]; then
-  ARCHIVOS=(-f compose.yaml)
-  if [ -f compose.oracle.yaml ]; then
-    ARCHIVOS+=(-f compose.oracle.yaml)
+  if [ -f compose.oracle.yaml ] && [ -f Caddyfile ] && grep -q '^DOMINIO=' .env 2>/dev/null; then
+    ARCHIVOS=(-f compose.oracle.yaml)
+  else
+    ARCHIVOS=(-f compose.yaml)
   fi
 fi
 
