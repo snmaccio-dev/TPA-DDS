@@ -15,7 +15,6 @@ import io.github.flbulgarelli.jpa.extras.simple.WithSimplePersistenceUnit;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 
 public class AsignacionesService implements WithSimplePersistenceUnit {
 
@@ -54,21 +53,20 @@ public ResultadoCorrida ejecutarMatchmakingProgramado() {
     int procesadas = 0;
     List<String> fallidas = new ArrayList<>();
 
+    // Cada corrida (job nocturno o a demanda) recalcula las propuestas de todas las
+    // donaciones en deposito: las necesidades y las donaciones recibidas cambian, y una
+    // propuesta vieja (por ejemplo, generada antes de filtrar por necesidad) no tiene
+    // que quedar.
     for (Donacion donacion : pendientes) {
       try {
-        Optional<PropuestaAsignacion> existente =
-            repositorioPropuestas.buscarPorDonacion(donacion.getId());
-
-        // Una propuesta guardada antes de registrar algoritmo y posicion se recalcula:
-        // sin esos datos la pantalla no puede mostrar las dos ejecuciones.
-        if (existente.isPresent() && !existente.get().esDeFormatoAnterior()) {
-          continue;
-        }
-
         PropuestaAsignacion propuesta = calcularPropuesta(donacion);
+        boolean habiaUna =
+            repositorioPropuestas.buscarPorDonacion(donacion.getId()).isPresent();
 
         withTransaction(() -> {
-          existente.ifPresent(anterior -> repositorioPropuestas.eliminar(donacion.getId()));
+          if (habiaUna) {
+            repositorioPropuestas.eliminar(donacion.getId());
+          }
           repositorioPropuestas.guardar(propuesta);
         });
 
@@ -117,12 +115,8 @@ public ResultadoCorrida ejecutarMatchmakingProgramado() {
         );
       }
 
-      boolean tieneNecesidadCompatible = destinatario.getNecesidades().stream()
-          .anyMatch(necesidad ->
-              necesidad.getSubcategoria().equals(donacion.getSubcategoria())
-          );
-
-      if (!tieneNecesidadCompatible) {
+      // Misma regla que usa el matchmaking para elegir candidatas.
+      if (!destinatario.tieneNecesidadDe(donacion.getSubcategoria())) {
         throw new DatosInvalidosException(
             "No se puede asignar la donación: la beneficiaria seleccionada "
                 + "no tiene una necesidad compatible con su subcategoría."
@@ -143,16 +137,24 @@ public ResultadoCorrida ejecutarMatchmakingProgramado() {
       );
     }
 
-    List<Beneficiaria> beneficiarias = repositorioEntidades.todas();
+    // Unico filtro de compatibilidad: solo compiten las entidades con una necesidad de
+    // la subcategoria donada. Si no hay ninguna, la propuesta queda sin candidatas.
+    List<Beneficiaria> candidatas = candidatasCompatibles(donacion);
 
     List<Beneficiaria> rankingCompatibilidad =
-        compatibilidad.matchmaking(donacion, beneficiarias);
+        compatibilidad.matchmaking(donacion, candidatas);
 
     List<Beneficiaria> rankingPrioridad =
-        prioridadSubAtendidos.matchmaking(donacion, beneficiarias);
+        prioridadSubAtendidos.matchmaking(donacion, candidatas);
 
     return PropuestaAsignacion.desdeRankings(
         donacion.getId(), rankingCompatibilidad, rankingPrioridad, LocalDateTime.now());
+  }
+
+  private List<Beneficiaria> candidatasCompatibles(Donacion donacion) {
+    return repositorioEntidades.todas().stream()
+        .filter(beneficiaria -> beneficiaria.tieneNecesidadDe(donacion.getSubcategoria()))
+        .toList();
   }
 
 }

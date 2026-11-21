@@ -64,6 +64,18 @@ public abstract class Necesidad {
     return cantidad;
   }
 
+  // Compara por id: Subcategoria no redefine equals, y dos instancias de la misma fila
+  // (por ejemplo, cargadas por EntityManagers distintos) no son "equals".
+  public boolean esDeLaSubcategoria(Subcategoria otra) {
+    if (subcategoria == null || otra == null) {
+      return false;
+    }
+    if (subcategoria == otra) {
+      return true;
+    }
+    return subcategoria.getId() != null && subcategoria.getId().equals(otra.getId());
+  }
+
   public Subcategoria getSubcategoria() {
     return subcategoria;
   }

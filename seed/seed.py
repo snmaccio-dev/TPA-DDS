@@ -275,6 +275,10 @@ BIENES = {
     "Mesas": ("Mesas plegables", 6, "USADO", False),
     "Colchones": ("Colchones de una plaza", 8, "NUEVO", False),
     "Juegos de mesa": ("Juegos de mesa para chicos", 10, "USADO", False),
+    # Solo las pide la red de escritorios (caso sin coincidencias).
+    "Escritorios": ("Escritorios escolares", 6, "USADO", False),
+    # Ninguna entidad la pide (caso sin candidatas compatibles).
+    "Yerba": ("Yerba mate de 1 kg", 30, "NUEVO", True),
 }
 
 # Beneficiarias extra para que el matchmaking tenga varias candidatas. Mismas reglas que
@@ -294,6 +298,21 @@ BENEFICIARIAS_EXTRA = [
      "nombre": "Inés", "apellido": "Domínguez"},
 ]
 
+# Red de 20 entidades que solo piden escritorios, para que la asignacion muestre las dos
+# ejecuciones por separado. Los dos algoritmos ordenan las mismas candidatas (las que
+# necesitan la subcategoria) y toman hasta 10, asi que solo dejan de coincidir con mas de
+# 10 candidatas. Ninguna recibio donaciones: Prioridad desempata por id y se queda con las
+# 10 primeras en darse de alta, que piden poco; Compatibilidad se queda con las 10
+# ultimas, que piden mucho. Los dos rankings quedan disjuntos.
+RED_ESCRITORIOS = [
+    {"email": "red-escritorios-%02d@demo.donatrack.ar" % n, "cuit": "3071%07d" % n,
+     "razonSocial": "Escuela Red Sur N.º %d" % n, "tipoOrganizacion": "INSTITUCION",
+     "rubro": "Educación", "direccion": "Av. Sáenz %d, CABA" % (1000 + n * 10),
+     "telefono": "+54 11 4900-%04d" % n, "nombre": "Docente", "apellido": "Red %02d" % n,
+     "cantidadNecesidad": 2 if n <= 10 else 20 + n}
+    for n in range(1, 21)
+]
+
 NECESIDADES = {
     "beneficiaria1@gmail.com": ["Fideos secos", "Arroz", "Leche", "Aceite", "Legumbres", "Mesas"],
     "beneficiaria2@gmail.com": ["Utiles escolares", "Cuadernos", "Mochilas", "Camperas", "Buzos", "Sillas"],
@@ -301,6 +320,7 @@ NECESIDADES = {
     "beneficiaria04@demo.donatrack.ar": ["Juegos de mesa", "Buzos", "Calzado", "Fideos secos"],
     "beneficiaria05@demo.donatrack.ar": ["Arroz", "Legumbres", "Conservas", "Aceite", "Camperas"],
 }
+NECESIDADES.update({b["email"]: ["Escritorios"] for b in RED_ESCRITORIOS})
 
 CAMIONES = [
     {"patente": "AE123CD", "capacidadVolumen": 18, "altura": 2.6, "capacidadCarga": 4000},
@@ -365,9 +385,15 @@ def armar_plan(doc_donante1, doc_donante2, beneficiarias, documentos_csv):
         (doc_donante2, TRASLADO, b2, "Utiles escolares"),
         (doc_donante2, ENTREGADA, b2, "Camperas"),
         (doc_donante2, VENCIDA, None, "Arroz"),
+        # Casos de la pantalla de asignacion: "Fideos secos" y "Buzos" (arriba) tienen
+        # coincidencias; "Escritorios" muestra las dos ejecuciones por separado y "Yerba"
+        # no tiene ninguna entidad con una necesidad compatible.
+        (doc_donante1, PROPUESTA, None, "Escritorios"),
+        (doc_donante2, PROPUESTA, None, "Yerba"),
     ]
 
-    necesitadas = sorted({s for lista in NECESIDADES.values() for s in lista})
+    # Sin "Escritorios": las donaciones del CSV quedan en los casos con coincidencias.
+    necesitadas = sorted({s for lista in NECESIDADES.values() for s in lista} - {"Escritorios"})
     todas = sorted(BIENES)
     perecederos = sorted(s for s, datos in BIENES.items() if datos[3])
     orden_beneficiarias = [b1, b2] + [b["email"] for b in BENEFICIARIAS_EXTRA]
@@ -481,6 +507,8 @@ class Carga:
             altas.append(dict(cuenta["perfil"], email=cuenta["email"],
                               nombre=persona["nombre"], apellido=persona["apellido"]))
         altas.extend(BENEFICIARIAS_EXTRA)
+        # La red va al final y en orden: los ids crecientes son el desempate de Prioridad.
+        altas.extend(RED_ESCRITORIOS)
 
         for alta in altas:
             creada = self.don("POST", "/entidades/nueva", json_cuerpo={
@@ -496,7 +524,7 @@ class Carga:
                 self.don("POST", "/necesidades", json_cuerpo={
                     "cuitBeneficiaria": alta["cuit"],
                     "descripcion": "Necesitamos " + BIENES[subcategoria][0].lower(),
-                    "cantidad": BIENES[subcategoria][1] * 2,
+                    "cantidad": alta.get("cantidadNecesidad") or BIENES[subcategoria][1] * 2,
                     "subcategoria": subcategoria,
                     "tipo": "RECURRENTE" if recurrente else "EXTRAORDINARIA",
                     "periodo": "MENSUAL" if recurrente else None,
@@ -657,6 +685,18 @@ class Carga:
                 + "  (esperadas " + str(esperados.get(estado, 0)) + ")")
         propuestas = self.don("GET", "/asignaciones/propuestas")
         log("Propuestas pendientes de asignacion: " + str(len(propuestas)))
+        sin_candidatas = [p for p in propuestas if not p["candidatas"]]
+        con_coincidencias = [p for p in propuestas if p["candidatas"] and p["huboCoincidencias"]]
+        sin_coincidencias = [p for p in propuestas
+                             if p["candidatas"] and not p["huboCoincidencias"]]
+        log("  con coincidencias " + str(len(con_coincidencias))
+            + ", sin coincidencias (dos rankings) " + str(len(sin_coincidencias))
+            + ", sin candidatas compatibles " + str(len(sin_candidatas)))
+        for nombre, grupo in (("con coincidencias", con_coincidencias),
+                              ("sin coincidencias", sin_coincidencias),
+                              ("sin candidatas", sin_candidatas)):
+            if not grupo:
+                log("ATENCION: no quedo ninguna propuesta " + nombre + ".")
         if distintas:
             raise SeedError(str(len(distintas)) + " donaciones no quedaron en el estado esperado, "
                             + "por ejemplo la " + str(distintas[0]["id"]) + " ("

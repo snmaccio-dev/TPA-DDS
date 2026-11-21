@@ -6,17 +6,19 @@ import java.util.List;
 import donatrack.donaciones.domain.donacion.Donacion;
 import donatrack.donaciones.domain.persona.Beneficiaria;
 
+// Prioriza a las entidades que menos donaciones recibieron en el ultimo trimestre. A
+// igual cantidad, por id, asi el ranking es el mismo en cada corrida.
 public class PrioridadSubatendidos implements Algoritmo {
 
   @Override
   public List<Beneficiaria> matchmaking(
       Donacion donacion,
-      List<Beneficiaria> beneficiarias) {
+      List<Beneficiaria> candidatas) {
 
-    return beneficiarias.stream()
-        .sorted(Comparator.comparingLong(
-            Beneficiaria::getCantidadDonacionesUltimoTrimestre))
-        .limit(10)
+    return candidatas.stream()
+        .sorted(Comparator.comparingLong(Beneficiaria::getCantidadDonacionesUltimoTrimestre)
+            .thenComparing(Desempate.POR_ID))
+        .limit(MAXIMO_DE_CANDIDATAS)
         .toList();
   }
 }
