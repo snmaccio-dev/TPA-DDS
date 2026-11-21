@@ -4,7 +4,9 @@ import donatrack.donaciones.controller.dto.DonanteExistenteRequest;
 import donatrack.donaciones.controller.dto.DonanteInactivoDTO;
 import donatrack.donaciones.controller.dto.ModificarDonanteRequest;
 import donatrack.donaciones.controller.dto.NuevoDonanteRequest;
+import donatrack.donaciones.controller.dto.PaginaDTO;
 import donatrack.donaciones.controller.dto.PersonaDTO;
+import donatrack.donaciones.domain.DatosInvalidosException;
 import donatrack.donaciones.domain.persona.Persona;
 import donatrack.donaciones.service.DonantesService;
 import donatrack.donaciones.service.ResultadoCorrida;
@@ -20,8 +22,26 @@ public class DonantesController {
     this.service = service;
   }
 
+  // GET /donantes?pagina=1&tamanio=20&busqueda=...
   public void todas(Context ctx) {
-    ctx.json(PersonaDTO.desde(service.todos()));
+    ctx.json(PaginaDTO.desde(
+        service.pagina(
+            ctx.queryParam("busqueda"),
+            entero(ctx, "pagina", 1),
+            entero(ctx, "tamanio", DonantesService.TAMANIO_POR_DEFECTO)),
+        (Persona persona) -> PersonaDTO.desde(persona)));
+  }
+
+  private static int entero(Context ctx, String nombre, int porDefecto) {
+    String valor = ctx.queryParam(nombre);
+    if (valor == null || valor.isBlank()) {
+      return porDefecto;
+    }
+    try {
+      return Integer.parseInt(valor.trim());
+    } catch (NumberFormatException e) {
+      throw new DatosInvalidosException("El parametro " + nombre + " tiene que ser un numero.");
+    }
   }
 
   public void buscar(Context ctx) {

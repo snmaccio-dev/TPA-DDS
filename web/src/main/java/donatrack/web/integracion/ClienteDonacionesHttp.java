@@ -8,9 +8,12 @@ import donatrack.web.vista.ImportacionVista;
 import donatrack.web.vista.NecesidadVista;
 import donatrack.web.vista.NotificacionVista;
 import donatrack.web.vista.PerfilVista;
+import donatrack.web.vista.PaginaVista;
 import donatrack.web.vista.PropuestaVista;
 import donatrack.web.vista.SubcategoriaVista;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -94,9 +97,13 @@ public class ClienteDonacionesHttp implements ClienteDonaciones {
   }
 
   @Override
-  public List<DonanteVista> donantes(String autorizacion) {
-    return http.obtener(autorizacion, "/donantes",
-        new TypeReference<List<DonanteVista>>() {});
+  public PaginaVista<DonanteVista> donantes(String autorizacion, String busqueda, int pagina) {
+    String ruta = "/donantes?pagina=" + pagina;
+    if (busqueda != null && !busqueda.isBlank()) {
+      ruta += "&busqueda=" + URLEncoder.encode(busqueda.trim(), StandardCharsets.UTF_8);
+    }
+    return http.obtener(autorizacion, ruta,
+        new TypeReference<PaginaVista<DonanteVista>>() {});
   }
 
   @Override

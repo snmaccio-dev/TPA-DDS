@@ -83,14 +83,59 @@ class DonantesControllerTest implements WithSimplePersistenceUnit {
 
     String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
     JavalinTest.test(app(), (server, client) -> {
-      var resp = client.get("/donantes",
+      // La base es compartida y paginada: se busca cada documento puntual.
+      var donante = client.get("/donantes?busqueda=" + documentoDonante,
           req -> req.header("Authorization", "Bearer " + token));
-      assertEquals(200, resp.code());
-      String body = resp.body().string();
-      assertTrue(body.contains("\"" + documentoDonante + "\""),
+      assertEquals(200, donante.code());
+      assertTrue(donante.body().string().contains("\"" + documentoDonante + "\""),
           "El donante tiene que estar en el listado.");
+
+      var beneficiaria = client.get("/donantes?busqueda=" + cuitBeneficiaria,
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(200, beneficiaria.code());
+      String body = beneficiaria.body().string();
       assertFalse(body.contains(cuitBeneficiaria),
           "Una persona que solo es beneficiaria no tiene que aparecer en /donantes.");
+      assertTrue(body.contains("\"total\":0"));
+    });
+  }
+
+  @Test
+  void getDonantesDevuelveLaPaginaConElTotalDelFiltro() throws Exception {
+    String apellido = DatosDeTest.textoUnico("Pagina");
+    withTransaction(() -> {
+      for (int i = 0; i < 3; i++) {
+        PersonaHumana persona = new PersonaHumana(
+            "Ana" + i, apellido, 30, DatosDeTest.documentoUnico(), Genero.FEMENINO);
+        repoPersonas.guardar(persona);
+        repoDonantes.guardar(new Donante(persona));
+      }
+    });
+
+    String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
+    JavalinTest.test(app(), (server, client) -> {
+      var resp = client.get("/donantes?busqueda=" + apellido + "&pagina=2&tamanio=2",
+          req -> req.header("Authorization", "Bearer " + token));
+      assertEquals(200, resp.code());
+
+      Map<?, ?> pagina = new com.fasterxml.jackson.databind.ObjectMapper()
+          .readValue(resp.body().string(), Map.class);
+      assertEquals(3, ((Number) pagina.get("total")).intValue());
+      assertEquals(2, ((Number) pagina.get("pagina")).intValue());
+      assertEquals(2, ((Number) pagina.get("tamanio")).intValue());
+      assertEquals(2, ((Number) pagina.get("totalPaginas")).intValue());
+      assertEquals(1, ((List<?>) pagina.get("items")).size());
+    });
+  }
+
+  @Test
+  void getDonantesConPaginaInvalidaDa400() throws Exception {
+    String token = firmar("kc-admin", "admin@mail.com", "ADMINISTRADOR");
+    JavalinTest.test(app(), (server, client) -> {
+      assertEquals(400, client.get("/donantes?pagina=0",
+          req -> req.header("Authorization", "Bearer " + token)).code());
+      assertEquals(400, client.get("/donantes?pagina=uno",
+          req -> req.header("Authorization", "Bearer " + token)).code());
     });
   }
 

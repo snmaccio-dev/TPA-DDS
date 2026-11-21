@@ -21,6 +21,7 @@ import donatrack.web.vista.EntidadVista;
 import donatrack.web.vista.ImportacionVista;
 import donatrack.web.vista.NecesidadVista;
 import donatrack.web.vista.NotificacionVista;
+import donatrack.web.vista.PaginaVista;
 import donatrack.web.vista.PerfilVista;
 import donatrack.web.vista.PropuestaVista;
 import donatrack.web.vista.SubcategoriaVista;
@@ -31,6 +32,8 @@ import io.javalin.http.UploadedFile;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -451,15 +454,44 @@ public class DonacionesWebController {
     ctx.redirect("/admin-donantes");
   }
 
+  // Una pagina por vez (20 por defecto, lo decide Donaciones). busqueda se mantiene al
+  // cambiar de pagina porque viaja en los links de Anterior/Siguiente.
   private void mostrarDonantes(Context ctx, String alertaError) {
-    ctx.render("admin-donantes.html.hbs",
-        Modelo.de("Donantes").seccion("Donantes")
-            .conUsuario(usuario(ctx).perfil())
-            .comoAdmin().activa("donantes")
-            .conAlertaError(alertaError)
-            .conDatosDe("donantes", List.<DonanteVista>of(),
-                () -> clienteDonaciones.donantes(autorizacionDe(ctx)))
-            .mapa());
+    String busqueda = ctx.queryParam("busqueda");
+    busqueda = busqueda == null ? "" : busqueda.trim();
+    Long pedida = parseLargo(ctx.queryParam("pagina"));
+    int numero = pedida == null || pedida < 1 || pedida > Integer.MAX_VALUE
+        ? 1
+        : pedida.intValue();
+    String filtro = busqueda;
+
+    Modelo modelo = Modelo.de("Donantes").seccion("Donantes")
+        .conUsuario(usuario(ctx).perfil())
+        .comoAdmin().activa("donantes")
+        .conAlertaError(alertaError)
+        .con("busqueda", busqueda)
+        .conDatosDe("donantes", PaginaVista.<DonanteVista>vacia(),
+            () -> clienteDonaciones.donantes(autorizacionDe(ctx), filtro, numero));
+
+    Object cargada = modelo.mapa().get("donantes");
+    if (cargada instanceof PaginaVista<?> pagina) {
+      // Una pagina que ya no existe (por ejemplo, despues de filtrar) lleva a la ultima.
+      if (pagina.isVacia() && pagina.totalPaginas() > 0 && numero > pagina.totalPaginas()) {
+        ctx.redirect(urlDonantes(busqueda, pagina.totalPaginas()));
+        return;
+      }
+      modelo.con("urlAnterior", urlDonantes(busqueda, pagina.pagina() - 1))
+          .con("urlSiguiente", urlDonantes(busqueda, pagina.pagina() + 1));
+    }
+
+    ctx.render("admin-donantes.html.hbs", modelo.mapa());
+  }
+
+  private static String urlDonantes(String busqueda, int pagina) {
+    String url = "/admin-donantes?pagina=" + pagina;
+    return busqueda == null || busqueda.isBlank()
+        ? url
+        : url + "&busqueda=" + URLEncoder.encode(busqueda, StandardCharsets.UTF_8);
   }
 
   private void deposito(Context ctx) {
@@ -483,8 +515,6 @@ public class DonacionesWebController {
                 "categoria", filtro.categoria() == null ? "" : filtro.categoria()))
             .conDatosDe("donaciones", List.<DonacionVista>of(),
                 () -> clienteDonaciones.donaciones(autorizacionDe(ctx), filtro))
-            .conDatosDe("donantes", List.<DonanteVista>of(),
-                () -> clienteDonaciones.donantes(autorizacionDe(ctx)))
             .conDatosDe("subcategorias", List.<SubcategoriaVista>of(),
                 () -> clienteDonaciones.subcategorias(autorizacionDe(ctx)))
             .con("categorias", categoriasDe(ctx))

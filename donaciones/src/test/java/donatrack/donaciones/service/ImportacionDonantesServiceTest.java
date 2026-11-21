@@ -495,9 +495,15 @@ class ImportacionDonantesServiceTest implements WithSimplePersistenceUnit {
   }
 
   private long donantesConDocumento(String documento) {
-    return repoDonantes.todos().stream()
-        .filter(donante -> documento.equals(donante.getPersona().getDocumento()))
-        .count();
+    // Cuenta en la base, sin traer a todos los donantes.
+    return entityManager().createQuery(
+            "select count(d) from Donante d join d.persona p "
+                + "left join PersonaHumana h on h.id = p.id "
+                + "left join PersonaJuridica j on j.id = p.id "
+                + "where h.documento = :documento or j.cuit = :documento",
+            Long.class)
+        .setParameter("documento", documento)
+        .getSingleResult();
   }
 
   private ImportacionCsv importar(ProveedorFalso proveedor, String contenido) {

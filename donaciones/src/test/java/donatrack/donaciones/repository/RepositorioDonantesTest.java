@@ -3,6 +3,9 @@ package donatrack.donaciones.repository;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import donatrack.donaciones.DatosDeTest;
+import donatrack.donaciones.domain.contacto.MedioContacto;
+import donatrack.donaciones.domain.contacto.TipoContacto;
 import donatrack.donaciones.domain.persona.Donante;
 import donatrack.donaciones.domain.persona.Genero;
 import donatrack.donaciones.domain.persona.PersonaHumana;
@@ -143,23 +146,98 @@ class RepositorioDonantesTest implements SimplePersistenceTest {
     assertEquals("12345678", requieren.get(0).getPersona().getDocumento());
   }
 
+  // Otros tests del run comparten la base: cada test usa un apellido unico y busca por
+  // el, asi el total y el orden no dependen de filas ajenas.
+
   @Test
-  void todosDevuelveLosDonantesGuardados() {
-    PersonaHumana ana = new PersonaHumana("Ana", "Perez", 30, "12345678", Genero.FEMENINO);
-    PersonaHumana luis = new PersonaHumana("Luis", "Garcia", 45, "87654321", Genero.MASCULINO);
-    repoPersonas.guardar(ana);
-    repoPersonas.guardar(luis);
-    Donante donanteAna = new Donante(ana);
-    Donante donanteLuis = new Donante(luis);
-    repositorio.guardar(donanteAna);
-    repositorio.guardar(donanteLuis);
+  void laPaginaTraeSoloSusElementosOrdenadosPorNombreYElTotalEsElDelFiltro() {
+    String apellido = DatosDeTest.textoUnico("Paginado");
+    for (String nombre : List.of("Elena", "Carla", "Ana", "Dario", "Bruno")) {
+      donanteHumano(nombre, apellido, DatosDeTest.documentoUnico());
+    }
+    entityManager().flush();
+    entityManager().clear();
+
+    assertEquals(5, repositorio.contar(apellido));
+    assertEquals(List.of("Ana", "Bruno"), nombres(repositorio.pagina(apellido, 1, 2)));
+    assertEquals(List.of("Carla", "Dario"), nombres(repositorio.pagina(apellido, 2, 2)));
+    assertEquals(List.of("Elena"), nombres(repositorio.pagina(apellido, 3, 2)));
+    assertTrue(repositorio.pagina(apellido, 4, 2).isEmpty());
+  }
+
+  @Test
+  void laPaginaTraeLosContactosDeCadaDonante() {
+    String apellido = DatosDeTest.textoUnico("ConContactos");
+    String mail = DatosDeTest.emailUnico("ana");
+    Donante ana = donanteHumano("Ana", apellido, DatosDeTest.documentoUnico());
+    ana.getPersona().agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, mail));
+    entityManager().flush();
+    entityManager().clear();
+
+    List<Donante> pagina = repositorio.pagina(apellido, 1, 20);
+
+    assertEquals(1, pagina.size());
+    assertEquals(mail, pagina.get(0).getPersona().getContactos().get(0).getValor());
+  }
+
+  @Test
+  void laBusquedaNoDistingueMayusculasYCubreNombreRazonSocialDocumentoYMail() {
+    String apellido = DatosDeTest.textoUnico("Buscado");
+    String documento = DatosDeTest.documentoUnico();
+    Donante humano = donanteHumano("Ana", apellido, documento);
+    String mail = DatosDeTest.emailUnico("contacto-" + apellido);
+    humano.getPersona().agregarMedioContacto(new MedioContacto(TipoContacto.EMAIL, mail));
+
+    String razonSocial = DatosDeTest.textoUnico("Ferreteria Buscada");
+    String cuit = DatosDeTest.cuitUnico();
+    PersonaJuridica juridica = new PersonaJuridica(
+        cuit, razonSocial, TipoOrganizacion.EMPRESA, "Rubro");
+    repoPersonas.guardar(juridica);
+    repositorio.guardar(new Donante(juridica));
 
     entityManager().flush();
     entityManager().clear();
 
-    List<Long> ids = repositorio.todos().stream().map(Donante::getId).toList();
+    assertEquals(List.of(documento), documentos(apellido.toUpperCase()));
+    assertEquals(List.of(documento), documentos("ana " + apellido.toLowerCase()));
+    assertEquals(List.of(documento), documentos(documento));
+    assertEquals(List.of(documento), documentos(mail.toUpperCase()));
+    assertEquals(List.of(cuit), documentos(razonSocial.toLowerCase()));
+    assertEquals(List.of(cuit), documentos(cuit));
+    String cuitConGuiones = cuit.substring(0, 2) + "-" + cuit.substring(2, 10) + "-"
+        + cuit.substring(10);
+    assertEquals(List.of(cuit), documentos(cuitConGuiones));
+    assertEquals(0, repositorio.contar(DatosDeTest.textoUnico("NoExiste")));
+  }
 
-    assertTrue(ids.contains(donanteAna.getId()));
-    assertTrue(ids.contains(donanteLuis.getId()));
+  @Test
+  void sinBusquedaElTotalCuentaATodosLosDonantes() {
+    long antes = repositorio.contar(null);
+    donanteHumano("Ana", DatosDeTest.textoUnico("Total"), DatosDeTest.documentoUnico());
+    entityManager().flush();
+
+    assertEquals(antes + 1, repositorio.contar(null));
+    assertEquals(antes + 1, repositorio.contar(" "));
+    assertTrue(repositorio.pagina(null, 1, 3).size() <= 3);
+  }
+
+  private Donante donanteHumano(String nombre, String apellido, String documento) {
+    PersonaHumana persona = new PersonaHumana(nombre, apellido, 30, documento, Genero.FEMENINO);
+    repoPersonas.guardar(persona);
+    Donante donante = new Donante(persona);
+    repositorio.guardar(donante);
+    return donante;
+  }
+
+  private List<String> documentos(String busqueda) {
+    return repositorio.pagina(busqueda, 1, 20).stream()
+        .map(d -> d.getPersona().getDocumento())
+        .toList();
+  }
+
+  private static List<String> nombres(List<Donante> donantes) {
+    return donantes.stream()
+        .map(d -> ((PersonaHumana) d.getPersona()).getNombre())
+        .toList();
   }
 }
