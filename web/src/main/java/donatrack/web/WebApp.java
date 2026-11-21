@@ -32,6 +32,7 @@ public class WebApp {
       "/",
       "/donaciones-publicas",
       "/registro",
+      "/registro/exito",
       "/login",
       "/privacidad",
       "/sesion/ingresar",
