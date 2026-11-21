@@ -70,7 +70,7 @@ leer_env() {
 }
 
 for variable in SEED_ADMIN_PASSWORD DONACIONES_CLIENT_SECRET LOGISTICA_CLIENT_SECRET \
-                PLANIFICADOR_TOKEN KEYCLOAK_REALM POSTGRES_USER \
+                KEYCLOAK_REALM POSTGRES_USER \
                 SEED_KEYCLOAK_URL SEED_DONACIONES_URL SEED_LOGISTICA_URL SEED_WEB_URL SEED_WEB_CLIENT_ID; do
   leer_env "$variable"
 done
@@ -113,7 +113,7 @@ directorio_seed="$(pwd -W 2>/dev/null || pwd)/seed"
 seed() {
   docker run --rm --network "$red" -v "${directorio_seed}:/seed:ro" \
     -e SEED_ADMIN_PASSWORD -e DONACIONES_CLIENT_SECRET -e LOGISTICA_CLIENT_SECRET \
-    -e PLANIFICADOR_TOKEN -e KEYCLOAK_REALM -e SEED_KEYCLOAK_URL -e SEED_DONACIONES_URL \
+    -e KEYCLOAK_REALM -e SEED_KEYCLOAK_URL -e SEED_DONACIONES_URL \
     -e SEED_LOGISTICA_URL -e SEED_WEB_URL -e SEED_WEB_CLIENT_ID \
     "$IMAGEN_PYTHON" python -u /seed/seed.py "$@"
 }
@@ -143,5 +143,25 @@ compose up -d donaciones logistica
 
 paso "Cargando los datos de demostracion..."
 seed cargar || error "La carga fallo. Las bases quedaron recreadas; corregi el problema y volve a correr el reset."
+
+# UNICA excepcion a "todo por las APIs" (ver docs/DEMO.md): el aviso de inactividad necesita
+# donantes cuya ultima interaccion tenga mas de DIAS_SIN_INTERACCION (20) dias, y ninguna API
+# permite cargar fechas pasadas (ni tiene que permitirlo). Se corren hacia atras las fechas
+# de 5 donantes del CSV, elegidos por documento fijo y sin cuenta de demo (nunca donante1 ni
+# donante2), y se deja su ultimo aviso en NULL para que el job los tome.
+paso "Dejando 5 donantes del CSV inactivos para el aviso de inactividad..."
+inactivos="$(compose exec -T db psql -U "$USUARIO_DB" -d donatrack_donaciones -v ON_ERROR_STOP=1 -tA -c "
+  WITH corridos AS (
+    UPDATE donante d
+       SET ultima_interaccion = CURRENT_DATE - x.dias,
+           fecha_ultimo_aviso_inactividad = NULL
+      FROM persona_humana h,
+           (VALUES ('40000030', 25), ('40000031', 32), ('40000032', 40),
+                   ('40000033', 51), ('40000034', 60)) AS x(documento, dias)
+     WHERE h.id = d.persona_id AND h.documento = x.documento
+    RETURNING d.donante_id)
+  SELECT count(*) FROM corridos;")" || error "No se pudieron correr las fechas de los donantes inactivos."
+[ "$(echo "$inactivos" | tr -d '[:space:]')" = "5" ] \
+  || error "Se esperaban 5 donantes inactivos y se actualizaron: ${inactivos:-ninguno}."
 
 paso "Listo. Ver docs/DEMO.md para lo que muestra cada cuenta."

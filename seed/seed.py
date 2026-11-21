@@ -18,7 +18,6 @@ Variables de entorno (seed.sh las toma del .env):
                              Keycloak (cuentas, roles y keycloak_id del chofer)
   LOGISTICA_CLIENT_SECRET    cuenta de servicio logistica-backend (rol SERVICIO_LOGISTICA):
                              reporta las posiciones GPS de la ruta en curso
-  PLANIFICADOR_TOKEN         token del callback del planificador (default el de Logistica)
   KEYCLOAK_REALM, SEED_KEYCLOAK_URL, SEED_DONACIONES_URL, SEED_LOGISTICA_URL,
   SEED_WEB_URL, SEED_WEB_CLIENT_ID
                              opcionales, con defaults para la red de compose
@@ -52,7 +51,6 @@ DONACIONES = env("SEED_DONACIONES_URL", "http://donaciones:8080").rstrip("/")
 LOGISTICA = env("SEED_LOGISTICA_URL", "http://logistica:8081").rstrip("/")
 WEB = env("SEED_WEB_URL", "http://web:8082").rstrip("/")
 CLIENTE_WEB = env("SEED_WEB_CLIENT_ID", "donatrack-web")
-TOKEN_PLANIFICADOR = env("PLANIFICADOR_TOKEN", "token-de-desarrollo")
 
 PERFILES_EXCLUYENTES = {"ADMINISTRADOR", "DONANTE", "BENEFICIARIA"}
 
@@ -369,12 +367,15 @@ RECORRIDO_GPS = [
 # tiene que terminar cada uno.
 PENDIENTE, DEPOSITO, PROPUESTA, ASIGNADA, LISTA, TRASLADO, ENTREGADA, VENCIDA = (
     "PENDIENTE", "DEPOSITO", "PROPUESTA", "ASIGNADA", "LISTA", "TRASLADO", "ENTREGADA", "VENCIDA")
+# Asignadas, ya en Logistica y con medidas, sin ruta: las toma JobPlanificacionRutas.
+PARA_PLANIFICAR = "PARA_PLANIFICAR"
 CICLO = [PENDIENTE, DEPOSITO, PROPUESTA, ASIGNADA, LISTA, TRASLADO, ENTREGADA, VENCIDA]
+ESTADOS = CICLO + [PARA_PLANIFICAR]
 CON_DESTINO = {ASIGNADA, LISTA, TRASLADO, ENTREGADA}
 ESPERADO = {
     PENDIENTE: "PENDIENTE_RECEPCION", DEPOSITO: "EN_DEPOSITO", PROPUESTA: "EN_DEPOSITO",
     ASIGNADA: "ASIGNACION_REALIZADA", LISTA: "LISTA_PARA_ENTREGAR", TRASLADO: "EN_TRASLADO",
-    ENTREGADA: "ENTREGADA", VENCIDA: "VENCIDA",
+    ENTREGADA: "ENTREGADA", VENCIDA: "VENCIDA", PARA_PLANIFICAR: "ASIGNACION_REALIZADA",
 }
 DONACIONES_POR_DONANTE_CSV = 2
 
@@ -421,6 +422,11 @@ def armar_plan(doc_donante1, doc_donante2, beneficiarias, documentos_csv):
         (doc_donante1, PROPUESTA, None, "Escritorios"),
         (doc_donante2, PROPUESTA, None, "Yerba"),
     ]
+    # Para JobPlanificacionRutas: una por cada beneficiaria de demo, con una subcategoria que
+    # esa entidad necesita (asi es candidata y se puede confirmar como destino).
+    for n, destino in enumerate([b1, b2] + [b["email"] for b in BENEFICIARIAS_EXTRA]):
+        plan.append((doc_donante1 if n % 2 == 0 else doc_donante2, PARA_PLANIFICAR, destino,
+                     NECESIDADES[destino][1]))
 
     # Sin "Escritorios": las donaciones del CSV quedan en los casos con coincidencias.
     necesitadas = sorted({s for lista in NECESIDADES.values() for s in lista} - {"Escritorios"})
@@ -655,43 +661,58 @@ class Carga:
 
     def planificar_rutas(self, por_estado):
         # 1) La corrida trae a Logistica lo asignado en Donaciones como entregas pendientes.
-        self.log_("POST", "/planificacion/corridas")
+        #    Todavia ninguna tiene medidas, asi que no se manda nada a planificar.
+        corrida = self.log_("POST", "/planificacion/corridas")
+        if corrida["solicitudes"]:
+            raise SeedError("La primera corrida no tenia que mandar nada a planificar.")
         entregas = {e["donacionId"]: e for e in self.log_("GET", "/entregas")}
-
-        grupos = [por_estado[ENTREGADA], por_estado[TRASLADO], por_estado[LISTA]]
-        for grupo in grupos:
-            for orden, item in enumerate(grupo):
+        for estado in (ENTREGADA, TRASLADO, LISTA, PARA_PLANIFICAR):
+            for item in por_estado[estado]:
                 if item["id"] not in entregas:
                     raise SeedError("Logistica no incorporo la donacion " + str(item["id"]) + ".")
                 item["entrega"] = entregas[item["id"]]
-                self.log_("POST", "/entregas/" + str(item["entrega"]["id"]) + "/medidas",
-                          json_cuerpo={"pesoKg": 20 + orden * 3, "volumenM3": 0.3 + orden * 0.05})
 
-        # 2) Con las medidas cargadas, la corrida arma la solicitud al planificador. El
-        #    planificador simulado no responde solo: la seed contesta el callback como lo
-        #    haria el proveedor externo, con una ruta por grupo.
-        corrida = self.log_("POST", "/planificacion/corridas")
-        solicitudes = corrida["solicitudes"]
-        if len(solicitudes) != 1:
-            raise SeedError("Se esperaba una solicitud de planificacion y hubo "
-                            + str(len(solicitudes)) + ".")
-
+        # 2) Una corrida por grupo: se miden las entregas del grupo y la corrida las manda al
+        #    planificador simulado, que contesta solo el callback unos segundos despues (como
+        #    el proveedor externo). Cada grupo entra en un camion disponible, asi que queda
+        #    una ruta por grupo, igual que antes.
         rutas = []
-        for camion, grupo in zip(CAMIONES, grupos):
-            destinos = {}
-            for item in grupo:
-                destinos.setdefault(item["entrega"]["direccionDestino"], []).append(
-                    item["entrega"]["id"])
-            rutas.append({"patenteCamion": camion["patente"],
-                          "destinos": [{"direccion": d, "entregaIds": ids}
-                                       for d, ids in destinos.items()]})
+        for estado in (ENTREGADA, TRASLADO, LISTA):
+            grupo = por_estado[estado]
+            self.medir(grupo)
+            corrida = self.log_("POST", "/planificacion/corridas")
+            if len(corrida["solicitudes"]) != 1:
+                raise SeedError("Se esperaba una solicitud de planificacion y hubo "
+                                + str(len(corrida["solicitudes"])) + ".")
+            rutas.append(self.esperar_ruta(estado, grupo))
+        log(str(len(rutas)) + " rutas planificadas por el planificador simulado.")
 
-        creadas = pedir("POST", LOGISTICA + "/planificacion/callback",
-                        json_cuerpo={"solicitudId": solicitudes[0], "rutas": rutas,
-                                     "entregaIdsNoAsignadas": []},
-                        encabezados={"X-Planificador-Token": TOKEN_PLANIFICADOR})
-        log(str(len(creadas)) + " rutas planificadas.")
-        return [ruta["id"] for ruta in creadas]
+        # 3) Las de PARA_PLANIFICAR quedan medidas y sin ruta: las toma el job.
+        self.medir(por_estado[PARA_PLANIFICAR])
+        return rutas
+
+    def medir(self, grupo):
+        for orden, item in enumerate(grupo):
+            self.log_("POST", "/entregas/" + str(item["entrega"]["id"]) + "/medidas",
+                      json_cuerpo={"pesoKg": 20 + orden * 3, "volumenM3": 0.3 + orden * 0.05})
+
+    def esperar_ruta(self, estado, grupo):
+        """Espera el callback del simulado: todas las entregas del grupo en una misma ruta."""
+        ids = {item["entrega"]["id"] for item in grupo}
+        rutas = set()
+
+        def planificado():
+            rutas.clear()
+            for entrega in self.log_("GET", "/entregas"):
+                if entrega["id"] in ids:
+                    rutas.add(entrega["rutaId"])
+            return None not in rutas
+
+        esperar("La ruta del grupo " + estado, planificado, segundos=90)
+        if len(rutas) != 1:
+            raise SeedError("Las entregas del grupo " + estado + " quedaron en "
+                            + str(len(rutas)) + " rutas y se esperaba una.")
+        return rutas.pop()
 
     def iniciar(self, ruta_id, chofer_id):
         self.log_("POST", "/rutas/" + str(ruta_id) + "/inicio",
@@ -821,6 +842,24 @@ class Carga:
         log("/donaciones-publicas: " + str(items) + " entregas recientes en " + str(len(marcadores))
             + " marcadores (uno por entidad de esas entregas).")
 
+    def verificar_pendientes_para_el_job(self, items):
+        """Lo que JobPlanificacionRutas tiene para procesar en su proxima corrida."""
+        pendientes = {e["id"] for e in self.log_("GET", "/planificacion/pendientes")}
+        faltan = [i["id"] for i in items if i["entrega"]["id"] not in pendientes]
+        if faltan:
+            raise SeedError("Estas donaciones no quedaron pendientes de planificar: " + str(faltan))
+
+        ocupados = {r["patenteCamion"] for r in self.log_("GET", "/rutas")
+                    if r["estado"] in ("PLANIFICADA", "EN_CURSO")}
+        disponibles = sorted(c["patente"] for c in self.log_("GET", "/camiones")
+                             if c["patente"] not in ocupados)
+        if len(disponibles) < 2:
+            raise SeedError("Se esperaban al menos 2 camiones disponibles y hay "
+                            + str(disponibles) + ".")
+        log("Para JobPlanificacionRutas: " + str(len(pendientes)) + " entregas medidas sin "
+            + "ruta y " + str(len(disponibles)) + " camiones disponibles ("
+            + ", ".join(disponibles) + ").")
+
     # -- orquestacion -----------------------------------------------------------------
     def correr(self):
         self.esperar_servicios()
@@ -831,7 +870,7 @@ class Carga:
 
         plan = armar_plan(documentos["donante1@gmail.com"], documentos["donante2@gmail.com"],
                           self.beneficiarias, leer_csv_donantes())
-        por_estado = {estado: [i for i in plan if i["estado"] == estado] for estado in CICLO}
+        por_estado = {estado: [i for i in plan if i["estado"] == estado] for estado in ESTADOS}
 
         self.crear_donaciones(plan)
 
@@ -845,7 +884,8 @@ class Carga:
         log("Asignacion ejecutada: " + str(ejecucion["procesadas"]) + " propuestas, "
             + str(len(ejecucion["fallidas"])) + " fallidas.")
 
-        self.confirmar_destino(por_estado[LISTA] + por_estado[TRASLADO] + por_estado[ENTREGADA])
+        self.confirmar_destino(por_estado[LISTA] + por_estado[TRASLADO] + por_estado[ENTREGADA]
+                               + por_estado[PARA_PLANIFICAR])
         self.recibir(por_estado[DEPOSITO])
 
         rutas = self.planificar_rutas(por_estado)
@@ -856,13 +896,15 @@ class Carga:
         self.entregar_con_fotos(orden_de_confirmacion(por_estado[ENTREGADA]))
         # Ruta 2: en curso, con posiciones GPS. La ruta 3 queda planificada para hoy.
         self.iniciar(ruta_en_curso, chofer_id)
-        self.reportar_posiciones(ruta_en_curso, CAMIONES[1]["patente"])
+        self.reportar_posiciones(
+            ruta_en_curso, self.log_("GET", "/rutas/" + str(ruta_en_curso))["patenteCamion"])
 
         # Asignadas que todavia no pasaron a Logistica.
         self.confirmar_destino(por_estado[ASIGNADA])
 
         self.resumen(plan)
         self.verificar_mapa_publico()
+        self.verificar_pendientes_para_el_job(por_estado[PARA_PLANIFICAR])
         log("Carga terminada.")
 
 

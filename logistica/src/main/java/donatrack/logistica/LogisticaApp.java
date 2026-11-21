@@ -26,6 +26,7 @@ import donatrack.logistica.infrastructure.integracion.ProveedorDeTokenDeServicio
 import donatrack.logistica.infrastructure.integracion.SerializadorJackson;
 import donatrack.logistica.infrastructure.planificacion.GeneradorRutasExterno;
 import donatrack.logistica.infrastructure.planificacion.GeneradorRutasSimulado;
+import donatrack.logistica.repository.RepositorioRutas;
 import donatrack.logistica.graphql.EsquemaGraphQl;
 import donatrack.logistica.graphql.GraphQlController;
 import donatrack.logistica.jobs.JobPlanificacionRutas;
@@ -104,8 +105,10 @@ public class LogisticaApp {
       clienteDonaciones = new ClienteDonacionesHttp(urlDonaciones, json, proveedorToken);
     }
 
+    // El simulado responde solo al callback, con el mismo token que el proveedor externo.
     GeneradorRutas generadorRutas = planificadorSimulado
-        ? new GeneradorRutasSimulado()
+        ? new GeneradorRutasSimulado(tokenPlanificador, json,
+            RepositorioRutas.getInstance()::patentesConRutaPlanificadaOEnCurso)
         : new GeneradorRutasExterno(urlPlanificador, json);
 
     GestorCamiones gestorCamiones = new GestorCamiones();

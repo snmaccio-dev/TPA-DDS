@@ -61,6 +61,10 @@ services:
       KEYCLOAK_ISSUER: http://localhost:8180/realms/donatrack
       # Coordenadas de las entidades para el mapa publico: nominatim (default) o simulado.
       GEOCODIFICADOR: ${GEOCODIFICADOR:-nominatim}
+      # Horas (HH:mm) de los jobs de asignacion y de avisos de inactividad; para
+      # probarlos, ponelas en el .env.
+      ASIGNACIONES_HORA: ${ASIGNACIONES_HORA:-03:00}
+      AVISOS_INACTIVIDAD_HORA: ${AVISOS_INACTIVIDAD_HORA:-09:00}
     ports:
       - "8080:8080"
     depends_on:
@@ -83,6 +87,8 @@ services:
       DONACIONES_URL_BASE: http://donaciones:8080
       LOGISTICA_MODO: http
       LOGISTICA_PLANIFICADOR: simulado
+      # Hora (HH:mm) de JobPlanificacionRutas; para probarlo, ponela en el .env.
+      PLANIFICACION_HORA: ${PLANIFICACION_HORA:-03:00}
       LOGISTICA_SEGURIDAD: on
       LOGISTICA_FOTOS_DIR: /app/fotos
       KEYCLOAK_URL: http://keycloak:8080

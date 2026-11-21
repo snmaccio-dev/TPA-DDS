@@ -108,6 +108,16 @@ public class RepositorioRutas implements WithSimplePersistenceUnit {
         .getResultList());
   }
 
+  // Camiones ocupados: con una ruta planificada (las rutas planificadas son para el dia en
+  // que se arman) o en curso. Los demas estan disponibles para una nueva planificacion.
+  public Set<String> patentesConRutaPlanificadaOEnCurso() {
+    return new HashSet<>(createQuery(
+        "select distinct r.camion.patente from RutaReparto r where r.estado in :estados",
+        String.class)
+        .setParameter("estados", List.of(EstadoRuta.PLANIFICADA, EstadoRuta.EN_CURSO))
+        .getResultList());
+  }
+
   public boolean tieneRutasDeCamion(String patente) {
     return createQuery(
         "select count(r) from RutaReparto r where r.camion.patente = :patente",
