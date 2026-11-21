@@ -576,48 +576,19 @@ public class DonacionesWebController {
   }
 
   private void mostrarAsignaciones(Context ctx, String alertaError) {
-    List<PropuestaVista> propuestas = new ArrayList<>();
     Modelo modelo = Modelo.de("Asignaciones").seccion("Asignaciones")
         .conUsuario(usuario(ctx).perfil())
         .comoAdmin().activa("asignaciones")
         .conAlertaError(alertaError)
         .conDatosDe("propuestas", List.<PropuestaVista>of(),
-            () -> propuestasEnriquecidas(ctx));
-
-    // Advertencia por propuestas sin candidatas: concatenamos los ids en un solo
-    // mensaje para no romper el patron de "una alerta a la vez".
-    Object cargadas = modelo.mapa().get("propuestas");
-    if (cargadas instanceof List<?> lista) {
-      for (Object item : lista) {
-        if (item instanceof PropuestaVista p && !p.isHuboCoincidencias()) {
-          propuestas.add(p);
-        }
-      }
-    }
-    if (!propuestas.isEmpty()) {
-      StringBuilder sb = new StringBuilder();
-      for (int i = 0; i < propuestas.size(); i++) {
-        if (i > 0) sb.append(" ");
-        sb.append("La donación #").append(propuestas.get(i).getDonacionId())
-            .append(" no tiene entidades compatibles.");
-      }
-
-      // Si viene el resultado de "Ejecutar asignación ahora" como flash, JavalinRenderer
-      // lo descartaria (no pisa una advertencia ya cargada): se muestran los dos juntos.
-      Object flash = ctx.sessionAttribute(Alertas.CLAVE_FLASH);
-      if (flash instanceof Map<?, ?> previo && Alertas.TIPO_ADVERTENCIA.equals(previo.get("tipo"))) {
-        Alertas.consumir(ctx);
-        sb.insert(0, previo.get("texto") + " ");
-      }
-
-      modelo.conAlertaAdvertencia(sb.toString());
-    }
+            () -> propuestasConDatosDeLaDonacion(ctx));
 
     ctx.render("asignaciones.html.hbs", modelo.mapa());
   }
 
-  // Esto lo cambie
-  private List<PropuestaVista> propuestasEnriquecidas(Context ctx) {
+  // Las candidatas son las que propusieron los algoritmos (Donaciones solo acepta como
+  // destino a una de ellas). De la donacion solo se agregan descripcion y donante.
+  private List<PropuestaVista> propuestasConDatosDeLaDonacion(Context ctx) {
       String autorizacion = autorizacionDe(ctx);
 
       List<PropuestaVista> propuestas =
@@ -627,57 +598,21 @@ public class DonacionesWebController {
         return propuestas;
       }
 
-      List<DonacionVista> donaciones =
-          clienteDonaciones.donaciones(autorizacion, FiltroDonacionesWeb.vacio());
-
-      List<EntidadVista> entidades =
-          clienteDonaciones.entidades(autorizacion);
-
-      List<NecesidadVista> necesidades =
-          clienteDonaciones.necesidades(autorizacion);
-
       Map<Long, DonacionVista> donacionesPorId = new HashMap<>();
-
-      for (DonacionVista donacion : donaciones) {
+      for (DonacionVista donacion
+          : clienteDonaciones.donaciones(autorizacion, FiltroDonacionesWeb.vacio())) {
         donacionesPorId.put(donacion.getId(), donacion);
       }
 
-      List<PropuestaVista> enriquecidas = new ArrayList<>();
-
+      List<PropuestaVista> conDatos = new ArrayList<>();
       for (PropuestaVista propuesta : propuestas) {
         DonacionVista donacion = donacionesPorId.get(propuesta.getDonacionId());
-
-        if (donacion == null) {
-          enriquecidas.add(propuesta.conDatos(
-              propuesta.getDescripcionDonacion(),
-              "Donante no identificado",
-              List.of()
-          ));
-          continue;
-        }
-
-        List<PropuestaVista.Candidata> compatibles = entidades.stream()
-            .filter(entidad -> necesidades.stream().anyMatch(necesidad ->
-                entidad.getCuit() != null
-                    && entidad.getCuit().equals(necesidad.cuitBeneficiaria())
-                    && donacion.getSubcategoria() != null
-                    && donacion.getSubcategoria().equals(necesidad.getSubcategoria())
-            ))
-            .map(entidad -> new PropuestaVista.Candidata(
-                entidad.getId(),
-                entidad.getRazonSocial(),
-                entidad.getCuit()
-            ))
-            .toList();
-
-        enriquecidas.add(propuesta.conDatos(
-            donacion.getDescripcion(),
-            donacion.getDonanteIdentificacion(),
-            compatibles
-        ));
+        conDatos.add(donacion == null
+            ? propuesta.conDatos(propuesta.getDescripcionDonacion(), "Donante no identificado")
+            : propuesta.conDatos(donacion.getDescripcion(), donacion.getDonanteIdentificacion()));
       }
 
-      return enriquecidas;
+      return conDatos;
   }
 
   private void confirmarAsignacion(Context ctx) {
@@ -690,6 +625,7 @@ public class DonacionesWebController {
 
     try {
       clienteDonaciones.confirmarDestinatario(autorizacionDe(ctx), id, beneficiariaId);
+      Alertas.flashExito(ctx, "Asignación confirmada para la donación #" + id + ".");
     } catch (IntegracionException e) {
       Alertas.flashError(ctx, mensajeDe(e));
     }

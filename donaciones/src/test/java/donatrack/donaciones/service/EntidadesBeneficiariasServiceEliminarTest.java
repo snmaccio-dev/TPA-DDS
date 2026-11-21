@@ -99,8 +99,8 @@ class EntidadesBeneficiariasServiceEliminarTest implements SimplePersistenceTest
     Beneficiaria otra = beneficiariaPersistida();
     long donacionId = DONACION_ID.incrementAndGet();
 
-    PropuestaAsignacion propuesta = new PropuestaAsignacion(
-        donacionId, List.of(aBorrar, otra), LocalDateTime.now(), true);
+    PropuestaAsignacion propuesta = PropuestaAsignacion.desdeRankings(
+        donacionId, List.of(aBorrar, otra), List.of(aBorrar, otra), LocalDateTime.now());
     entityManager().persist(propuesta);
     entityManager().flush();
     entityManager().clear();
